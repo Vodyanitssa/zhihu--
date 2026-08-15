@@ -309,6 +309,7 @@ private fun RenderMarkdownDocument(
     val previewImageUrls = remember(document) { document.previewImageUrls() }
     val navigator = LocalNavigator.current
     val mathFont = rememberMarkdownMathFont()
+    val codeFontFamily = rememberMarkdownCodeFontFamily()
     val openExternalUrl = rememberExternalUrlOpener()
     val settings = rememberSettingsStore()
     val fontSize = settings.getInt(PREF_FONT_SIZE, 100)
@@ -316,10 +317,20 @@ private fun RenderMarkdownDocument(
     val blockSpacing = settings.getInt(PREF_BLOCK_SPACING, 100)
     val defaultTheme = MarkdownTheme.material3()
 
+    val scaledFontSize = 16f * fontSize / 100
+    val scaledLineHeight = scaledFontSize * lineHeight / 100
+    val scaledCodeFontSize = 14f * fontSize / 100
+    val scaledCodeLineHeight = scaledCodeFontSize * lineHeight / 100
     val theme = defaultTheme.copy(
         bodyStyle = defaultTheme.bodyStyle.copy(
-            fontSize = 16.sp * fontSize / 100,
-            lineHeight = 16.sp * fontSize / 100 * lineHeight / 100,
+            fontSize = scaledFontSize.sp,
+            lineHeight = scaledLineHeight.sp,
+        ),
+        codeBlockStyle = defaultTheme.codeBlockStyle.copy(
+            fontSize = scaledCodeFontSize.sp,
+            lineHeight = scaledCodeLineHeight.sp,
+            letterSpacing = 0.sp,
+            fontFamily = codeFontFamily,
         ),
         blockSpacing = defaultTheme.blockSpacing * (blockSpacing / 100f),
         mathFontSize = 18f * fontSize / 100,

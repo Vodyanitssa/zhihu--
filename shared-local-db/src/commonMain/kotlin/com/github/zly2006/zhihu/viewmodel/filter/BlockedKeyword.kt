@@ -26,7 +26,6 @@ import kotlin.time.Clock
  */
 enum class KeywordType {
     EXACT_MATCH, // 精确匹配（传统关键词）
-    NLP_SEMANTIC, // NLP语义匹配（主题/短语）
 }
 
 /**
@@ -51,13 +50,6 @@ data class BlockedKeyword(
         KeywordType.valueOf(keywordType)
     } catch (e: Exception) {
         KeywordType.EXACT_MATCH
-    }
-
-    // 辅助方法：获取NLP短语的各个关键词
-    fun getNLPKeywords(): List<String> = if (getKeywordTypeEnum() == KeywordType.NLP_SEMANTIC) {
-        keyword.split("\\s+".toRegex()).filter { it.isNotBlank() }
-    } else {
-        emptyList()
     }
 }
 

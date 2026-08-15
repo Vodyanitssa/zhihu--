@@ -25,8 +25,6 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.account.ZhihuIdentityClient
-import com.github.zly2006.zhihu.data.AigcVoteClient
-import com.github.zly2006.zhihu.data.AigcVoteVoter
 import com.github.zly2006.zhihu.data.ContentDetailCache
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.Feed
@@ -47,7 +45,6 @@ import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.util.ZhihuCredentialRefresher
 import com.github.zly2006.zhihu.util.signZhihuFetchRequest
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
-import com.github.zly2006.zhihu.viewmodel.local.LocalRecommendationEngine
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
@@ -414,7 +411,6 @@ interface FeedDisplayEnvironment {
         HomeFeedFilterResult(
             foregroundItems = items,
             filteredItems = items,
-            reverseBlock = feedDisplaySettings().reverseBlock,
         )
 }
 
@@ -443,12 +439,6 @@ interface ContentOpenEnvironment {
     ) = Unit
 }
 
-interface AigcVoteEnvironment {
-    fun aigcVoteClient(): AigcVoteClient? = null
-
-    fun aigcVoteVoter(): AigcVoteVoter? = null
-}
-
 interface ContentBlocklistEnvironment {
     suspend fun isUserBlocked(userId: String): Boolean = false
 
@@ -473,16 +463,6 @@ interface ContentBlocklistEnvironment {
     suspend fun removeBlockedUser(userId: String) = Unit
 
     suspend fun removeBlockedQuestionAuthor(userId: String) = Unit
-}
-
-interface LocalRecommendationEnvironment : ZhihuApiEnvironment {
-    fun localRecommendationEngine(): LocalRecommendationEngine? = null
-
-    suspend fun handleLocalRecommendationFailure(error: Exception) {
-        handleFetchFailure("LocalHomeFeedViewModel", error)
-    }
-
-    suspend fun showLocalRecommendationDatabaseError() = Unit
 }
 
 interface ClipboardEnvironment {
@@ -537,8 +517,7 @@ interface ArticleNavigationEnvironment {
 interface ContentLoadEnvironment :
     ZhihuApiEnvironment,
     HistoryEnvironment,
-    ContentOpenEnvironment,
-    AigcVoteEnvironment
+    ContentOpenEnvironment
 
 interface ProfileLoadEnvironment :
     ContentLoadEnvironment,
@@ -555,7 +534,6 @@ interface PaginationEnvironment :
     MobileHomeFeedEnvironment,
     FeedDisplayEnvironment,
     ContentInteractionEnvironment,
-    LocalRecommendationEnvironment,
     ClipboardEnvironment,
     ProfileLoadEnvironment,
     ArticleLoadEnvironment,
@@ -563,13 +541,11 @@ interface PaginationEnvironment :
 
 data class FeedDisplaySettings(
     val enableQualityFilter: Boolean = true,
-    val reverseBlock: Boolean = false,
 )
 
 data class HomeFeedFilterResult(
     val foregroundItems: List<FeedDisplayItem>,
     val filteredItems: List<FeedDisplayItem>,
-    val reverseBlock: Boolean,
 )
 
 @Composable

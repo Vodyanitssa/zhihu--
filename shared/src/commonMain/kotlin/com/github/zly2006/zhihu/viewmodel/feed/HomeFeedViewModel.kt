@@ -100,27 +100,6 @@ suspend fun resolveFeedQuestionAuthorInfo(
         }
 }
 
-suspend fun resolveFeedKeywordBlockingContent(
-    feedItem: FeedDisplayItem,
-    contentDetailProvider: ContentDetailProvider?,
-): Triple<String, String, String?>? {
-    val title = feedItem.title
-    val summary = feedItem.summary ?: feedItem.feed?.target?.excerpt ?: ""
-    val content = feedItem.content ?: when (val fullContent = resolveFeedBlockContentDetail(feedItem, contentDetailProvider)) {
-        is DataHolder.Answer -> fullContent.content
-        is DataHolder.Article -> fullContent.content
-        is DataHolder.Question -> fullContent.detail
-        is DataHolder.Pin -> fullContent.contentHtml
-        else -> null
-    }
-
-    return if (title.isNotEmpty() || summary.isNotEmpty() || content != null) {
-        Triple(title, summary, content)
-    } else {
-        null
-    }
-}
-
 fun removeFeedItemsByBlockedTopic(
     viewModel: BaseFeedViewModel,
     topicId: String,
@@ -179,18 +158,8 @@ class HomeFeedViewModel :
                 .map { feed -> createDisplayItem(environment, feed) }
 
             val filterResult = environment.applyHomeFeedFilters(newItems)
-            if (!filterResult.reverseBlock) {
-                withContext(Dispatchers.Main) {
-                    addDisplayItems(filterResult.foregroundItems)
-                }
-            }
-
-            if (filterResult.reverseBlock) {
-                addDisplayItems(filterResult.filteredItems)
-            }
-
-            // 移除被过滤的条目，并更新已保留条目的 raw 内容
             withContext(Dispatchers.Main) {
+                addDisplayItems(filterResult.foregroundItems)
                 displayItems.replaceHomeFeedItemsWithFilteredResult(filterResult)
                 latestLoadedDisplayItems.value = filterResult.filteredItems
             }

@@ -146,12 +146,6 @@ data object Account : TopLevelDestination {
 
     @Serializable
     data object OpenSourceLicenses : NavDestination
-
-    @Serializable
-    data object DeveloperSettings : NavDestination {
-        @Serializable
-        data object ColorScheme : NavDestination
-    }
 }
 
 /**
@@ -186,9 +180,6 @@ data object Notification : NavDestination {
         val avatarUrl: String = "",
     ) : NavDestination
 }
-
-@Serializable
-data object SentenceSimilarityTest : NavDestination
 
 @Serializable
 data class Search(

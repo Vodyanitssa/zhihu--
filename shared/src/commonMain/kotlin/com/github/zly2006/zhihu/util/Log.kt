@@ -15,23 +15,14 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-package com.github.zly2006.zhihu.viewmodel.filter
+package com.github.zly2006.zhihu.util
 
-import androidx.room.Room
-import java.io.File
+expect object Log {
+    fun d(tag: String, message: String, throwable: Throwable? = null)
 
-fun desktopContentFilterDatabaseFile(): File =
-    File(File(System.getProperty("user.home"), ".zhihu-plus"), "content-filter.db")
+    fun i(tag: String, message: String, throwable: Throwable? = null)
 
-private val desktopContentFilterDatabase by lazy {
-    getContentFilterDatabase(desktopContentFilterDatabaseFile().also { it.parentFile?.mkdirs() })
+    fun w(tag: String, message: String, throwable: Throwable? = null)
+
+    fun e(tag: String, message: String, throwable: Throwable? = null)
 }
-
-actual fun getContentFilterDatabase(): ContentFilterDatabase = desktopContentFilterDatabase
-
-fun getContentFilterDatabase(databaseFile: File): ContentFilterDatabase =
-    buildContentFilterDatabase(
-        Room.databaseBuilder<ContentFilterDatabase>(
-            name = databaseFile.absolutePath,
-        ),
-    )

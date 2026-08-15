@@ -79,7 +79,6 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
         val settings = environment.feedDisplaySettings()
         return feed.toDisplayItem(
             enableQualityFilter = settings.enableQualityFilter,
-            reverseBlock = settings.reverseBlock,
         )
     }
 
@@ -129,25 +128,6 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
         }
     }
 
-    fun handleBlockByKeywords(
-        environment: PaginationEnvironment,
-        userMessages: UserMessageSink,
-        feedItem: FeedDisplayItem,
-        onShowDialog: (Pair<FeedDisplayItem, Triple<String, String, String?>>) -> Unit,
-    ) {
-        viewModelScope.launch {
-            val contentInfo = resolveFeedKeywordBlockingContent(
-                feedItem,
-                ContentDetailProvider(environment::getOrFetchContentDetail),
-            )
-            if (contentInfo != null) {
-                onShowDialog(feedItem to contentInfo)
-            } else {
-                userMessages.showLongMessage("无法获取关键词屏蔽所需的数据，请尝试进入内容详情页操作")
-            }
-        }
-    }
-
     fun handleBlockTopic(
         userMessages: UserMessageSink,
         topicId: String,
@@ -175,11 +155,9 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
  * [HomeFeedFilterResult.filteredItems], and replaced when the final filter pipeline returns a matching item
  * with the same [FeedDisplayItem.stableKey]. This lets delayed quality/content filters swap an already
  * rendered card with an `已屏蔽` placeholder while preserving existing raw content if the replacement has not
- * loaded one. Reverse-block mode is intentionally ignored because it renders filtered items directly.
+ * loaded one.
  */
 internal fun MutableList<FeedDisplayItem>.replaceHomeFeedItemsWithFilteredResult(filterResult: HomeFeedFilterResult) {
-    if (filterResult.reverseBlock) return
-
     val foregroundKeys = filterResult.foregroundItems.map { it.stableKey }.toSet()
     val filteredItemsByKey = filterResult.filteredItems.associateBy { it.stableKey }
     var index = 0

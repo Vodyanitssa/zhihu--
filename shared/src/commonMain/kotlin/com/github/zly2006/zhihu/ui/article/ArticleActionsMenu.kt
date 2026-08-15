@@ -28,12 +28,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.automirrored.filled.VolumeOff
 import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.FilterCenterFocus
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.GetApp
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material.icons.outlined.DesktopWindows
@@ -115,8 +113,6 @@ fun ArticleActionsMenu(
     answerQueueFallbackProvider: (suspend (limit: Int) -> List<Article>)? = null,
     showMenu: Boolean,
     onDismissRequest: () -> Unit,
-    onSummaryRequest: () -> Unit,
-    onAigcFlagRequest: () -> Unit,
     onExportRequest: () -> Unit,
     onSetImmersiveDoubleTap: () -> Unit = {},
 ) {
@@ -347,26 +343,6 @@ fun ArticleActionsMenu(
                     article,
                     articleActionText(article, viewModel.questionId, viewModel.title, viewModel.authorName),
                 )
-            },
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-        MenuActionButton(
-            icon = Icons.AutoMirrored.Filled.Comment,
-            text = "总结本文",
-            onClick = {
-                onDismissRequest()
-                onSummaryRequest()
-            },
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-        MenuActionButton(
-            icon = Icons.Filled.Flag,
-            text = "标记疑似 AIGC",
-            onClick = {
-                onDismissRequest()
-                onAigcFlagRequest()
             },
         )
 

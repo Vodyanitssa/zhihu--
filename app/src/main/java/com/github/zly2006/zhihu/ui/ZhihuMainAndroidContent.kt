@@ -26,7 +26,6 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.runtime.Composable
 import androidx.lifecycle.DefaultLifecycleObserver
 import androidx.lifecycle.LifecycleOwner
@@ -41,7 +40,7 @@ import com.github.zly2006.zhihu.viewmodel.ArticleViewModel
 /**
  * Android 平台的 Zhihu++ 主界面入口。
  *
- * 这里把 [MainActivity] 持有的导航、偏好设置、文章页 ViewModel、回答切换转场和 NLP 页面适配到共享 [ZhihuMain]。
+ * 这里把 [MainActivity] 持有的导航、偏好设置、文章页 ViewModel 和回答切换转场适配到共享 [ZhihuMain]。
  * UI 结构仍由 common 主壳负责，Android 只提供生命周期、Activity、ViewModel 和平台专属页面实现。
  */
 @Composable
@@ -102,15 +101,6 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 }
             }
             ArticleScreen(article, viewModel)
-        },
-        sentenceSimilarityContent = {
-            SentenceSimilarityTestScreen()
-        },
-        blocklistSettingsNlpContent = { onNavigateBack ->
-            NLPKeywordManagementScreen(
-                innerPadding = PaddingValues(),
-                onNavigateBack = onNavigateBack,
-            )
         },
     )
 }

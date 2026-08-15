@@ -51,7 +51,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.ArrowCircleUp
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Flag
@@ -76,7 +75,6 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -123,13 +121,10 @@ import com.github.zly2006.zhihu.notification.rememberNotificationSettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberAppPrivateDirectory
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
-import com.github.zly2006.zhihu.platform.rememberIsLiteVariant
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.ui.components.AnnouncementCard
-import com.github.zly2006.zhihu.ui.components.AnnouncementCardDefaults
-import com.github.zly2006.zhihu.ui.components.BlockByKeywordsDialog
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
@@ -141,17 +136,13 @@ import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FAB_OPACITY
-import com.github.zly2006.zhihu.ui.subscreens.SystemUpdateState
-import com.github.zly2006.zhihu.ui.subscreens.rememberSystemUpdateRuntime
 import com.github.zly2006.zhihu.ui.topLevelReselectAction
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedInteractionViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedViewModel
-import com.github.zly2006.zhihu.viewmodel.local.LocalHomeFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.za.AndroidHomeFeedViewModel
-import com.github.zly2006.zhihu.viewmodel.za.MixedHomeFeedViewModel
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
@@ -229,8 +220,8 @@ fun HomeScreen(
     // 获取当前推荐算法设置
     val currentRecommendationMode =
         RecommendationMode.entries.find {
-            it.key == settings.getString("recommendationMode", RecommendationMode.MIXED.key)
-        } ?: RecommendationMode.MIXED
+            it.key == settings.getString("recommendationMode", RecommendationMode.ANDROID.key)
+        } ?: RecommendationMode.ANDROID
     val startupCacheFile = remember(appPrivateDirectory, currentRecommendationMode) {
         Path(appPrivateDirectory, homeFeedStartupCacheFileName(currentRecommendationMode))
     }
@@ -248,29 +239,24 @@ fun HomeScreen(
             },
         )
     }
-    val updateState by rememberSystemUpdateRuntime().state.collectAsState()
-    val updateAnnouncement = updateState as? SystemUpdateState.UpdateAvailable
     val versionName = rememberAppVersionInfo().substringBefore(' ').takeIf { it.firstOrNull()?.isDigit() == true }
     val onlineNotificationRepository = remember(settings) {
         OnlineHomeNotificationRepository(settings)
     }
     var onlineNotifications by remember { mutableStateOf(emptyList<OnlineHomeNotification>()) }
     val isDebuggable = rememberHomeIsDebuggable()
-    val isLiteVariant = rememberIsLiteVariant()
+
     val viewModel: BaseFeedViewModel = when (currentRecommendationMode) {
         RecommendationMode.WEB -> viewModel { HomeFeedViewModel() }
         RecommendationMode.ANDROID -> viewModel { AndroidHomeFeedViewModel() }
-        RecommendationMode.LOCAL -> viewModel { LocalHomeFeedViewModel() }
-        RecommendationMode.MIXED -> viewModel { MixedHomeFeedViewModel() }
+        else -> viewModel { HomeFeedViewModel() }
     }
-    val localHomeViewModel = viewModel as? LocalHomeFeedViewModel
     val readingQueueSourceId = "home:${currentRecommendationMode.name}"
     RegisterReadingQueueSource(
         sourceId = readingQueueSourceId,
         items = viewModel.displayItems,
     )
 
-    var dismissedUpdateVersion by remember { mutableStateOf<String?>(null) }
     var authorPinAnnouncements by remember { mutableStateOf(emptyList<HomePinAnnouncement>()) }
 
     val listState = rememberLazyListState()
@@ -396,10 +382,6 @@ fun HomeScreen(
     }
 
     var feedAuthorBlockRequest by remember { mutableStateOf<FeedAuthorBlockRequest?>(null) }
-
-    // 按关键词屏蔽对话框
-    var showBlockByKeywordsDialog by remember { mutableStateOf(false) }
-    var feedToBlockByKeywords by remember { mutableStateOf<Pair<String, String?>?>(null) } // 二元组内容为标题和摘要。
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -598,26 +580,6 @@ fun HomeScreen(
                     footer = ProgressIndicatorFooter,
                     key = { item -> item.stableKey },
                     topContent = {
-                        item {
-                            val availableUpdate = updateAnnouncement
-
-                            AnnouncementCard(
-                                visible = availableUpdate != null && dismissedUpdateVersion != availableUpdate.version,
-                                title = "发现新版本：${availableUpdate?.version}${if (availableUpdate?.isNightly == true) " (Nightly)" else ""}",
-                                leadingIcon = { Icon(Icons.Default.ArrowCircleUp, contentDescription = null) },
-                                accept = { Text("查看更新") },
-                                onAccept = {
-                                    navigator.onNavigate(Account.SystemAndUpdateSettings())
-                                },
-                                dismiss = { Text("以后") },
-                                onDismiss = {
-                                    availableUpdate?.version?.let { versionStr ->
-                                        dismissedUpdateVersion = versionStr
-                                    }
-                                },
-                                colors = AnnouncementCardDefaults.colorsImportant(),
-                            )
-                        }
                         onlineNotifications.forEach { notification ->
                             val markRead = {
                                 onlineNotificationRepository.markRead(notification)
@@ -740,18 +702,6 @@ fun HomeScreen(
                             else -> null
                         },
                         menuItems = { dismissMenu ->
-                            if (!isLiteVariant) {
-                                DropdownMenuItem(
-                                    text = { Text("按关键词屏蔽") },
-                                    onClick = {
-                                        dismissMenu()
-                                        viewModel.handleBlockByKeywords(paginationEnvironment, userMessages, item) { (_, contentInfo) ->
-                                            feedToBlockByKeywords = contentInfo.first to contentInfo.second
-                                            showBlockByKeywordsDialog = true
-                                        }
-                                    },
-                                )
-                            }
                             DropdownMenuItem(
                                 text = { Text("屏蔽用户") },
                                 onClick = {
@@ -807,8 +757,6 @@ fun HomeScreen(
 //                            DataHolder.putFeed(feed)
                             (viewModel as? HomeFeedInteractionViewModel)
                                 ?.onUiContentClick(paginationEnvironment, feed, clickedItem)
-                        } else {
-                            localHomeViewModel?.onLocalItemOpened(clickedItem)
                         }
                         if (destination != null) {
                             navigator.onNavigate(destination)
@@ -967,22 +915,4 @@ fun HomeScreen(
             feedAuthorBlockRequest = null
         },
     )
-
-    // 按关键词屏蔽对话框
-    feedToBlockByKeywords?.let { (title, excerpt) ->
-        BlockByKeywordsDialog(
-            showDialog = showBlockByKeywordsDialog,
-            feedTitle = title,
-            feedExcerpt = excerpt,
-            onDismiss = {
-                showBlockByKeywordsDialog = false
-                feedToBlockByKeywords = null
-            },
-            onConfirm = {
-                viewModel.refresh(paginationEnvironment)
-                showBlockByKeywordsDialog = false
-                feedToBlockByKeywords = null
-            },
-        )
-    }
 }

@@ -29,8 +29,8 @@ import com.github.zly2006.zhihu.data.applyPlatformDriver
 import kotlinx.coroutines.Dispatchers
 
 @Database(
-    entities = [ContentViewRecord::class, BlockedKeyword::class, BlockedUser::class, BlockedQuestionAuthor::class, BlockedContentRecord::class, BlockedTopic::class, BlockedFeedRecord::class, ContentOpenEvent::class],
-    version = 7,
+    entities = [ContentViewRecord::class, BlockedKeyword::class, BlockedUser::class, BlockedQuestionAuthor::class, BlockedTopic::class, BlockedFeedRecord::class, ContentOpenEvent::class],
+    version = 8,
     exportSchema = false,
 )
 @ConstructedBy(ContentFilterDatabaseConstructor::class)
@@ -44,8 +44,6 @@ abstract class ContentFilterDatabase : RoomDatabase() {
     abstract fun blockedUserDao(): BlockedUserDao
 
     abstract fun blockedQuestionAuthorDao(): BlockedQuestionAuthorDao
-
-    abstract fun blockedContentRecordDao(): BlockedContentRecordDao
 
     abstract fun blockedTopicDao(): BlockedTopicDao
 
@@ -61,23 +59,6 @@ expect fun getContentFilterDatabase(): ContentFilterDatabase
 
 private val migration2To3 = object : Migration(2, 3) {
     override fun migrate(connection: SQLiteConnection) {
-        connection.execSQL(
-            """
-            CREATE TABLE IF NOT EXISTS `blocked_content_records` (
-                `id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL,
-                `contentId` TEXT NOT NULL,
-                `contentType` TEXT NOT NULL,
-                `title` TEXT NOT NULL,
-                `excerpt` TEXT,
-                `authorName` TEXT,
-                `authorId` TEXT,
-                `blockedTime` INTEGER NOT NULL,
-                `blockReason` TEXT NOT NULL,
-                `matchedKeywords` TEXT NOT NULL
-            )
-            """.trimIndent(),
-        )
-
         val defaultKeywordType = KeywordType.EXACT_MATCH.name
         connection.execSQL(
             """
@@ -169,10 +150,16 @@ private val migration6To7 = object : Migration(6, 7) {
     }
 }
 
+private val migration7To8 = object : Migration(7, 8) {
+    override fun migrate(connection: SQLiteConnection) {
+        connection.execSQL("""DROP TABLE IF EXISTS `blocked_content_records`""")
+    }
+}
+
 fun buildContentFilterDatabase(
     builder: Builder<ContentFilterDatabase>,
 ): ContentFilterDatabase = builder
-    .addMigrations(migration2To3, migration3To4, migration4To5, migration5To6, migration6To7)
+    .addMigrations(migration2To3, migration3To4, migration4To5, migration5To6, migration6To7, migration7To8)
     .fallbackToDestructiveMigration(true)
     .applyPlatformDriver()
     .setQueryCoroutineContext(Dispatchers.Default)

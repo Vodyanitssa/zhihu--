@@ -232,14 +232,10 @@ dependencies {
     implementation("androidx.compose.material:material-icons-extended")
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.mikepenz:aboutlibraries-compose-m3:$aboutLibraries")
-    "fullImplementation"(project(":sentence_embeddings"))
     debugImplementation("androidx.compose.ui:ui-tooling")
     debugImplementation("androidx.compose.ui:ui-test-manifest")
     androidTestImplementation(platform("androidx.compose:compose-bom:2026.06.00"))
     androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-
-    // HanLP for Chinese NLP
-    "fullImplementation"("com.hankcs:hanlp:portable-1.8.6")
 
     testImplementation("junit:junit:4.13.2")
     testImplementation("io.ktor:ktor-client-cio:$ktor")

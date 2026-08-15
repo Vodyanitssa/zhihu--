@@ -154,8 +154,8 @@ fun ContentFilterSettingsScreen(
                         val currentRecommendationMode = remember {
                             mutableStateOf(
                                 RecommendationMode.entries.find {
-                                    it.key == settings.getString("recommendationMode", RecommendationMode.MIXED.key)
-                                } ?: RecommendationMode.MIXED,
+                                    it.key == settings.getString("recommendationMode", RecommendationMode.ANDROID.key)
+                                } ?: RecommendationMode.ANDROID,
                             )
                         }
                         var expanded by remember { mutableStateOf(false) }
@@ -432,19 +432,6 @@ fun ContentFilterSettingsScreen(
                         settings.putBoolean("blockPaidContent", it)
                     },
                     settingKey = "blockPaidContent",
-                    highlightedKey = highlightedSetting,
-                )
-
-                val reverseBlock = remember { mutableStateOf(settings.getBoolean("reverseBlock", false)) }
-                SettingItemWithSwitch(
-                    title = { Text("反向屏蔽（吃\uD83D\uDCA9模式）") },
-                    description = { Text("开启后，首页将只保留广告和付费内容，屏蔽其余所有内容") },
-                    checked = reverseBlock.value,
-                    onCheckedChange = {
-                        reverseBlock.value = it
-                        settings.putBoolean("reverseBlock", it)
-                    },
-                    settingKey = "reverseBlock",
                     highlightedKey = highlightedSetting,
                 )
             }

@@ -67,7 +67,6 @@ import com.github.zly2006.zhihu.ui.components.WebviewComp
 import com.github.zly2006.zhihu.ui.components.setupUpWebviewClient
 import com.github.zly2006.zhihu.util.enableEdgeToEdgeCompat
 import com.github.zly2006.zhihu.util.luoTianYiUrlLauncher
-import com.github.zly2006.zhihu.util.telemetry
 import kotlinx.coroutines.launch
 
 private const val LOGIN_MODE_WEB = 0
@@ -248,7 +247,6 @@ class LoginActivity : ComponentActivity() {
                         }
                     }.create()
                     .show()
-                telemetry(this, "login")
                 true
             } else {
                 AlertDialog

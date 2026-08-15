@@ -35,13 +35,10 @@ import androidx.compose.ui.platform.ComposeView
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
-import com.github.zly2006.zhihu.nlp.KeywordAnalyzerCore
-import com.github.zly2006.zhihu.nlp.KeywordWithWeight
 import com.github.zly2006.zhihu.platform.androidUserMessageSink
 import com.github.zly2006.zhihu.ui.articleHost
 import com.github.zly2006.zhihu.util.clipboardManager
 import com.github.zly2006.zhihu.util.luoTianYiUrlLauncher
-import com.github.zly2006.zhihu.viewmodel.filter.androidKeywordWeightExtractor
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -106,17 +103,6 @@ class OpenImageDialog(
         window?.setBackgroundDrawable(BLACK.toDrawable())
     }
 }
-
-actual suspend fun extractFeedKeywords(
-    title: String,
-    excerpt: String?,
-): List<KeywordWithWeight> = KeywordAnalyzerCore.extractFromFeedWithWeight(
-    title = title,
-    excerpt = excerpt,
-    content = null,
-    topN = 10,
-    extractor = androidKeywordWeightExtractor,
-)
 
 @Composable
 actual fun rememberShareActionExecutor(): ShareActionExecutor {

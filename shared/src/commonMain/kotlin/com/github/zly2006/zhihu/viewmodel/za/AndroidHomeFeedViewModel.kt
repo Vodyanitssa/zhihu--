@@ -86,18 +86,8 @@ class AndroidHomeFeedViewModel :
 
                 // 前台先做本地已读过滤，再立即展示
                 val filterResult = environment.applyHomeFeedFilters(itemsToDisplay)
-                if (!filterResult.reverseBlock) {
-                    withContext(Dispatchers.Main) {
-                        addDisplayItems(filterResult.foregroundItems)
-                    }
-                }
-
-                if (filterResult.reverseBlock) {
-                    addDisplayItems(filterResult.filteredItems)
-                }
-
-                // 移除被过滤的条目，并更新已保留条目的 raw 内容
                 withContext(Dispatchers.Main) {
+                    addDisplayItems(filterResult.foregroundItems)
                     displayItems.replaceHomeFeedItemsWithFilteredResult(filterResult)
                     latestLoadedDisplayItems.value = filterResult.filteredItems
                 }

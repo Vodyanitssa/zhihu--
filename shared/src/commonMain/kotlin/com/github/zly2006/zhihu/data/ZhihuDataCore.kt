@@ -55,31 +55,21 @@ fun List<Feed>.flattenFeeds(): List<Feed> = flatMap {
 
 fun Feed.toDisplayItem(
     enableQualityFilter: Boolean = true,
-    reverseBlock: Boolean = false,
 ): FeedDisplayItem = when (this) {
     is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is HotListFeed, is TopicFeed -> toTargetDisplayItem(
         enableQualityFilter = enableQualityFilter,
-        reverseBlock = reverseBlock,
     )
 
     is AdvertisementFeed -> FeedDisplayItem(
-        title = if (reverseBlock) {
-            ad.creatives
-                .firstOrNull()
-                ?.title ?: ""
-        } else {
-            ""
-        },
-        summary = if (reverseBlock) {
-            ad.creatives
-                .firstOrNull()
-                ?.description ?: actionText
-        } else {
-            actionText
-        },
+        title = ad.creatives
+            .firstOrNull()
+            ?.title ?: "",
+        summary = ad.creatives
+            .firstOrNull()
+            ?.description ?: actionText,
         details = actionText + "广告",
         feed = this,
-        isFiltered = !reverseBlock,
+        isFiltered = false,
         content = ad.creatives
             .firstOrNull()
             ?.landingUrl,
@@ -99,10 +89,9 @@ fun Feed.toDisplayItem(
 
 private fun Feed.toTargetDisplayItem(
     enableQualityFilter: Boolean,
-    reverseBlock: Boolean,
 ): FeedDisplayItem {
     val target = target
-    val filterReason = if (!enableQualityFilter || reverseBlock) null else target?.filterReason()
+    val filterReason = if (!enableQualityFilter) null else target?.filterReason()
 
     if (filterReason != null) {
         return FeedDisplayItem(

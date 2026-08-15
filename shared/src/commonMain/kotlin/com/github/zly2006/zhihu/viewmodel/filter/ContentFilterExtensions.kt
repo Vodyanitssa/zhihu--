@@ -18,7 +18,6 @@
 package com.github.zly2006.zhihu.viewmodel.filter
 
 import com.fleeksoft.ksoup.Ksoup
-import com.github.zly2006.zhihu.data.AdvertisementFeed
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.navDestination
@@ -37,7 +36,7 @@ class ForegroundReadFilterPipeline(
     private val blockedFeedRecordDao: BlockedFeedRecordDao,
 ) {
     suspend fun filter(items: List<FeedDisplayItem>): List<FeedDisplayItem> {
-        if (settings.reverseBlock || !settings.enableContentFilter) {
+        if (!settings.enableContentFilter) {
             return items
         }
 
@@ -91,9 +90,7 @@ class FeedContentFilterPipeline(
     private val blockedUserDao: BlockedUserDao,
     private val blockedQuestionAuthorDao: BlockedQuestionAuthorDao,
     private val blockedTopicDao: BlockedTopicDao,
-    private val blockedKeywordService: BlockedKeywordService,
     private val htmlToText: (String) -> String = { html -> Ksoup.parse(html).text() },
-    private val onNlpBlocked: suspend (List<FilterableContent>) -> Unit = {},
 ) {
     suspend fun filter(contents: List<FilterableContent>): FeedContentFilterResult {
         val blocked = mutableListOf<Pair<FilterableContent, String>>()
@@ -126,43 +123,6 @@ class FeedContentFilterPipeline(
             }
             removed.forEach { blocked.add(it to "关键词屏蔽") }
             filteredContents = kept
-        }
-
-        if (settings.enableNlpBlocking) {
-            val blockedThisRound = mutableListOf<FilterableContent>()
-            val finalFilteredContents = mutableListOf<FilterableContent>()
-
-            for (content in filteredContents) {
-                val (shouldBlock, matchedKeywords) = blockedKeywordService.checkNLPBlockingWithWeight(
-                    title = content.title,
-                    excerpt = content.summary,
-                    content = content.content?.let(htmlToText),
-                    threshold = settings.nlpSimilarityThreshold,
-                )
-
-                if (!shouldBlock) {
-                    finalFilteredContents.add(content)
-                } else {
-                    blockedKeywordService.recordBlockedContent(
-                        contentId = content.contentId,
-                        contentType = content.contentType,
-                        title = content.title,
-                        excerpt = content.summary ?: "",
-                        authorName = content.authorName,
-                        authorId = content.authorId,
-                        matchedKeywords = matchedKeywords,
-                    )
-                    val keywordNames = matchedKeywords.joinToString("、") { it.keyword }
-                    blocked.add(content to "NLP语义屏蔽：$keywordNames")
-                    blockedThisRound.add(content)
-                }
-            }
-
-            if (blockedThisRound.isNotEmpty()) {
-                onNlpBlocked(blockedThisRound)
-            }
-
-            filteredContents = finalFilteredContents
         }
 
         if (settings.enableTopicBlocking) {
@@ -249,16 +209,6 @@ class FeedDisplayFilterPipeline(
         }
 
         val filterableContents = itemToFilterableMap.values.toList()
-
-        if (settings.reverseBlock) {
-            val adIds = filterableContents
-                .filter { content -> getFeedAdBlockReason(content, FeedAdBlockSettings()) != null }
-                .map { it.contentId }
-                .toSet()
-            return items.filter { item ->
-                item.resolveContentIdentity().id in adIds
-            } + items.filter { it.feed is AdvertisementFeed }
-        }
 
         val adBlockedContents = mutableListOf<Pair<FilterableContent, String>>()
         val nonAdContents = filterableContents.filter { content ->
@@ -481,11 +431,8 @@ private fun getLinkBasedAdReason(
 
 data class FeedFilterSettings(
     val enableContentFilter: Boolean = true,
-    val reverseBlock: Boolean = false,
     val filterFollowedUserContent: Boolean = false,
     val enableKeywordBlocking: Boolean = true,
-    val enableNlpBlocking: Boolean = true,
-    val nlpSimilarityThreshold: Double = 0.8,
     val enableUserBlocking: Boolean = true,
     val enableTopicBlocking: Boolean = true,
     val topicBlockingThreshold: Int = 1,
@@ -494,11 +441,8 @@ data class FeedFilterSettings(
 
 fun SettingsStore.toFeedFilterSettings(): FeedFilterSettings = FeedFilterSettings(
     enableContentFilter = getBoolean("enableContentFilter", true),
-    reverseBlock = getBoolean("reverseBlock", false),
     filterFollowedUserContent = getBoolean("filterFollowedUserContent", false),
     enableKeywordBlocking = getBoolean("enableKeywordBlocking", true),
-    enableNlpBlocking = getBoolean("enableNLPBlocking", true),
-    nlpSimilarityThreshold = getFloat("nlpSimilarityThreshold", 0.8f).toDouble(),
     enableUserBlocking = getBoolean("enableUserBlocking", true),
     enableTopicBlocking = getBoolean("enableTopicBlocking", true),
     topicBlockingThreshold = getInt("topicBlockingThreshold", 1),

@@ -41,21 +41,6 @@ kotlin {
             jvmTarget = JvmTarget.JVM_17
         }
     }
-    jvm {
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-        }
-    }
-
-    listOf(
-        iosArm64(),
-        iosSimulatorArm64(),
-    ).forEach { iosTarget ->
-        iosTarget.binaries.framework {
-            baseName = "SharedLocalDb"
-            isStatic = true
-        }
-    }
 
     sourceSets {
         commonMain.dependencies {
@@ -66,13 +51,9 @@ kotlin {
         commonTest.dependencies {
             implementation(kotlin("test"))
         }
-        jvmMain.dependencies {
-            implementation("androidx.sqlite:sqlite-bundled:2.6.2")
-        }
     }
 }
 
 dependencies {
     add("kspAndroid", "androidx.room:room-compiler:2.8.4")
-    add("kspJvm", "androidx.room:room-compiler:2.8.4")
 }

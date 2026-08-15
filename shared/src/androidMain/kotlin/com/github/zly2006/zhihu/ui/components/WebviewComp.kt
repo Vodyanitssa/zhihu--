@@ -71,7 +71,6 @@ import com.github.zly2006.zhihu.platform.androidSettingsStore
 import com.github.zly2006.zhihu.theme.ThemeManager
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FONT_SIZE
 import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
-import com.github.zly2006.zhihu.util.blacklist
 import com.github.zly2006.zhihu.util.extractImageUrl
 import com.github.zly2006.zhihu.util.luoTianYiUrlLauncher
 import com.github.zly2006.zhihu.util.saveImageToGallery
@@ -403,10 +402,6 @@ class CustomWebView : WebView {
                 for (i in size - 1 downTo 0) {
                     val item = it.getItem(i)
                     val packageName = item.intent?.component?.packageName ?: return@let
-                    // 过滤黑名单
-                    if (blacklist.any { it in packageName }) {
-                        item.isVisible = false
-                    }
                 }
             }
             return result

@@ -53,7 +53,6 @@ import com.github.zly2006.zhihu.util.EmojiManager
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.util.OpenInBrowser
 import com.github.zly2006.zhihu.util.createEmojiInlineContent
-import com.github.zly2006.zhihu.util.fuckHonorService
 import com.github.zly2006.zhihu.viewmodel.SharedAndroidNotificationEnvironment
 import com.github.zly2006.zhihu.viewmodel.filter.encodeBlocklistBackup
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
@@ -223,7 +222,7 @@ actual fun ArticleWebViewContent(
     }
 }
 
-actual fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = fuckHonorService()
+actual fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = this
 
 @Composable
 actual fun rememberHomeIsDebuggable(): Boolean {
@@ -348,7 +347,7 @@ actual fun commentEmojiInlineKey(placeholder: String): String? {
     return "emoji_$emojiFileName"
 }
 
-actual fun Modifier.commentSelectionWorkaround(): Modifier = fuckHonorService()
+actual fun Modifier.commentSelectionWorkaround(): Modifier = this
 
 @Composable
 actual fun rememberNotificationEnvironment(
@@ -378,7 +377,7 @@ actual fun QuestionDetailWebViewContent(
 
 actual fun supportsQuestionDetailWebView(): Boolean = true
 
-actual fun Modifier.questionSelectionWorkaround(): Modifier = fuckHonorService()
+actual fun Modifier.questionSelectionWorkaround(): Modifier = this
 
 @Composable
 actual fun ArticleImmersiveModeEffect(immersive: Boolean) {

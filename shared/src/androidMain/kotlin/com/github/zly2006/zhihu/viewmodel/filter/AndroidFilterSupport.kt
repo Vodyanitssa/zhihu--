@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu++ - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -18,11 +18,7 @@
 package com.github.zly2006.zhihu.viewmodel.filter
 
 import android.content.Context
-import com.github.zly2006.zhihu.nlp.KeywordWeightExtractor
 import com.github.zly2006.zhihu.platform.androidSettingsStore
-
-var androidKeywordSemanticMatcher: KeywordSemanticMatcher = KeywordSemanticMatcher { _, _, _ -> emptyList() }
-var androidKeywordWeightExtractor: KeywordWeightExtractor = KeywordWeightExtractor { _, _ -> emptyList() }
 
 fun Context.contentFilterSettings(): FeedFilterSettings =
     androidSettingsStore(this).toFeedFilterSettings()

@@ -19,6 +19,7 @@ package com.github.zly2006.zhihu.markdown
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.ui.text.font.FontFamily
 import coil3.compose.LocalPlatformContext
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
@@ -27,6 +28,13 @@ import com.hrm.latex.renderer.font.MathFont
 
 @Composable
 expect fun rememberMarkdownMathFont(): MathFont?
+
+/**
+ * 获取用于代码块的等宽字体（优先使用下载的 KaTeX Typewriter 字体，回退到系统字体）。
+ * 该字体包含完整的框线字符（┌┐└┘├┤┬┴┼│─等），适合渲染字符画/流程图。
+ */
+@Composable
+expect fun rememberMarkdownCodeFontFamily(): FontFamily
 
 @Composable
 fun rememberMarkdownImageModel(url: String): Any {

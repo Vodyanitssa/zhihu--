@@ -36,10 +36,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import com.github.zly2006.zhihu.data.AIGC_MARKING_ENABLED_PREFERENCE_KEY
 import com.github.zly2006.zhihu.data.AccountData
-import com.github.zly2006.zhihu.data.AigcVoteClient
-import com.github.zly2006.zhihu.data.AigcVoteVoter
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
@@ -62,7 +59,6 @@ import com.github.zly2006.zhihu.util.buildOfflineArticleExportHtml
 import com.github.zly2006.zhihu.util.clipboardManager
 import com.github.zly2006.zhihu.util.exportCollectionItemsToZip
 import com.github.zly2006.zhihu.util.saveBitmapToGallery
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedKeywordService
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedQuestionAuthor
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedUser
 import com.github.zly2006.zhihu.viewmodel.filter.ContentFilterManager
@@ -70,10 +66,8 @@ import com.github.zly2006.zhihu.viewmodel.filter.ContentType
 import com.github.zly2006.zhihu.viewmodel.filter.FeedContentFilterPipeline
 import com.github.zly2006.zhihu.viewmodel.filter.FeedDisplayFilterPipeline
 import com.github.zly2006.zhihu.viewmodel.filter.ForegroundReadFilterPipeline
-import com.github.zly2006.zhihu.viewmodel.filter.androidKeywordSemanticMatcher
 import com.github.zly2006.zhihu.viewmodel.filter.contentFilterSettings
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
-import com.github.zly2006.zhihu.viewmodel.local.LocalRecommendationEngine
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
@@ -93,7 +87,6 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import java.io.File
-import java.util.UUID
 import com.github.zly2006.zhihu.navigation.Article as ArticleDestination
 import com.github.zly2006.zhihu.util.buildArticleExportHtml as buildAndroidArticleExportHtml
 import io.ktor.http.ContentType as KtorContentType
@@ -108,32 +101,13 @@ private val ZHIHU_PP_ANDROID_HEADERS = createClientPlugin("ZhihuPPAndroidHeaders
     }
 }
 
-private const val AIGC_VOTE_CLIENT_ID_KEY = "aigcVoteClientId"
-private const val AIGC_VOTE_SERVER_URL_KEY = "aigcVoteServerUrl"
-private const val DEFAULT_ANDROID_AIGC_VOTE_SERVER_URL = "https://aigc-vote.ai.fintechedu.cn"
-
 open class SharedAndroidPaginationEnvironment(
     override val context: Context,
     private val allowGuestAccess: Boolean,
 ) : AndroidContextPaginationEnvironment,
     CollectionContentEnvironment {
-    private val localRecommendationEngine by lazy { LocalRecommendationEngine(context) }
     private val settingsStore by lazy { androidSettingsStore(context) }
     private val userMessageSink by lazy { androidUserMessageSink(context) }
-    private val aigcVoteHttpClient by lazy {
-        HttpClient {
-            install(ContentNegotiation) {
-                json(json)
-            }
-        }
-    }
-    private val aigcVoteClient by lazy {
-        AigcVoteClient(
-            httpClient = aigcVoteHttpClient,
-            baseUrl = aigcVoteServerUrl(),
-            clientId = aigcVoteClientId(),
-        )
-    }
 
     override suspend fun refreshAccountProfile() {
         AccountData.refreshProfile(context)
@@ -217,23 +191,6 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
-    override fun aigcVoteClient(): AigcVoteClient? =
-        if (settingsStore.getBoolean(AIGC_MARKING_ENABLED_PREFERENCE_KEY, false)) {
-            aigcVoteClient
-        } else {
-            null
-        }
-
-    override fun aigcVoteVoter(): AigcVoteVoter? =
-        AccountData.data.self?.let { self ->
-            AigcVoteVoter(
-                id = self.id,
-                name = self.name,
-                urlToken = self.urlToken,
-                avatarUrl = self.avatarUrl,
-            )
-        }
-
     override fun authenticatedCookies(): Map<String, String> {
         val loginForRecommendation = settingsStore.getBoolean("loginForRecommendation", true)
         return if (allowGuestAccess && !loginForRecommendation) {
@@ -241,20 +198,6 @@ open class SharedAndroidPaginationEnvironment(
         } else {
             AccountData.data.cookies
         }
-    }
-
-    private fun aigcVoteServerUrl(): String =
-        settingsStore
-            .getString(AIGC_VOTE_SERVER_URL_KEY, DEFAULT_ANDROID_AIGC_VOTE_SERVER_URL)
-            .ifBlank { DEFAULT_ANDROID_AIGC_VOTE_SERVER_URL }
-
-    private fun aigcVoteClientId(): String {
-        settingsStore.getStringOrNull(AIGC_VOTE_CLIENT_ID_KEY)?.takeIf { it.isNotBlank() }?.let {
-            return it
-        }
-        val id = UUID.randomUUID().toString()
-        settingsStore.putString(AIGC_VOTE_CLIENT_ID_KEY, id)
-        return id
     }
 
     override suspend fun handleFetchFailure(
@@ -283,7 +226,6 @@ open class SharedAndroidPaginationEnvironment(
 
     override fun feedDisplaySettings(): FeedDisplaySettings = FeedDisplaySettings(
         enableQualityFilter = settingsStore.getBoolean("enableQualityFilter", true),
-        reverseBlock = settingsStore.getBoolean("reverseBlock", false),
     )
 
     override fun localHistory(): List<NavDestination> = HistoryStorage(context).history
@@ -397,18 +339,6 @@ open class SharedAndroidPaginationEnvironment(
                 blockedUserDao = filterDatabase.blockedUserDao(),
                 blockedQuestionAuthorDao = filterDatabase.blockedQuestionAuthorDao(),
                 blockedTopicDao = filterDatabase.blockedTopicDao(),
-                blockedKeywordService = BlockedKeywordService(
-                    keywordDao = filterDatabase.blockedKeywordDao(),
-                    recordDao = filterDatabase.blockedContentRecordDao(),
-                    semanticMatcher = androidKeywordSemanticMatcher,
-                ),
-                onNlpBlocked = { blockedThisRound ->
-                    if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.P) {
-                        context.mainExecutor.execute {
-                            userMessageSink.showShortMessage("NLP 已屏蔽 ${blockedThisRound.first().title.take(10)}... 等 ${blockedThisRound.size} 条内容")
-                        }
-                    }
-                },
             ),
             blockedFeedRecordDao = filterDatabase.blockedFeedRecordDao(),
             onDetailFetchFailed = { item ->
@@ -421,7 +351,6 @@ open class SharedAndroidPaginationEnvironment(
         return HomeFeedFilterResult(
             foregroundItems = foregroundItems,
             filteredItems = filteredItems,
-            reverseBlock = settings.reverseBlock,
         )
     }
 
@@ -450,23 +379,6 @@ open class SharedAndroidPaginationEnvironment(
                     put("clear", true)
                 }.toString(),
             )
-        }
-    }
-
-    override fun localRecommendationEngine(): LocalRecommendationEngine = localRecommendationEngine
-
-    override suspend fun handleLocalRecommendationFailure(error: Exception) {
-        Log.e("LocalHomeFeedViewModel", "Error fetching local feeds", error)
-    }
-
-    override suspend fun showLocalRecommendationDatabaseError() {
-        withContext(Dispatchers.Main) {
-            AlertDialog
-                .Builder(context)
-                .setTitle("数据库错误")
-                .setMessage("本地推荐系统的数据库未正确初始化。请尝试重启应用或清除应用数据。")
-                .setPositiveButton("确定") { dialog, _ -> dialog.dismiss() }
-                .show()
         }
     }
 

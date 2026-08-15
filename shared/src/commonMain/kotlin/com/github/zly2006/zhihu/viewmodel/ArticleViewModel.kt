@@ -18,7 +18,6 @@
 package com.github.zly2006.zhihu.viewmodel
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableLongStateOf
 import androidx.compose.runtime.mutableStateListOf
@@ -26,10 +25,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.github.zly2006.zhihu.data.AigcVoteFlagSubmission
-import com.github.zly2006.zhihu.data.AigcVoteNamedVoter
-import com.github.zly2006.zhihu.data.AigcVoteReadEvent
-import com.github.zly2006.zhihu.data.AigcVoteReadEvidence
 import com.github.zly2006.zhihu.data.Collection
 import com.github.zly2006.zhihu.data.CollectionResponse
 import com.github.zly2006.zhihu.data.DataHolder
@@ -48,36 +43,22 @@ import com.github.zly2006.zhihu.navigation.QuestionAnswerNavigator
 import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.util.ArticleExportComment
 import com.github.zly2006.zhihu.util.Log
-import com.github.zly2006.zhihu.util.ZhidaSummarySsePayload
-import com.github.zly2006.zhihu.util.ZhihuFetchSignature
 import com.github.zly2006.zhihu.util.applySegmentInfosToHtml
 import com.github.zly2006.zhihu.util.buildArticleExportCommentsHtml
 import com.github.zly2006.zhihu.util.buildArticleExportFileName
-import com.github.zly2006.zhihu.util.buildZhidaSummaryRequest
-import com.github.zly2006.zhihu.util.decodeZhidaAnswerData
-import com.github.zly2006.zhihu.util.decodeZhidaStreamErrorMessage
-import com.github.zly2006.zhihu.util.mergeSummaryChunk
-import com.github.zly2006.zhihu.util.parseZhidaSsePayload
 import com.github.zly2006.zhihu.util.prepareArticleExportComment
-import com.github.zly2006.zhihu.util.serializeZhidaSummaryRequest
 import com.github.zly2006.zhihu.util.twoDigitString
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.accept
 import io.ktor.client.request.get
-import io.ktor.client.request.header
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsChannel
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
-import io.ktor.utils.io.readLine
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.datetime.number
@@ -86,12 +67,9 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
-import kotlin.time.Clock
 
 class ArticleViewModel(
     private val article: Article,
@@ -137,50 +115,6 @@ class ArticleViewModel(
         set(value) {
             endorsements = value.map { text -> DataHolder.AnswerEndorsementDisplay(text = text) }
         }
-    var aiSummaryText by mutableStateOf("")
-        private set
-    var aiSummaryError by mutableStateOf<String?>(null)
-        private set
-    var aiSummaryLoading by mutableStateOf(false)
-        private set
-    var aigcVoteAvailable by mutableStateOf(false)
-        private set
-    var aigcVoteLoading by mutableStateOf(false)
-        private set
-    var aigcVoteError by mutableStateOf<String?>(null)
-        private set
-    var aigcVoteCredit by mutableIntStateOf(0)
-        private set
-    var aigcVoteProgress by mutableIntStateOf(0)
-        private set
-    var aigcVoteCap by mutableIntStateOf(5)
-        private set
-    var aigcCreditBypassAvailable by mutableStateOf(false)
-        private set
-    var aigcVoterName by mutableStateOf("")
-        private set
-    var aigcNamedVoters by mutableStateOf<List<AigcVoteNamedVoter>>(emptyList())
-        private set
-
-    /** 自家后端支持人数：在 Zhihu++ 服务中把该内容标记为 AIGC 的有效用户数。 */
-    var aigcEffectiveFlagCount by mutableIntStateOf(0)
-        private set
-    var aigcCurrentVersionFlagCount by mutableIntStateOf(0)
-        private set
-
-    /** 外部来源支持人数：仅来自 zhihuai.sx349.xyz 的支持票投票人数。 */
-    var zhihuaiAigcSupportVoterCount by mutableIntStateOf(0)
-        private set
-
-    /** 展示用 AIGC 支持总人数：自家后端支持人数 + zhihuai 外部支持人数。 */
-    val aigcSupportVoterCount: Int
-        get() = aigcEffectiveFlagCount + zhihuaiAigcSupportVoterCount
-    var aigcFlagged by mutableStateOf(false)
-        private set
-    private var aigcMaxScrollRatio by mutableFloatStateOf(0f)
-    private var aigcReadSyncStarted = false
-    private val openedAtEpochSeconds = Clock.System.now().epochSeconds
-    private var aiSummaryJob: Job? = null
     private var exportSourceContent: DataHolder.Content? = null
 
     // scroll fix
@@ -412,126 +346,6 @@ class ArticleViewModel(
         }
     }
 
-    fun requestAiSummary(environment: ZhihuApiEnvironment) {
-        if (httpClient == null) {
-            aiSummaryError = "未初始化网络客户端"
-            return
-        }
-        aiSummaryJob?.cancel()
-        aiSummaryJob = viewModelScope.launch {
-            aiSummaryLoading = true
-            aiSummaryError = null
-            aiSummaryText = ""
-            try {
-                val contentType = when (article.type) {
-                    ArticleType.Answer -> "answer"
-                    ArticleType.Article -> "article"
-                }
-                val request = buildZhidaSummaryRequest(
-                    contentId = article.id,
-                    contentType = contentType,
-                    title = title.ifBlank { "知乎内容" },
-                )
-                val response = environment.postSigned("https://www.zhihu.com/ai_ingress/stream/completion") {
-                    accept(ContentType.Text.EventStream)
-                    contentType(ContentType.Application.Json)
-                    header("x-xsrftoken", environment.xsrfToken())
-                    setBody(serializeZhidaSummaryRequest(request))
-                }
-                if (!response.status.isSuccess()) {
-                    val errorBody = response.bodyAsText()
-                    val status = response.status.value
-                    val message = parseSummaryErrorMessage(errorBody)
-                    throw IllegalStateException(message ?: "总结请求失败（HTTP $status）")
-                }
-
-                val channel = response.bodyAsChannel()
-                var seenAnswerEvent = false
-                var streamEnded = false
-                var frameEvent: String? = null
-                val frameDataLines = mutableListOf<String>()
-
-                fun handlePayload(payload: ZhidaSummarySsePayload) {
-                    when (payload.event.lowercase()) {
-                        "answer" -> {
-                            val answer = decodeZhidaAnswerData(payload.data) ?: return
-                            if (answer.summary.isBlank()) return
-                            seenAnswerEvent = true
-                            aiSummaryText = if (answer.delta) {
-                                mergeSummaryChunk(aiSummaryText, answer.summary)
-                            } else {
-                                answer.summary
-                            }
-                        }
-                        "error" -> {
-                            val message = decodeZhidaStreamErrorMessage(payload.data) ?: "总结失败"
-                            throw IllegalStateException(message)
-                        }
-                        "end" -> streamEnded = true
-                        else -> Unit
-                    }
-                }
-
-                fun flushFrame() {
-                    if (frameDataLines.isEmpty()) return
-                    val joinedData = frameDataLines.joinToString("\n")
-                    frameDataLines.clear()
-                    val payload = parseZhidaSsePayload(joinedData, frameEvent) ?: return
-                    handlePayload(payload)
-                }
-
-                while (!streamEnded) {
-                    val line = channel.readLine() ?: break
-                    when {
-                        line.startsWith("event:") -> {
-                            frameEvent = line.substringAfter("event:").trim()
-                        }
-                        line.startsWith("data:") -> {
-                            frameDataLines += line.substringAfter("data:")
-                        }
-                        line.isBlank() -> {
-                            flushFrame()
-                            frameEvent = null
-                        }
-                        line.startsWith(":") -> Unit
-                        else -> Unit
-                    }
-                }
-
-                if (!streamEnded) {
-                    flushFrame()
-                }
-
-                if (!seenAnswerEvent || aiSummaryText.isBlank()) {
-                    aiSummaryError = "未返回可显示的总结内容"
-                }
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e("ArticleViewModel", "Failed to summarize article", e)
-                aiSummaryError = e.message ?: "总结失败"
-            } finally {
-                aiSummaryLoading = false
-            }
-        }
-    }
-
-    fun cancelAiSummary() {
-        aiSummaryJob?.cancel()
-        aiSummaryJob = null
-        aiSummaryLoading = false
-    }
-
-    private fun parseSummaryErrorMessage(responseBody: String): String? = runCatching {
-        val json = ZhihuJson.json.parseToJsonElement(responseBody).jsonObject
-        json["error"]
-            ?.jsonObject
-            ?.get("message")
-            ?.jsonPrimitive
-            ?.contentOrNull
-            ?: json["message"]?.jsonPrimitive?.contentOrNull
-    }.getOrNull()
-
     private val collectionOrder = mutableListOf<String>()
 
     fun loadCollections(environment: ZhihuApiEnvironment) {
@@ -621,179 +435,6 @@ class ArticleViewModel(
                 userMessages.showShortMessage("点赞失败: ${e.message}")
             }
         }
-    }
-
-    fun updateAigcReadProgress(
-        currentScroll: Int,
-        maxScroll: Int,
-    ) {
-        val ratio = when {
-            content.isBlank() -> 0f
-            maxScroll <= 0 -> 1f
-            else -> (currentScroll.toFloat() / maxScroll.toFloat()).coerceIn(0f, 1f)
-        }
-        if (ratio > aigcMaxScrollRatio) {
-            aigcMaxScrollRatio = ratio
-        }
-    }
-
-    fun isAigcFlagEvidenceReady(): Boolean = currentAigcReadEvidence().isEligibleForCredit()
-
-    fun loadAigcFlagStatus(environment: AigcVoteEnvironment) {
-        val client = environment.aigcVoteClient()
-        aigcVoteAvailable = client != null
-        val voter = environment.aigcVoteVoter()
-        aigcVoterName = voter?.name.orEmpty()
-        if (client == null) return
-
-        viewModelScope.launch {
-            aigcVoteLoading = true
-            aigcVoteError = null
-            try {
-                val response = client.getFlagStatus(
-                    contentType = aigcContentType(),
-                    contentId = article.id.toString(),
-                    voter = voter,
-                )
-                aigcFlagged = response.myFlagged
-                aigcVoteCredit = response.credit
-                aigcVoteProgress = response.progress
-                aigcVoteCap = response.cap
-                aigcCreditBypassAvailable = response.creditBypassAvailable
-                aigcEffectiveFlagCount = response.effectiveFlagCount
-                aigcNamedVoters = response.voters
-                zhihuaiAigcSupportVoterCount = response.externalSource?.voterCount ?: 0
-            } catch (e: Exception) {
-                Log.e("ArticleViewModel", "Failed to load AIGC vote status", e)
-                aigcVoteError = e.message ?: "AIGC 投票状态加载失败"
-            } finally {
-                aigcVoteLoading = false
-            }
-        }
-    }
-
-    fun syncAigcReadEventIfEligible(environment: AigcVoteEnvironment) {
-        val client = environment.aigcVoteClient()
-        aigcVoteAvailable = client != null
-        if (client == null || aigcReadSyncStarted || content.isBlank()) return
-
-        val evidence = currentAigcReadEvidence()
-        val contentUpdatedAt = currentContentUpdatedAt()
-        if (!evidence.isEligibleForCredit() || contentUpdatedAt <= 0) return
-        aigcReadSyncStarted = true
-
-        viewModelScope.launch {
-            try {
-                val response = client.syncReadEvent(
-                    AigcVoteReadEvent(
-                        contentType = aigcContentType(),
-                        contentId = article.id.toString(),
-                        title = title,
-                        authorHash = currentAuthorHash(),
-                        contentHtml = content,
-                        contentUpdatedAt = contentUpdatedAt,
-                        evidence = evidence,
-                    ),
-                )
-                aigcVoteCredit = response.credit
-                aigcVoteProgress = response.progress
-                aigcVoteCap = response.cap
-                aigcVoteError = null
-            } catch (e: Exception) {
-                Log.e("ArticleViewModel", "Failed to sync AIGC read event", e)
-                aigcVoteError = e.message ?: "AIGC 阅读积分同步失败"
-                aigcReadSyncStarted = false
-            }
-        }
-    }
-
-    fun submitAigcFlag(environment: AigcVoteEnvironment) {
-        val client = environment.aigcVoteClient()
-        aigcVoteAvailable = client != null
-        if (client == null) {
-            aigcVoteError = "未配置 AIGC 投票服务"
-            userMessages.showShortMessage(aigcVoteError!!)
-            return
-        }
-        if (content.isBlank()) {
-            aigcVoteError = "正文尚未加载完成"
-            userMessages.showShortMessage(aigcVoteError!!)
-            return
-        }
-        val voter = environment.aigcVoteVoter()
-        aigcVoterName = voter?.name.orEmpty()
-        if (voter == null) {
-            aigcVoteError = "需要登录后才能记名投票"
-            userMessages.showShortMessage(aigcVoteError!!)
-            return
-        }
-        if (aigcVoteCredit <= 0 && !aigcFlagged && !aigcCreditBypassAvailable) {
-            aigcVoteError = "投票积分不足"
-            userMessages.showShortMessage(aigcVoteError!!)
-            return
-        }
-        if (!aigcCreditBypassAvailable && !isAigcFlagEvidenceReady()) {
-            aigcVoteError = "需要继续阅读后才能标记"
-            userMessages.showShortMessage(aigcVoteError!!)
-            return
-        }
-
-        viewModelScope.launch {
-            aigcVoteLoading = true
-            aigcVoteError = null
-            try {
-                val response = client.submitFlag(
-                    AigcVoteFlagSubmission(
-                        contentType = aigcContentType(),
-                        contentId = article.id.toString(),
-                        voter = voter,
-                        title = title,
-                        authorHash = currentAuthorHash(),
-                        contentHtml = content,
-                        contentUpdatedAt = currentContentUpdatedAt(),
-                        evidence = currentAigcReadEvidence(),
-                    ),
-                )
-                aigcFlagged = response.myFlagged
-                aigcVoteCredit = response.credit
-                aigcCreditBypassAvailable = response.creditBypassAvailable
-                aigcEffectiveFlagCount = response.effectiveFlagCount
-                aigcCurrentVersionFlagCount = response.currentVersionFlagCount
-                aigcNamedVoters = response.voters
-                zhihuaiAigcSupportVoterCount = response.externalSource?.voterCount ?: 0
-                userMessages.showShortMessage("已标记疑似 AIGC")
-            } catch (e: Exception) {
-                Log.e("ArticleViewModel", "AIGC flag failed", e)
-                aigcVoteError = e.message ?: "AIGC 标记失败"
-                userMessages.showShortMessage("AIGC 标记失败: ${e.message}")
-            } finally {
-                aigcVoteLoading = false
-            }
-        }
-    }
-
-    private fun currentAigcReadEvidence(): AigcVoteReadEvidence {
-        val nowEpochSeconds = Clock.System.now().epochSeconds
-        return AigcVoteReadEvidence(
-            foregroundDurationMs = (nowEpochSeconds - openedAtEpochSeconds).coerceAtLeast(0) * 1_000,
-            maxScrollRatio = aigcMaxScrollRatio.toDouble(),
-            openedAtEpochSeconds = openedAtEpochSeconds,
-        )
-    }
-
-    private fun currentContentUpdatedAt(): Long = when {
-        updatedAt > 0L -> updatedAt
-        createdAt > 0L -> createdAt
-        else -> 0L
-    }
-
-    private fun currentAuthorHash(): String = ZhihuFetchSignature.md5Hex(
-        authorId.ifBlank { authorUrlToken.ifBlank { authorName } },
-    )
-
-    private fun aigcContentType(): String = when (article.type) {
-        ArticleType.Answer -> "answer"
-        ArticleType.Article -> "article"
     }
 
     fun loadMoreVoters(environment: ZhihuApiEnvironment, reset: Boolean = false) {

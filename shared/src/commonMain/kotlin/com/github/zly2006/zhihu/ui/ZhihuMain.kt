@@ -115,7 +115,6 @@ import com.github.zly2006.zhihu.navigation.Person
 import com.github.zly2006.zhihu.navigation.Pin
 import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.Search
-import com.github.zly2006.zhihu.navigation.SentenceSimilarityTest
 import com.github.zly2006.zhihu.navigation.TopLevelDestination
 import com.github.zly2006.zhihu.navigation.Topic
 import com.github.zly2006.zhihu.navigation.WriteAnswer
@@ -130,9 +129,7 @@ import com.github.zly2006.zhihu.ui.components.ReadingPlayerBar
 import com.github.zly2006.zhihu.ui.components.ReadingQueueSheet
 import com.github.zly2006.zhihu.ui.subscreens.AppearanceSettingsScreen
 import com.github.zly2006.zhihu.ui.subscreens.BlockedFeedHistoryScreen
-import com.github.zly2006.zhihu.ui.subscreens.ColorSchemeScreen
 import com.github.zly2006.zhihu.ui.subscreens.ContentFilterSettingsScreen
-import com.github.zly2006.zhihu.ui.subscreens.DeveloperSettingsScreen
 import com.github.zly2006.zhihu.ui.subscreens.IdentityManagementScreen
 import com.github.zly2006.zhihu.ui.subscreens.OpenSourceLicensesScreen
 import com.github.zly2006.zhihu.ui.subscreens.ReadingSettingsScreen
@@ -187,10 +184,6 @@ fun ZhihuMain(
     preferenceState: ZhihuMainPreferenceState,
     isDarkTheme: Boolean,
     articleContent: @Composable (Article, NavBackStackEntry) -> Unit,
-    sentenceSimilarityContent: @Composable () -> Unit = {
-        Text("Sentence similarity test is not available on this platform.")
-    },
-    blocklistSettingsNlpContent: BlocklistSettingsNlpContent? = null,
     articleEnterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
     articleExitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
 ) {
@@ -624,7 +617,7 @@ fun ZhihuMain(
                         PinScreen(pin)
                     }
                     composable<Account.RecommendSettings.Blocklist> {
-                        BlocklistSettingsScreen(blocklistSettingsNlpContent)
+                        BlocklistSettingsScreen()
                     }
                     composable<Account.RecommendSettings.BlockedFeedHistory> {
                         BlockedFeedHistoryScreen()
@@ -646,9 +639,6 @@ fun ZhihuMain(
                         NotificationSettingsScreen(
                             setting = navEntry.toRoute<Notification.NotificationSettings>().setting,
                         )
-                    }
-                    composable<SentenceSimilarityTest> {
-                        sentenceSimilarityContent()
                     }
                     composable<Account.AppearanceSettings> { navEntry ->
                         val args = navEntry.toRoute<Account.AppearanceSettings>()
@@ -677,12 +667,6 @@ fun ZhihuMain(
                     }
                     composable<Account.OpenSourceLicenses> {
                         OpenSourceLicensesScreen()
-                    }
-                    composable<Account.DeveloperSettings> {
-                        DeveloperSettingsScreen()
-                    }
-                    composable<Account.DeveloperSettings.ColorScheme> {
-                        ColorSchemeScreen()
                     }
                 }
             }

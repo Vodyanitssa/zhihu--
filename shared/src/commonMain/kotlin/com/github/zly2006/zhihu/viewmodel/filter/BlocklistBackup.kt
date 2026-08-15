@@ -23,10 +23,9 @@ import kotlin.time.Clock
 
 @Serializable
 data class BlocklistBackup(
-    val version: Int = 3,
+    val version: Int = 4,
     val exportTime: Long = Clock.System.now().toEpochMilliseconds(),
     val keywords: List<KeywordBackup> = emptyList(),
-    val nlpKeywords: List<NlpKeywordBackup> = emptyList(),
     val users: List<UserBackup> = emptyList(),
     val questionAuthors: List<UserBackup> = emptyList(),
     val topics: List<TopicBackup> = emptyList(),
@@ -37,11 +36,6 @@ data class KeywordBackup(
     val keyword: String,
     val caseSensitive: Boolean = false,
     val isRegex: Boolean = false,
-)
-
-@Serializable
-data class NlpKeywordBackup(
-    val keyword: String,
 )
 
 @Serializable
@@ -85,9 +79,6 @@ suspend fun encodeBlocklistBackup(
         keywords = allKeywords
             .filter { it.getKeywordTypeEnum() == KeywordType.EXACT_MATCH }
             .map { KeywordBackup(it.keyword, it.caseSensitive, it.isRegex) },
-        nlpKeywords = allKeywords
-            .filter { it.getKeywordTypeEnum() == KeywordType.NLP_SEMANTIC }
-            .map { NlpKeywordBackup(it.keyword) },
         users = users.map { UserBackup(it.userId, it.userName, it.urlToken ?: "", it.avatarUrl ?: "") },
         questionAuthors = questionAuthors.map { UserBackup(it.userId, it.userName, it.urlToken ?: "", it.avatarUrl ?: "") },
         topics = topics.map { TopicBackup(it.topicId, it.topicName) },
@@ -115,11 +106,6 @@ suspend fun importBlocklistBackupFromJsonText(
             ),
         )
     }
-    backup.nlpKeywords.filter { it.keyword.isNotBlank() }.forEach { kw ->
-        keywordDao.insertKeyword(
-            BlockedKeyword(keyword = kw.keyword, keywordType = KeywordType.NLP_SEMANTIC.name),
-        )
-    }
     backup.users.filter { it.userId.isNotBlank() }.forEach { user ->
         userDao.insertUser(
             BlockedUser(
@@ -144,5 +130,5 @@ suspend fun importBlocklistBackupFromJsonText(
         topicDao.insertTopic(BlockedTopic(topicId = topic.topicId, topicName = topic.topicName))
     }
 
-    return "关键词 ${backup.keywords.size} · NLP ${backup.nlpKeywords.size} · 用户 ${backup.users.size} · 提问者 ${backup.questionAuthors.size} · 主题 ${backup.topics.size}"
+    return "关键词 ${backup.keywords.size} · 用户 ${backup.users.size} · 提问者 ${backup.questionAuthors.size} · 主题 ${backup.topics.size}"
 }

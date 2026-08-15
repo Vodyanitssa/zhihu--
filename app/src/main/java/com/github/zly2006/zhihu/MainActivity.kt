@@ -65,10 +65,6 @@ import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.TopLevelDestination
 import com.github.zly2006.zhihu.navigation.Video
 import com.github.zly2006.zhihu.navigation.resolveContent
-import com.github.zly2006.zhihu.nlp.KeywordWeightExtractor
-import com.github.zly2006.zhihu.nlp.NLPService
-import com.github.zly2006.zhihu.nlp.NlpServiceKeywordSemanticMatcher
-import com.github.zly2006.zhihu.nlp.SentenceEmbeddingManager
 import com.github.zly2006.zhihu.platform.androidSettingsStore
 import com.github.zly2006.zhihu.platform.androidUserMessageSink
 import com.github.zly2006.zhihu.reading.AndroidReadingPlayerBridge
@@ -87,36 +83,25 @@ import com.github.zly2006.zhihu.ui.ArticleAnswerSwitchState
 import com.github.zly2006.zhihu.ui.ArticleHost
 import com.github.zly2006.zhihu.ui.TtsState
 import com.github.zly2006.zhihu.ui.components.getHighestQualityVideoUrl
-import com.github.zly2006.zhihu.ui.subscreens.DeveloperRuntimeInfo
-import com.github.zly2006.zhihu.ui.subscreens.DeveloperRuntimeInfoProvider
-import com.github.zly2006.zhihu.updater.UpdateManager
-import com.github.zly2006.zhihu.util.ContinuousUsageReminderManager
 import com.github.zly2006.zhihu.util.EmojiManager
-import com.github.zly2006.zhihu.util.PowerSaveModeCompat
 import com.github.zly2006.zhihu.util.ZHIHU_WEB_ZSE93
 import com.github.zly2006.zhihu.util.ZhihuCredentialRefresher
 import com.github.zly2006.zhihu.util.clearShareImageCache
 import com.github.zly2006.zhihu.util.clipboardManager
 import com.github.zly2006.zhihu.util.enableEdgeToEdgeCompat
-import com.github.zly2006.zhihu.util.telemetry
 import com.github.zly2006.zhihu.viewmodel.ArticleAnswerSwitchData
 import com.github.zly2006.zhihu.viewmodel.filter.ContentFilterManager
-import com.github.zly2006.zhihu.viewmodel.filter.androidKeywordSemanticMatcher
-import com.github.zly2006.zhihu.viewmodel.filter.androidKeywordWeightExtractor
 import com.github.zly2006.zhihu.viewmodel.filter.contentFilterSettings
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import kotlinx.coroutines.CoroutineScope
-import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.GlobalScope
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import java.util.concurrent.TimeUnit
 
 class MainActivity :
     ComponentActivity(),
-    ArticleHost,
-    DeveloperRuntimeInfoProvider {
+    ArticleHost {
     class SharedData : ViewModel() {
         var clipboardDestination: NavDestination? = null
     }
@@ -150,7 +135,6 @@ class MainActivity :
         }
 
     lateinit var navController: NavHostController
-    private lateinit var continuousUsageReminderManager: ContinuousUsageReminderManager
     private var pendingContentOpenIdentity: TrackedContentIdentity? = null
     private var pendingContentOpenFrom: String? = null
     private var pendingCommentHolder: CommentHolder? = null
@@ -187,14 +171,9 @@ class MainActivity :
         enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
         clearShareImageCache(this)
-        continuousUsageReminderManager = ContinuousUsageReminderManager(this)
         history = HistoryStorage(this)
         AccountData.loadData(this)
         AndroidThemeSettings.initialize(this)
-        androidKeywordSemanticMatcher = NlpServiceKeywordSemanticMatcher
-        androidKeywordWeightExtractor = KeywordWeightExtractor { text, topN ->
-            NLPService.extractKeywordsWithWeight(text, topN)
-        }
         getContentFilterDatabase(this)
 
         val settings = androidSettingsStore(this)
@@ -212,13 +191,6 @@ class MainActivity :
                     withContext(Dispatchers.Main) {
                         androidUserMessageSink(this@MainActivity)
                             .showLongMessage("刷新登录状态失败，如多次看到此提示请重新登录")
-                    }
-                }
-                if (!PowerSaveModeCompat.getPowerSaveMode(this@MainActivity).isPowerSaveMode) {
-                    try {
-                        SentenceEmbeddingManager.ensureModel(this@MainActivity)
-                    } catch (e: Exception) {
-                        Log.e(TAG, "Failed to initialize NLP embedding model", e)
                     }
                 }
             }
@@ -257,7 +229,6 @@ class MainActivity :
             }
         }
         if (savedInstanceState == null) {
-            telemetry(this, "start")
             if (intent.data != null) {
                 if (intent.data!!.authority == "zhihu-plus.internal") {
                     if (intent.data!!.path == "/error") {
@@ -317,38 +288,7 @@ class MainActivity :
                 }
             }
         }
-
-        // 自动检查更新（在应用启动时）
-        if (savedInstanceState == null) {
-            @OptIn(DelicateCoroutinesApi::class)
-            GlobalScope.launch {
-                try {
-                    UpdateManager.autoCheckForUpdate(this@MainActivity)
-                } catch (e: Exception) {
-                    Log.e(TAG, "Failed to check for updates", e)
-                }
-            }
-        }
     }
-
-    override fun onStart() {
-        super.onStart()
-        continuousUsageReminderManager.onAppForeground()
-    }
-
-    override fun onStop() {
-        continuousUsageReminderManager.onAppBackground()
-        super.onStop()
-    }
-
-    override val developerRuntimeInfo: DeveloperRuntimeInfo
-        get() = DeveloperRuntimeInfo(
-            continuousUsageDurationMs = continuousUsageReminderManager.currentElapsedForegroundMs(),
-            ttsState = ttsState,
-            currentTtsEngineLabel = AndroidReadingPlayerBridge.state.value.engineLabel
-                .ifBlank { "按需初始化" },
-            availableTtsEngineLabels = AndroidReadingPlayerBridge.state.value.availableEngineLabels,
-        )
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
         if (hasFocus) {
@@ -572,11 +512,6 @@ class MainActivity :
 
     override fun stopArticleSpeaking() {
         startService(ContentReadingService.commandIntent(this, ContentReadingService.ACTION_STOP))
-    }
-
-    override fun onDestroy() {
-        continuousUsageReminderManager.onDestroy()
-        super.onDestroy()
     }
 
     @Suppress("unused")

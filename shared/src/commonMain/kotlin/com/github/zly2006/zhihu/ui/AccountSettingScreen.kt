@@ -17,7 +17,6 @@
 
 package com.github.zly2006.zhihu.ui
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
@@ -44,7 +43,6 @@ import androidx.compose.material.icons.automirrored.filled.VolumeUp
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
-import androidx.compose.material.icons.filled.Code
 import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
@@ -68,9 +66,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -94,10 +90,8 @@ import com.github.zly2006.zhihu.reading.rememberReadingPlayerController
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
-import com.github.zly2006.zhihu.ui.subscreens.SystemUpdateState
 import com.github.zly2006.zhihu.ui.subscreens.defaultBottomBarSelectionKeys
 import com.github.zly2006.zhihu.ui.subscreens.normalizeBottomBarSelection
-import com.github.zly2006.zhihu.ui.subscreens.rememberSystemUpdateRuntime
 import com.github.zly2006.zhihu.ui.subscreens.shouldShowAccountHistoryShortcut
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
@@ -120,7 +114,6 @@ const val ACCOUNT_SETTINGS_READING_TAG = "accountSettings.reading"
 const val ACCOUNT_SETTINGS_RECOMMEND_TAG = "accountSettings.recommend"
 const val ACCOUNT_SETTINGS_SEARCH_TAG = "accountSettings.search"
 const val ACCOUNT_SETTINGS_SYSTEM_TAG = "accountSettings.system"
-const val ACCOUNT_SETTINGS_DEVELOPER_TAG = "accountSettings.developer"
 const val ACCOUNT_SETTINGS_LICENSES_TAG = "accountSettings.licenses"
 const val ACCOUNT_SETTINGS_IDENTITY_MANAGEMENT_TAG = "accountSettings.identityManagement"
 
@@ -151,7 +144,6 @@ fun AccountSettingScreen(
     val copyPlainText = rememberPlainTextClipboard()
     val openSystemUrl = rememberSystemUrlOpener()
     val userMessages = rememberUserMessageSink()
-    val updateRuntime = rememberSystemUpdateRuntime()
     val versionInfo = rememberAppVersionInfo()
     val readingPlayerSupported = rememberReadingPlayerController().isSupported
 
@@ -166,12 +158,7 @@ fun AccountSettingScreen(
             enforceMinimumSelection = true,
         )
     }
-    var isDeveloper by remember { mutableStateOf(settings.getBoolean("developer", false)) }
-    var clickTimes by remember { mutableIntStateOf(0) }
     var showLogoutDialog by remember { mutableStateOf(false) }
-    LaunchedEffect(isDeveloper) {
-        settings.putBoolean("developer", isDeveloper)
-    }
     val liveData by accountState
     val data = testAccountData ?: liveData
 
@@ -509,27 +496,6 @@ fun AccountSettingScreen(
                     modifier = Modifier.testTag(ACCOUNT_SETTINGS_SYSTEM_TAG),
                     onClick = { navigator.onNavigate(Account.SystemAndUpdateSettings()) },
                 )
-
-                AnimatedVisibility(isDeveloper) {
-                    SettingItem(
-                        title = { Text("开发者选项") },
-                        icon = { Icon(Icons.Default.Code, null) },
-                        modifier = Modifier.testTag(ACCOUNT_SETTINGS_DEVELOPER_TAG),
-                        onClick = { navigator.onNavigate(Account.DeveloperSettings) },
-                    )
-                }
-            }
-
-            val updateState by updateRuntime.state.collectAsState()
-            LaunchedEffect(updateState) {
-                if (updateState is SystemUpdateState.UpdateAvailable) {
-                    val state = updateState as SystemUpdateState.UpdateAvailable
-                    val versionType = if (state.isNightly) "Nightly版本" else "正式版本"
-                    userMessages.showShortMessage("发现新$versionType ${state.version}")
-                }
-                if (updateState is SystemUpdateState.Error) {
-                    userMessages.showLongMessage("检查更新失败: ${(updateState as SystemUpdateState.Error).message}")
-                }
             }
 
             SettingItemGroup(
@@ -550,14 +516,7 @@ fun AccountSettingScreen(
                     },
                     modifier = Modifier.combinedClickable(
                         enabled = true,
-                        onClick = {
-                            clickTimes++
-                            if (clickTimes == 5) {
-                                clickTimes = 0
-                                isDeveloper = true
-                                userMessages.showShortMessage("You are now a developer")
-                            }
-                        },
+                        onClick = {},
                         onLongClick = {
                             copyPlainText("version", versionInfo)
                             userMessages.showShortMessage("已复制版本号")

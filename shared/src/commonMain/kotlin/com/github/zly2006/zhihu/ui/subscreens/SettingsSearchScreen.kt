@@ -38,7 +38,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -48,7 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.github.zly2006.zhihu.data.AIGC_MARKING_ENABLED_PREFERENCE_KEY
 import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.navigation.NavDestination
@@ -199,7 +197,7 @@ private val settingsSearchEntries = buildList {
     add(appearanceEntry("appearance.predictiveBack", "启用预测性返回", "控制 Android 预测性返回动画。", "enable_predictive_back", listOf("返回手势")))
     add(appearanceEntry("appearance.duo3", "123Duo3 新 UI", "集中管理 Duo3 视觉和交互开关。", "123Duo3", listOf("新UI", "Duo3")))
 
-    add(recommendEntry("recommend.recommendationMode", "推荐算法", "选择 Web、Android、本地或混合推荐。", "recommendationMode", listOf("推荐来源", "Web 推荐", "Android 推荐", "本地推荐", "混合推荐")))
+    add(recommendEntry("recommend.recommendationMode", "推荐算法", "选择 Web 或 Android 推荐。", "recommendationMode", listOf("推荐来源", "Web 推荐", "Android 推荐")))
     add(recommendEntry("recommend.loginForRecommendation", "推荐内容时登录", "获取推荐内容时是否带登录凭证。", "loginForRecommendation"))
     add(recommendEntry("recommend.enableQualityFilter", "启用质量过滤规则", "按赞同数、关注数等指标过滤内容。", "enableQualityFilter", listOf("低质量")))
     add(recommendEntry("recommend.enableContentFilter", "启用智能内容过滤", "过滤重复出现但未点击内容。", "enableContentFilter"))
@@ -212,7 +210,6 @@ private val settingsSearchEntries = buildList {
     add(recommendEntry("recommend.blockZhihuSchool", "屏蔽知乎学堂内容", "过滤知乎学堂和教育推广内容。", "blockZhihuSchool", listOf("学堂")))
     add(recommendEntry("recommend.blockWeChatOfficialAccount", "屏蔽微信公众号文章", "过滤微信公众号外链内容。", "blockWeChatOfficialAccount", listOf("微信")))
     add(recommendEntry("recommend.blockPaidContent", "屏蔽知乎盐选付费内容", "过滤会员付费内容。", "blockPaidContent", listOf("盐选", "付费")))
-    add(recommendEntry("recommend.reverseBlock", "反向屏蔽", "只保留广告和付费内容的调试模式。", "reverseBlock"))
     add(
         SettingsSearchEntry(
             id = "recommend.blocklist",
@@ -234,28 +231,14 @@ private val settingsSearchEntries = buildList {
         ),
     )
 
-    add(systemEntry("system.githubToken", "GitHub Token", "配置更新检查时使用的 GitHub API 令牌。", "githubToken", listOf("限速", "更新检查", "令牌")))
     add(systemEntry("system.autoCheckUpdates", "自动检查更新", "应用启动后后台检查新版本。", "autoCheckUpdates", listOf("更新提醒")))
     add(systemEntry("system.checkNightlyUpdates", "检查 Nightly 版本更新", "检查每日构建版本。", "checkNightlyUpdates", listOf("每日构建")))
-    add(systemEntry("system.allowTelemetry", "允许发送遥测统计数据", "控制匿名使用统计。", "allowTelemetry", listOf("统计", "隐私", "数据收集", "使用数据")))
-    add(systemEntry("system.aigcMarking", "启用 AIGC 标记", "开启后可查看其他用户对内容是否疑似 AIGC 的标记。", AIGC_MARKING_ENABLED_PREFERENCE_KEY, listOf("AI", "AIGC")))
-    add(systemEntry("system.reminder", "防沉迷提醒", "设置连续使用提醒的间隔。", CONTINUOUS_USAGE_REMINDER_INTERVAL_MINUTES_KEY, listOf("连续使用", "休息提醒")))
 
     add(notificationEntry("notification.autoMarkAsRead", "打开通知自动已读", "进入通知页后自动标记当前批次为已读。", "autoMarkAsRead", listOf("已读", "标记已读")))
     add(notificationEntry("notification.unreadBadge", "显示未读红点", "控制首页和账号入口的未读角标。", "unreadBadge", listOf("角标", "红点", "未读数")))
     add(notificationEntry("notification.systemNotifications", "系统通知", "控制是否向系统发送各类通知。", "systemNotifications", NotificationType.entries.map { it.displayName }))
     add(notificationEntry("notification.displayInAppNotifications", "应用内显示", "控制通知页展示哪些通知类型。", "displayInAppNotifications", NotificationType.entries.map { it.displayName }))
 
-    add(
-        SettingsSearchEntry(
-            id = "developer.page",
-            title = "开发者选项",
-            section = "开发者",
-            description = "调试、签名、Cookie 和实验入口。",
-            destination = Account.DeveloperSettings,
-            keywords = listOf("Cookie", "调试", "签名请求", "验证登录", "刷新Token"),
-        ),
-    )
     add(
         SettingsSearchEntry(
             id = "about.licenses",
@@ -280,20 +263,8 @@ fun SettingsSearchScreen() {
     val navigator = LocalNavigator.current
     val settings = rememberSettingsStore()
     var query by rememberSaveable { mutableStateOf("") }
-    var developerModeEnabled by remember {
-        mutableStateOf(settings.getBoolean("developer", false))
-    }
-    DisposableEffect(settings) {
-        val unregister = settings.observeKeyChanges { key ->
-            if (key == "developer") {
-                developerModeEnabled = settings.getBoolean("developer", false)
-            }
-        }
-        onDispose(unregister)
-    }
-    val results = remember(query, developerModeEnabled) {
+    val results = remember(query) {
         settingsSearchEntries
-            .filter { entry -> entry.id != "developer.page" || developerModeEnabled }
             .filter { entry -> entry.matches(query) }
     }
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
@@ -375,9 +346,7 @@ fun SettingsSearchScreen() {
                                 Text(entry.description)
                             },
                             onClick = {
-                                if (entry.id != "developer.page" || settings.getBoolean("developer", false)) {
-                                    navigator.onNavigate(entry.destination)
-                                }
+                                navigator.onNavigate(entry.destination)
                             },
                             endAction = {
                                 Icon(

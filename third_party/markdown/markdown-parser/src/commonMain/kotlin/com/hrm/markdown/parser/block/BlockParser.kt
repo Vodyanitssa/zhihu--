@@ -209,7 +209,7 @@ class BlockParser(
             // handle blank lines (but fenced code blocks preserve blank lines as content)
             if (cursor.restIsBlank()) {
                 if (lastMatched.isFenced || lastMatched.node is IndentedCodeBlock) {
-                    addLineToTip(lastMatched, cursor, lineIdx)
+                    addLineToTip(lastMatched, cursor, lineIdx, line)
                 } else {
                     handleBlankLine(lastMatched, lineIdx)
                     // set blankLineAfterContent on the deepest open ListItem
@@ -363,7 +363,7 @@ class BlockParser(
         }
 
         // 第四阶段：将行添加到当前块
-        addLineToTip(lastMatched, cursor, lineIdx)
+        addLineToTip(lastMatched, cursor, lineIdx, line)
     }
 
     private fun isSelfContainedBlock(block: OpenBlock): Boolean {
@@ -752,9 +752,11 @@ class BlockParser(
 
     // ────── 行处理 ──────
 
-    private fun addLineToTip(tip: OpenBlock, cursor: LineCursor, lineIdx: Int) {
+    private fun addLineToTip(tip: OpenBlock, cursor: LineCursor, lineIdx: Int, originalLine: String) {
         tip.lastLineIndex = lineIdx
-        val lineContent = cursor.rest()
+        // Use original line content to preserve leading spaces that might have been consumed by continueBlock
+        // (e.g., fenceIndent for FencedCodeBlock)
+        val lineContent = originalLine
 
         when (val node = tip.node) {
             is FencedCodeBlock -> {

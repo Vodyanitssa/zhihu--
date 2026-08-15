@@ -80,8 +80,6 @@ import com.github.zly2006.zhihu.viewmodel.filter.KeywordType
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import kotlinx.coroutines.launch
 
-typealias BlocklistSettingsNlpContent = @Composable (onNavigateBack: () -> Unit) -> Unit
-
 object BlocklistSettingsTestTags {
     const val ROOT = "blocklistSettings:root"
     const val STATS_CARD = "blocklistSettings:statsCard"
@@ -134,18 +132,16 @@ data class BlocklistSettingsTestConfig(
     val onAddTopic: ((String, String) -> Unit)? = null,
     val onDeleteTopic: ((BlockedTopic) -> Unit)? = null,
     val onClearTopics: (() -> Unit)? = null,
-    val nlpContent: BlocklistSettingsNlpContent? = null,
 )
 
 /**
  * 屏蔽列表管理页。
  *
- * 页面用 tab 管理关键词、NLP 智能屏蔽短语、用户和主题四类规则，并展示统计、添加、删除和清空操作。Lite variant 可能没有
- * NLP 内容区，因此 [nlpContent] 需要作为可空插槽传入；新增屏蔽类型时要同步数据管理、设置页入口和 Feed 卡片菜单。
+ * 页面用 tab 管理关键词、用户和主题三类规则，并展示统计、添加、删除和清空操作。
+ * 新增屏蔽类型时要同步数据管理、设置页入口和 Feed 卡片菜单。
  */
 @Composable
 fun BlocklistSettingsScreen(
-    nlpContent: BlocklistSettingsNlpContent? = null,
     testConfig: BlocklistSettingsTestConfig? = null,
 ) {
     val navigator = LocalNavigator.current
@@ -156,7 +152,7 @@ fun BlocklistSettingsScreen(
     val coroutineScope = rememberCoroutineScope()
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("屏蔽关键词", "NLP智能屏蔽", "屏蔽用户", "屏蔽提问者", "屏蔽主题")
+    val tabs = listOf("屏蔽关键词", "屏蔽用户", "屏蔽提问者", "屏蔽主题")
 
     var loadedBlockedKeywords by remember { mutableStateOf<List<BlockedKeyword>>(emptyList()) }
     var loadedBlockedUsers by remember { mutableStateOf<List<BlockedUser>>(emptyList()) }
@@ -216,9 +212,9 @@ fun BlocklistSettingsScreen(
                     onClick = {
                         when (selectedTab) {
                             0 -> showAddKeywordDialog = true
-                            2 -> showAddUserDialog = true
-                            3 -> showAddQuestionAuthorDialog = true
-                            4 -> showAddTopicDialog = true
+                            1 -> showAddUserDialog = true
+                            2 -> showAddQuestionAuthorDialog = true
+                            3 -> showAddTopicDialog = true
                         }
                     },
                 ) {
@@ -405,15 +401,7 @@ fun BlocklistSettingsScreen(
                         }
                     },
                 )
-                1 -> {
-                    val actualNlpContent = testConfig?.nlpContent ?: nlpContent
-                    if (actualNlpContent != null) {
-                        actualNlpContent(navigator.onNavigateBack)
-                    } else {
-                        Text("AI features are not available on this platform.")
-                    }
-                }
-                2 -> BlockedPeopleList(
+                1 -> BlockedPeopleList(
                     users = blockedUsers,
                     category = "users",
                     emptyText = "暂无屏蔽用户",
@@ -464,7 +452,7 @@ fun BlocklistSettingsScreen(
                         )
                     },
                 )
-                3 -> BlockedPeopleList(
+                2 -> BlockedPeopleList(
                     users = blockedQuestionAuthors,
                     category = "questionAuthors",
                     emptyText = "暂无屏蔽提问者",
@@ -515,7 +503,7 @@ fun BlocklistSettingsScreen(
                         )
                     },
                 )
-                4 -> BlockedTopicsList(
+                3 -> BlockedTopicsList(
                     topics = blockedTopics,
                     onDeleteTopic = { topic ->
                         val onDeleteTopic = testConfig?.onDeleteTopic
