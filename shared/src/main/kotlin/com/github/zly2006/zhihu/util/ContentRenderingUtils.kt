@@ -182,7 +182,10 @@ private fun saveImageToMediaStore(
     }
 }
 
-fun createEmojiInlineContent(emojiKeys: Set<String>): Map<String, InlineTextContent> {
+fun createEmojiInlineContent(
+    context: Context,
+    emojiKeys: Set<String>,
+): Map<String, InlineTextContent> {
     return emojiKeys
         .filter { it.startsWith("emoji_") }
         .mapNotNull { emojiKey ->
@@ -196,7 +199,9 @@ fun createEmojiInlineContent(emojiKeys: Set<String>): Map<String, InlineTextCont
                     placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                 ),
             ) {
-                val bitmap = android.graphics.BitmapFactory.decodeFile(path)
+                val bitmap = context.assets.open(path).use { inputStream ->
+                    android.graphics.BitmapFactory.decodeStream(inputStream)
+                }
                 if (bitmap != null) {
                     Image(
                         bitmap = bitmap.asImageBitmap(),

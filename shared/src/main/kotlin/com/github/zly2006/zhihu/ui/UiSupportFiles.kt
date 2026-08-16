@@ -759,8 +759,11 @@ fun ZhihuHtmlWebViewContent(html: String) {
 fun supportsZhihuHtmlWebView(): Boolean = true
 
 @Composable
-fun rememberCommentEmojiInlineContent(emojiKeys: Set<String>): Map<String, InlineTextContent> =
-    remember(emojiKeys) { createEmojiInlineContent(emojiKeys) }
+fun rememberCommentEmojiInlineContent(
+    emojiKeys: Set<String>,
+    context: Context = LocalContext.current,
+): Map<String, InlineTextContent> =
+    remember(emojiKeys) { createEmojiInlineContent(context, emojiKeys) }
 
 @Composable
 fun rememberCommentEmojis(): List<CommentEmoji> {
