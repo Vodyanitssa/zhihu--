@@ -36,28 +36,13 @@ android {
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.github.zly2006.zhplus"
+        applicationId = "com.github.zly2006.zhplus.lite"
         minSdk = 27
         targetSdk = 35
         versionCode = property("app.versionCode").toString().toIntOrNull() ?: 1
         versionName = property("app.versionName").toString()
 
         testInstrumentationRunner = "com.github.zly2006.zhihu.ZhihuInstrumentedTestRunner"
-    }
-
-    flavorDimensions += "version"
-    productFlavors {
-        create("full") {
-            dimension = "version"
-            buildConfigField("boolean", "IS_LITE", "false")
-        }
-        create("lite") {
-            dimension = "version"
-            isDefault = true
-            buildConfigField("boolean", "IS_LITE", "true")
-            applicationIdSuffix = ".lite"
-//            versionNameSuffix = "-lite"
-        }
     }
 
     androidResources {
@@ -131,21 +116,6 @@ android {
                     "DebugProbesKt.bin",
 //                    "META-INF/*.kotlin_module",
                 )
-        }
-    }
-
-    androidComponents {
-        beforeVariants(selector().all()) { variantBuilder ->
-            val flavorName = variantBuilder.flavorName
-            if (variantBuilder.buildType == "release") {
-                val minify =
-                    when (flavorName) {
-                        "lite" -> true
-                        else -> false
-                    }
-                variantBuilder.isMinifyEnabled = minify
-                variantBuilder.shrinkResources = minify
-            }
         }
     }
 }

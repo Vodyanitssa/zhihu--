@@ -38,62 +38,62 @@ Zhihu++ 是一个隐私增强的知乎 Android 客户端，支持本地内容过
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│                        :app (Android App)                    │
+│                        :app (Android App)                   │
 │  namespace: com.github.zly2006.zhihu                        │
-│  applicationId: com.github.zly2006.zhplus(.lite)           │
-│                                                            │
-│  ┌──→ :shared                                              │
-│  ├──→ :markdown-parser                                     │
-│  ├──→ :markdown-renderer                                   │
-│  ├──→ io.github.zly2006:latex-renderer-android             │
-│  ├──→ coil3 (compose, gif, network-ktor3)                  │
-│  ├──→ me.saket.telephoto:zoomable-image-coil3              │
-│  ├──→ com.materialkolor:material-kolor                     │
-│  ├──→ com.mikepenz:aboutlibraries-compose-m3               │
-│  └──→ (Compose 1.11.1, ktor 3.5.0, jsoup, zxing)          │
+│  applicationId: com.github.zly2006.zhplus.lite              │
+│                                                             │
+│  ┌──→ :shared                                               │
+│  ├──→ :markdown-parser                                      │
+│  ├──→ :markdown-renderer                                    │
+│  ├──→ io.github.zly2006:latex-renderer-android              │
+│  ├──→ coil3 (compose, gif, network-ktor3)                   │
+│  ├──→ me.saket.telephoto:zoomable-image-coil3               │
+│  ├──→ com.materialkolor:material-kolor                      │
+│  ├──→ com.mikepenz:aboutlibraries-compose-m3                │
+│  └──→ (Compose 1.11.1, ktor 3.5.0, jsoup, zxing)            │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                      :shared (KMP Library)                   │
-│  namespace: com.github.zly2006.zhihu.shared                  │
+│                      :shared (KMP Library)                  │
+│  namespace: com.github.zly2006.zhihu.shared                 │
 │  Targets: Android library                                   │
-│                                                            │
-│  ┌──→ :shared-local-db                                     │
-│  ├──→ :markdown-parser                                     │
-│  ├──→ :markdown-renderer                                   │
-│  ├──→ io.github.zly2006:latex-renderer (common)            │
-│  ├──→ coil3 (compose, network-core)                        │
-│  ├──→ com.materialkolor:material-kolor                     │
+│                                                             │
+│  ┌──→ :shared-local-db                                      │
+│  ├──→ :markdown-parser                                      │
+│  ├──→ :markdown-renderer                                    │
+│  ├──→ io.github.zly2006:latex-renderer (common)             │
+│  ├──→ coil3 (compose, network-core)                         │
+│  ├──→ com.materialkolor:material-kolor                      │
 │  ├──→ com.fleeksoft.ksoup:ksoup                             │
-│  ├──→ com.mikepenz:aboutlibraries-compose-m3               │
-│  └──→ (Compose, ktor, kotlinx-serialization, datetime)     │
+│  ├──→ com.mikepenz:aboutlibraries-compose-m3                │
+│  └──→ (Compose, ktor, kotlinx-serialization, datetime)      │
 └─────────────────────────────────────────────────────────────┘
                               │
                               ▼
 ┌─────────────────────────────────────────────────────────────┐
-│                 :shared-local-db (KMP Library)               │
-│  namespace: com.github.zly2006.zhihu.shared.localdb        │
+│                 :shared-local-db (KMP Library)              │
+│  namespace: com.github.zly2006.zhihu.shared.localdb         │
 │  Targets: Android library                                   │
-│                                                            │
-│  ┌──→ androidx.room:room-runtime                           │
-│  └──→ kotlinx-serialization-json                           │
-│  (KSP: room-compiler → schema + DAO 生成)                  │
+│                                                             │
+│  ┌──→ androidx.room:room-runtime                            │
+│  └──→ kotlinx-serialization-json                            │
+│  (KSP: room-compiler → schema + DAO)                        │ 
 └─────────────────────────────────────────────────────────────┘
 
-┌─────────────────────────────────────────────────────────────┐
-│                   Vendored Markdown 库 (third_party)         │
-│                                                            │
+┌──────────────────────────────────────────────────────────────┐
+│                   Vendored Markdown (third_party)            │
+│                                                              │
 │  :markdown-parser    :markdown-runtime    :markdown-renderer │
-│  pure parsing AST    runtime directives    render AST→Compose │
-│  ────────────────→   ────────────────→   ────────────────→  │
+│  pure parsing AST    runtime directives    render AST→Compose│
+│  ────────────────→   ────────────────→   ────────────────→   │
 │  (commonMain)        (commonMain)        (commonMain + jvm)  │
 │       │                  │                  │                │
 │       └──────────────────┴──────────────────┘                │
-│                    depends chain                               │
-│                                                            │
-│  Targets: android, jvm, iosArm64, iosSimulatorArm64         │
-└─────────────────────────────────────────────────────────────┘
+│                    depends chain                             │
+│                                                              │
+│  Targets: android, jvm, iosArm64, iosSimulatorArm64          │
+└──────────────────────────────────────────────────────────────┘
 ```
 
 ### 依赖传递关系
@@ -113,7 +113,7 @@ Zhihu++ 是一个隐私增强的知乎 Android 客户端，支持本地内容过
 
 ```
 app/
-├── build.gradle.kts              # 应用配置，productFlavors (full/lite)
+├── build.gradle.kts              # 应用配置 (debug/release)
 ├── proguard-rules.pro            # ProGuard 规则
 ├── aboutlibraries/               # 开源许可依赖配置
 └── src/
@@ -132,15 +132,12 @@ app/
     │   │   └── ZhihuMainAndroidState.kt    # Android 专用状态
     │   ├── res/                        # 图标、主题、字符串（en/zh）
     │   └── assets/                     # HTML 模板、JS、CSS
-    ├── full/
-    │   └── (空 — NLP/HanLP 依赖已移除)
-    └── lite/
-        └── res/values[-zh]/strings.xml   # Lite 特有字符串
+    ├── androidTest/                  # Instrumented tests
+    └── test/                         # Unit tests
 ```
 
 **构建变体**:
-- `full`: applicationId `com.github.zly2006.zhplus` (当前空实现，仅作为 flavor 占位)
-- `lite` (默认): applicationId `com.github.zly2006.zhplus.lite`
+- `applicationId`: `com.github.zly2006.zhplus.lite` (固定，无 flavor 后缀)
 - `debug`/`release`: release 启用 minify + shrinkResources
 
 **关键职责**:
@@ -270,17 +267,14 @@ shared-local-db/src/
 | 类型 | minify | shrinkResources | 说明 |
 |------|--------|-----------------|------|
 | debug | false | false | 调试用，包含 BuildConfig |
-| release (lite) | true | true | 启用 ProGuard + 资源压缩 |
-| release (full) | false | false | 保持原始 |
+| release | true | true | 启用 ProGuard + 资源压缩 |
 
-### 5.4 Flavor
+> **注意**: `app/build.gradle.kts` 中已移除 `productFlavors` 配置。`applicationId` 直接设为
+> `com.github.zly2006.zhplus.lite`，不再通过 flavor suffix 区分。`androidComponents` 中原有的
+> flavor-specific minify/shrink 逻辑也已移除，`buildTypes.release` 的 `minifyEnabled=true`／
+> `shrinkResources=true` 直接作用于唯一 variant。
 
-| Flavor | dimension | applicationIdSuffix | IS_LITE | 说明 |
-|--------|-----------|-------------------|---------|------|
-| lite (默认) | version | `.lite` | true | 轻量版 ~4MB |
-| full | version | (none) | false | 完整版 (当前为空) |
-
-### 5.5 其他配置文件
+### 5.4 其他配置文件
 
 | 文件/目录 | 说明 |
 |-----------|------|
@@ -355,17 +349,9 @@ ContentFilterDatabase (Room)
 
 ---
 
-## 7. 近期历史
+## 7. 近期剪裁内容
 
-| 提交 | 说明 | 影响模块 |
-|------|------|---------|
-| `c4f716a` chore: clean up | 清理 | 删除 `docs/architecture-diagram.md` |
-| `0acfa69` chore: remove tokenizer | 移除 tokenizer | NLP 相关残余清理 |
-| `847cb36` fix(db): update database schema | 数据库 schema 更新 | shared-local-db |
-| `6be7b52` evolve: prune features | 特性裁剪 | 删除 desktopApp、sentence_embeddings、NLP/AI、更新器、遥测、防控、开发者选项、iOS/JVM 支持 |
-| `0023163` bump version | 版本升级 | gradle.properties |
-
-**裁剪内容** (来自 `6be7b52` + `PLAN.md`):
+来自 `6be7b52` + `PLAN.md`:
 - ✅ Desktop 平台 (desktopApp/)
 - ✅ iOS/JVM 平台支持 (sourceSets)
 - ✅ NLP/AI 功能 (HanLP, sentence_embeddings)
@@ -410,8 +396,8 @@ zhihu-plus-plus/
 │   ├── aboutlibraries/
 │   └── src/
 │       ├── main/                 # 9 Kotlin files + 资源 + assets
-│       ├── full/                 # (empty - NLP removed)
-│       └── lite/                 # 2 strings.xml 资源
+│       ├── androidTest/          # Instrumented tests
+│       └── test/                 # Unit tests
 ├── shared/                       # KMP 核心库 (~250 Kotlin files)
 │   ├── build.gradle.kts
 │   └── src/
@@ -470,4 +456,4 @@ zhihu-plus-plus/
 5. **ZSE 签名**: 纯 Kotlin 实现在 `shared` 模块 (`ZseSigner.kt`)，Rust 版本 (`rs-zse-sign`) 作为参考
 6. **Room**: `shared-local-db` 模块通过 KSP 生成 schema，存储在 `schemas/` 目录
 7. **WebView**: 正文渲染只支持 Compose Markdown，WebView 作为废弃路径保留
-8. **构建**: `assembleLiteDebug` 构建 lite 变体，`ktlintFormat` 格式化
+8. **构建**: `assembleDebug` 构建调试 APK，`assembleRelease` 构建发布 APK，`ktlintFormat` 格式化

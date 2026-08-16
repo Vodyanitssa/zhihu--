@@ -69,14 +69,14 @@ jobs:
       - name: Setup Android SDK
         uses: android-actions/setup-android@v3
 
-      - name: Build Lite APKs
+      - name: Build debug APK
         env:
           CI_BUILD_MINIFY: false
           RUN_INSTRUMENTED_TESTS: ${{ steps.instrumented_changes.outputs.required }}
         run: |
-          tasks=(assembleLiteDebug)
+          tasks=(assembleDebug)
           if [[ "$RUN_INSTRUMENTED_TESTS" == "true" ]]; then
-            tasks+=(:app:assembleLiteDebugAndroidTest)
+            tasks+=(:app:assembleDebugAndroidTest)
           fi
           ./gradlew "${tasks[@]}" --max-workers=2
 
@@ -88,12 +88,12 @@ jobs:
           include-hidden-files: true
           retention-days: 1
 
-      - name: Prepare Lite debug APK
+      - name: Prepare debug APK
         run: |
           mkdir -p app/build/upload
-          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/upload/zhihu++-lite-debug.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/upload/zhihu++-debug.apk
 
-      - name: Upload Lite debug APK
+      - name: Upload debug APK
         uses: actions/upload-artifact@v4
         with:
           name: PR Debug artifacts
@@ -103,8 +103,8 @@ jobs:
         if: steps.instrumented_changes.outputs.required == 'true'
         run: |
           mkdir -p app/build/instrument-apks
-          cp app/build/outputs/apk/lite/debug/app-lite-debug.apk app/build/instrument-apks/app.apk
-          cp app/build/outputs/apk/androidTest/lite/debug/app-lite-debug-androidTest.apk app/build/instrument-apks/test.apk
+          cp app/build/outputs/apk/debug/app-debug.apk app/build/instrument-apks/app.apk
+          cp app/build/outputs/apk/androidTest/debug/app-debug-androidTest.apk app/build/instrument-apks/test.apk
 
       - name: Upload instrumented test APKs
         if: steps.instrumented_changes.outputs.required == 'true'
@@ -137,8 +137,8 @@ jobs:
       - name: Change wrapper permissions
         run: chmod +x ./gradlew
 
-      - name: Run Lite unit tests
-        run: ./gradlew :app:testLiteDebugUnitTest --max-workers=2
+      - name: Run unit tests
+        run: ./gradlew :app:testDebugUnitTest --max-workers=2
 
       - name: Upload test reports
         if: always()
