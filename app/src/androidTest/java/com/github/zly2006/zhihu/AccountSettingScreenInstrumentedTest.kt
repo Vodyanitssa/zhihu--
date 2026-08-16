@@ -167,7 +167,6 @@ class AccountSettingScreenInstrumentedTest {
         //    OnlineHistory main tab directly instead of going through the local Navigator.
         preferences
             .edit()
-            .putBoolean("duo3_home_account", true)
             .putStringSet(
                 BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
                 linkedSetOf(Home.name, Follow.name, Daily.name),

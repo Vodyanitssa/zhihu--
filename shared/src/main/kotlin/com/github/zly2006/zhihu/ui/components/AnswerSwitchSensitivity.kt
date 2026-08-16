@@ -18,7 +18,7 @@
 package com.github.zly2006.zhihu.ui.components
 
 const val ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY = "answerSwitchSensitivity"
-const val DEFAULT_ANSWER_SWITCH_SENSITIVITY = 1f
+const val DEFAULT_ANSWER_SWITCH_SENSITIVITY = 0.8f
 const val MIN_ANSWER_SWITCH_SENSITIVITY = 0.5f
 const val MAX_ANSWER_SWITCH_SENSITIVITY = 3f
 

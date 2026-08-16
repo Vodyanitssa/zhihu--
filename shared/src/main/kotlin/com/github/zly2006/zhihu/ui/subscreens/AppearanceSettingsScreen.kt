@@ -77,12 +77,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextDecoration
-import androidx.compose.ui.text.withLink
-import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.Daily
@@ -107,14 +101,12 @@ import com.github.zly2006.zhihu.ui.components.MAX_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.MIN_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
-import com.github.zly2006.zhihu.ui.components.SettingItemOverall
 import com.github.zly2006.zhihu.ui.components.SettingItemWithSwitch
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
-const val DUO3_CARD_LARGE_TITLE_PREFERENCE_KEY = "duo3_card_large_title"
 const val PREF_FONT_SIZE = "contentFontSize"
 const val PREF_LINE_HEIGHT = "contentLineHeight"
 const val PREF_BLOCK_SPACING = "contentBlockSpacing"
@@ -162,52 +154,28 @@ internal fun resolveValidStartDestinationKey(
     else -> Home.name
 }
 
-internal fun defaultBottomBarSelectionKeys(duo3HomeAccount: Boolean): Set<String> = if (duo3HomeAccount) {
-    linkedSetOf(Home.name, Follow.name, Daily.name)
-} else {
-    linkedSetOf(Home.name, Follow.name, Daily.name, OnlineHistory.name, Account.name)
-}
+internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name)
 
 internal fun normalizeBottomBarSelection(
     selectedKeys: Collection<String>,
-    duo3HomeAccount: Boolean,
     enforceMinimumSelection: Boolean = false,
 ): Set<String> {
     val allowedKeys = topLevelDestinationsInOrder.map { it.first }.toSet()
     val normalized = selectedKeys
         .filterTo(linkedSetOf()) { it in allowedKeys }
-        .ifEmpty { defaultBottomBarSelectionKeys(duo3HomeAccount).toMutableSet() }
+        .ifEmpty { defaultBottomBarSelectionKeys().toMutableSet() }
 
-    if (duo3HomeAccount) {
-        if (Home.name in normalized) {
-            normalized.remove(Account.name)
-        } else {
-            normalized.add(Account.name)
-        }
+    if (Home.name in normalized) {
+        normalized.remove(Account.name)
     } else {
         normalized.add(Account.name)
-        while (normalized.size > 5) {
-            val removableKey = listOf(
-                HotList.name,
-                MyCollections.name,
-                OnlineHistory.name,
-                Daily.name,
-                Follow.name,
-                Home.name,
-            ).firstOrNull { it in normalized } ?: break
-            normalized.remove(removableKey)
-        }
     }
 
     if (enforceMinimumSelection) {
-        val fillOrder = if (duo3HomeAccount) {
-            if (Home.name in normalized) {
-                listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name)
-            } else {
-                listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name, Home.name)
-            }
+        val fillOrder = if (Home.name in normalized) {
+            listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name)
         } else {
-            listOf(Home.name, Follow.name, Daily.name, HotList.name, OnlineHistory.name, MyCollections.name, Account.name)
+            listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name, Home.name)
         }
         fillOrder.forEach { key ->
             if (normalized.size < 3) {
@@ -254,9 +222,8 @@ internal fun bottomBarItemOrderFromPreference(
 )
 
 internal fun shouldShowAccountHistoryShortcut(
-    duo3HomeAccount: Boolean,
     selectedKeys: Set<String>,
-): Boolean = duo3HomeAccount && OnlineHistory.name !in selectedKeys
+): Boolean = OnlineHistory.name !in selectedKeys
 
 /**
  * 外观与阅读体验设置页。
@@ -287,14 +254,12 @@ fun AppearanceSettingsScreen(
 
     fun requesterFor(settingKey: String): BringIntoViewRequester =
         bringIntoViewRequesters.getOrPut(settingKey) { BringIntoViewRequester() }
-    val duo3HomeAccount = remember { mutableStateOf(settings.getBoolean("duo3_home_account", false)) }
     val selectedBottomBarItemKeys = remember {
         val normalizedSelection = normalizeBottomBarSelection(
             settings.getStringSet(
                 BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
-                defaultBottomBarSelectionKeys(duo3HomeAccount.value),
+                defaultBottomBarSelectionKeys(),
             ),
-            duo3HomeAccount.value,
             enforceMinimumSelection = true,
         )
         mutableStateOf(
@@ -1012,11 +977,9 @@ fun AppearanceSettingsScreen(
 
             fun persistBottomBarSelection(
                 currentOrderKeys: List<String>,
-                duo3HomeAccountEnabled: Boolean = duo3HomeAccount.value,
             ) {
                 val normalizedSet = normalizeBottomBarSelection(
                     currentOrderKeys,
-                    duo3HomeAccountEnabled,
                     enforceMinimumSelection = true,
                 )
                 val normalizedOrderKeys = normalizeBottomBarItemOrder(currentOrderKeys, normalizedSet)
@@ -1367,167 +1330,6 @@ fun AppearanceSettingsScreen(
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor("enable_predictive_back"),
                 )
-            }
-            // ── 123duo3 UI 改进 ─────────────────────────────────────────────────
-
-            // 先声明所有子开关状态，以便主开关可以批量操作
-            val duo3All = remember { mutableStateOf(settings.getBoolean("duo3_all", false)) }
-            val duo3CardAppearance = remember { mutableStateOf(settings.getBoolean("duo3_card_appearance", false)) }
-            val duo3CardLayout = remember { mutableStateOf(settings.getBoolean("duo3_card_layout", false)) }
-            val duo3CardLargeTitle = remember {
-                mutableStateOf(settings.getBoolean(DUO3_CARD_LARGE_TITLE_PREFERENCE_KEY, true))
-            }
-            val duo3ArticleBar = remember { mutableStateOf(settings.getBoolean("duo3_article_bar", false)) }
-            val duo3ArticleActions = remember { mutableStateOf(settings.getBoolean("duo3_article_actions", false)) }
-
-            fun enableAllSubs() {
-                settings.putBoolean("duo3_home_account", true)
-                settings.putBoolean("duo3_card_appearance", true)
-                settings.putBoolean("duo3_card_layout", true)
-                settings.putBoolean("duo3_article_bar", true)
-                settings.putBoolean("duo3_article_actions", true)
-                settings.putBoolean("showRefreshFab", false)
-                settings.putBoolean("buttonSkipAnswer", false)
-                duo3HomeAccount.value = true
-                duo3CardAppearance.value = true
-                duo3CardLayout.value = true
-                duo3ArticleBar.value = true
-                duo3ArticleActions.value = true
-                // 123duo3 改动中会移除 FAB。
-                showRefreshFab.value = false
-                buttonSkipAnswer.value = false
-                val updatedSelection = if (Home.name !in selectedBottomBarItemKeys.value) {
-                    selectedBottomBarItemKeys.value + Account.name
-                } else {
-                    selectedBottomBarItemKeys.value
-                }
-                persistBottomBarSelection(updatedSelection, duo3HomeAccountEnabled = true)
-            }
-
-            fun disableAllSubs() {
-                settings.putBoolean("duo3_home_account", false)
-                settings.putBoolean("duo3_card_appearance", false)
-                settings.putBoolean("duo3_card_layout", false)
-                settings.putBoolean("duo3_article_bar", false)
-                settings.putBoolean("duo3_article_actions", false)
-                duo3HomeAccount.value = false
-                duo3CardAppearance.value = false
-                duo3CardLayout.value = false
-                duo3ArticleBar.value = false
-                duo3ArticleActions.value = false
-                persistBottomBarSelection(selectedBottomBarItemKeys.value, duo3HomeAccountEnabled = false)
-            }
-
-            SettingItemGroup(
-                title = "123Duo3 的 UI/UX 改进（beta）",
-                settingKey = "123Duo3",
-                highlightedKey = settingKey,
-                bringIntoViewRequester = requesterFor("123Duo3"),
-                header = {
-                    SettingItemOverall(
-                        title = { Text("启用所有修改并关闭浮动按钮") },
-                        checked = duo3All.value,
-                        onCheckedChange = {
-                            duo3All.value = it
-                            settings.putBoolean("duo3_all", it)
-                            if (it) {
-                                enableAllSubs()
-                            } else {
-                                disableAllSubs()
-                            }
-                        },
-                    )
-                },
-                footer = {
-                    Text(
-                        text = buildAnnotatedString {
-                            append("以上设置项可能随时更改，或并入主线。\n欢迎")
-                            withLink(LinkAnnotation.Url("https://github.com/zly2006/zhihu-plus-plus/issues")) {
-                                withStyle(
-                                    MaterialTheme.typography.bodyMedium
-                                        .copy(
-                                            color = MaterialTheme.colorScheme.primary,
-                                            textDecoration = TextDecoration.Underline,
-                                            fontWeight = FontWeight.Medium,
-                                        ).toSpanStyle(),
-                                ) {
-                                    append("提交 Issue")
-                                }
-                            }
-                            append(" 讨论本次 UI/UX 修改和反馈问题。")
-                        },
-                    )
-                },
-            ) {
-                SettingItemWithSwitch(
-                    title = { Text("主页：账号入口迁移至顶部头像") },
-                    description = { Text("搜索栏样式变更；点击头像弹出账号与设置；「历史」入口可挪入账号设置页。") },
-                    checked = duo3HomeAccount.value,
-                    onCheckedChange = {
-                        duo3HomeAccount.value = it
-                        settings.putBoolean("duo3_home_account", it)
-                        val updatedSelection = if (it && Home.name !in selectedBottomBarItemKeys.value) {
-                            selectedBottomBarItemKeys.value + Account.name
-                        } else {
-                            selectedBottomBarItemKeys.value
-                        }
-                        persistBottomBarSelection(updatedSelection, it)
-                    },
-                )
-
-                SettingItemWithSwitch(
-                    title = { Text("信息流卡片：外观更改") },
-                    description = { Text("卡片圆角增大，移除阴影；修改背景与卡片颜色。") },
-                    checked = duo3CardAppearance.value,
-                    onCheckedChange = {
-                        duo3CardAppearance.value = it
-                        settings.putBoolean("duo3_card_appearance", it)
-                    },
-                )
-
-                SettingItemWithSwitch(
-                    title = { Text("信息流卡片：更改内容排版") },
-                    description = { Text("作者移至底部；图片不与底部小字并列；摘要最多显示 4 行（原 3 行），规范字体样式。") },
-                    checked = duo3CardLayout.value,
-                    onCheckedChange = {
-                        duo3CardLayout.value = it
-                        settings.putBoolean("duo3_card_layout", it)
-                    },
-                )
-
-                AnimatedVisibility(visible = duo3CardLayout.value) {
-                    SettingItemWithSwitch(
-                        title = { Text("信息流卡片：使用更大的标题字体") },
-                        description = { Text("默认启用；关闭后标题会缩小一档。") },
-                        checked = duo3CardLargeTitle.value,
-                        onCheckedChange = {
-                            duo3CardLargeTitle.value = it
-                            settings.putBoolean(DUO3_CARD_LARGE_TITLE_PREFERENCE_KEY, it)
-                        },
-                    )
-                }
-
-                SettingItemWithSwitch(
-                    title = { Text("文章阅读页：更改整体顶/底栏框架") },
-                    description = { Text("更改标题栏样式；优化顶/底栏隐藏逻辑。") },
-                    checked = duo3ArticleBar.value,
-                    onCheckedChange = {
-                        duo3ArticleBar.value = it
-                        settings.putBoolean("duo3_article_bar", it)
-                    },
-                )
-
-                AnimatedVisibility(visible = duo3ArticleBar.value) {
-                    SettingItemWithSwitch(
-                        title = { Text("文章阅读页：更改操作栏样式") },
-                        description = { Text("底栏操作按钮用药丸包裹；分隔赞同/反对按钮并添加动画。") },
-                        checked = duo3ArticleActions.value,
-                        onCheckedChange = {
-                            duo3ArticleActions.value = it
-                            settings.putBoolean("duo3_article_actions", it)
-                        },
-                    )
-                }
             }
         }
     }

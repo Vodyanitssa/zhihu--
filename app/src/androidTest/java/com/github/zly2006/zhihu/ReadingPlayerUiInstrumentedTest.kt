@@ -80,7 +80,6 @@ class ReadingPlayerUiInstrumentedTest {
             .edit(commit = true) {
                 putString(START_DESTINATION_PREFERENCE_KEY, Home.name)
                 putStringSet(BOTTOM_BAR_ITEMS_PREFERENCE_KEY, linkedSetOf(Home.name, Account.name))
-                putBoolean("duo3_nav_style", false)
                 putBoolean("autoHideBottomBar", false)
                 putBoolean("showRefreshFab", true)
             }

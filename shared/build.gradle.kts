@@ -93,7 +93,6 @@ android {
     composeOptions {
         kotlinCompilerExtensionVersion = "1.11.1"
     }
-
 }
 
 val composeVersion = "1.11.1"

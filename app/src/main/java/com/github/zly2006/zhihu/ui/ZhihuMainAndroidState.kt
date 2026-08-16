@@ -56,13 +56,11 @@ fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
         listOf(Home.name, Follow.name, HotList.name, Daily.name, OnlineHistory.name, MyCollections.name, Account.name)
     }
     return rememberZhihuMainPreferenceState {
-        val duo3HomeAccount = settings.getBoolean("duo3_home_account", false)
         val selectedKeys = normalizeBottomBarSelection(
             settings.getStringSet(
                 BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
-                defaultBottomBarSelectionKeys(duo3HomeAccount),
+                defaultBottomBarSelectionKeys(),
             ),
-            duo3HomeAccount,
             enforceMinimumSelection = true,
         )
         val orderedSelectedKeys = bottomBarItemOrderFromPreference(
@@ -70,7 +68,6 @@ fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
             selectedKeys,
         )
         ZhihuMainPreferenceSnapshot(
-            duo3HomeAccount = duo3HomeAccount,
             tapToScrollToTopEnabled = settings.getBoolean("bottomBarTapScrollToTop", true),
             autoHideBottomBar = settings.getBoolean("autoHideBottomBar", false),
             collectionDirectBrowseEnabled = settings.getBoolean(COLLECTION_DIRECT_BROWSE_PREFERENCE_KEY, false),

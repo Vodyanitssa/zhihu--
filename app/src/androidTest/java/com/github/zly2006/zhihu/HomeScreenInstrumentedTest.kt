@@ -39,7 +39,6 @@ import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.RecommendationMode
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.toFeedDisplayItemNavDestinationJson
-import com.github.zly2006.zhihu.navigation.Notification
 import com.github.zly2006.zhihu.navigation.Pin
 import com.github.zly2006.zhihu.navigation.Search
 import com.github.zly2006.zhihu.navigation.WritePin
@@ -95,45 +94,16 @@ class HomeScreenInstrumentedTest {
     }
 
     @Test
-    fun classicTopButtons_showSearchAndNotification_andHideAccount() {
+    fun topButtons_showSearchAndAccountSheet_andHideNotification() {
         /*
          * Expected behavior:
-         * 1. With duo3 account mode disabled, the classic toolbar should show the search surface and
-         *    the notification action, but it must not render the duo3-only account button.
-         * 2. Clicking search should navigate to an empty Search destination without relying on live data.
-         * 3. Clicking notification should append exactly one Notification destination and must not emit
-         *    any back navigation event.
-         */
-        val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
-            showRefreshFab = false,
-            displayItems = homeFeedFixtureItems(),
-        )
-
-        composeRule.onNodeWithTag(HOME_TOP_ACTIONS_TAG).assertIsDisplayed()
-        composeRule.onNodeWithTag(HOME_SEARCH_BUTTON_TAG).assertIsDisplayed().assertHasClickAction()
-        composeRule.onNodeWithTag(HOME_NOTIFICATION_BUTTON_TAG).assertIsDisplayed().assertHasClickAction()
-        composeRule.onNodeWithTag(HOME_ACCOUNT_BUTTON_TAG).assertDoesNotExist()
-
-        composeRule.onNodeWithTag(HOME_SEARCH_BUTTON_TAG).performClick()
-        composeRule.onNodeWithTag(HOME_NOTIFICATION_BUTTON_TAG).performClick()
-
-        assertEquals(listOf(Search(query = ""), Notification), recordingNavigator.destinations)
-        assertEquals(0, recordingNavigator.backCount)
-    }
-
-    @Test
-    fun duo3TopButtons_showSearchAndAccountSheet_andHideNotification() {
-        /*
-         * Expected behavior:
-         * 1. With duo3 account mode enabled, the top action area should switch to the account-entry layout,
-         *    so the account button is visible and the classic notification icon is absent.
+         * 1. The top action area should use the account-entry layout, so the account button is visible
+         *    and the notification icon is absent.
          * 2. The search affordance should still navigate to Search(query = "") exactly once.
          * 3. Clicking the account button in a forced logged-out state should open the offline account sheet,
          *    which is verified by the stable "登录知乎" entry instead of any network-backed profile UI.
          */
         val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = true,
             showRefreshFab = false,
             displayItems = homeFeedFixtureItems(),
         )
@@ -161,7 +131,6 @@ class HomeScreenInstrumentedTest {
          *    and the interaction does not create any navigation side effects.
          */
         val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = true,
             displayItems = homeFeedFixtureItems(),
         )
@@ -184,7 +153,6 @@ class HomeScreenInstrumentedTest {
          * 3. Question and answer are placeholders that only show the construction toast; pin navigates to WritePin.
          */
         val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = false,
             displayItems = homeFeedFixtureItems(),
         )
@@ -240,7 +208,6 @@ class HomeScreenInstrumentedTest {
                 """.trimIndent(),
         )
         val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = false,
             useSeededAccountForNetwork = true,
             displayItems = homeFeedFixtureItems(),
@@ -273,7 +240,6 @@ class HomeScreenInstrumentedTest {
          */
         mockAuthorPollAnnouncement()
         val recordingNavigator = composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = false,
             useSeededAccountForNetwork = true,
             displayItems = homeFeedFixtureItems(),
@@ -304,7 +270,6 @@ class HomeScreenInstrumentedTest {
         val secondPin = authorTopicPin(secondPinId, "第二条开发动态")
         mockAuthorAnnouncements(firstPin, secondPin)
         composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = false,
             useSeededAccountForNetwork = true,
             displayItems = homeFeedFixtureItems(),
@@ -370,7 +335,6 @@ class HomeScreenInstrumentedTest {
          *    offline content intact instead of dropping or corrupting the seeded rows.
          */
         composeRule.launchHomeScreen(
-            duo3HomeAccount = false,
             showRefreshFab = false,
             displayItems = homeFeedFixtureItems(count = 30),
         )
@@ -387,14 +351,12 @@ class HomeScreenInstrumentedTest {
     }
 
     private fun MainActivityComposeRule.launchHomeScreen(
-        duo3HomeAccount: Boolean,
         showRefreshFab: Boolean,
         useSeededAccountForNetwork: Boolean = false,
         displayItems: List<FeedDisplayItem>,
     ): RecordingNavigator {
         setScreenContent {}
         activity.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE).edit(commit = true) {
-            putBoolean("duo3_home_account", duo3HomeAccount)
             putBoolean("showRefreshFab", showRefreshFab)
             putBoolean("loginForRecommendation", useSeededAccountForNetwork)
             putBoolean("survey_feedback_done", true)

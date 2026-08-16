@@ -88,7 +88,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.RectangleShape
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -122,9 +121,6 @@ import com.github.zly2006.zhihu.ui.article.rememberArticleAnswerNavigationState
 import com.github.zly2006.zhihu.ui.article.rememberArticleBottomBarState
 import com.github.zly2006.zhihu.ui.article.rememberArticleTopBarState
 import com.github.zly2006.zhihu.ui.article.rememberBottomBarAvoidingBringIntoViewSpec
-import com.github.zly2006.zhihu.ui.article.voteUpActiveButtonColors
-import com.github.zly2006.zhihu.ui.article.voteUpNeutralButtonColors
-import com.github.zly2006.zhihu.ui.article.voteUpNeutralContent
 import com.github.zly2006.zhihu.ui.article.voteUpNeutralContentDuo3
 import com.github.zly2006.zhihu.ui.components.AnswerHorizontalOverscroll
 import com.github.zly2006.zhihu.ui.components.AnswerVerticalOverscroll
@@ -381,15 +377,13 @@ fun ArticleScreen(
                                 }
                             },
                             actions = {
-                                if (articleSettings.useDuo3ArticleActions) {
-                                    IconButton(
-                                        onClick = { showActionsMenu = true },
-                                    ) {
-                                        Icon(
-                                            Icons.Filled.MoreVert,
-                                            contentDescription = "更多选项",
-                                        )
-                                    }
+                                IconButton(
+                                    onClick = { showActionsMenu = true },
+                                ) {
+                                    Icon(
+                                        Icons.Filled.MoreVert,
+                                        contentDescription = "更多选项",
+                                    )
                                 }
                             },
                             title = { expanded ->
@@ -493,277 +487,163 @@ fun ArticleScreen(
             } else {
                 @Composable {
                     // 防止在导航动画和预测性返回手势过程中，底部操作栏闪烁。
-                    // 操作栏内容的共享组合，按 useDuo3ArticleActions 切换两套视觉。
                     @Composable
                     fun ActionBarContent() {
-                        if (!articleSettings.useDuo3ArticleActions) {
-                            // ── 主视觉：按钮式投票与操作区 ────────────────────────
+                        // ── 药丸式动画投票与操作区 ──────────────────────────
+                        Row(
+                            modifier = Modifier
+                                .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 16.dp)
+                                .padding(horizontal = 16.dp)
+                                .fillMaxWidth(),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                        ) {
                             Row(
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 8.dp)
-                                    .height(36.dp),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                    .clip(RoundedCornerShape(50))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .padding(4.dp),
+                                verticalAlignment = Alignment.CenterVertically,
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(
-                                            color = if (viewModel.voteUpState == VoteUpState.Neutral) {
-                                                voteUpNeutralContent().copy(alpha = 0.1f)
-                                            } else {
-                                                voteUpNeutralContent()
-                                            },
-                                        ),
-                                    horizontalArrangement = Arrangement.Start,
+                                AnimatedVisibility(
+                                    visible = viewModel.voteUpState == VoteUpState.Neutral || viewModel.voteUpState == VoteUpState.Up,
                                 ) {
-                                    when (viewModel.voteUpState) {
-                                        VoteUpState.Neutral -> {
-                                            Button(
-                                                onClick = { viewModel.toggleVoteUp(environment, VoteUpState.Up) },
-                                                colors = voteUpNeutralButtonColors(),
-                                                shape = RectangleShape,
-                                                contentPadding = PaddingValues(horizontal = 0.dp),
-                                            ) {
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Icon(painterResource(R.drawable.ic_vote_up_24dp), "赞同")
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = viewModel.voteUpCount.toString())
-                                            }
-                                            Button(
-                                                onClick = { viewModel.toggleVoteUp(environment, VoteUpState.Down) },
-                                                colors = voteUpNeutralButtonColors(),
-                                                shape = RectangleShape,
-                                                modifier = Modifier.height(ButtonDefaults.MinHeight).width(ButtonDefaults.MinHeight),
-                                                contentPadding = PaddingValues(horizontal = 0.dp),
-                                            ) {
-                                                Icon(painterResource(R.drawable.ic_vote_down_24dp), "反对")
-                                            }
-                                        }
-
-                                        VoteUpState.Up -> {
-                                            Button(
-                                                onClick = { viewModel.toggleVoteUp(environment, VoteUpState.Neutral) },
-                                                colors = voteUpActiveButtonColors(),
-                                                shape = RectangleShape,
-                                                contentPadding = PaddingValues(horizontal = 0.dp),
-                                            ) {
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Icon(painterResource(R.drawable.ic_vote_up_24dp), "赞同")
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text(text = viewModel.voteUpCount.toString())
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                            }
-                                        }
-
-                                        VoteUpState.Down -> {
-                                            Button(
-                                                onClick = { viewModel.toggleVoteUp(environment, VoteUpState.Neutral) },
-                                                colors = voteUpActiveButtonColors(),
-                                                shape = RectangleShape,
-                                                modifier = Modifier.height(ButtonDefaults.MinHeight),
-                                                contentPadding = PaddingValues(horizontal = 0.dp),
-                                            ) {
-                                                Icon(painterResource(R.drawable.ic_vote_down_24dp), "反对")
-                                                Spacer(modifier = Modifier.width(4.dp))
-                                                Text("反对")
-                                                Spacer(modifier = Modifier.width(8.dp))
-                                            }
-                                        }
-                                    }
-                                }
-                                Row(horizontalArrangement = Arrangement.End) {
-                                    IconButton(
-                                        onClick = { showCollectionDialog = true },
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = if (viewModel.isFavorited) Color(0xFFF57C00) else MaterialTheme.colorScheme.secondaryContainer,
-                                            contentColor = if (viewModel.isFavorited) Color.White else MaterialTheme.colorScheme.onSecondaryContainer,
-                                        ),
-                                    ) {
-                                        Icon(if (viewModel.isFavorited) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder, contentDescription = "收藏")
-                                    }
-                                    Button(
-                                        onClick = { showComments = true },
-                                        contentPadding = PaddingValues(start = 8.dp, end = 12.dp),
-                                        colors = voteUpNeutralButtonColors(),
-                                    ) {
-                                        Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(text = "${viewModel.commentCount}")
-                                    }
-
-                                    IconButton(
-                                        onClick = { showActionsMenu = true },
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceVariant,
-                                            contentColor = MaterialTheme.colorScheme.onSurfaceVariant,
-                                        ),
+                                    val upBgColor by animateColorAsState(
+                                        targetValue = if (viewModel.voteUpState == VoteUpState.Up) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
+                                    )
+                                    val upContentColor by animateColorAsState(
+                                        targetValue = if (viewModel.voteUpState == VoteUpState.Up) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(50))
+                                            .background(upBgColor)
+                                            .clickable {
+                                                viewModel.toggleVoteUp(
+                                                    environment,
+                                                    if (viewModel.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up,
+                                                )
+                                            }.padding(6.dp, 8.dp, 12.dp, 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
-                                            Icons.Filled.MoreVert,
-                                            contentDescription = "更多选项",
+                                            painter = painterResource(R.drawable.ic_vote_up_24dp),
+                                            contentDescription = "赞同",
+                                            tint = upContentColor,
+                                            modifier = Modifier.size(24.dp),
                                         )
+                                        Spacer(modifier = Modifier.width(4.dp))
+                                        Text(
+                                            text = viewModel.voteUpCount.toString(),
+                                            color = upContentColor,
+                                            style = MaterialTheme.typography.titleMedium,
+                                        )
+                                    }
+                                }
+
+                                AnimatedVisibility(visible = viewModel.voteUpState == VoteUpState.Neutral) {
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                }
+
+                                AnimatedVisibility(
+                                    visible = viewModel.voteUpState == VoteUpState.Neutral || viewModel.voteUpState == VoteUpState.Down,
+                                ) {
+                                    val downBgColor by animateColorAsState(
+                                        targetValue = if (viewModel.voteUpState == VoteUpState.Down) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
+                                    )
+                                    val downContentColor by animateColorAsState(
+                                        targetValue = if (viewModel.voteUpState == VoteUpState.Down) Color.White else MaterialTheme.colorScheme.onSurface,
+                                    )
+                                    Row(
+                                        modifier = Modifier
+                                            .clip(RoundedCornerShape(50))
+                                            .background(downBgColor)
+                                            .clickable {
+                                                viewModel.toggleVoteUp(
+                                                    environment,
+                                                    if (viewModel.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down,
+                                                )
+                                            }.padding(6.dp, 8.dp, 8.dp, 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
+                                    ) {
+                                        AnimatedVisibility(visible = viewModel.voteUpState != VoteUpState.Down) {
+                                            Spacer(modifier = Modifier.width(2.dp))
+                                        }
+                                        Icon(
+                                            painter = painterResource(R.drawable.ic_vote_down_24dp),
+                                            contentDescription = "反对",
+                                            tint = downContentColor,
+                                            modifier = Modifier.size(24.dp),
+                                        )
+                                        AnimatedVisibility(visible = viewModel.voteUpState == VoteUpState.Down) {
+                                            Row {
+                                                Text(
+                                                    text = "反对",
+                                                    color = downContentColor,
+                                                    style = MaterialTheme.typography.titleMedium,
+                                                    modifier = Modifier.padding(horizontal = 4.dp),
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
-                        } else {
-                            // ── duo3：药丸式动画投票与操作区 ────────────────────
+
                             Row(
                                 modifier = Modifier
-                                    .padding(bottom = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 16.dp)
-                                    .padding(horizontal = 16.dp)
-                                    .fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
+                                    .clip(RoundedCornerShape(50))
+                                    .background(MaterialTheme.colorScheme.surfaceContainerHighest)
+                                    .padding(end = 4.dp),
+                                horizontalArrangement = Arrangement.End,
                             ) {
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                                        .padding(4.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                IconButton(
+                                    onClick = { showCollectionDialog = true },
+                                    colors = IconButtonDefaults.iconButtonColors(
+                                        containerColor = if (viewModel.isFavorited) {
+                                            Color(0xFFF57C00).harmonize(MaterialTheme.colorScheme.primary)
+                                        } else {
+                                            MaterialTheme.colorScheme.surfaceContainer
+                                        },
+                                        contentColor = if (viewModel.isFavorited) {
+                                            Color.White.copy(alpha = 0.87f)
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurface
+                                        },
+                                    ),
                                 ) {
-                                    AnimatedVisibility(
-                                        visible = viewModel.voteUpState == VoteUpState.Neutral || viewModel.voteUpState == VoteUpState.Up,
-                                    ) {
-                                        val upBgColor by animateColorAsState(
-                                            targetValue = if (viewModel.voteUpState == VoteUpState.Up) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
-                                        )
-                                        val upContentColor by animateColorAsState(
-                                            targetValue = if (viewModel.voteUpState == VoteUpState.Up) Color.White else MaterialTheme.colorScheme.onSurface,
-                                        )
-                                        Row(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(50))
-                                                .background(upBgColor)
-                                                .clickable {
-                                                    viewModel.toggleVoteUp(
-                                                        environment,
-                                                        if (viewModel.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up,
-                                                    )
-                                                }.padding(6.dp, 8.dp, 12.dp, 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_vote_up_24dp),
-                                                contentDescription = "赞同",
-                                                tint = upContentColor,
-                                                modifier = Modifier.size(24.dp),
-                                            )
-                                            Spacer(modifier = Modifier.width(4.dp))
-                                            Text(
-                                                text = viewModel.voteUpCount.toString(),
-                                                color = upContentColor,
-                                                style = MaterialTheme.typography.titleMedium,
-                                            )
-                                        }
-                                    }
+                                    Icon(
+                                        if (viewModel.isFavorited) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
+                                        contentDescription = "收藏",
+                                    )
+                                }
 
-                                    AnimatedVisibility(visible = viewModel.voteUpState == VoteUpState.Neutral) {
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                    }
-
-                                    AnimatedVisibility(
-                                        visible = viewModel.voteUpState == VoteUpState.Neutral || viewModel.voteUpState == VoteUpState.Down,
+                                val ttsState = articleHost?.articleTtsState
+                                AnimatedVisibility(visible = ttsState?.isSpeaking == true) {
+                                    IconButton(
+                                        onClick = {
+                                            articleHost?.stopArticleSpeaking()
+                                            userMessages.showMessage("已停止朗读")
+                                        },
+                                        enabled = ttsState !in listOf(TtsState.Error, TtsState.Uninitialized, TtsState.Initializing, null),
+                                        colors = IconButtonDefaults.iconButtonColors(
+                                            containerColor = Color(0xFF4CAF50).harmonize(MaterialTheme.colorScheme.primary),
+                                            contentColor = Color.White,
+                                        ),
                                     ) {
-                                        val downBgColor by animateColorAsState(
-                                            targetValue = if (viewModel.voteUpState == VoteUpState.Down) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
-                                        )
-                                        val downContentColor by animateColorAsState(
-                                            targetValue = if (viewModel.voteUpState == VoteUpState.Down) Color.White else MaterialTheme.colorScheme.onSurface,
-                                        )
-                                        Row(
-                                            modifier = Modifier
-                                                .clip(RoundedCornerShape(50))
-                                                .background(downBgColor)
-                                                .clickable {
-                                                    viewModel.toggleVoteUp(
-                                                        environment,
-                                                        if (viewModel.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down,
-                                                    )
-                                                }.padding(6.dp, 8.dp, 8.dp, 8.dp),
-                                            verticalAlignment = Alignment.CenterVertically,
-                                        ) {
-                                            AnimatedVisibility(visible = viewModel.voteUpState != VoteUpState.Down) {
-                                                Spacer(modifier = Modifier.width(2.dp))
-                                            }
-                                            Icon(
-                                                painter = painterResource(R.drawable.ic_vote_down_24dp),
-                                                contentDescription = "反对",
-                                                tint = downContentColor,
-                                                modifier = Modifier.size(24.dp),
-                                            )
-                                            AnimatedVisibility(visible = viewModel.voteUpState == VoteUpState.Down) {
-                                                Row {
-                                                    Text(
-                                                        text = "反对",
-                                                        color = downContentColor,
-                                                        style = MaterialTheme.typography.titleMedium,
-                                                        modifier = Modifier.padding(horizontal = 4.dp),
-                                                    )
-                                                }
-                                            }
-                                        }
+                                        Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = "停止朗读")
                                     }
                                 }
 
-                                Row(
-                                    modifier = Modifier
-                                        .clip(RoundedCornerShape(50))
-                                        .background(MaterialTheme.colorScheme.surfaceContainerHighest)
-                                        .padding(end = 4.dp),
-                                    horizontalArrangement = Arrangement.End,
+                                Button(
+                                    onClick = { showComments = true },
+                                    contentPadding = PaddingValues(start = 8.dp, end = 12.dp),
+                                    colors = ButtonDefaults.buttonColors(
+                                        containerColor = MaterialTheme.colorScheme.surfaceContainer,
+                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                    ),
                                 ) {
-                                    IconButton(
-                                        onClick = { showCollectionDialog = true },
-                                        colors = IconButtonDefaults.iconButtonColors(
-                                            containerColor = if (viewModel.isFavorited) {
-                                                Color(0xFFF57C00).harmonize(MaterialTheme.colorScheme.primary)
-                                            } else {
-                                                MaterialTheme.colorScheme.surfaceContainer
-                                            },
-                                            contentColor = if (viewModel.isFavorited) {
-                                                Color.White.copy(alpha = 0.87f)
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurface
-                                            },
-                                        ),
-                                    ) {
-                                        Icon(
-                                            if (viewModel.isFavorited) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
-                                            contentDescription = "收藏",
-                                        )
-                                    }
-
-                                    val ttsState = articleHost?.articleTtsState
-                                    AnimatedVisibility(visible = ttsState?.isSpeaking == true) {
-                                        IconButton(
-                                            onClick = {
-                                                articleHost?.stopArticleSpeaking()
-                                                userMessages.showMessage("已停止朗读")
-                                            },
-                                            enabled = ttsState !in listOf(TtsState.Error, TtsState.Uninitialized, TtsState.Initializing, null),
-                                            colors = IconButtonDefaults.iconButtonColors(
-                                                containerColor = Color(0xFF4CAF50).harmonize(MaterialTheme.colorScheme.primary),
-                                                contentColor = Color.White,
-                                            ),
-                                        ) {
-                                            Icon(Icons.AutoMirrored.Filled.VolumeOff, contentDescription = "停止朗读")
-                                        }
-                                    }
-
-                                    Button(
-                                        onClick = { showComments = true },
-                                        contentPadding = PaddingValues(start = 8.dp, end = 12.dp),
-                                        colors = ButtonDefaults.buttonColors(
-                                            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-                                            contentColor = MaterialTheme.colorScheme.onSurface,
-                                        ),
-                                    ) {
-                                        Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
-                                        Spacer(modifier = Modifier.width(4.dp))
-                                        Text(text = "${viewModel.commentCount}", style = MaterialTheme.typography.titleMedium)
-                                    }
+                                    Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
+                                    Spacer(modifier = Modifier.width(4.dp))
+                                    Text(text = "${viewModel.commentCount}", style = MaterialTheme.typography.titleMedium)
                                 }
                             }
                         }
@@ -997,7 +877,7 @@ fun ArticleScreen(
                             }
                         }
                     }
-                    // 状态栏渐变遮罩，仅 duo3 路径需要；主视觉路径不绘制。
+                    // 状态栏渐变遮罩。
                     val statusBarHeight = WindowInsets.statusBars.asPaddingValues().calculateTopPadding()
                     val surfaceColor = MaterialTheme.colorScheme.surfaceContainer
                     Box(

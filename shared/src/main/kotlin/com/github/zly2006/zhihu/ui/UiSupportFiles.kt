@@ -177,7 +177,6 @@ class ArticleScreenSettingsState(
     answerSwitchMode: String,
     answerSwitchSensitivity: Float,
     pinAnswerDate: Boolean,
-    useDuo3ArticleActions: Boolean,
     buttonSkipAnswer: Boolean,
     autoHideSkipAnswerButton: Boolean,
     answerDoubleTapAction: AnswerDoubleTapAction,
@@ -189,7 +188,6 @@ class ArticleScreenSettingsState(
     var answerSwitchMode by mutableStateOf(answerSwitchMode)
     var answerSwitchSensitivity by mutableFloatStateOf(answerSwitchSensitivity)
     var pinAnswerDate by mutableStateOf(pinAnswerDate)
-    var useDuo3ArticleActions by mutableStateOf(useDuo3ArticleActions)
     var buttonSkipAnswer by mutableStateOf(buttonSkipAnswer)
     var autoHideSkipAnswerButton by mutableStateOf(autoHideSkipAnswerButton)
     var answerDoubleTapAction by mutableStateOf(answerDoubleTapAction)
@@ -222,7 +220,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
                 ),
             ),
             pinAnswerDate = settings.getBoolean("pinAnswerDate", false),
-            useDuo3ArticleActions = settings.getBoolean("duo3_article_actions", false),
             buttonSkipAnswer = settings.getBoolean("buttonSkipAnswer", true),
             autoHideSkipAnswerButton = settings.getBoolean("autoHideSkipAnswerButton", true),
             answerDoubleTapAction = settings.answerDoubleTapAction(),
@@ -257,7 +254,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
                 }
 
                 "pinAnswerDate" -> state.pinAnswerDate = settings.getBoolean(key, false)
-                "duo3_article_actions" -> state.useDuo3ArticleActions = settings.getBoolean(key, false)
                 ARTICLE_USE_WEBVIEW_PREFERENCE_KEY -> state.useWebView = settings.getBoolean(key, false)
                 ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY -> {
                     state.answerDoubleTapAction = settings.answerDoubleTapAction()
@@ -421,7 +417,6 @@ enum class TtsState(
  * [ZhihuMain] 按快照读取它们，避免把更新到一半的导航设置应用到主界面。
  */
 data class ZhihuMainPreferenceSnapshot(
-    val duo3HomeAccount: Boolean,
     val tapToScrollToTopEnabled: Boolean,
     val autoHideBottomBar: Boolean,
     val collectionDirectBrowseEnabled: Boolean,
@@ -440,7 +435,6 @@ class ZhihuMainPreferenceState(
 ) {
     private var snapshot by mutableStateOf(readSnapshot())
 
-    val duo3HomeAccount: Boolean get() = snapshot.duo3HomeAccount
     val tapToScrollToTopEnabled: Boolean get() = snapshot.tapToScrollToTopEnabled
     val autoHideBottomBar: Boolean get() = snapshot.autoHideBottomBar
     val collectionDirectBrowseEnabled: Boolean get() = snapshot.collectionDirectBrowseEnabled

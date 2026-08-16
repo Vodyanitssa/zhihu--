@@ -135,8 +135,6 @@ class ArticleScreenInstrumentedTest {
         composeRule.activity
             .getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
             .edit()
-            .putBoolean("duo3_article_bar", true)
-            .putBoolean("duo3_article_actions", true)
             .putBoolean("titleAutoHide", true)
             .putBoolean("autoHideArticleBottomBar", true)
             .putBoolean("buttonSkipAnswer", true)
