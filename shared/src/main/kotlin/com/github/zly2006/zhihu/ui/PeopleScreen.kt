@@ -735,26 +735,26 @@ fun PeopleScreen(
                                     }
                                 }
                             },
-                            onRecommendationBlockToggle = {
-                                coroutineScope.launch {
-                                    try {
-                                        viewModel.toggleRecommendationBlock(paginationEnvironment)
-                                        userMessages.showShortMessage(if (viewModel.isBlockedInRecommendations) "已屏蔽推荐" else "已取消屏蔽推荐")
-                                    } catch (e: Exception) {
-                                        userMessages.showShortMessage("操作失败: ${e.message}")
-                                    }
-                                }
-                            },
-                            onQuestionAuthorBlockToggle = {
-                                coroutineScope.launch {
-                                    try {
-                                        viewModel.toggleQuestionAuthorBlock(paginationEnvironment)
-                                        userMessages.showShortMessage(if (viewModel.isBlockedAsQuestionAuthor) "已屏蔽其提问" else "已取消屏蔽其提问")
-                                    } catch (e: Exception) {
-                                        userMessages.showShortMessage("操作失败: ${e.message}")
-                                    }
-                                }
-                            },
+                            // onRecommendationBlockToggle = {
+                            //     coroutineScope.launch {
+                            //         try {
+                            //             viewModel.toggleRecommendationBlock(paginationEnvironment)
+                            //             userMessages.showShortMessage(if (viewModel.isBlockedInRecommendations) "已屏蔽推荐" else "已取消屏蔽推荐")
+                            //         } catch (e: Exception) {
+                            //             userMessages.showShortMessage("操作失败: ${e.message}")
+                            //         }
+                            //     }
+                            // },
+                            // onQuestionAuthorBlockToggle = {
+                            //     coroutineScope.launch {
+                            //         try {
+                            //             viewModel.toggleQuestionAuthorBlock(paginationEnvironment)
+                            //             userMessages.showShortMessage(if (viewModel.isBlockedAsQuestionAuthor) "已屏蔽其提问" else "已取消屏蔽其提问")
+                            //         } catch (e: Exception) {
+                            //             userMessages.showShortMessage("操作失败: ${e.message}")
+                            //         }
+                            //     }
+                            // },
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors().copy(
@@ -1553,8 +1553,8 @@ private fun UserInfoHeader(
     modifier: Modifier = Modifier,
     onFollowToggle: () -> Unit,
     onBlockToggle: () -> Unit,
-    onRecommendationBlockToggle: () -> Unit,
-    onQuestionAuthorBlockToggle: () -> Unit,
+    // onRecommendationBlockToggle: () -> Unit,
+    // onQuestionAuthorBlockToggle: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     val openImagePreview = rememberImagePreviewOpener()
@@ -1687,18 +1687,18 @@ private fun UserInfoHeader(
             ) {
                 Text(if (viewModel.isBlocking) "取消拉黑" else "拉黑")
             }
-            OutlinedButton(
-                onClick = onRecommendationBlockToggle,
-                modifier = Modifier.testTag(PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG),
-            ) {
-                Text(if (viewModel.isBlockedInRecommendations) "取消屏蔽推荐" else "屏蔽推荐")
-            }
-            OutlinedButton(
-                onClick = onQuestionAuthorBlockToggle,
-                modifier = Modifier.testTag(PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG),
-            ) {
-                Text(if (viewModel.isBlockedAsQuestionAuthor) "取消屏蔽其提问" else "屏蔽其提问")
-            }
+            // OutlinedButton(
+            //     onClick = onRecommendationBlockToggle,
+            //     modifier = Modifier.testTag(PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG),
+            // ) {
+            //     Text(if (viewModel.isBlockedInRecommendations) "取消屏蔽推荐" else "屏蔽推荐")
+            // }
+            // OutlinedButton(
+            //     onClick = onQuestionAuthorBlockToggle,
+            //     modifier = Modifier.testTag(PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG),
+            // ) {
+            //     Text(if (viewModel.isBlockedAsQuestionAuthor) "取消屏蔽其提问" else "屏蔽其提问")
+            // }
         }
     }
 }
