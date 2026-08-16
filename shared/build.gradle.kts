@@ -3,19 +3,12 @@ import org.jlleitschuh.gradle.ktlint.tasks.GenerateReportsTask
 import org.jlleitschuh.gradle.ktlint.tasks.KtLintFormatTask
 
 plugins {
-    kotlin("multiplatform")
+    id("com.android.library")
     kotlin("plugin.compose")
     kotlin("plugin.serialization")
-    id("com.android.kotlin.multiplatform.library")
-    id("org.jetbrains.compose")
     id("org.jlleitschuh.gradle.ktlint")
 }
 
-// Force material3 to 1.10.0-alpha05 across all configurations.
-// 根因：material-kolor 在 commonMain 用 strictly 约束强制 1.10.0-alpha05，
-// 但该约束仅作用于 KMP 元数据配置，不会传播到 jvmMain/androidMain 平台配置。
-// 平台配置仍然从 Compose 插件解析到 1.9.0，导致 commonMain 代码（如 MyModalBottomSheet.kt）
-// 编译时用 1.10.0-alpha05 的 API，而平台编译时看到的是 1.9.0，产生 HIDDEN/invisible 编译错误。
 configurations.configureEach {
     resolutionStrategy {
         force("org.jetbrains.compose.material3:material3:1.10.0-alpha05")
@@ -46,14 +39,14 @@ tasks.withType<KtLintFormatTask>().configureEach {
 
 tasks
     .withType<GenerateReportsTask>()
-    .matching { it.name in setOf("ktlintAndroidMainSourceSetFormat", "ktlintJvmMainSourceSetFormat") }
+    .matching { it.name in setOf("ktlintMainSourceSetFormat", "ktlintTestSourceSetFormat") }
     .configureEach {
         enabled = false
     }
 
 mapOf(
-    "runKtlintFormatOverAndroidMainSourceSet" to "src/androidMain/kotlin",
-    "runKtlintFormatOverCommonMainSourceSet" to "src/commonMain/kotlin",
+    "runKtlintFormatOverMainSourceSet" to "src/main/kotlin",
+    "runKtlintFormatOverTestSourceSet" to "src/test/kotlin",
 ).forEach { (taskName, sourcePath) ->
     tasks.withType<KtLintFormatTask>().matching { it.name == taskName }.configureEach {
         setSource(
@@ -66,69 +59,107 @@ mapOf(
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
+        jvmTarget = JvmTarget.JVM_17
     }
+}
 
-    androidLibrary {
-        namespace = "com.github.zly2006.zhihu.shared"
-        compileSdk = 37
+android {
+    namespace = "com.github.zly2006.zhihu.shared"
+    compileSdk = 37
+
+    defaultConfig {
         minSdk = 27
+    }
 
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-        }
-        androidResources {
-            enable = true
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
+    }
+
+    kotlin {
+        jvmToolchain(17)
+    }
+
+    testOptions {
+        unitTests {
+            isReturnDefaultValues = true
         }
     }
 
-    sourceSets {
-        commonMain.dependencies {
-            api(project(":shared-local-db"))
-            implementation(compose.runtime)
-            implementation(compose.foundation)
-            implementation(compose.material3)
-            implementation(compose.materialIconsExtended)
-            implementation(compose.ui)
-            implementation(compose.components.resources)
-            implementation("io.coil-kt.coil3:coil-compose:3.5.0")
-            implementation("io.coil-kt.coil3:coil-network-core:3.5.0")
-            implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
-            implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-            implementation("io.ktor:ktor-client-core:3.5.0")
-            implementation("io.ktor:ktor-client-content-negotiation:3.5.0")
-            implementation("io.ktor:ktor-serialization-kotlinx-json:3.5.0")
-            implementation("com.materialkolor:material-kolor:4.1.1")
-            implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
-            implementation("io.github.zly2006:latex-renderer:0.0.1-alpha5")
-            implementation(project(":markdown-parser"))
-            implementation(project(":markdown-renderer"))
-            implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.1")
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-            implementation("com.mikepenz:aboutlibraries-compose-m3:15.0.0")
-        }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-            implementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
-            implementation("io.ktor:ktor-client-mock:3.5.0")
-        }
-        androidMain.dependencies {
-            implementation("androidx.activity:activity-compose:1.13.0")
-            implementation("androidx.browser:browser:1.10.0")
-            implementation("androidx.core:core-ktx:1.19.0")
-            implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
-            implementation("androidx.media:media:1.7.1")
-            implementation("androidx.webkit:webkit:1.16.0")
-            implementation("com.journeyapps:zxing-android-embedded:4.3.0")
-            implementation("com.google.zxing:core:3.5.4")
-            implementation("io.coil-kt.coil3:coil-gif:3.5.0")
-            implementation("io.coil-kt.coil3:coil-network-ktor3-android:3.5.0")
-            implementation("io.ktor:ktor-client-android:3.5.0")
-            implementation("me.saket.telephoto:zoomable-image-coil3:0.19.0")
-            implementation("org.jsoup:jsoup:1.22.2")
-        }
+    buildFeatures {
+        compose = true
     }
+
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.11.1"
+    }
+
+}
+
+val composeVersion = "1.11.1"
+val ktorVersion = "3.5.0"
+val coilVersion = "3.5.0"
+
+dependencies {
+    api(project(":shared-local-db"))
+    implementation(project(":markdown-parser"))
+    implementation(project(":markdown-renderer"))
+
+    // Compose
+    implementation("org.jetbrains.compose.runtime:runtime:$composeVersion")
+    implementation("org.jetbrains.compose.foundation:foundation:$composeVersion")
+    implementation("org.jetbrains.compose.material3:material3:1.10.0-alpha05")
+    implementation("org.jetbrains.compose.ui:ui:$composeVersion")
+    implementation("org.jetbrains.compose.ui:ui-graphics:$composeVersion")
+    implementation("org.jetbrains.compose.animation:animation:$composeVersion")
+    implementation("org.jetbrains.compose.animation:animation-core:$composeVersion")
+    implementation(platform("androidx.compose:compose-bom:2026.06.00"))
+    implementation("androidx.compose.material:material-icons-extended")
+    implementation("androidx.compose.ui:ui-tooling-preview")
+
+    // Kotlin
+    implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.1")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    // Ktor
+    implementation("io.ktor:ktor-client-core:$ktorVersion")
+    implementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    implementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
+    implementation("io.ktor:ktor-client-android:$ktorVersion")
+
+    // Other
+    implementation("com.materialkolor:material-kolor:4.1.1")
+    implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
+    implementation("io.coil-kt.coil3:coil-compose:$coilVersion")
+    implementation("io.coil-kt.coil3:coil-network-core:$coilVersion")
+    implementation("io.coil-kt.coil3:coil-network-ktor3-android:$coilVersion")
+    implementation("io.coil-kt.coil3:coil-gif:$coilVersion")
+    implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
+    implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")
+    implementation("com.mikepenz:aboutlibraries-compose-m3:15.0.0")
+    implementation("io.github.zly2006:latex-renderer-android:0.0.1-alpha5")
+
+    // Android-specific
+    implementation("androidx.activity:activity-compose:1.13.0")
+    implementation("androidx.browser:browser:1.10.0")
+    implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.lifecycle:lifecycle-livedata-ktx:2.11.0")
+    implementation("androidx.media:media:1.7.1")
+    implementation("androidx.webkit:webkit:1.16.0")
+    implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.4")
+    implementation("me.saket.telephoto:zoomable-image-coil3:0.19.0")
+    implementation("org.jsoup:jsoup:1.22.2")
+
+    // Test
+    testImplementation(kotlin("test"))
+    testImplementation("junit:junit:4.13.2")
+    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
+    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-cio:$ktorVersion")
+    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
+    testImplementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 }
