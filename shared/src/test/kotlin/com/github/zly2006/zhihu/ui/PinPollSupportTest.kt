@@ -61,49 +61,6 @@ class PinPollSupportTest {
         assertEquals(2, poll.options[1].votingCount)
     }
 
-    @Test
-    fun homeAnnouncementExtractionKeepsPollsAndZhihuPlusPlusTopics() {
-        val response = ZhihuJson.json
-            .parseToJsonElement(
-                """
-                {
-                  "data": [
-                    ${pinJson(id = "101", pollId = "poll-101", title = "第一个反馈投票")},
-                    ${pinJson(id = "102", pollId = "poll-102", title = "第二个反馈投票")},
-                    ${pinJson(id = "103", pollId = "poll-103", title = "已结束反馈投票", endAt = 1000)},
-                    ${pinJson(id = "104", pollId = "", topicId = ZHIHU_PLUS_TOPIC_ID, excerptTitle = "版本动态")},
-                    ${pinJson(id = "105", pollId = "", topicId = "other-topic")}
-                  ]
-                }
-                """.trimIndent(),
-            ).jsonObject
-
-        val announcements = decodeHomePinAnnouncements(response)
-
-        assertEquals(listOf(101L, 102L, 104L), announcements.map { it.pinId })
-        assertEquals(
-            listOf(HomePinAnnouncementKind.Poll, HomePinAnnouncementKind.Poll, HomePinAnnouncementKind.Topic),
-            announcements.map { it.kind },
-        )
-        assertEquals("第一个反馈投票", announcements.first().title)
-        assertEquals(2, announcements.first().optionCount)
-        assertEquals("版本动态", announcements.last().title)
-    }
-
-    @Test
-    fun topicAnnouncementUsesPlainTextBeforeHtmlDetails() {
-        val pin = decodePin(
-            pinJson(
-                id = "104",
-                pollId = "",
-                topicId = ZHIHU_PLUS_TOPIC_ID,
-                excerptTitle = "版本动态<br><p>详细内容</p>",
-            ),
-        )
-
-        assertEquals("版本动态", pin.toHomePinAnnouncement()?.title)
-    }
-
     private fun decodePin(json: String): DataHolder.Pin =
         ZhihuJson.decodeJson(ZhihuJson.json.parseToJsonElement(json).jsonObject)
 

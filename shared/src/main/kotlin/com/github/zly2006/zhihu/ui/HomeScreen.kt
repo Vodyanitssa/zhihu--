@@ -53,9 +53,7 @@ import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.MarkUnreadChatAlt
-import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
@@ -88,9 +86,7 @@ import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
-import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.github.zly2006.zhihu.data.DataHolder
@@ -100,30 +96,15 @@ import com.github.zly2006.zhihu.data.ZHIHU_ME_URL
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.ZhihuMeNotifications
 import com.github.zly2006.zhihu.data.target
-import com.github.zly2006.zhihu.navigation.Account
-import com.github.zly2006.zhihu.navigation.Article
-import com.github.zly2006.zhihu.navigation.ArticleType
 import com.github.zly2006.zhihu.navigation.LocalNavigator
-import com.github.zly2006.zhihu.navigation.Pin
 import com.github.zly2006.zhihu.navigation.Search
 import com.github.zly2006.zhihu.navigation.WritePin
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_OPEN_ANSWER
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_OPEN_ARTICLE
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_OPEN_PIN
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_OPEN_UPDATE_SETTINGS
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_OPEN_URL
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_ACTION_SET_SETTING
-import com.github.zly2006.zhihu.notification.HOME_NOTIFICATION_REFRESH_INTERVAL_MILLIS
-import com.github.zly2006.zhihu.notification.OnlineHomeNotification
-import com.github.zly2006.zhihu.notification.OnlineHomeNotificationRepository
 import com.github.zly2006.zhihu.notification.rememberNotificationSettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberAppPrivateDirectory
-import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
-import com.github.zly2006.zhihu.ui.components.AnnouncementCard
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
@@ -136,15 +117,12 @@ import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.topLevelReselectAction
-import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedInteractionViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.za.AndroidHomeFeedViewModel
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
 import kotlinx.io.files.Path
@@ -152,11 +130,6 @@ import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.io.writeString
 import kotlinx.serialization.json.Json
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.contentOrNull
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 const val PREFERENCE_NAME = "com.github.zly2006.zhihu_preferences"
 const val ARTICLE_USE_WEBVIEW_PREFERENCE_KEY = "webviewRenderLegacy"
@@ -171,21 +144,12 @@ const val HOME_NOTIFICATION_BUTTON_TAG = "home_notification_button"
 const val HOME_ACCOUNT_BUTTON_TAG = "home_account_button"
 const val HOME_FEED_LIST_TAG = "home_feed_list"
 const val HOME_REFRESH_BUTTON_TAG = "home_refresh_button"
-const val HOME_AUTHOR_POLL_ANNOUNCEMENT_TAG = "home_author_poll_announcement"
-const val HOME_ONLINE_NOTIFICATION_TAG = "home_online_notification"
-private const val MAX_HOME_PIN_ANNOUNCEMENTS = 3
-
-fun homeAuthorPollAnnouncementTag(pinId: Long): String = "$HOME_AUTHOR_POLL_ANNOUNCEMENT_TAG:$pinId"
-
-fun homeOnlineNotificationTag(uuid: String): String = "$HOME_ONLINE_NOTIFICATION_TAG:$uuid"
-
-fun homePinAnnouncementReadKey(pinId: Long): String = "readHomePinAnnouncement_$pinId"
 
 /**
  * 首页信息流页面。
  *
  * 页面顶部承载搜索、账号入口等高频操作，主体是可分页的推荐信息流，底部可按设置显示可拖动刷新 FAB。
- * 设计上首页同时响应推荐算法、更新公告、在线通知、作者动态和未读通知等状态，因此 UI 改动时要同时检查
+ * 设计上首页同时响应推荐算法、账号未读通知数等状态，因此 UI 改动时要同时检查
  * `recommendationMode`、`showRefreshFab` 和账号面板相关路径。
  */
 @OptIn(ExperimentalMaterial3Api::class)
@@ -201,7 +165,6 @@ fun HomeScreen(
     val appPrivateDirectory = rememberAppPrivateDirectory()
     val notificationSettings = rememberNotificationSettingsStore()
     val userMessages = rememberUserMessageSink()
-    val openExternalUrl = rememberExternalUrlOpener()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     val showRefreshFab = settings.getBoolean("showRefreshFab", true)
@@ -237,11 +200,6 @@ fun HomeScreen(
             },
         )
     }
-    val versionName = rememberAppVersionInfo().substringBefore(' ').takeIf { it.firstOrNull()?.isDigit() == true }
-    val onlineNotificationRepository = remember(settings) {
-        OnlineHomeNotificationRepository(settings)
-    }
-    var onlineNotifications by remember { mutableStateOf(emptyList<OnlineHomeNotification>()) }
     val isDebuggable = rememberHomeIsDebuggable()
 
     val viewModel: BaseFeedViewModel = when (currentRecommendationMode) {
@@ -254,8 +212,6 @@ fun HomeScreen(
         sourceId = readingQueueSourceId,
         items = viewModel.displayItems,
     )
-
-    var authorPinAnnouncements by remember { mutableStateOf(emptyList<HomePinAnnouncement>()) }
 
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
@@ -273,7 +229,7 @@ fun HomeScreen(
         cachedScrollToTopTrigger = scrollToTopTrigger
     }
 
-    // 通知 ViewModel
+    // 未读通知数
     var unreadCount by remember { mutableIntStateOf(0) }
     LaunchedEffect(Unit) {
         try {
@@ -328,46 +284,6 @@ fun HomeScreen(
             } else if (viewModel.displayItems.isEmpty()) {
                 // 只在第一次加载时刷新，这样可以避免在返回时刷新
                 viewModel.refresh(paginationEnvironment)
-            }
-        }
-    }
-
-    LaunchedEffect(lifecycleOwner, scrollToTopTrigger) {
-        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val loadedAnnouncements = try {
-                paginationEnvironment
-                    .fetchJson(ZHIHU_PLUS_AUTHOR_PINS_URL, "")
-                    ?.let(::decodeHomePinAnnouncements)
-                    ?.filterNot { settings.getBoolean(homePinAnnouncementReadKey(it.pinId), false) }
-                    ?.take(MAX_HOME_PIN_ANNOUNCEMENTS)
-            } catch (e: CancellationException) {
-                throw e
-            } catch (e: Exception) {
-                Log.e("HomeScreen", "Failed to load home pin announcements", e)
-                null
-            }
-            if (loadedAnnouncements != null) {
-                authorPinAnnouncements = loadedAnnouncements
-            }
-        }
-    }
-
-    LaunchedEffect(lifecycleOwner, paginationEnvironment, versionName) {
-        if (versionName != null) {
-            lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-                while (true) {
-                    try {
-                        onlineNotifications = onlineNotificationRepository.load(
-                            versionName = versionName,
-                            httpClient = paginationEnvironment.httpClient(),
-                        )
-                    } catch (e: CancellationException) {
-                        throw e
-                    } catch (e: Exception) {
-                        Log.e("HomeScreen", "Failed to load online notifications", e)
-                    }
-                    delay(HOME_NOTIFICATION_REFRESH_INTERVAL_MILLIS)
-                }
             }
         }
     }
@@ -505,120 +421,6 @@ fun HomeScreen(
                     onLoadMore = { viewModel.loadMore(paginationEnvironment) },
                     footer = ProgressIndicatorFooter,
                     key = { item -> item.stableKey },
-                    topContent = {
-                        onlineNotifications.forEach { notification ->
-                            val markRead = {
-                                onlineNotificationRepository.markRead(notification)
-                                onlineNotifications = onlineNotifications.filterNot { it.uuid == notification.uuid }
-                            }
-                            item(notification.uuid) {
-                                AnnouncementCard(
-                                    modifier = Modifier.testTag(homeOnlineNotificationTag(notification.uuid)),
-                                    visible = true,
-                                    title = notification.title,
-                                    leadingIcon = { Icon(Icons.Default.Notifications, contentDescription = null) },
-                                    content = notification.content,
-                                    accept = notification.accept?.let { accept ->
-                                        { Text(accept.text) }
-                                    },
-                                    onAccept = {
-                                        val accept = notification.accept
-                                        markRead()
-                                        when (accept?.key) {
-                                            HOME_NOTIFICATION_ACTION_OPEN_URL -> {
-                                                accept.value
-                                                    ?.jsonPrimitive
-                                                    ?.contentOrNull
-                                                    ?.let(openExternalUrl)
-                                            }
-                                            HOME_NOTIFICATION_ACTION_OPEN_UPDATE_SETTINGS -> {
-                                                navigator.onNavigate(Account.SystemAndUpdateSettings())
-                                            }
-                                            HOME_NOTIFICATION_ACTION_OPEN_PIN -> {
-                                                accept.value?.jsonPrimitive?.contentOrNull?.toLongOrNull()?.let {
-                                                    navigator.onNavigate(Pin(it))
-                                                }
-                                            }
-                                            HOME_NOTIFICATION_ACTION_OPEN_ANSWER -> {
-                                                accept.value?.jsonPrimitive?.contentOrNull?.toLongOrNull()?.let {
-                                                    navigator.onNavigate(Article(type = ArticleType.Answer, id = it))
-                                                }
-                                            }
-                                            HOME_NOTIFICATION_ACTION_OPEN_ARTICLE -> {
-                                                accept.value?.jsonPrimitive?.contentOrNull?.toLongOrNull()?.let {
-                                                    navigator.onNavigate(Article(type = ArticleType.Article, id = it))
-                                                }
-                                            }
-                                            HOME_NOTIFICATION_ACTION_SET_SETTING -> {
-                                                val setting = accept.value?.jsonObject
-                                                val name = setting?.get("setting_name")?.jsonPrimitive?.contentOrNull
-                                                when (setting?.get("value_type")?.jsonPrimitive?.contentOrNull) {
-                                                    "boolean" -> setting["value"]?.jsonPrimitive?.booleanOrNull?.let {
-                                                        settings.putBoolean(name!!, it)
-                                                    }
-                                                    "string" -> setting["value"]?.jsonPrimitive?.contentOrNull?.let {
-                                                        settings.putString(name!!, it)
-                                                    }
-                                                    "int" -> setting["value"]?.jsonPrimitive?.intOrNull?.let {
-                                                        settings.putInt(name!!, it)
-                                                    }
-                                                }
-                                            }
-                                            else -> userMessages.showShortMessage("当前版本不支持此通知操作")
-                                        }
-                                    },
-                                    dismiss = { Text(notification.dismiss) },
-                                    onDismiss = markRead,
-                                )
-                            }
-                        }
-                        authorPinAnnouncements.forEach { announcement ->
-                            item(announcement.pinId) {
-                                AnnouncementCard(
-                                    modifier = Modifier.testTag(homeAuthorPollAnnouncementTag(announcement.pinId)),
-                                    visible = true,
-                                    title = if (announcement.kind == HomePinAnnouncementKind.Poll) {
-                                        "请给未来的知乎++提出建议"
-                                    } else {
-                                        "知乎++新动态"
-                                    },
-                                    leadingIcon = { Icon(Icons.Default.Flag, contentDescription = null) },
-                                    content = buildString {
-                                        append(announcement.title)
-                                        val details = buildList {
-                                            if (announcement.optionCount > 0) {
-                                                add("${announcement.optionCount} 个选项")
-                                            }
-                                            if (announcement.memberCount > 0) {
-                                                add("${announcement.memberCount} 人已参与")
-                                            }
-                                        }
-                                        if (details.isNotEmpty()) {
-                                            append("\n")
-                                            append(details.joinToString(" · "))
-                                        }
-                                    },
-                                    accept = {
-                                        Text(if (announcement.kind == HomePinAnnouncementKind.Poll) "去投票" else "查看")
-                                    },
-                                    onAccept = {
-                                        settings.putBoolean(homePinAnnouncementReadKey(announcement.pinId), true)
-                                        authorPinAnnouncements = authorPinAnnouncements.filterNot {
-                                            it.pinId == announcement.pinId
-                                        }
-                                        navigator.onNavigate(Pin(announcement.pinId))
-                                    },
-                                    dismiss = { Text("关闭") },
-                                    onDismiss = {
-                                        settings.putBoolean(homePinAnnouncementReadKey(announcement.pinId), true)
-                                        authorPinAnnouncements = authorPinAnnouncements.filterNot {
-                                            it.pinId == announcement.pinId
-                                        }
-                                    },
-                                )
-                            }
-                        }
-                    },
                 ) { item ->
                     FeedCard(
                         item,

@@ -17,43 +17,8 @@
 
 package com.github.zly2006.zhihu.ui
 
-import com.fleeksoft.ksoup.Ksoup
 import com.github.zly2006.zhihu.data.DataHolder
-import com.github.zly2006.zhihu.data.ZhihuJson
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.jsonArray
-import kotlinx.serialization.json.jsonObject
 import kotlin.time.Clock
-
-const val ZHIHU_PLUS_AUTHOR_URL_TOKEN = "scanmenge"
-const val ZHIHU_PLUS_AUTHOR_PINS_URL = "https://www.zhihu.com/api/v4/v2/pins/$ZHIHU_PLUS_AUTHOR_URL_TOKEN/moments"
-const val ZHIHU_PLUS_TOPIC_ID = "2064846813258109867"
-
-enum class HomePinAnnouncementKind {
-    Poll,
-    Topic,
-}
-
-data class HomePinAnnouncement(
-    val pinId: Long,
-    val kind: HomePinAnnouncementKind,
-    val title: String,
-    val optionCount: Int,
-    val memberCount: Int,
-)
-
-internal fun decodeHomePinAnnouncements(
-    response: JsonObject,
-): List<HomePinAnnouncement> =
-    response["data"]
-        ?.jsonArray
-        ?.mapNotNull { item ->
-            val pin = runCatching {
-                ZhihuJson.decodeJson<DataHolder.Pin>(item.jsonObject)
-            }.getOrNull()
-            pin?.toHomePinAnnouncement()
-        }
-        ?: emptyList()
 
 internal fun DataHolder.Pin.withSelectedPinPollOption(
     pollId: String,
@@ -111,29 +76,4 @@ internal fun DataHolder.Pin.Poll.statusText(): String {
             append(validity)
         }
     }
-}
-
-internal fun DataHolder.Pin.toHomePinAnnouncement(): HomePinAnnouncement? {
-    val pinId = id.toLongOrNull() ?: return null
-    val poll = bottomPoll?.voting
-    if (poll != null && poll.acceptsVote() && !poll.isVoted) {
-        return HomePinAnnouncement(
-            pinId = pinId,
-            kind = HomePinAnnouncementKind.Poll,
-            title = poll.title.ifBlank { "想法投票" },
-            optionCount = poll.options.size,
-            memberCount = poll.memberCount,
-        )
-    }
-
-    if (topics.orEmpty().none { it.id == ZHIHU_PLUS_TOPIC_ID }) {
-        return null
-    }
-    return HomePinAnnouncement(
-        pinId = pinId,
-        kind = HomePinAnnouncementKind.Topic,
-        title = Ksoup.parse(excerptTitle.substringBefore("<br")).text().ifBlank { "知乎++新动态" },
-        optionCount = 0,
-        memberCount = 0,
-    )
 }
