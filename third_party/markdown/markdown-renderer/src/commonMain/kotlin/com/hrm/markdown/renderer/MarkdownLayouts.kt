@@ -280,7 +280,7 @@ internal fun estimateMarkdownBlockHeightDp(
     theme: MarkdownTheme,
 ): Float {
     val fontSize = theme.bodyStyle.fontSize.value.takeIf { it.isFinite() && it > 0f } ?: 16f
-    val lineHeight = theme.bodyStyle.lineHeight.value.takeIf { it.isFinite() && it > 0f } ?: fontSize * 1.5f
+    val lineHeight = theme.bodyStyle.lineHeight.value.takeIf { it.isFinite() && it > 0f } ?: (fontSize * 1.5f)
     val safeWidth = widthDp.coerceAtLeast(fontSize * 8f)
     return when (node) {
         is BlankLine, is FrontMatter, is LinkReferenceDefinition, is AbbreviationDefinition -> 0f

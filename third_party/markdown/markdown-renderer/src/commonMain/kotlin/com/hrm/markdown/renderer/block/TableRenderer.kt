@@ -78,7 +78,7 @@ private fun TableLayout(
     val theme = LocalMarkdownTheme.current
     val rows = remember(allRows) { allRows.map { it.first } }
     val fontSize = theme.bodyStyle.fontSize.value.takeIf { it.isFinite() && it > 0f } ?: 16f
-    val lineHeight = theme.bodyStyle.lineHeight.value.takeIf { it.isFinite() && it > 0f } ?: fontSize * 1.5f
+    val lineHeight = theme.bodyStyle.lineHeight.value.takeIf { it.isFinite() && it > 0f } ?: (fontSize * 1.5f)
     val horizontalPadding = theme.tableCellPadding.value * 2f
     val columnWidthsDp = remember(allRows, alignments, theme) {
         List(columnCount) { columnIndex ->

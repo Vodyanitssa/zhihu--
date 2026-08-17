@@ -65,7 +65,6 @@ import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
 import com.github.zly2006.zhihu.util.EmojiManager
 import com.github.zly2006.zhihu.util.Log
-import com.github.zly2006.zhihu.util.OpenInBrowser
 import com.github.zly2006.zhihu.util.createEmojiInlineContent
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
@@ -79,7 +78,6 @@ import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import org.jsoup.Jsoup
 import java.io.File
 
 data class PinLikeResult(
@@ -540,21 +538,6 @@ fun rememberArticleSpeechToggler(): (title: String, content: String) -> Unit {
                         }
                     }
                 }
-            }
-        }
-    }
-}
-
-@Composable
-fun rememberArticleBrowserOpener(): (Article) -> Unit {
-    val context = LocalContext.current.applicationContext
-    val coroutineScope = rememberCoroutineScope()
-    val userMessages = rememberUserMessageSink()
-    return remember(context, coroutineScope, userMessages) {
-        { article ->
-            coroutineScope.launch {
-                OpenInBrowser.openUrlInBrowser(context, article)
-                userMessages.showMessage("已发送到浏览器")
             }
         }
     }
