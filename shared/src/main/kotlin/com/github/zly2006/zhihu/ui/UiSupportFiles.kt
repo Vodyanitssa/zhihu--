@@ -62,8 +62,6 @@ import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.ui.ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY
-import com.github.zly2006.zhihu.ui.AnswerDoubleTapAction
 import com.github.zly2006.zhihu.ui.article.prepareContentDocument
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
@@ -179,9 +177,7 @@ class ArticleScreenSettingsState(
     pinAnswerDate: Boolean,
     buttonSkipAnswer: Boolean,
     autoHideSkipAnswerButton: Boolean,
-    answerDoubleTapAction: AnswerDoubleTapAction,
     useWebView: Boolean,
-    private val saveAnswerDoubleTapActionPreference: (AnswerDoubleTapAction) -> Unit,
 ) {
     var isTitleAutoHide by mutableStateOf(isTitleAutoHide)
     var autoHideArticleBottomBar by mutableStateOf(autoHideArticleBottomBar)
@@ -190,13 +186,7 @@ class ArticleScreenSettingsState(
     var pinAnswerDate by mutableStateOf(pinAnswerDate)
     var buttonSkipAnswer by mutableStateOf(buttonSkipAnswer)
     var autoHideSkipAnswerButton by mutableStateOf(autoHideSkipAnswerButton)
-    var answerDoubleTapAction by mutableStateOf(answerDoubleTapAction)
     var useWebView by mutableStateOf(useWebView)
-
-    fun saveAnswerDoubleTapAction(action: AnswerDoubleTapAction) {
-        answerDoubleTapAction = action
-        saveAnswerDoubleTapActionPreference(action)
-    }
 }
 
 /**
@@ -222,14 +212,7 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
             pinAnswerDate = settings.getBoolean("pinAnswerDate", false),
             buttonSkipAnswer = settings.getBoolean("buttonSkipAnswer", true),
             autoHideSkipAnswerButton = settings.getBoolean("autoHideSkipAnswerButton", true),
-            answerDoubleTapAction = settings.answerDoubleTapAction(),
             useWebView = settings.getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false),
-            saveAnswerDoubleTapActionPreference = { action ->
-                settings.putString(
-                    ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY,
-                    action.preferenceValue,
-                )
-            },
         )
     }
 
@@ -255,9 +238,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
 
                 "pinAnswerDate" -> state.pinAnswerDate = settings.getBoolean(key, false)
                 ARTICLE_USE_WEBVIEW_PREFERENCE_KEY -> state.useWebView = settings.getBoolean(key, false)
-                ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY -> {
-                    state.answerDoubleTapAction = settings.answerDoubleTapAction()
-                }
             }
         }
         onDispose(unregister)
@@ -265,14 +245,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
 
     return state
 }
-
-private fun SettingsStore.answerDoubleTapAction(): AnswerDoubleTapAction =
-    AnswerDoubleTapAction.fromPreference(
-        getString(
-            ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY,
-            AnswerDoubleTapAction.Ask.preferenceValue,
-        ),
-    )
 
 /** 过滤部分设备文本选择菜单中的非预期系统项。 */
 
@@ -626,11 +598,9 @@ fun ArticleWebViewContent(
     rememberedScrollYSync: Boolean,
     onRememberedScrollYSyncChange: (Boolean) -> Unit,
     onImageLoadFailed: () -> Unit,
-    onDoubleTap: () -> Unit,
 ) {
     val coroutineScope = rememberCoroutineScope()
     WebviewComp(
-        onDoubleTap = onDoubleTap,
         scrollState = scrollState,
     ) {
         it.isVerticalScrollBarEnabled = false

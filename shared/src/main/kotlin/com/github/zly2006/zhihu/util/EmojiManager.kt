@@ -62,7 +62,10 @@ object EmojiManager {
      */
     private fun loadEmojiMapping(context: Context) {
         val json = Json { ignoreUnknownKeys = true }
-        val mappingJson = context.assets.open(EMOJI_MAPPING_FILE).bufferedReader().use { it.readText() }
+        val mappingJson = context.assets
+            .open(EMOJI_MAPPING_FILE)
+            .bufferedReader()
+            .use { it.readText() }
         val mapping = json.decodeFromString<Map<String, String>>(mappingJson)
 
         emojiMapping.clear()

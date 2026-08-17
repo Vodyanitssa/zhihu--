@@ -114,7 +114,6 @@ fun ArticleActionsMenu(
     showMenu: Boolean,
     onDismissRequest: () -> Unit,
     onExportRequest: () -> Unit,
-    onSetImmersiveDoubleTap: () -> Unit = {},
 ) {
     val ttsState = rememberArticleTtsState()
     val toggleSpeech = rememberArticleSpeechToggler()
@@ -366,7 +365,6 @@ fun ArticleActionsMenu(
             text = "进入沉浸式",
             onClick = {
                 onDismissRequest()
-                onSetImmersiveDoubleTap()
             },
         )
 

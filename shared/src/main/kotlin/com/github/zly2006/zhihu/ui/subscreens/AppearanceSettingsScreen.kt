@@ -91,9 +91,7 @@ import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.theme.ThemeManager
 import com.github.zly2006.zhihu.theme.ThemeMode
-import com.github.zly2006.zhihu.ui.ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.ARTICLE_USE_WEBVIEW_PREFERENCE_KEY
-import com.github.zly2006.zhihu.ui.AnswerDoubleTapAction
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.ColorPickerDialog
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
@@ -114,7 +112,6 @@ const val PREF_FAB_OPACITY = "fabOpacity"
 const val DEFAULT_FAB_OPACITY = 100
 const val APPEARANCE_SETTINGS_SCROLL_TAG = "appearanceSettings.scroll"
 const val APPEARANCE_SETTINGS_START_DESTINATION_TAG = "appearanceSettings.startDestination"
-const val APPEARANCE_SETTINGS_ANSWER_DOUBLE_TAP_TAG = "appearanceSettings.answerDoubleTap"
 const val APPEARANCE_SETTINGS_ANSWER_SWITCH_SENSITIVITY_TAG = "appearanceSettings.answerSwitchSensitivity"
 const val APPEARANCE_SETTINGS_USE_WEBVIEW_TAG = "appearanceSettings.useWebView"
 const val APPEARANCE_SETTINGS_WEBVIEW_FONT_TAG = "appearanceSettings.webViewFont"
@@ -896,62 +893,6 @@ fun AppearanceSettingsScreen(
                         },
                     )
                 }
-
-                var answerDoubleTapExpanded by remember { mutableStateOf(false) }
-                val answerDoubleTapAction = remember {
-                    mutableStateOf(
-                        AnswerDoubleTapAction.fromPreference(
-                            settings.getString(
-                                ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY,
-                                AnswerDoubleTapAction.Ask.preferenceValue,
-                            ),
-                        ),
-                    )
-                }
-                SettingItem(
-                    title = { Text("双击回答动作") },
-                    description = { Text("双击回答正文时执行的动作。默认弹窗询问。") },
-                    settingKey = ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY,
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor(ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY),
-                    endAction = {
-                        ExposedDropdownMenuBox(
-                            expanded = answerDoubleTapExpanded,
-                            onExpandedChange = { answerDoubleTapExpanded = it },
-                        ) {
-                            OutlinedTextField(
-                                value = answerDoubleTapAction.value.label,
-                                onValueChange = {},
-                                readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = answerDoubleTapExpanded) },
-                                modifier = Modifier
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                    .width(160.dp)
-                                    .testTag(APPEARANCE_SETTINGS_ANSWER_DOUBLE_TAP_TAG),
-                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                            )
-                            ExposedDropdownMenu(
-                                expanded = answerDoubleTapExpanded,
-                                onDismissRequest = { answerDoubleTapExpanded = false },
-                            ) {
-                                AnswerDoubleTapAction.entries.forEach { action ->
-                                    DropdownMenuItem(
-                                        text = { Text(action.label) },
-                                        onClick = {
-                                            answerDoubleTapAction.value = action
-                                            settings.putString(
-                                                ANSWER_DOUBLE_TAP_ACTION_PREFERENCE_KEY,
-                                                action.preferenceValue,
-                                            )
-                                            answerDoubleTapExpanded = false
-                                            userMessages.showShortMessage("已设置为：${action.label}")
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    },
-                )
             }
 
             // ── 底部导航栏 ──────────────────────────────────────────────────────

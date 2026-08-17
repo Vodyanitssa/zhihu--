@@ -53,8 +53,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.platform.LocalViewConfiguration
-import androidx.compose.ui.platform.ViewConfiguration
 import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -232,26 +230,6 @@ fun RenderVideoBox(
     }
 }
 
-/**
- * 禁用谷歌的双击选择文字功能。
- *
- * 比较hack的做法，但目前没有更好的方案了。
- */
-@Composable
-private fun NoDoubleClickSelectionScope(content: @Composable () -> Unit) {
-    val current = LocalViewConfiguration.current
-    val patched =
-        remember(current) {
-            object : ViewConfiguration by current {
-                override val doubleTapTimeoutMillis: Long = 0L
-            }
-        }
-
-    CompositionLocalProvider(LocalViewConfiguration provides patched) {
-        content()
-    }
-}
-
 @Composable
 fun RenderMarkdown(
     html: String,
@@ -346,28 +324,26 @@ private fun RenderMarkdownDocument(
     ) {
         SegmentHighlightInteractionHost {
             Box(modifier = modifier) {
-                NoDoubleClickSelectionScope {
-                    Markdown(
-                        document = document,
-                        imageContent = { data, imageModifier ->
-                            RenderImage(
-                                data = data,
-                                modifier = imageModifier,
-                                imageUrls = previewImageUrls,
-                            )
-                        },
-                        scrollState = scrollState,
-                        enableScroll = enableScroll,
-                        enableSelection = selectable,
-                        onLinkClick = { url ->
-                            resolveContent(url)?.let { navigator.onNavigate(it) }
-                                ?: openExternalUrl(url)
-                        },
-                        header = header,
-                        footer = footer,
-                        theme = theme,
-                    )
-                }
+                Markdown(
+                    document = document,
+                    imageContent = { data, imageModifier ->
+                        RenderImage(
+                            data = data,
+                            modifier = imageModifier,
+                            imageUrls = previewImageUrls,
+                        )
+                    },
+                    scrollState = scrollState,
+                    enableScroll = enableScroll,
+                    enableSelection = selectable,
+                    onLinkClick = { url ->
+                        resolveContent(url)?.let { navigator.onNavigate(it) }
+                            ?: openExternalUrl(url)
+                    },
+                    header = header,
+                    footer = footer,
+                    theme = theme,
+                )
             }
         }
     }

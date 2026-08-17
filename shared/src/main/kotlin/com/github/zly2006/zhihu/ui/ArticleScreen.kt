@@ -25,7 +25,6 @@ import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.LocalBringIntoViewSpec
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -89,14 +88,11 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.res.painterResource
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -113,7 +109,6 @@ import com.github.zly2006.zhihu.navigation.Topic
 import com.github.zly2006.zhihu.platform.PlatformBackHandler
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.shared.R
-import com.github.zly2006.zhihu.ui.AnswerDoubleTapAction
 import com.github.zly2006.zhihu.ui.article.ArticleActionsMenu
 import com.github.zly2006.zhihu.ui.article.ArticleVideoAttachmentContent
 import com.github.zly2006.zhihu.ui.article.CachedAnswerPreview
@@ -129,7 +124,6 @@ import com.github.zly2006.zhihu.ui.components.CollectionDialogComponent
 import com.github.zly2006.zhihu.ui.components.CommentScreenComponent
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.ExportDialogComponent
-import com.github.zly2006.zhihu.ui.components.MyModalBottomSheet
 import com.github.zly2006.zhihu.ui.components.VerticalReadingProgressBar
 import com.github.zly2006.zhihu.ui.components.VotersSheet
 import com.github.zly2006.zhihu.ui.components.ZhihuTwoRowsTopAppBar
@@ -153,7 +147,7 @@ private val ScrollThresholdDp = SCROLL_THRESHOLD.dp
  *
  * 页面负责加载知乎回答或专栏文章，展示标题、作者、正文、附件视频、评论入口、分享/复制/朗读/浏览器打开等底部操作，
  * 正文主路径使用 Compose Markdown 渲染。回答页还承载同题回答切换手势和对应转场状态，因此改动时要同时关注
- * `answerSwitchMode`、`buttonSkipAnswer`、`autoHideArticleBottomBar`、`titleAutoHide`、`answerDoubleTapAction` 和
+ * `answerSwitchMode`、`buttonSkipAnswer`、`autoHideArticleBottomBar`、`titleAutoHide` 和
  * `ARTICLE_USE_WEBVIEW_PREFERENCE_KEY`。
  */
 @OptIn(
@@ -194,7 +188,6 @@ fun ArticleScreen(
     var showCollectionDialog by remember { mutableStateOf(false) }
     var showActionsMenu by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
-    var showDoubleTapActionDialog by remember { mutableStateOf(false) }
     var showVoters by rememberSaveable(article.type, article.id) { mutableStateOf(false) }
     val topBarState = rememberArticleTopBarState(
         scrollState = scrollState,
@@ -259,46 +252,6 @@ fun ArticleScreen(
             contentToken = article.id.toString(),
             contentTypeName = article.type.name.lowercase(),
         )
-    }
-
-    fun upVoteFromDoubleTap() {
-        hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-        if (viewModel.voteUpState != VoteUpState.Up) {
-            viewModel.toggleVoteUp(environment, VoteUpState.Up)
-        }
-    }
-
-    fun performAnswerDoubleTapAction(action: AnswerDoubleTapAction) {
-        when (action) {
-            AnswerDoubleTapAction.None -> Unit
-            AnswerDoubleTapAction.Ask -> showDoubleTapActionDialog = true
-            AnswerDoubleTapAction.VoteUp -> upVoteFromDoubleTap()
-            AnswerDoubleTapAction.OpenComments -> {
-                hapticFeedback.performHapticFeedback(HapticFeedbackType.Confirm)
-                showComments = true
-            }
-            AnswerDoubleTapAction.ToggleImmersive -> {
-                isImmersiveMode = !isImmersiveMode
-            }
-        }
-    }
-
-    fun handleAnswerDoubleTap() {
-        if (article.type != ArticleType.Answer) return
-        performAnswerDoubleTapAction(articleSettings.answerDoubleTapAction)
-    }
-
-    val answerDoubleTapModifier = if (
-        article.type == ArticleType.Answer &&
-        articleSettings.answerDoubleTapAction != AnswerDoubleTapAction.None
-    ) {
-        Modifier.pointerInput(articleSettings.answerDoubleTapAction) {
-            detectTapGestures(
-                onDoubleTap = { handleAnswerDoubleTap() },
-            )
-        }
-    } else {
-        Modifier
     }
 
     LaunchedEffect(scrollState) {
@@ -828,7 +781,6 @@ fun ArticleScreen(
                                     rememberedScrollYSync = viewModel.rememberedScrollYSync,
                                     onRememberedScrollYSyncChange = { viewModel.rememberedScrollYSync = it },
                                     onImageLoadFailed = { userMessages.showMessage("图片加载失败，请向开发者反馈") },
-                                    onDoubleTap = ::handleAnswerDoubleTap,
                                 )
                                 Column(
                                     modifier = Modifier.fillMaxWidth(),
@@ -898,7 +850,7 @@ fun ArticleScreen(
     val progressBarBottomPadding = WindowInsets.systemBars.asPaddingValues().calculateBottomPadding() + 96.dp
 
     Box(
-        modifier = Modifier.fillMaxSize().then(answerDoubleTapModifier),
+        modifier = Modifier.fillMaxSize(),
     ) {
         // 根据模式渲染
         if (article.type == ArticleType.Answer && articleSettings.answerSwitchMode == "vertical") {
@@ -995,12 +947,6 @@ fun ArticleScreen(
         showMenu = showActionsMenu,
         onDismissRequest = { showActionsMenu = false },
         onExportRequest = { showExportDialog = true },
-        onSetImmersiveDoubleTap = {
-            showActionsMenu = false
-            // 沉浸式模式下，按返回键优先退出沉浸式，不会直接退出回答
-            isImmersiveMode = !isImmersiveMode
-            userMessages.showMessage("已进入沉浸式，按返回键即可退出")
-        },
     )
 
     // 沉浸式模式下，返回键优先退出沉浸式
@@ -1048,72 +994,6 @@ fun ArticleScreen(
             navigator.onNavigate(person)
         },
     )
-    if (showDoubleTapActionDialog) {
-        MyModalBottomSheet(
-            onDismissRequest = { showDoubleTapActionDialog = false },
-        ) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(16.dp),
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text(
-                    text = "设置双击回答动作",
-                    style = MaterialTheme.typography.headlineSmall,
-                    fontWeight = FontWeight.Bold,
-                )
-                Text(
-                    text = "选择以后双击回答时默认执行的动作。选择后会立即保存到设置，你也可以稍后在设置中修改。",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Button(
-                    onClick = {
-                        showDoubleTapActionDialog = false
-                        articleSettings.saveAnswerDoubleTapAction(AnswerDoubleTapAction.None)
-                        userMessages.showMessage("已将双击回答动作设为：${AnswerDoubleTapAction.None.label}")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("设为无操作")
-                }
-                Button(
-                    onClick = {
-                        showDoubleTapActionDialog = false
-                        articleSettings.saveAnswerDoubleTapAction(AnswerDoubleTapAction.VoteUp)
-                        upVoteFromDoubleTap()
-                        userMessages.showMessage("已将双击回答动作设为：${AnswerDoubleTapAction.VoteUp.label}")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("设为点赞")
-                }
-                Button(
-                    onClick = {
-                        showDoubleTapActionDialog = false
-                        articleSettings.saveAnswerDoubleTapAction(AnswerDoubleTapAction.OpenComments)
-                        showComments = true
-                        userMessages.showMessage("已将双击回答动作设为：${AnswerDoubleTapAction.OpenComments.label}")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("设为打开评论区")
-                }
-                Button(
-                    onClick = {
-                        showDoubleTapActionDialog = false
-                        articleSettings.saveAnswerDoubleTapAction(AnswerDoubleTapAction.ToggleImmersive)
-                        isImmersiveMode = !isImmersiveMode
-                        userMessages.showMessage("已将双击回答动作设为：${AnswerDoubleTapAction.ToggleImmersive.label}")
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text("设为开关沉浸式")
-                }
-            }
-        }
-    }
     // 导出对话框
     ExportDialogComponent(
         showDialog = showExportDialog,
