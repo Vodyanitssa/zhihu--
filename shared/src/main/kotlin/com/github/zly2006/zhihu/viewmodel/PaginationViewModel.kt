@@ -28,6 +28,7 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
+import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -120,7 +121,6 @@ import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -715,6 +715,7 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleFetchFailure(
         tag: String?,
         error: Exception,
@@ -732,6 +733,7 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleMobileHomeFeedFailure(error: Exception) {
         Log.e("AndroidHomeFeedViewModel", "Failed to fetch feeds", error)
         context.mainExecutor.execute {
@@ -949,6 +951,7 @@ open class SharedAndroidPaginationEnvironment(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleCollectionExportFailure(error: Exception) {
         Log.e("CollectionContentViewModel", "Failed to export collection HTML zip", error)
         context.mainExecutor.execute {
@@ -980,6 +983,7 @@ open class SharedAndroidPaginationEnvironment(
         )
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun tryShowLoginExpiredDialog(error: HttpStatusException): Boolean {
         try {
             val body = json.parseToJsonElement(error.bodyText).jsonObject
@@ -1006,6 +1010,7 @@ open class SharedAndroidPaginationEnvironment(
         return false
     }
 
+    @RequiresApi(Build.VERSION_CODES.P)
     private fun showDebugErrorDialog(error: HttpStatusException) {
         context.mainExecutor.execute {
             if (context.canSafelyShowDialog()) {

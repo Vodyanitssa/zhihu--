@@ -50,7 +50,6 @@ import com.github.zly2006.zhihu.util.prepareArticleExportComment
 import com.github.zly2006.zhihu.util.twoDigitString
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
-import io.ktor.client.request.get
 import io.ktor.client.request.put
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType

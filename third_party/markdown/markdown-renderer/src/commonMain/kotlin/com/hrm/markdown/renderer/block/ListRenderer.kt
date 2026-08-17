@@ -19,9 +19,8 @@ import androidx.compose.ui.unit.dp
 import com.hrm.markdown.parser.ast.BlankLine
 import com.hrm.markdown.parser.ast.ListBlock
 import com.hrm.markdown.parser.ast.ListItem
-import com.hrm.markdown.parser.ast.Paragraph
-import com.hrm.markdown.renderer.LocalMarkdownTheme
 import com.hrm.markdown.renderer.DeferredMarkdownColumn
+import com.hrm.markdown.renderer.LocalMarkdownTheme
 
 /**
  * 列表渲染器（有序/无序列表）。

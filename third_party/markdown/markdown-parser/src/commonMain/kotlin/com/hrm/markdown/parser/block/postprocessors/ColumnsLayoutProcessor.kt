@@ -89,11 +89,6 @@ class ColumnsLayoutProcessor : PostProcessor {
                 }
                 foundColumn = true
 
-                // 处理之前的 column 容器（如果有的话）
-                if (currentColumnContainer != null) {
-                    // 这不应该在同一层级发生，但以防万一
-                }
-
                 // 当前 column 容器的直接内容（非 column 子节点）作为该列内容
                 val colItem = ColumnItem(width = extractWidth(child))
                 colItem.lineRange = child.lineRange

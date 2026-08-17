@@ -415,21 +415,6 @@ class PersonViewModel(
         }
     }
 
-    suspend fun toggleQuestionAuthorBlock(environment: ContentBlocklistEnvironment) {
-        if (isBlockedAsQuestionAuthor) {
-            environment.removeBlockedQuestionAuthor(person.id)
-            isBlockedAsQuestionAuthor = false
-        } else {
-            environment.addBlockedQuestionAuthor(
-                userId = person.id,
-                userName = name,
-                urlToken = person.urlToken,
-                avatarUrl = avatar,
-            )
-            isBlockedAsQuestionAuthor = true
-        }
-    }
-
     suspend fun load(environment: ProfileLoadEnvironment) {
         environment.addReadHistory(person.id, "profile")
 
@@ -573,8 +558,6 @@ const val PEOPLE_SCREEN_FOLLOWER_COUNT_TAG = "people_screen_stat_followers"
 const val PEOPLE_SCREEN_FOLLOWING_COUNT_TAG = "people_screen_stat_following"
 const val PEOPLE_SCREEN_FOLLOW_BUTTON_TAG = "people_screen_follow_button"
 const val PEOPLE_SCREEN_BLOCK_BUTTON_TAG = "people_screen_block_button"
-const val PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG = "people_screen_recommendation_block_button"
-const val PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG = "people_screen_question_author_block_button"
 const val PEOPLE_SCREEN_SEARCH_BUTTON_TAG = "people_screen_search_button"
 const val PEOPLE_SCREEN_GITHUB_STARS_TAG = "people_screen_github_stars"
 const val PEOPLE_SCREEN_ANSWER_SORT_HOT_TAG = "people_screen_answer_sort_voteups"

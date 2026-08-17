@@ -20,7 +20,6 @@ package com.github.zly2006.zhihu.util
 import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.github.zly2006.zhihu.data.DataHolder
-import com.github.zly2006.zhihu.util.twoDigitString
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
@@ -319,7 +318,7 @@ suspend fun fetchArticleExportImageDataUrl(
         imageUrl = imageUrl,
         imageBytes = bytes,
     )
-    return "data:$mimeType;base64,${Base64.Default.encode(bytes)}"
+    return "data:$mimeType;base64,${Base64.encode(bytes)}"
 }
 
 fun resolveArticleExportImageMimeType(

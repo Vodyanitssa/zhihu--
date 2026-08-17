@@ -18,8 +18,6 @@ issue #495 的性能修复不会拆分 HTML 或构造不完整 AST。Zhihu++ 仍
 
 vendored renderer 继续使用 1.2.9 分支的原生 Compose `SelectionContainer`，没有带入实验工作树中仍有 issue 的自定义选择实现。脚注实现恢复自[上游 PR #15](https://github.com/huarangmeng/Markdown/pull/15)，并仅按其评论中的方案增加 1px 宽度补偿，修复 Android AVD 上的舍入裁切；视口懒布局还会在脚注跳转时临时物化目标定义或引用，完成 `bringIntoView` 后再恢复常规回收策略。
 
-完整的阶段计时、错误复盘、被拒绝方案和最终验证结果见 [`docs/markdown-issue-495-performance-report.md`](../../docs/markdown-issue-495-performance-report.md)。
-
 三个模块的 `build.gradle.kts` 是接入当前 Zhihu++ Kotlin/Compose 工程所需的宿主构建适配，不属于上游生产源码快照。更新内置库时必须重新核对实际应用基线、逐文件审查生产源码差异，并禁止把实验工作树或上游新版本整体覆盖进来。
 
 可在仓库根目录重新计算生产源码清单摘要：

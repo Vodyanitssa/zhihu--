@@ -114,7 +114,6 @@ import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonArray
 
 @Serializable

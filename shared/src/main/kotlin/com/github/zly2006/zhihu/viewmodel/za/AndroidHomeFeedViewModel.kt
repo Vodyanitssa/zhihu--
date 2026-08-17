@@ -48,7 +48,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonArray
@@ -163,7 +162,7 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
         ?.let { encoded ->
             runCatching {
                 ZhihuJson.decodeJson<MobileHomeOriginalContent>(
-                    ZhihuJson.json.parseToJsonElement(Base64.Default.decode(encoded).decodeToString()),
+                    ZhihuJson.json.parseToJsonElement(Base64.decode(encoded).decodeToString()),
                 )
             }.getOrNull()
         }

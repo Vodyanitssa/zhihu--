@@ -570,7 +570,7 @@ private fun hmacSha1Base64(secret: String, message: String): String {
         innerPad[index] = (keyBlock[index].toInt() xor 0x36).toByte()
     }
 
-    return Base64.Default.encode(sha1(outerPad + sha1(innerPad + message.encodeToByteArray())))
+    return Base64.encode(sha1(outerPad + sha1(innerPad + message.encodeToByteArray())))
 }
 
 private fun sha1(input: ByteArray): ByteArray {

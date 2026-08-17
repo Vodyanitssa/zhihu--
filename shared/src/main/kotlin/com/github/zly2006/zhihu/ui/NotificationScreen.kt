@@ -55,10 +55,8 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -92,7 +90,6 @@ import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.util.formatRelativeTime
 import com.github.zly2006.zhihu.viewmodel.MobileNotificationCategory
-import com.github.zly2006.zhihu.viewmodel.NotificationEnvironment
 import com.github.zly2006.zhihu.viewmodel.NotificationViewModel
 import com.github.zly2006.zhihu.viewmodel.SharedAndroidNotificationEnvironment
 import kotlinx.coroutines.launch

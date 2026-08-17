@@ -35,7 +35,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.github.zly2006.zhihu.platform.androidSettingsStore
-import com.github.zly2006.zhihu.theme.ThemeMode
 import com.materialkolor.dynamicColorScheme
 
 private val DarkColorScheme = darkColorScheme(

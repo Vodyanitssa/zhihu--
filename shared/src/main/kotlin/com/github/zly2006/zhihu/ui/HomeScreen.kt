@@ -116,7 +116,6 @@ import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FAB_OPACITY
-import com.github.zly2006.zhihu.ui.topLevelReselectAction
 import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedInteractionViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedViewModel
@@ -140,7 +139,6 @@ const val HOME_CREATE_MENU_TAG = "home_create_menu"
 const val HOME_WRITE_QUESTION_BUTTON_TAG = "home_write_question_button"
 const val HOME_WRITE_ANSWER_BUTTON_TAG = "home_write_answer_button"
 const val HOME_WRITE_PIN_BUTTON_TAG = "home_write_pin_button"
-const val HOME_NOTIFICATION_BUTTON_TAG = "home_notification_button"
 const val HOME_ACCOUNT_BUTTON_TAG = "home_account_button"
 const val HOME_FEED_LIST_TAG = "home_feed_list"
 const val HOME_REFRESH_BUTTON_TAG = "home_refresh_button"

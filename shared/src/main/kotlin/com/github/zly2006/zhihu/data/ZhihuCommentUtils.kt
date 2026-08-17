@@ -17,8 +17,6 @@
 
 package com.github.zly2006.zhihu.data
 
-import com.github.zly2006.zhihu.data.DataHolder
-import com.github.zly2006.zhihu.data.ZhihuJson
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonArray
 import com.github.zly2006.zhihu.viewmodel.comment.CommentSortOrder as CommentSortOrderImpl

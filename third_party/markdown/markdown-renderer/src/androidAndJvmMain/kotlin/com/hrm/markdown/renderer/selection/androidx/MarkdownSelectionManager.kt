@@ -1303,7 +1303,7 @@ internal fun calculateMarkdownSelectionMagnifierCenterAndroid(
 ): Offset {
     val selection = manager.selection ?: return Offset.Unspecified
     return when (manager.draggingHandle) {
-        null -> return Offset.Unspecified
+        null -> Offset.Unspecified
         Handle.SelectionStart -> getMagnifierCenter(manager, magnifierSize, selection.start)
         Handle.SelectionEnd -> getMagnifierCenter(manager, magnifierSize, selection.end)
         Handle.Cursor -> error("SelectionContainer does not support cursor")

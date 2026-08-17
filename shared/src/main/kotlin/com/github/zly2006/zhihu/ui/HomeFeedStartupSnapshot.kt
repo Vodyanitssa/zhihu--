@@ -21,8 +21,6 @@ import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.RecommendationMode
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.util.Log
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 const val AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY = "autoRefreshHomeOnStartup"
 const val LEGACY_HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"

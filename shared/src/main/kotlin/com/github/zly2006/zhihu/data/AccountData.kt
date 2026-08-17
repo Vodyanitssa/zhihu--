@@ -32,9 +32,6 @@ import com.github.zly2006.zhihu.account.ZhihuAccountSession
 import com.github.zly2006.zhihu.account.ZhihuAccountSessionStore
 import com.github.zly2006.zhihu.account.ZhihuIdentityClient
 import com.github.zly2006.zhihu.account.ZhihuMobileLoginToken
-import com.github.zly2006.zhihu.data.Person
-import com.github.zly2006.zhihu.data.ZhihuJson
-import com.github.zly2006.zhihu.data.installZhihuCommonClientConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -127,14 +124,6 @@ object AccountData {
         HttpClient(engine) {
             applyCommonConfiguration(context, cookies, onCookieChanged)
         }
-    }
-
-    @Synchronized
-    fun overrideHttpClientFactoryForTesting(factory: ((Context, MutableMap<String, String>?) -> HttpClient)?) {
-        accountClient?.invalidateHttpClient()
-        accountClient = null
-        observedLifecycleClient = null
-        httpClientFactoryOverride = factory
     }
 
     fun httpClient(context: Context, cookies: MutableMap<String, String>? = null): HttpClient {

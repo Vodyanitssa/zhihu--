@@ -17,9 +17,6 @@
 
 package com.github.zly2006.zhihu.util
 
-import com.github.zly2006.zhihu.util.Log
-import com.github.zly2006.zhihu.util.ZseSigner
-import com.github.zly2006.zhihu.util.raiseForStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.cookies.HttpCookies

@@ -15,7 +15,6 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.hrm.markdown.parser.ast.Admonition
-import com.hrm.markdown.renderer.AdmonitionStyle
 import com.hrm.markdown.renderer.LocalMarkdownTheme
 import com.hrm.markdown.renderer.MarkdownBlockChildren
 

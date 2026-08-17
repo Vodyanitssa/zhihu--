@@ -82,8 +82,6 @@ import com.github.zly2006.zhihu.data.DailySection
 import com.github.zly2006.zhihu.data.DailyStory
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.navigation.resolveContent
-import com.github.zly2006.zhihu.ui.TopLevelReselectAction
-import com.github.zly2006.zhihu.ui.topLevelReselectAction
 import com.github.zly2006.zhihu.util.formatDailyDate
 import com.github.zly2006.zhihu.util.twoDigitString
 import com.github.zly2006.zhihu.viewmodel.DailyViewModel

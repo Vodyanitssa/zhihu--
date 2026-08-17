@@ -44,7 +44,6 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
-import kotlinx.serialization.encodeToString
 import kotlinx.serialization.json.Json
 import kotlin.time.Clock
 import kotlin.time.Instant
@@ -645,9 +644,6 @@ object ReadingQueueSourceRegistry {
             .take(safeLimit)
     }
 
-    internal fun clearForTesting() {
-        sources.clear()
-    }
 }
 
 @Composable

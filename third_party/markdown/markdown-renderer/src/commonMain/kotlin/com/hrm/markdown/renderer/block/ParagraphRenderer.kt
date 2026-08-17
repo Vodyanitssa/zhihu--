@@ -2,12 +2,11 @@ package com.hrm.markdown.renderer.block
 
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.text.BasicText
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
@@ -22,6 +21,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.text.rememberTextMeasurer
 import androidx.compose.ui.unit.dp
 import com.hrm.codehigh.theme.LocalCodeTheme
+import com.hrm.latex.renderer.LocalLatexRenderCache
 import com.hrm.markdown.parser.ast.Image
 import com.hrm.markdown.parser.ast.Node
 import com.hrm.markdown.parser.ast.Paragraph
@@ -35,15 +35,14 @@ import com.hrm.markdown.renderer.LocalOnFootnoteClick
 import com.hrm.markdown.renderer.LocalOnLinkClick
 import com.hrm.markdown.renderer.LocalOnSegmentHighlightClick
 import com.hrm.markdown.renderer.MarkdownImageData
-import com.hrm.markdown.renderer.markdownInlineTaps
-import com.hrm.markdown.renderer.segmentHighlightsByKey
-import com.hrm.latex.renderer.LocalLatexRenderCache
-import com.hrm.markdown.renderer.inline.buildInlineAnnotatedString
-import com.hrm.markdown.renderer.inline.InlineFlowText
 import com.hrm.markdown.renderer.inline.InlineContentEntry
+import com.hrm.markdown.renderer.inline.InlineFlowText
 import com.hrm.markdown.renderer.inline.SEGMENT_HIGHLIGHT_ANNOTATION_TAG
+import com.hrm.markdown.renderer.inline.buildInlineAnnotatedString
 import com.hrm.markdown.renderer.inline.inlineMathDimensionsKey
 import com.hrm.markdown.renderer.inline.rememberInlineContent
+import com.hrm.markdown.renderer.markdownInlineTaps
+import com.hrm.markdown.renderer.segmentHighlightsByKey
 
 /**
  * 段落渲染器。

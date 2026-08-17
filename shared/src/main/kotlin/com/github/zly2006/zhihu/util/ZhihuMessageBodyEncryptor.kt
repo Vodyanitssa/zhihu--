@@ -44,7 +44,7 @@ internal object ZhihuMessageBodyEncryptor {
                 encrypted[offset + index] = swapPairs(value).toByte()
             }
         }
-        return Base64.Default.encode(encrypted)
+        return Base64.encode(encrypted)
     }
 
     private fun encryptBlock(block: ByteArray): ByteArray {
@@ -100,7 +100,7 @@ internal object ZhihuMessageBodyEncryptor {
         ((value and 0x55) shl 1) or ((value and 0xaa) ushr 1)
 
     private val protocolData by lazy {
-        Base64.Default.decode(PROTOCOL_DATA.filterNot(Char::isWhitespace))
+        Base64.decode(PROTOCOL_DATA.filterNot(Char::isWhitespace))
     }
     private val roundKeys by lazy { protocolData.copyOfRange(0, 176) }
     private val x0 by lazy { protocolData.copyOfRange(176, 432) }

@@ -56,8 +56,6 @@ import com.github.zly2006.zhihu.theme.Typography
 import com.github.zly2006.zhihu.ui.CommentScreen
 import com.github.zly2006.zhihu.ui.rememberArticleHost
 import com.github.zly2006.zhihu.viewmodel.CommentItem
-import kotlinx.serialization.decodeFromString
-import kotlinx.serialization.encodeToString
 
 /**
  * 最好不要在 if 或者其他条件语句中使用，这会导致本组件内部状态丢失。

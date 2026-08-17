@@ -81,7 +81,6 @@ import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
-import com.github.zly2006.zhihu.ui.TopLevelReselectAction
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
@@ -92,7 +91,6 @@ import com.github.zly2006.zhihu.ui.components.NoOpPagerNestedScrollConnection
 import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.ui.components.rememberNestedHorizontalPagerConnection
-import com.github.zly2006.zhihu.ui.topLevelReselectAction
 import com.github.zly2006.zhihu.viewmodel.feed.FollowRecommendViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.FollowViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.RecentMomentsViewModel
@@ -127,34 +125,6 @@ fun FollowScreen(
     scrollToTopTrigger = scrollToTopTrigger,
     innerPadding = innerPadding,
     parentPagerState = parentPagerState,
-    onTestRecommendRefreshClick = null,
-    onTestRecommendLoadMore = null,
-    onTestDynamicRefreshClick = null,
-    onTestDynamicLoadMore = null,
-)
-
-/**
- * 关注页的测试入口。
- *
- * 与生产入口使用同一套 UI 内容，但允许测试注入刷新和加载更多回调，避免 instrumentation 测试依赖真实网络或分页状态。
- */
-@Composable
-fun FollowScreen(
-    scrollToTopTrigger: Int = 0,
-    innerPadding: PaddingValues,
-    parentPagerState: PagerState,
-    onTestRecommendRefreshClick: (() -> Unit)?,
-    onTestRecommendLoadMore: (() -> Unit)?,
-    onTestDynamicRefreshClick: (() -> Unit)?,
-    onTestDynamicLoadMore: (() -> Unit)?,
-): Unit = FollowScreenContent(
-    scrollToTopTrigger = scrollToTopTrigger,
-    innerPadding = innerPadding,
-    parentPagerState = parentPagerState,
-    onTestRecommendRefreshClick = onTestRecommendRefreshClick,
-    onTestRecommendLoadMore = onTestRecommendLoadMore,
-    onTestDynamicRefreshClick = onTestDynamicRefreshClick,
-    onTestDynamicLoadMore = onTestDynamicLoadMore,
 )
 
 /**
@@ -169,10 +139,6 @@ private fun FollowScreenContent(
     scrollToTopTrigger: Int = 0,
     innerPadding: PaddingValues = PaddingValues(0.dp),
     parentPagerState: PagerState,
-    onTestRecommendRefreshClick: (() -> Unit)? = null,
-    onTestRecommendLoadMore: (() -> Unit)? = null,
-    onTestDynamicRefreshClick: (() -> Unit)? = null,
-    onTestDynamicLoadMore: (() -> Unit)? = null,
 ) {
     val viewModel = viewModel { FollowScreenData() }
     val titles = listOf("推荐", "动态")
@@ -218,15 +184,11 @@ private fun FollowScreenContent(
                 0 -> FollowRecommendScreen(
                     scrollToTopTrigger = scrollToTopTrigger,
                     isActive = pagerState.currentPage == 0,
-                    onTestRefreshClick = onTestRecommendRefreshClick,
-                    onTestLoadMore = onTestRecommendLoadMore,
                 )
 
                 1 -> FollowDynamicScreen(
                     scrollToTopTrigger = scrollToTopTrigger,
                     isActive = pagerState.currentPage == 1,
-                    onTestRefreshClick = onTestDynamicRefreshClick,
-                    onTestLoadMore = onTestDynamicLoadMore,
                 )
             }
         }

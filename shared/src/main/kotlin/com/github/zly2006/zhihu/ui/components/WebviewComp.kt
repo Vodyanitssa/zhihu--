@@ -31,7 +31,6 @@ import android.util.Log
 import android.view.ActionMode
 import android.view.Menu
 import android.view.MenuItem
-import android.view.MotionEvent
 import android.view.View
 import android.view.ViewGroup
 import android.webkit.ConsoleMessage
@@ -551,11 +550,6 @@ fun WebView.setupUpWebviewClient(onPageFinished: ((String) -> Unit)? = null) {
                 url.contains(".svg", true)
             ) {
                 Log.i("WebView-Image", "Loading image: $url")
-            }
-
-            if (request.url.host == "www.zhihu.com" && request.url.path == "/equation") {
-                if (ThemeManager.isDarkTheme) {
-                }
             }
 
             return assetLoader.shouldInterceptRequest(request.url)
