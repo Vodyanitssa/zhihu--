@@ -1,9 +1,8 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
-    kotlin("multiplatform")
+    id("com.android.library")
     kotlin("plugin.serialization")
-    id("com.android.kotlin.multiplatform.library")
     id("com.google.devtools.ksp")
     id("org.jlleitschuh.gradle.ktlint")
 }
@@ -29,31 +28,33 @@ ksp {
 
 kotlin {
     compilerOptions {
-        freeCompilerArgs.add("-Xexpect-actual-classes")
+        jvmTarget = JvmTarget.JVM_17
+    }
+}
+
+android {
+    namespace = "com.github.zly2006.zhihu.shared.localdb"
+    compileSdk = 37
+
+    compileOptions {
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
 
-    androidLibrary {
-        namespace = "com.github.zly2006.zhihu.shared.localdb"
-        compileSdk = 37
+    kotlin {
+        jvmToolchain(17)
+    }
+
+    defaultConfig {
         minSdk = 27
-
-        compilerOptions {
-            jvmTarget = JvmTarget.JVM_17
-        }
-    }
-
-    sourceSets {
-        commonMain.dependencies {
-            api("androidx.room:room-runtime:2.8.4")
-            api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
-            implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
-        }
-        commonTest.dependencies {
-            implementation(kotlin("test"))
-        }
     }
 }
 
 dependencies {
-    add("kspAndroid", "androidx.room:room-compiler:2.8.4")
+    api("androidx.room:room-runtime:2.8.4")
+    api("androidx.room:room-ktx:2.8.4")
+    api("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.11.0")
+
+    ksp("androidx.room:room-compiler:2.8.4")
 }

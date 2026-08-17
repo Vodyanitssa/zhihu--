@@ -17,11 +17,11 @@
 
 package com.github.zly2006.zhihu.viewmodel.filter
 
-import androidx.room.ConstructedBy
+import android.content.Context
 import androidx.room.Database
+import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.room.RoomDatabase.Builder
-import androidx.room.RoomDatabaseConstructor
 import com.github.zly2006.zhihu.data.applyPlatformDriver
 import kotlinx.coroutines.Dispatchers
 
@@ -30,7 +30,6 @@ import kotlinx.coroutines.Dispatchers
     version = 1,
     exportSchema = false,
 )
-@ConstructedBy(ContentFilterDatabaseConstructor::class)
 abstract class ContentFilterDatabase : RoomDatabase() {
     abstract fun contentFilterDao(): ContentFilterDao
 
@@ -47,12 +46,27 @@ abstract class ContentFilterDatabase : RoomDatabase() {
     abstract fun blockedFeedRecordDao(): BlockedFeedRecordDao
 }
 
-@Suppress("NO_ACTUAL_FOR_EXPECT")
-expect object ContentFilterDatabaseConstructor : RoomDatabaseConstructor<ContentFilterDatabase> {
-    override fun initialize(): ContentFilterDatabase
-}
+private const val CONTENT_FILTER_DATABASE_NAME = "content_filter_database"
 
-expect fun getContentFilterDatabase(): ContentFilterDatabase
+@Volatile
+private var contentFilterDatabase: ContentFilterDatabase? = null
+
+fun getContentFilterDatabase(context: Context): ContentFilterDatabase =
+    contentFilterDatabase ?: synchronized(ContentFilterDatabase::class) {
+        contentFilterDatabase ?: buildContentFilterDatabase(
+            Room.databaseBuilder(
+                context.applicationContext,
+                ContentFilterDatabase::class.java,
+                CONTENT_FILTER_DATABASE_NAME,
+            ),
+        ).also {
+            contentFilterDatabase = it
+        }
+    }
+
+fun getContentFilterDatabase(): ContentFilterDatabase =
+    contentFilterDatabase
+        ?: error("Content filter database is not initialized")
 
 fun buildContentFilterDatabase(
     builder: Builder<ContentFilterDatabase>,
