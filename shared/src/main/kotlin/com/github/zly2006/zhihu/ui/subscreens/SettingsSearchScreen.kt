@@ -53,7 +53,6 @@ import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.navigation.Notification
 import com.github.zly2006.zhihu.notification.NotificationType
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
-import com.github.zly2006.zhihu.ui.ARTICLE_USE_WEBVIEW_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 
@@ -157,7 +156,6 @@ private val settingsSearchEntries = buildList {
     add(appearanceEntry("appearance.showFeedThumbnail", "显示 Feed 卡片缩略图", "控制信息流卡片图片显示。", "showFeedThumbnail", listOf("图片", "封面")))
     add(appearanceEntry("appearance.showRefreshFab", "显示刷新 FAB 按钮", "控制首页和列表的浮动刷新按钮。", "showRefreshFab", listOf("刷新按钮", "浮动按钮")))
     add(appearanceEntry("appearance.feedCardStyle", "信息流样式", "切换卡片或分割线样式。", "feedCardStyle", listOf("Feed", "列表样式", "卡片样式", "分割线")))
-    add(appearanceEntry("appearance.webviewRender", "使用 WebView 显示文章", "切换文章、回答、想法正文渲染方式。", ARTICLE_USE_WEBVIEW_PREFERENCE_KEY))
     add(appearanceEntry("appearance.titleAutoHide", "自动隐藏回答标题", "阅读时自动收起顶部标题。", "titleAutoHide", listOf("标题栏")))
     add(appearanceEntry("appearance.autoHideArticleBottomBar", "自动隐藏回答底部按钮", "滚动阅读时自动隐藏底部操作栏。", "autoHideArticleBottomBar"))
     add(appearanceEntry("appearance.buttonSkipAnswer", "显示跳转下一个回答按钮", "在回答页显示快速跳转按钮。", "buttonSkipAnswer", listOf("下一个回答")))

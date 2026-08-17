@@ -91,7 +91,6 @@ import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.theme.ThemeManager
 import com.github.zly2006.zhihu.theme.ThemeMode
-import com.github.zly2006.zhihu.ui.ARTICLE_USE_WEBVIEW_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.ColorPickerDialog
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
@@ -113,9 +112,6 @@ const val DEFAULT_FAB_OPACITY = 100
 const val APPEARANCE_SETTINGS_SCROLL_TAG = "appearanceSettings.scroll"
 const val APPEARANCE_SETTINGS_START_DESTINATION_TAG = "appearanceSettings.startDestination"
 const val APPEARANCE_SETTINGS_ANSWER_SWITCH_SENSITIVITY_TAG = "appearanceSettings.answerSwitchSensitivity"
-const val APPEARANCE_SETTINGS_USE_WEBVIEW_TAG = "appearanceSettings.useWebView"
-const val APPEARANCE_SETTINGS_WEBVIEW_FONT_TAG = "appearanceSettings.webViewFont"
-const val APPEARANCE_SETTINGS_WEBVIEW_OPTIONS_TAG = "appearanceSettings.webViewOptions"
 const val APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY = "appearanceSettings.bottomBarSection"
 const val APPEARANCE_SETTINGS_COLLECTION_DIRECT_BROWSE_TAG = "appearanceSettings.collectionDirectBrowse"
 
@@ -674,68 +670,6 @@ fun AppearanceSettingsScreen(
             SettingItemGroup(
                 title = "回答页",
             ) {
-                val articleUseWebview = remember {
-                    mutableStateOf(settings.getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false))
-                }
-                SettingItemWithSwitch(
-                    modifier = Modifier.testTag(APPEARANCE_SETTINGS_USE_WEBVIEW_TAG),
-                    title = { Text("使用 WebView 显示文章") },
-                    description = { Text("关闭后使用 Compose 渲染，支持代码高亮等高级功能。警告：这个渲染模式不再推荐，非专业人士请不要开启！") },
-                    checked = articleUseWebview.value,
-                    onCheckedChange = {
-                        articleUseWebview.value = it
-                        settings.putBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, it)
-                    },
-                    settingKey = ARTICLE_USE_WEBVIEW_PREFERENCE_KEY,
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY),
-                )
-
-                if (articleUseWebview.value) {
-                    var customFontName by remember {
-                        mutableStateOf(settings.getStringOrNull("webviewCustomFontName"))
-                    }
-                    Column(
-                        modifier = Modifier.testTag(APPEARANCE_SETTINGS_WEBVIEW_OPTIONS_TAG),
-                        verticalArrangement = Arrangement.spacedBy(2.dp),
-                    ) {
-                        SettingItem(
-                            modifier = Modifier.testTag(APPEARANCE_SETTINGS_WEBVIEW_FONT_TAG),
-                            title = {
-                                Text(
-                                    "WebView 自定义字体",
-                                    modifier = Modifier.testTag(APPEARANCE_SETTINGS_WEBVIEW_FONT_TAG),
-                                )
-                            },
-                            description = { Text(customFontName ?: "未设置") },
-                            bottomAction = {
-                                WebViewCustomFontSettings(
-                                    customFontName = customFontName,
-                                    onCustomFontNameChange = { name ->
-                                        if (name == null) {
-                                            settings.remove("webviewCustomFontName")
-                                        } else {
-                                            settings.putString("webviewCustomFontName", name)
-                                        }
-                                        customFontName = name
-                                    },
-                                )
-                            },
-                        )
-
-                        val useHardwareAcceleration = remember { mutableStateOf(settings.getBoolean("webviewHardwareAcceleration", true)) }
-                        SettingItemWithSwitch(
-                            title = { Text("WebView 硬件加速") },
-                            description = { Text("提高渲染性能，可能导致兼容性问题。") },
-                            checked = useHardwareAcceleration.value,
-                            onCheckedChange = {
-                                useHardwareAcceleration.value = it
-                                settings.putBoolean("webviewHardwareAcceleration", it)
-                            },
-                        )
-                    }
-                }
-
                 val isTitleAutoHide = remember { mutableStateOf(settings.getBoolean("titleAutoHide", false)) }
                 SettingItemWithSwitch(
                     title = { Text("自动隐藏回答标题") },

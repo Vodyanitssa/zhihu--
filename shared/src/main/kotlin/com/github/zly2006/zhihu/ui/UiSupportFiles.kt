@@ -23,7 +23,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.InlineTextContent
@@ -61,12 +60,9 @@ import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.ui.article.prepareContentDocument
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
-import com.github.zly2006.zhihu.ui.components.WebviewComp
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
-import com.github.zly2006.zhihu.ui.components.setupUpWebviewClient
 import com.github.zly2006.zhihu.util.EmojiManager
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.util.OpenInBrowser
@@ -78,7 +74,6 @@ import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import com.github.zly2006.zhihu.viewmodel.filter.importBlocklistBackupFromJsonText
 import com.github.zly2006.zhihu.viewmodel.getOrFetchContentDetail
 import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
@@ -146,19 +141,13 @@ internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
  */
 @Composable
 fun PinHtmlContent(html: String) {
-    if (rememberSettingsStore().getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false) &&
-        supportsZhihuHtmlWebView()
-    ) {
-        ZhihuHtmlWebViewContent(html)
-    } else {
-        Spacer(Modifier.height(10.dp))
-        RenderMarkdown(
-            html = html,
-            modifier = Modifier.questionSelectionWorkaround(),
-            selectable = true,
-            enableScroll = false,
-        )
-    }
+    Spacer(Modifier.height(10.dp))
+    RenderMarkdown(
+        html = html,
+        modifier = Modifier.questionSelectionWorkaround(),
+        selectable = true,
+        enableScroll = false,
+    )
 }
 
 /**
@@ -176,7 +165,6 @@ class ArticleScreenSettingsState(
     pinAnswerDate: Boolean,
     buttonSkipAnswer: Boolean,
     autoHideSkipAnswerButton: Boolean,
-    useWebView: Boolean,
 ) {
     var isTitleAutoHide by mutableStateOf(isTitleAutoHide)
     var autoHideArticleBottomBar by mutableStateOf(autoHideArticleBottomBar)
@@ -185,7 +173,6 @@ class ArticleScreenSettingsState(
     var pinAnswerDate by mutableStateOf(pinAnswerDate)
     var buttonSkipAnswer by mutableStateOf(buttonSkipAnswer)
     var autoHideSkipAnswerButton by mutableStateOf(autoHideSkipAnswerButton)
-    var useWebView by mutableStateOf(useWebView)
 }
 
 /**
@@ -211,7 +198,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
             pinAnswerDate = settings.getBoolean("pinAnswerDate", false),
             buttonSkipAnswer = settings.getBoolean("buttonSkipAnswer", true),
             autoHideSkipAnswerButton = settings.getBoolean("autoHideSkipAnswerButton", true),
-            useWebView = settings.getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false),
         )
     }
 
@@ -236,7 +222,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
                 }
 
                 "pinAnswerDate" -> state.pinAnswerDate = settings.getBoolean(key, false)
-                ARTICLE_USE_WEBVIEW_PREFERENCE_KEY -> state.useWebView = settings.getBoolean(key, false)
             }
         }
         onDispose(unregister)
@@ -257,21 +242,12 @@ fun QuestionDetailContent(
     questionId: Long,
     html: String,
 ) {
-    if (rememberSettingsStore().getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false) &&
-        supportsQuestionDetailWebView()
-    ) {
-        QuestionDetailWebViewContent(
-            questionId = questionId,
-            html = html,
-        )
-    } else {
-        RenderMarkdown(
-            html = html,
-            modifier = Modifier.questionSelectionWorkaround(),
-            selectable = true,
-            enableScroll = false,
-        )
-    }
+    RenderMarkdown(
+        html = html,
+        modifier = Modifier.questionSelectionWorkaround(),
+        selectable = true,
+        enableScroll = false,
+    )
 }
 
 fun articleActionText(
@@ -587,43 +563,6 @@ fun rememberArticleBrowserOpener(): (Article) -> Unit {
 @Composable
 fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
 
-@Composable
-fun ArticleWebViewContent(
-    article: Article,
-    html: String,
-    title: String,
-    scrollState: ScrollState,
-    rememberedScrollY: Int,
-    rememberedScrollYSync: Boolean,
-    onRememberedScrollYSyncChange: (Boolean) -> Unit,
-    onImageLoadFailed: () -> Unit,
-) {
-    val coroutineScope = rememberCoroutineScope()
-    WebviewComp(
-        scrollState = scrollState,
-    ) {
-        it.isVerticalScrollBarEnabled = false
-        it.setupUpWebviewClient {
-            if (!rememberedScrollYSync) {
-                coroutineScope.launch {
-                    while (scrollState.maxValue < rememberedScrollY) {
-                        delay(100)
-                    }
-                    Log.i("zhihu-scroll", "scroll to $rememberedScrollY, max= ${scrollState.maxValue}, sync on")
-                    scrollState.animateScrollTo(rememberedScrollY)
-                    onRememberedScrollYSyncChange(true)
-                }
-            }
-        }
-        it.contentId = article.id.toString()
-        it.loadZhihu(
-            "https://www.zhihu.com/${article.type}/${article.id}",
-            prepareContentDocument(html, onImageLoadFailed),
-            title,
-        )
-    }
-}
-
 fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = this
 
 @Composable
@@ -714,20 +653,6 @@ fun rememberBlocklistRuleExporter(): suspend () -> String {
 }
 
 @Composable
-fun ZhihuHtmlWebViewContent(html: String) {
-    WebviewComp {
-        it.isVerticalScrollBarEnabled = false
-        it.setupUpWebviewClient()
-        it.loadZhihu(
-            "https://www.zhihu.com",
-            Jsoup.parse(html),
-        )
-    }
-}
-
-fun supportsZhihuHtmlWebView(): Boolean = true
-
-@Composable
 fun rememberCommentEmojiInlineContent(
     emojiKeys: Set<String>,
     context: Context = LocalContext.current,
@@ -756,21 +681,6 @@ fun Modifier.commentSelectionWorkaround(): Modifier = this
 
 fun Context.articleHost(): ArticleHost? =
     (this as? ArticleHost) ?: (this as? ContextWrapper)?.baseContext?.takeIf { it !== this }?.articleHost()
-
-@Composable
-fun QuestionDetailWebViewContent(
-    questionId: Long,
-    html: String,
-) {
-    WebviewComp {
-        it.loadZhihu(
-            "https://www.zhihu.com/question/$questionId",
-            Jsoup.parse(html),
-        )
-    }
-}
-
-fun supportsQuestionDetailWebView(): Boolean = true
 
 fun Modifier.questionSelectionWorkaround(): Modifier = this
 

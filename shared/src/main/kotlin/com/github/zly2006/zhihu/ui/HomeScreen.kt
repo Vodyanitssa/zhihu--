@@ -131,7 +131,6 @@ import kotlinx.io.writeString
 import kotlinx.serialization.json.Json
 
 const val PREFERENCE_NAME = "com.github.zly2006.zhihu_preferences"
-const val ARTICLE_USE_WEBVIEW_PREFERENCE_KEY = "webviewRenderLegacy"
 const val HOME_TOP_ACTIONS_TAG = "home_top_actions"
 const val HOME_SEARCH_BUTTON_TAG = "home_search_button"
 const val HOME_CREATE_FAB_TAG = "home_create_fab"

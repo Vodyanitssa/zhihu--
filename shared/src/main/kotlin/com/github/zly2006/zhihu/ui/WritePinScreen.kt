@@ -232,7 +232,6 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
     var isPreviewLoading by remember { mutableStateOf(false) }
     var previewHtml by remember { mutableStateOf<String?>(null) }
     var previewMarkdown by remember { mutableStateOf<String?>(null) }
-    var previewUseWebView by remember { mutableStateOf(false) }
 
     fun updateContent(newValue: TextFieldValue) {
         selectedTopics = updatePinTopicMarkers(content.text, newValue.text, selectedTopics)
@@ -265,31 +264,16 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
 
     fun showPreview() {
         if (isSubmitting || content.text.isBlank()) return
-        val useWebView = settings.getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false)
         val markdownSnapshot = content.text
-        val topicsSnapshot = selectedTopics
         coroutineScope.launch {
             focusManager.clearFocus(force = true)
             keyboardController?.hide()
             yield()
-            previewUseWebView = useWebView
             previewMarkdown = markdownSnapshot
             previewHtml = null
             showPreviewSheet = true
-            if (!useWebView) {
-                isPreviewLoading = false
-                return@launch
-            }
-            isPreviewLoading = true
-            runCatching {
-                compilePinMarkdownToZhihuHtml(markdownSnapshot, topicsSnapshot)
-            }.onSuccess { html ->
-                previewHtml = html
-            }.onFailure { e ->
-                errorDialogMessage = buildWriteOperationErrorMessage("生成预览失败", e)
-                showPreviewSheet = false
-            }
             isPreviewLoading = false
+            return@launch
         }
     }
 
@@ -587,9 +571,6 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
     if (showPreviewSheet) {
         WriteContentPreviewSheet(
             sheetState = previewSheetState,
-            useWebView = previewUseWebView,
-            isLoading = isPreviewLoading,
-            html = previewHtml,
             markdown = previewMarkdown,
             onDismissRequest = {
                 showPreviewSheet = false

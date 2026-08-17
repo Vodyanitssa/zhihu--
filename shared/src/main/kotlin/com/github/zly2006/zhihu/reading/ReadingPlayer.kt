@@ -643,7 +643,6 @@ object ReadingQueueSourceRegistry {
             .distinctBy(ReadingQueueItem::key)
             .take(safeLimit)
     }
-
 }
 
 @Composable

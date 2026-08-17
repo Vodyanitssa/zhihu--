@@ -41,17 +41,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.markdown.RenderMarkdown
 import com.github.zly2006.zhihu.markdown.RenderMarkdownText
-import com.github.zly2006.zhihu.ui.ZhihuHtmlWebViewContent
 import com.github.zly2006.zhihu.ui.questionSelectionWorkaround
-import com.github.zly2006.zhihu.ui.supportsZhihuHtmlWebView
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteContentPreviewSheet(
     sheetState: SheetState,
-    useWebView: Boolean,
-    isLoading: Boolean,
-    html: String?,
     markdown: String?,
     onDismissRequest: () -> Unit,
 ) {
@@ -70,82 +65,41 @@ fun WriteContentPreviewSheet(
                 modifier = Modifier.weight(1f),
             )
             Text(
-                text = if (useWebView) "WebView" else "Markdown",
+                text = "Markdown",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
         Spacer(Modifier.height(8.dp))
-        if (useWebView) {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 240.dp)
-                        .fillMaxHeight(0.9f),
-            ) {
-                when {
-                    isLoading -> {
-                        CircularProgressIndicator(modifier = Modifier.align(Alignment.Center))
-                    }
-
-                    html != null && supportsZhihuHtmlWebView() -> {
-                        val scrollState = rememberScrollState()
-                        Column(modifier = Modifier.fillMaxSize().verticalScroll(scrollState)) {
-                            ZhihuHtmlWebViewContent(html = html)
-                        }
-                    }
-
-                    html != null -> {
-                        RenderMarkdown(
-                            html = html,
-                            modifier = Modifier.fillMaxSize().questionSelectionWorkaround(),
-                            selectable = true,
-                            enableScroll = true,
-                        )
-                    }
-
-                    else -> {
-                        Text(
-                            text = "暂无可用预览内容",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
+        Box(
+            modifier =
+                Modifier
+                    .fillMaxWidth()
+                    .heightIn(min = 240.dp)
+                    .fillMaxHeight(0.9f),
+        ) {
+            when {
+                markdown != null -> {
+                    RenderMarkdownText(
+                        markdown = markdown,
+                        modifier =
+                            Modifier
+                                .fillMaxSize()
+                                .padding(horizontal = 16.dp)
+                                .padding(top = 8.dp)
+                                .questionSelectionWorkaround(),
+                        selectable = true,
+                        enableScroll = true,
+                    )
                 }
-            }
-        } else {
-            Box(
-                modifier =
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 240.dp)
-                        .fillMaxHeight(0.9f),
-            ) {
-                when {
-                    markdown != null -> {
-                        RenderMarkdownText(
-                            markdown = markdown,
-                            modifier =
-                                Modifier
-                                    .fillMaxSize()
-                                    .padding(horizontal = 16.dp)
-                                    .padding(top = 8.dp)
-                                    .questionSelectionWorkaround(),
-                            selectable = true,
-                            enableScroll = true,
-                        )
-                    }
 
-                    else -> {
-                        Text(
-                            text = "暂无可用预览内容",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            modifier = Modifier.align(Alignment.Center),
-                        )
-                    }
+                else -> {
+                    Text(
+                        text = "暂无可用预览内容",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.align(Alignment.Center),
+                    )
                 }
             }
         }

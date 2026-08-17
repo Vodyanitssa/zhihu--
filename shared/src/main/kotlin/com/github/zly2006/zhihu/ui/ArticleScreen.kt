@@ -770,63 +770,33 @@ fun ArticleScreen(
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
-                            if (articleSettings.useWebView) {
-                                // WebView 正文渲染已经废弃，只保留为紧急回退路径；正文外 UI 不再为它单独分支。
-                                ArticleWebViewContent(
-                                    article = article,
-                                    html = viewModel.content,
-                                    title = viewModel.title,
-                                    scrollState = scrollState,
-                                    rememberedScrollY = viewModel.rememberedScrollY,
-                                    rememberedScrollYSync = viewModel.rememberedScrollYSync,
-                                    onRememberedScrollYSyncChange = { viewModel.rememberedScrollYSync = it },
-                                    onImageLoadFailed = { userMessages.showMessage("图片加载失败，请向开发者反馈") },
-                                )
-                                Column(
-                                    modifier = Modifier.fillMaxWidth(),
-                                    horizontalAlignment = Alignment.End,
-                                ) {
-                                    if (!articleSettings.pinAnswerDate) {
-                                        DateTexts()
-                                    }
-                                    if (viewModel.ipInfo != null) {
-                                        Text(
-                                            "IP属地：${viewModel.ipInfo}",
-                                            color = Color.Gray,
-                                            fontSize = 11.sp,
-                                        )
-                                    }
-                                }
-                                Spacer(modifier = Modifier.height((16 + 36).dp))
-                            } else {
-                                RenderMarkdown(
-                                    html = viewModel.content,
-                                    modifier = Modifier.articleMarkdownSelectionWorkaround(),
-                                    scrollState = scrollState,
-                                    selectable = true,
-                                    enableScroll = false,
-                                    header = {},
-                                    footer = {
-                                        ArticleVideoAttachmentContent(viewModel.attachment)
-                                        Column(
-                                            modifier = Modifier.fillMaxWidth(),
-                                            horizontalAlignment = Alignment.End,
-                                        ) {
-                                            if (!articleSettings.pinAnswerDate) {
-                                                DateTexts()
-                                            }
-                                            if (viewModel.ipInfo != null) {
-                                                Text(
-                                                    "IP属地：${viewModel.ipInfo}",
-                                                    color = Color.Gray,
-                                                    fontSize = 11.sp,
-                                                )
-                                            }
+                            RenderMarkdown(
+                                html = viewModel.content,
+                                modifier = Modifier.articleMarkdownSelectionWorkaround(),
+                                scrollState = scrollState,
+                                selectable = true,
+                                enableScroll = false,
+                                header = {},
+                                footer = {
+                                    ArticleVideoAttachmentContent(viewModel.attachment)
+                                    Column(
+                                        modifier = Modifier.fillMaxWidth(),
+                                        horizontalAlignment = Alignment.End,
+                                    ) {
+                                        if (!articleSettings.pinAnswerDate) {
+                                            DateTexts()
                                         }
-                                        Spacer(modifier = Modifier.height((16 + 36).dp))
-                                    },
-                                )
-                            }
+                                        if (viewModel.ipInfo != null) {
+                                            Text(
+                                                "IP属地：${viewModel.ipInfo}",
+                                                color = Color.Gray,
+                                                fontSize = 11.sp,
+                                            )
+                                        }
+                                    }
+                                    Spacer(modifier = Modifier.height((16 + 36).dp))
+                                },
+                            )
                         }
                     }
                     // 状态栏渐变遮罩。

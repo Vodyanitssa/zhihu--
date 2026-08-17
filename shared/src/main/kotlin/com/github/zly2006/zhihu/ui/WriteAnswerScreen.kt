@@ -118,7 +118,6 @@ fun WriteAnswerScreen(
     var isPreviewLoading by remember { mutableStateOf(false) }
     var previewHtml by remember { mutableStateOf<String?>(null) }
     var previewMarkdown by remember { mutableStateOf<String?>(null) }
-    var previewUseWebView by remember { mutableStateOf(false) }
 
     suspend fun ensureAnswerId(): Long? {
         val cached = existingAnswerId
@@ -130,30 +129,16 @@ fun WriteAnswerScreen(
 
     fun showPreview() {
         if (isSubmitting || content.text.isBlank()) return
-        val useWebView = settings.getBoolean(ARTICLE_USE_WEBVIEW_PREFERENCE_KEY, false)
         val markdownSnapshot = content.text
         coroutineScope.launch {
             focusManager.clearFocus(force = true)
             keyboardController?.hide()
             yield()
-            previewUseWebView = useWebView
             previewMarkdown = markdownSnapshot
             previewHtml = null
             showPreviewSheet = true
-            if (!useWebView) {
-                isPreviewLoading = false
-                return@launch
-            }
-            isPreviewLoading = true
-            runCatching {
-                compileMdToZhihuHtml(markdown = markdownSnapshot)
-            }.onSuccess { html ->
-                previewHtml = html
-            }.onFailure { e ->
-                errorDialogMessage = buildWriteOperationErrorMessage("生成预览失败", e)
-                showPreviewSheet = false
-            }
             isPreviewLoading = false
+            return@launch
         }
     }
 
@@ -401,9 +386,6 @@ fun WriteAnswerScreen(
     if (showPreviewSheet) {
         WriteContentPreviewSheet(
             sheetState = previewSheetState,
-            useWebView = previewUseWebView,
-            isLoading = isPreviewLoading,
-            html = previewHtml,
             markdown = previewMarkdown,
             onDismissRequest = {
                 showPreviewSheet = false
