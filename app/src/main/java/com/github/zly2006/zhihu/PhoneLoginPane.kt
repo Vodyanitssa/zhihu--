@@ -73,6 +73,7 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.util.TimeZone
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 @Composable
 internal fun PhoneLoginPane(activity: LoginActivity) {
@@ -107,7 +108,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
 
     LaunchedEffect(resendSeconds) {
         if (resendSeconds > 0) {
-            delay(1_000)
+            delay(1_000.milliseconds)
             resendSeconds--
         }
     }

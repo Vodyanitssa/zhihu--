@@ -121,24 +121,19 @@ import com.github.zly2006.zhihu.navigation.WriteAnswer
 import com.github.zly2006.zhihu.navigation.WritePin
 import com.github.zly2006.zhihu.platform.PlatformBackHandler
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
-import com.github.zly2006.zhihu.reading.rememberReadingPlayerController
-import com.github.zly2006.zhihu.reading.saveReadingPlaybackSpeed
-import com.github.zly2006.zhihu.ui.components.CompactReadingPlayerButton
 import com.github.zly2006.zhihu.ui.components.NoOpPagerNestedScrollConnection
-import com.github.zly2006.zhihu.ui.components.ReadingPlayerBar
-import com.github.zly2006.zhihu.ui.components.ReadingQueueSheet
 import com.github.zly2006.zhihu.ui.subscreens.AppearanceSettingsScreen
 import com.github.zly2006.zhihu.ui.subscreens.BlockedFeedHistoryScreen
 import com.github.zly2006.zhihu.ui.subscreens.ContentFilterSettingsScreen
 import com.github.zly2006.zhihu.ui.subscreens.IdentityManagementScreen
 import com.github.zly2006.zhihu.ui.subscreens.OpenSourceLicensesScreen
-import com.github.zly2006.zhihu.ui.subscreens.ReadingSettingsScreen
 import com.github.zly2006.zhihu.ui.subscreens.SettingsSearchScreen
 import com.github.zly2006.zhihu.ui.subscreens.SystemAndUpdateSettingsScreen
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
+import kotlin.time.Duration.Companion.milliseconds
 
 private sealed class MainTabPage(
     val bottomDestination: TopLevelDestination,
@@ -158,8 +153,6 @@ private sealed class MainTabPage(
 
     data object AccountPage : MainTabPage(Account, "account")
 }
-
-internal val LocalReadingPlayerOverlayPadding = staticCompositionLocalOf { 0.dp }
 
 /**
  * Zhihu++ 的共享应用主壳。
@@ -194,13 +187,10 @@ fun ZhihuMain(
     val selectedBottomBarItemKeys = preferenceState.selectedBottomBarItemKeys
     val startDestination = preferenceState.startDestination
     val reloadBottomBarPreferences = preferenceState::reload
-    val readingPlayer = rememberReadingPlayerController()
-    val readingPlayerState by readingPlayer.state
     val settings = rememberSettingsStore()
     var showReadingQueue by remember { mutableStateOf(false) }
     var isReadingPlayerExpandedByUser by remember { mutableStateOf(false) }
     var readingPlayerHeightPx by remember { mutableIntStateOf(0) }
-    val readingPlayerOverlayOffsetState = remember { ReadingPlayerOverlayOffsetState() }
     val density = LocalDensity.current
 
     val navEntry by navController.currentBackStackEntryAsState()
@@ -208,58 +198,12 @@ fun ZhihuMain(
     val isOnReadingDetail = navEntry?.destination?.hasRoute<Article>() == true ||
         navEntry?.destination?.hasRoute<Question>() == true ||
         navEntry?.destination?.hasRoute<Pin>() == true
-    val isReadingPlayerExpanded = readingPlayerState.hasSession &&
-        (isOnReadingDetail || isReadingPlayerExpandedByUser)
     val shouldCompactPlayerOnBackgroundInteraction by rememberUpdatedState(
         isReadingPlayerExpandedByUser && !isOnReadingDetail,
     )
-    val readingPlayerOverlayPadding = when {
-        !readingPlayerState.hasSession -> 0.dp
-        !isReadingPlayerExpanded -> 0.dp
-        readingPlayerHeightPx > 0 -> with(density) { readingPlayerHeightPx.toDp() } + 16.dp
-        else -> 16.dp
-    }
-
-    LaunchedEffect(readingPlayerState.hasSession) {
-        if (!readingPlayerState.hasSession) {
-            showReadingQueue = false
-            isReadingPlayerExpandedByUser = false
-            readingPlayerOverlayOffsetState.resetOffset()
-        }
-    }
-    var previousReadingItemKey by remember { mutableStateOf(readingPlayerState.currentItem?.key) }
-    LaunchedEffect(readingPlayerState.currentItem?.key) {
-        val currentItem = readingPlayerState.currentItem
-        val currentItemKey = currentItem?.key
-        val itemChanged = previousReadingItemKey != null && previousReadingItemKey != currentItemKey
-        previousReadingItemKey = currentItemKey
-        if (itemChanged && currentItem != null) {
-            val currentDestination = when {
-                navEntry?.destination?.hasRoute<Article>() == true -> runCatching {
-                    navEntry?.toRoute<Article>()
-                }.getOrNull()
-                navEntry?.destination?.hasRoute<Pin>() == true -> runCatching {
-                    navEntry?.toRoute<Pin>()
-                }.getOrNull()
-                navEntry?.destination?.hasRoute<Question>() == true -> runCatching {
-                    navEntry?.toRoute<Question>()
-                }.getOrNull()
-                else -> null
-            }
-            val destination = currentItem.toDestination(readingPlayerState.sourceId)
-            if (currentDestination != null && currentDestination != destination) {
-                navController.popBackStack()
-                navigate(destination)
-            }
-        }
-    }
 
     // 离开文章页时恢复系统状态栏（只在实际切换时触发）
     val isOnArticle = navEntry?.destination?.hasRoute<Article>() == true
-    LaunchedEffect(navEntry) {
-        isReadingPlayerExpandedByUser = false
-        if (!isOnArticle) readingPlayerOverlayOffsetState.revokeOwner()
-    }
     var wasOnArticle by remember { mutableStateOf(false) }
     if (!isOnArticle && wasOnArticle) {
         LeaveImmersiveModeCleanup()
@@ -378,35 +322,6 @@ fun ZhihuMain(
             modifier = Modifier
                 .fillMaxSize()
                 .nestedScroll(bottomBarScrollConnection),
-            floatingActionButton = {
-                AnimatedVisibility(
-                    visible = isReadingPlayerExpanded,
-                    enter = fadeIn(tween(220)) + scaleIn(tween(220), initialScale = 0.92f),
-                    exit = fadeOut(tween(160)) + scaleOut(tween(160), targetScale = 0.92f),
-                ) {
-                    ReadingPlayerBar(
-                        state = readingPlayerState,
-                        onPrevious = readingPlayer::playPrevious,
-                        onTogglePlayPause = readingPlayer::togglePlayPause,
-                        onNext = readingPlayer::playNext,
-                        onStop = readingPlayer::stop,
-                        onOpenQueue = { showReadingQueue = true },
-                        onPlaybackSpeedChange = { speed ->
-                            saveReadingPlaybackSpeed(settings, speed)
-                            readingPlayer.setPlaybackSpeed(speed)
-                        },
-                        onBackgroundInteraction = {
-                            if (!isOnReadingDetail) isReadingPlayerExpandedByUser = false
-                        },
-                        modifier = Modifier
-                            .onSizeChanged { readingPlayerHeightPx = it.height }
-                            .graphicsLayer {
-                                translationY = readingPlayerOverlayOffsetState.verticalOffsetPx
-                            },
-                    )
-                }
-            },
-            floatingActionButtonPosition = FabPosition.Center,
             bottomBar = {
                 if (navEntry != null) {
                     // 页面切换时重置底部导航栏可见状态
@@ -477,8 +392,6 @@ fun ZhihuMain(
                     onNavigateBack = navController::popBackStack,
                     onNavigateTopLevel = ::navigateTopLevel,
                 ),
-                LocalReadingPlayerOverlayPadding provides readingPlayerOverlayPadding,
-                LocalReadingPlayerOverlayOffsetState provides readingPlayerOverlayOffsetState,
             ) {
                 NavHost(
                     navController,
@@ -498,7 +411,7 @@ fun ZhihuMain(
                                 }
                             }
                             if (shouldCompactPlayerOnBackgroundInteraction) {
-                                delay(100)
+                                delay(100.milliseconds)
                                 isReadingPlayerExpandedByUser = false
                             }
                         }
@@ -658,9 +571,6 @@ fun ZhihuMain(
                             setting = navEntry.toRoute<Account.SystemAndUpdateSettings>().setting,
                         )
                     }
-                    composable<Account.ReadingSettings> {
-                        ReadingSettingsScreen()
-                    }
                     composable<Account.SettingsSearch> {
                         SettingsSearchScreen()
                     }
@@ -670,62 +580,6 @@ fun ZhihuMain(
                 }
             }
         }
-
-        AnimatedVisibility(
-            visible = readingPlayerState.hasSession && !isReadingPlayerExpanded,
-            enter = fadeIn(tween(220)),
-            exit = fadeOut(tween(160)),
-        ) {
-            Box(modifier = Modifier.fillMaxSize()) {
-                CompactReadingPlayerButton(
-                    state = readingPlayerState,
-                    onExpand = { isReadingPlayerExpandedByUser = true },
-                )
-            }
-        }
-    }
-
-    if (showReadingQueue && readingPlayerState.hasSession) {
-        ReadingQueueSheet(
-            state = readingPlayerState,
-            onDismissRequest = {
-                showReadingQueue = false
-                if (!isOnReadingDetail) isReadingPlayerExpandedByUser = false
-            },
-            onItemClick = { index, item ->
-                previousReadingItemKey = item.key
-                if (index != readingPlayerState.currentIndex) {
-                    readingPlayer.playAt(index)
-                }
-                showReadingQueue = false
-                val destination = item.toDestination(readingPlayerState.sourceId)
-                val currentDestination = when {
-                    navEntry?.destination?.hasRoute<Article>() == true -> runCatching {
-                        navEntry?.toRoute<Article>()
-                    }.getOrNull()
-                    navEntry?.destination?.hasRoute<Pin>() == true -> runCatching {
-                        navEntry?.toRoute<Pin>()
-                    }.getOrNull()
-                    navEntry?.destination?.hasRoute<Question>() == true -> runCatching {
-                        navEntry?.toRoute<Question>()
-                    }.getOrNull()
-                    else -> null
-                }
-                if (currentDestination != destination) {
-                    if (currentDestination != null) {
-                        navController.popBackStack()
-                    }
-                    navigate(destination)
-                }
-            },
-            onOpenSettings = {
-                showReadingQueue = false
-                isReadingPlayerExpandedByUser = false
-                if (navEntry?.destination?.hasRoute<Account.ReadingSettings>() != true) {
-                    navigate(Account.ReadingSettings)
-                }
-            },
-        )
     }
 }
 

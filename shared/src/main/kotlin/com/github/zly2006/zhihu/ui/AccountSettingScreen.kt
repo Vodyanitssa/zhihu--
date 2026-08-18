@@ -86,7 +86,6 @@ import com.github.zly2006.zhihu.platform.rememberPlainTextClipboard
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberSystemUrlOpener
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.reading.rememberReadingPlayerController
 import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
@@ -106,7 +105,6 @@ const val ACCOUNT_SETTINGS_SHORTCUT_SUBSCRIPTIONS_TAG = "accountSettings.shortcu
 const val ACCOUNT_SETTINGS_SHORTCUT_NOTIFICATION_TAG = "accountSettings.shortcutNotification"
 const val ACCOUNT_SETTINGS_SHORTCUT_HISTORY_TAG = "accountSettings.shortcutHistory"
 const val ACCOUNT_SETTINGS_APPEARANCE_TAG = "accountSettings.appearance"
-const val ACCOUNT_SETTINGS_READING_TAG = "accountSettings.reading"
 const val ACCOUNT_SETTINGS_RECOMMEND_TAG = "accountSettings.recommend"
 const val ACCOUNT_SETTINGS_SEARCH_TAG = "accountSettings.search"
 const val ACCOUNT_SETTINGS_SYSTEM_TAG = "accountSettings.system"
@@ -141,7 +139,6 @@ fun AccountSettingScreen(
     val openSystemUrl = rememberSystemUrlOpener()
     val userMessages = rememberUserMessageSink()
     val versionInfo = rememberAppVersionInfo()
-    val readingPlayerSupported = rememberReadingPlayerController().isSupported
 
     val selectedBottomBarItemKeys = remember {
         normalizeBottomBarSelection(
@@ -433,16 +430,6 @@ fun AccountSettingScreen(
                     modifier = Modifier.testTag(ACCOUNT_SETTINGS_APPEARANCE_TAG),
                     onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
                 )
-
-                if (readingPlayerSupported) {
-                    SettingItem(
-                        title = { Text("朗读与播放") },
-                        description = { Text("朗读内容、播放队列与条目过渡") },
-                        icon = { Icon(Icons.AutoMirrored.Filled.VolumeUp, null) },
-                        modifier = Modifier.testTag(ACCOUNT_SETTINGS_READING_TAG),
-                        onClick = { navigator.onNavigate(Account.ReadingSettings) },
-                    )
-                }
 
                 SettingItem(
                     title = { Text("推荐系统与内容过滤") },

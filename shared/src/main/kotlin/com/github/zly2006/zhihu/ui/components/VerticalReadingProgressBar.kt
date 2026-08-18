@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import kotlin.time.Duration.Companion.milliseconds
 
 internal fun calculateReadingProgress(
     scrollValue: Int,
@@ -106,7 +107,7 @@ fun VerticalReadingProgressBar(
         }
         shouldKeepVisible = true
         if (!isScrollInProgress && !isDragging) {
-            delay(fadeOutDelayMillis)
+            delay(fadeOutDelayMillis.milliseconds)
             if (!isScrollInProgress && !isDragging) {
                 shouldKeepVisible = false
             }

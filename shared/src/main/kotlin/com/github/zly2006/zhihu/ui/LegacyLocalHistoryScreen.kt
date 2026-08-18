@@ -23,7 +23,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.ui.components.FeedCard
 import com.github.zly2006.zhihu.ui.components.FeedPullToRefresh
 import com.github.zly2006.zhihu.ui.components.PaginatedList
@@ -36,10 +35,6 @@ fun LegacyLocalHistoryScreen(
 ) {
     val viewModel: HistoryViewModel = viewModel { HistoryViewModel() }
     val readingQueueSourceId = "history:local"
-    RegisterReadingQueueSource(
-        sourceId = readingQueueSourceId,
-        items = viewModel.displayItems,
-    )
     val environment = rememberPaginationEnvironment(allowGuestAccess = true)
 
     LaunchedEffect(Unit) {

@@ -61,6 +61,7 @@ import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.util.ProvideContentColorTextStyle
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 为设置项提供跳转高亮和滚动定位能力。
@@ -99,7 +100,7 @@ fun Modifier.highlightSetting(
         LaunchedEffect(isTarget) {
             if (isTarget) {
                 actualBringIntoViewRequester?.let {
-                    delay(200)
+                    delay(200.milliseconds)
                     it.bringIntoView()
                 }
                 // 闪烁两次：亮、暗、亮、暗、亮。
@@ -108,7 +109,7 @@ fun Modifier.highlightSetting(
                     highlightAlpha.animateTo(0.1f, tween(200, easing = LinearEasing))
                 }
                 highlightAlpha.animateTo(0.4f, tween(200))
-                delay(2000)
+                delay(2000.milliseconds)
                 highlightAlpha.animateTo(0f, tween(1000, easing = FastOutSlowInEasing))
             } else {
                 highlightAlpha.animateTo(0f, tween(500))

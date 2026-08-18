@@ -233,7 +233,7 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
 /**
  * 问题描述正文的渲染入口。
  *
- * 与文章和想法一致，优先遵循用户选择的 WebView/Markdown 渲染模式；当前平台不支持问题详情 WebView 时回落到 Compose Markdown。
+ * 与文章和想法一致，Compose Markdown。
  */
 @Composable
 fun QuestionDetailContent(
@@ -269,35 +269,14 @@ fun articleWebUrl(article: Article): String =
         ArticleType.Article -> "https://zhuanlan.zhihu.com/p/${article.id}"
     }
 
-fun articleSpeechText(
-    title: String,
-    content: String,
-    maxContentLength: Int = 50_000,
-): String =
-    buildString {
-        append(title)
-        append("。")
-        if (content.isNotEmpty()) {
-            val contentToProcess =
-                if (content.length > maxContentLength) {
-                    content.substring(0, maxContentLength) + "..."
-                } else {
-                    content
-                }
-            append(Ksoup.parse(contentToProcess).text())
-        }
-    }
-
 /**
  * 文章页需要从外围应用获取的宿主级服务。
  *
- * 文章会参与历史记录、回答间导航、内容打开来源归因、TTS、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
- * 让 common 文章 UI 能同时运行在 Android、Desktop 和测试环境里，而不依赖平台类。
+ * 文章会参与历史记录、回答间导航、内容打开来源归因、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
  */
 interface ArticleHost {
     val articleNavController: NavHostController
     val articleAnswerSwitchState: ArticleAnswerSwitchState
-    val articleTtsState: TtsState
     var clipboardDestination: NavDestination?
 
     fun postHistoryDestination(destination: NavDestination)
@@ -305,13 +284,6 @@ interface ArticleHost {
     fun consumePendingContentOpenFrom(destination: NavDestination): String = ContentOpenFrom.UNKNOWN
 
     fun consumePendingCommentId(destination: NavDestination): String? = null
-
-    fun speakArticleText(
-        text: String,
-        title: String,
-    )
-
-    fun stopArticleSpeaking()
 }
 
 /**
@@ -340,19 +312,6 @@ enum class ArticleAnswerTransitionDirection {
     VERTICAL_PREVIOUS,
     HORIZONTAL_NEXT,
     HORIZONTAL_PREVIOUS,
-}
-
-enum class TtsState(
-    val isSpeaking: Boolean = false,
-) {
-    Uninitialized,
-    Initializing,
-    Ready,
-    Error,
-    LoadingText,
-    Speaking(true),
-    Paused,
-    SwitchingChunk(true),
 }
 
 /**
@@ -502,45 +461,6 @@ private fun Context.zhihuVersionInfo(): String {
         ?: if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) "debug" else "release"
     val gitHash = metaData?.getString("com.github.zly2006.zhihu.GIT_HASH") ?: "unknown"
     return "$versionName $buildType, $gitHash"
-}
-
-@Composable
-fun rememberArticleTtsState(): TtsState {
-    val articleHost = LocalContext.current.articleHost()
-    return articleHost?.articleTtsState ?: TtsState.Uninitialized
-}
-
-@Composable
-fun rememberArticleSpeechToggler(): (title: String, content: String) -> Unit {
-    val activityContext = LocalContext.current
-    val coroutineScope = rememberCoroutineScope()
-    val userMessages = rememberUserMessageSink()
-    val articleHost = activityContext.articleHost()
-    val ttsState = articleHost?.articleTtsState ?: TtsState.Uninitialized
-    return remember(coroutineScope, userMessages, articleHost, ttsState) {
-        { title, content ->
-            if (ttsState.isSpeaking) {
-                articleHost?.stopArticleSpeaking()
-            } else if (ttsState !in listOf(TtsState.Error, TtsState.Uninitialized, TtsState.Initializing)) {
-                coroutineScope.launch {
-                    try {
-                        withContext(Dispatchers.IO) {
-                            val textToRead = articleSpeechText(title, content)
-                            withContext(Dispatchers.Main) {
-                                if (textToRead.isNotBlank()) {
-                                    articleHost?.speakArticleText(textToRead, title)
-                                }
-                            }
-                        }
-                    } catch (e: Exception) {
-                        withContext(Dispatchers.Main) {
-                            userMessages.showMessage("朗读失败：${e.message}")
-                        }
-                    }
-                }
-            }
-        }
-    }
 }
 
 @Composable

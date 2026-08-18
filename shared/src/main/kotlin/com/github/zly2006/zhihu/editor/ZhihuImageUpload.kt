@@ -42,6 +42,7 @@ import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.math.min
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 图片上传逻辑移植自 zhihu_obsidian/src/image_service.ts。
@@ -323,7 +324,7 @@ private suspend fun pollImageStatus(
     repeat(10) {
         val status = fetchImageStatus(client, imageId)
         if (status.status == "success") return status
-        delay(2_000)
+        delay(2_000.milliseconds)
     }
     return fetchImageStatus(client, imageId)
 }

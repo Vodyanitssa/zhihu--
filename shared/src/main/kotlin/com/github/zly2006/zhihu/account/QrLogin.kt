@@ -70,6 +70,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
 import kotlin.time.Clock
+import kotlin.time.Duration.Companion.milliseconds
 import kotlin.time.Duration.Companion.seconds
 
 const val ZHIHU_HOME_URL = "https://www.zhihu.com/"
@@ -246,7 +247,7 @@ suspend fun pollQrCodeLogin(
             // 临时网络抖动时继续轮询
         }
 
-        delay(500)
+        delay(500.milliseconds)
     }
 
     return false

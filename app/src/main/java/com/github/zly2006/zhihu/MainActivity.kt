@@ -67,21 +67,11 @@ import com.github.zly2006.zhihu.navigation.Video
 import com.github.zly2006.zhihu.navigation.resolveContent
 import com.github.zly2006.zhihu.platform.androidSettingsStore
 import com.github.zly2006.zhihu.platform.androidUserMessageSink
-import com.github.zly2006.zhihu.reading.AndroidReadingPlayerBridge
-import com.github.zly2006.zhihu.reading.ContentReadingService
-import com.github.zly2006.zhihu.reading.ReadingContentType
-import com.github.zly2006.zhihu.reading.ReadingPlaybackStatus
-import com.github.zly2006.zhihu.reading.ReadingPreferences
-import com.github.zly2006.zhihu.reading.ReadingQueueItem
-import com.github.zly2006.zhihu.reading.ReadingStartRequest
-import com.github.zly2006.zhihu.reading.ReadingTemplateField
-import com.github.zly2006.zhihu.reading.loadReadingPlaybackSpeed
 import com.github.zly2006.zhihu.theme.AndroidThemeSettings
 import com.github.zly2006.zhihu.theme.ZhihuTheme
 import com.github.zly2006.zhihu.ui.AndroidZhihuMain
 import com.github.zly2006.zhihu.ui.ArticleAnswerSwitchState
 import com.github.zly2006.zhihu.ui.ArticleHost
-import com.github.zly2006.zhihu.ui.TtsState
 import com.github.zly2006.zhihu.ui.components.getHighestQualityVideoUrl
 import com.github.zly2006.zhihu.util.EmojiManager
 import com.github.zly2006.zhihu.util.ZHIHU_WEB_ZSE93
@@ -111,8 +101,6 @@ class MainActivity :
         get() = navController
     override val articleAnswerSwitchState: ArticleAnswerSwitchState
         get() = ViewModelProvider(this)[ArticleAnswerSwitchData::class.java]
-    override val articleTtsState: TtsState
-        get() = ttsState
     override var clipboardDestination: NavDestination?
         get() = sharedData.clipboardDestination
         set(value) {
@@ -122,17 +110,6 @@ class MainActivity :
     val httpClient by lazy {
         AccountData.httpClient(this)
     }
-
-    private val _ttsState = mutableStateOf(TtsState.Ready)
-    var ttsState: TtsState
-        get() = _ttsState.value
-        private set(value) {
-            if (_ttsState.value != value) {
-                val oldState = _ttsState.value
-                _ttsState.value = value
-                Log.i(TAG, "TTS State: $oldState -> $value")
-            }
-        }
 
     lateinit var navController: NavHostController
     private var pendingContentOpenIdentity: TrackedContentIdentity? = null
@@ -275,19 +252,6 @@ class MainActivity :
                     loader
                 }
             }
-
-        lifecycleScope.launch {
-            AndroidReadingPlayerBridge.state.collect { state ->
-                ttsState = when (state.status) {
-                    ReadingPlaybackStatus.Idle -> TtsState.Ready
-                    ReadingPlaybackStatus.Initializing -> TtsState.Initializing
-                    ReadingPlaybackStatus.Loading -> TtsState.LoadingText
-                    ReadingPlaybackStatus.Playing -> TtsState.Speaking
-                    ReadingPlaybackStatus.Paused -> TtsState.Paused
-                    ReadingPlaybackStatus.Error -> TtsState.Error
-                }
-            }
-        }
     }
 
     override fun onWindowFocusChanged(hasFocus: Boolean) {
@@ -323,13 +287,11 @@ class MainActivity :
     private fun handleIntentData(incomingIntent: Intent): Boolean {
         val data = incomingIntent.data ?: return false
         if (data.authority == "zhihu-plus.internal") return true
-        val forceNavigation = incomingIntent.getBooleanExtra(ContentReadingService.READING_NOTIFICATION_INTENT_EXTRA, false)
-        incomingIntent.removeExtra(ContentReadingService.READING_NOTIFICATION_INTENT_EXTRA)
 
         Log.i(TAG, "Intent data: $data")
         val destination = resolveContent(data.toString())
         if (destination != null) {
-            if (forceNavigation || destination != sharedData.clipboardDestination) {
+            if (destination != sharedData.clipboardDestination) {
                 sharedData.clipboardDestination = destination
                 navigate(destination, popup = true)
             }
@@ -484,34 +446,6 @@ class MainActivity :
 
     override fun postHistoryDestination(destination: NavDestination) {
         history.add(destination)
-    }
-
-    override fun speakArticleText(
-        text: String,
-        title: String,
-    ) {
-        val request = ReadingStartRequest(
-            queue = listOf(
-                ReadingQueueItem(
-                    contentType = ReadingContentType.Article,
-                    id = title.hashCode().toLong() and 0xffffffffL,
-                    title = title,
-                    bodyHtml = text,
-                ),
-            ),
-            preferences = ReadingPreferences(
-                fieldOrder = listOf(ReadingTemplateField.Body),
-                enabledFields = setOf(ReadingTemplateField.Body),
-                queueLimit = 1,
-                transitionText = "",
-            ),
-            playbackSpeed = loadReadingPlaybackSpeed(androidSettingsStore(this)),
-        )
-        AndroidReadingPlayerBridge.start(this, request)
-    }
-
-    override fun stopArticleSpeaking() {
-        startService(ContentReadingService.commandIntent(this, ContentReadingService.ACTION_STOP))
     }
 
     @Suppress("unused")

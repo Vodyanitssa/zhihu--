@@ -41,7 +41,6 @@ import com.github.zly2006.zhihu.data.HotListFeed
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedCard
 import com.github.zly2006.zhihu.ui.components.FeedPullToRefresh
@@ -70,12 +69,6 @@ fun HotListScreen(
 ) {
     val viewModel: HotListViewModel = viewModel { HotListViewModel() }
     val readingQueueSourceId = "hot-list:total"
-    if (isActive) {
-        RegisterReadingQueueSource(
-            sourceId = readingQueueSourceId,
-            items = viewModel.displayItems,
-        )
-    }
     val environment = rememberPaginationEnvironment(viewModel.allowGuestAccess)
     val userMessages = rememberUserMessageSink()
     val settings = rememberSettingsStore()

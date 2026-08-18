@@ -15,6 +15,7 @@ import com.hrm.markdown.runtime.MarkdownDirectiveRegistry
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.withContext
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 流式文档解析状态。
@@ -74,7 +75,7 @@ internal fun rememberRenderDocument(
 
         while (true) {
             withFrameNanos { }
-            delay(16L)
+            delay(16L.milliseconds)
             val upstream = latestDocument
             if (upstream !== throttledDocument) {
                 throttledDocument = upstream

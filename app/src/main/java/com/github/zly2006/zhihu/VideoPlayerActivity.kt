@@ -108,6 +108,7 @@ import com.github.zly2006.zhihu.platform.androidSettingsStore
 import com.github.zly2006.zhihu.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.delay
 import kotlin.math.abs
+import kotlin.time.Duration.Companion.milliseconds
 
 class VideoPlayerActivity : ComponentActivity() {
     private var player: MediaPlayer? = null
@@ -299,19 +300,19 @@ private fun VideoPlayerView(
         while (controlsVisible || isPlayingState.value) {
             currentPosition = safeGetMediaTime(currentPosition) { this.currentPosition }
             duration = safeGetMediaTime(duration) { this.duration }
-            delay(200)
+            delay(200.milliseconds)
         }
     }
     LaunchedEffect(isPlayingState.value) { if (!isPlayingState.value) controlsVisible = true }
     LaunchedEffect(controlsVisible, isPlayingState.value) {
         if (controlsVisible && isPlayingState.value) {
-            delay(3000)
+            delay(3000.milliseconds)
             controlsVisible = false
         }
     }
     LaunchedEffect(lockHintVisible) {
         if (lockHintVisible) {
-            delay(3000)
+            delay(3000.milliseconds)
             lockHintVisible = false
         }
     }
@@ -371,7 +372,7 @@ private fun VideoPlayerView(
 
             LaunchedEffect(fingerDown) {
                 if (!fingerDown) return@LaunchedEffect
-                delay(viewCfg.longPressTimeoutMillis + 150L)
+                delay((viewCfg.longPressTimeoutMillis + 150L).milliseconds)
                 if (fingerDown && !screenLocked) {
                     safeSetSpeed(2f)
                     isFastForwardingState.value = true

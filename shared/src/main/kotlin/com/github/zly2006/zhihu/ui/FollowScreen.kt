@@ -80,7 +80,6 @@ import com.github.zly2006.zhihu.navigation.Person
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
@@ -338,12 +337,6 @@ fun FollowRecommendScreen(
 ) {
     val viewModel: FollowRecommendViewModel = viewModel { FollowRecommendViewModel() }
     val readingQueueSourceId = "follow:recommend"
-    if (isActive) {
-        RegisterReadingQueueSource(
-            sourceId = readingQueueSourceId,
-            items = viewModel.displayItems,
-        )
-    }
     val environment = rememberPaginationEnvironment(allowGuestAccess = viewModel.allowGuestAccess)
     val settings = rememberSettingsStore()
     val userMessages = rememberUserMessageSink()
@@ -488,12 +481,6 @@ fun FollowDynamicScreen(
 ) {
     val viewModel: FollowViewModel = viewModel { FollowViewModel() }
     val readingQueueSourceId = "follow:dynamic"
-    if (isActive) {
-        RegisterReadingQueueSource(
-            sourceId = readingQueueSourceId,
-            items = viewModel.displayItems,
-        )
-    }
     val environment = rememberPaginationEnvironment(allowGuestAccess = viewModel.allowGuestAccess)
     val settings = rememberSettingsStore()
     val userMessages = rememberUserMessageSink()

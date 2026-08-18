@@ -42,6 +42,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 val ProgressIndicatorFooter: @Composable (LazyListState) -> Unit = { state ->
     Box(
@@ -142,7 +143,7 @@ fun <T> PaginatedList(
         if (shouldLoadMore && items.isNotEmpty() && !isEnd()) {
             onLoadMore()
             // 留一帧给调用方发布新数据或标记列表结束。
-            delay(50)
+            delay(50.milliseconds)
         }
     }
 

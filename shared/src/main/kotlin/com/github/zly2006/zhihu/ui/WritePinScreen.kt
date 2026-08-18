@@ -96,6 +96,7 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
+import kotlin.time.Duration.Companion.milliseconds
 
 const val WRITE_PIN_TITLE_TAG = "WritePinTitle"
 const val WRITE_PIN_CONTENT_TAG = "WritePinContent"
@@ -244,7 +245,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
             return
         }
         topicSearchJob = coroutineScope.launch {
-            delay(180)
+            delay(180.milliseconds)
             val contentHtml = compilePinMarkdownToZhihuHtml(newValue.text, selectedTopics)
             topicSuggestionError = null
             try {

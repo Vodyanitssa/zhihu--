@@ -53,23 +53,11 @@ import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.navigation.Article
 import com.github.zly2006.zhihu.navigation.ArticleType
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
-import com.github.zly2006.zhihu.reading.ReadingContentType
-import com.github.zly2006.zhihu.reading.ReadingQueueItem
-import com.github.zly2006.zhihu.reading.ReadingQueueSourceRegistry
-import com.github.zly2006.zhihu.reading.ReadingStartRequest
-import com.github.zly2006.zhihu.reading.hasReadableFields
-import com.github.zly2006.zhihu.reading.loadReadingPlaybackSpeed
-import com.github.zly2006.zhihu.reading.loadReadingPreferences
-import com.github.zly2006.zhihu.reading.rememberReadingPlayerController
 import com.github.zly2006.zhihu.theme.ThemeManager
-import com.github.zly2006.zhihu.ui.TtsState
 import com.github.zly2006.zhihu.ui.articleActionText
-import com.github.zly2006.zhihu.ui.articleSpeechText
 import com.github.zly2006.zhihu.ui.components.MyModalBottomSheet
 import com.github.zly2006.zhihu.ui.components.ShareAction
 import com.github.zly2006.zhihu.ui.components.rememberShareActionExecutor
-import com.github.zly2006.zhihu.ui.rememberArticleSpeechToggler
-import com.github.zly2006.zhihu.ui.rememberArticleTtsState
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel
 import com.materialkolor.ktx.harmonize
@@ -113,31 +101,8 @@ fun ArticleActionsMenu(
     onDismissRequest: () -> Unit,
     onExportRequest: () -> Unit,
 ) {
-    val ttsState = rememberArticleTtsState()
-    val toggleSpeech = rememberArticleSpeechToggler()
-    val readingPlayer = rememberReadingPlayerController()
-    val readingPlayerState by readingPlayer.state
-    val readingSettings = rememberSettingsStore()
     val executeShareAction = rememberShareActionExecutor()
     val coroutineScope = rememberCoroutineScope()
-    val readingItem = ReadingQueueItem(
-        contentType = when (article.type) {
-            ArticleType.Answer -> ReadingContentType.Answer
-            ArticleType.Article -> ReadingContentType.Article
-        },
-        id = article.id,
-        title = viewModel.title,
-        author = viewModel.authorName,
-        questionId = viewModel.questionId.takeIf { it > 0 },
-        bodyHtml = viewModel.content.takeIf(String::isNotBlank),
-        publishedAt = viewModel.createdAt,
-        updatedAt = viewModel.updatedAt,
-        voteUpCount = viewModel.voteUpCount,
-        commentCount = viewModel.commentCount,
-    )
-    val readingPreferences = loadReadingPreferences(readingSettings)
-    val readingPlaybackSpeed = loadReadingPlaybackSpeed(readingSettings)
-    val hasReadingSession = readingPlayerState.hasSession
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
     @Composable
@@ -202,133 +167,6 @@ fun ArticleActionsMenu(
 
     @Composable
     fun Content() {
-        MenuActionButton(
-            icon = {
-                if (readingPlayer.isSupported && hasReadingSession) {
-                    Icon(
-                        Icons.AutoMirrored.Filled.VolumeOff,
-                        contentDescription = null,
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                } else {
-                    when (ttsState) {
-                        TtsState.Initializing, TtsState.Uninitialized -> CircularProgressIndicator(
-                            modifier = Modifier.height(24.dp),
-                            strokeWidth = 2.dp,
-                        )
-
-                        else -> Icon(
-                            if (!readingPlayer.isSupported && ttsState.isSpeaking) {
-                                Icons.AutoMirrored.Filled.VolumeOff
-                            } else {
-                                Icons.AutoMirrored.Filled.VolumeUp
-                            },
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            },
-            text = if (readingPlayer.isSupported) {
-                if (hasReadingSession) "停止朗读" else "开始连续朗读"
-            } else if (ttsState.isSpeaking) {
-                "停止朗读"
-            } else {
-                "开始朗读"
-            },
-            enabled = if (readingPlayer.isSupported) {
-                hasReadingSession || readingItem.hasReadableFields(readingPreferences)
-            } else {
-                ttsState !in listOf(TtsState.Error, TtsState.Uninitialized, TtsState.Initializing)
-            },
-            onClick = {
-                onDismissRequest()
-                if (readingPlayer.isSupported) {
-                    if (hasReadingSession) {
-                        readingPlayer.stop()
-                    } else {
-                        coroutineScope.launch {
-                            val originQueue = ReadingQueueSourceRegistry.queueStartingAt(
-                                current = readingItem,
-                                sourceId = article.readingQueueSourceId,
-                                limit = readingPreferences.queueLimit,
-                            )
-                            val queue = if (
-                                article.type == ArticleType.Answer &&
-                                originQueue.size < readingPreferences.queueLimit &&
-                                readingPreferences.queueLimit > 1
-                            ) {
-                                val fallbackAfterCurrent = try {
-                                    val fallbackArticles = answerQueueFallbackProvider
-                                        ?.invoke(readingPreferences.queueLimit - 1)
-                                        ?: viewModel.answerNextIds.map { answerId ->
-                                            Article(
-                                                type = ArticleType.Answer,
-                                                id = answerId,
-                                                title = viewModel.title,
-                                            )
-                                        }
-                                    fallbackArticles.map { fallback ->
-                                        ReadingQueueItem(
-                                            contentType = ReadingContentType.Answer,
-                                            id = fallback.id,
-                                            title = fallback.title
-                                                .takeUnless { it == "loading..." }
-                                                .orEmpty()
-                                                .ifBlank { viewModel.title },
-                                            author = fallback.authorName
-                                                .takeUnless { it == "loading..." }
-                                                .orEmpty(),
-                                            questionId = viewModel.questionId.takeIf { it > 0 },
-                                        )
-                                    }
-                                } catch (error: CancellationException) {
-                                    throw error
-                                } catch (error: Exception) {
-                                    Log.w("ArticleActionsMenu", "Failed to load the remaining reading queue", error)
-                                    emptyList()
-                                }
-                                ReadingQueueSourceRegistry.queueStartingAt(
-                                    current = readingItem,
-                                    sourceId = article.readingQueueSourceId,
-                                    limit = readingPreferences.queueLimit,
-                                    fallbackAfterCurrent = fallbackAfterCurrent,
-                                )
-                            } else {
-                                originQueue
-                            }
-                            readingPlayer.start(
-                                ReadingStartRequest(
-                                    queue = queue,
-                                    preferences = readingPreferences,
-                                    sourceId = article.readingQueueSourceId,
-                                    playbackSpeed = readingPlaybackSpeed,
-                                ),
-                            )
-                        }
-                    }
-                } else if (ttsState.isSpeaking) {
-                    toggleSpeech(viewModel.title, viewModel.content)
-                } else if (ttsState !in listOf(TtsState.Error, TtsState.Uninitialized, TtsState.Initializing)) {
-                    viewModel.viewModelScope.launch {
-                        try {
-                            withContext(Dispatchers.Default) {
-                                val textToRead = articleSpeechText(viewModel.title, viewModel.content)
-                                withContext(Dispatchers.Main) {
-                                    if (textToRead.isNotBlank()) {
-                                        toggleSpeech(viewModel.title, viewModel.content)
-                                    }
-                                }
-                            }
-                        } catch (e: Exception) {
-                            withContext(Dispatchers.Main) { Unit }
-                        }
-                    }
-                }
-            },
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
         MenuActionButton(
             icon = Icons.Filled.Share,
             text = "分享",

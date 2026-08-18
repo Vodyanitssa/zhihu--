@@ -88,7 +88,6 @@ import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
 import com.github.zly2006.zhihu.platform.rememberImagePreviewOpener
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.platform.rememberZhihuWebUrlOpener
-import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.components.AuthorBadge
 import com.github.zly2006.zhihu.ui.components.FeedCard
@@ -640,24 +639,6 @@ fun PeopleScreen(
         2 -> "people:${person.userTokenOrId}:activities:${viewModel.activitiesFeedModel.sort}"
         5 -> "people:${person.userTokenOrId}:pins"
         else -> null
-    }
-    when (pagerState.currentPage) {
-        0 -> RegisterReadingQueueSource(
-            sourceId = requireNotNull(readingQueueSourceId),
-            items = viewModel.answersFeedModel.allData.map(DataHolder.Answer::toPeopleAnswerDisplayItem),
-        )
-        1 -> RegisterReadingQueueSource(
-            sourceId = requireNotNull(readingQueueSourceId),
-            items = viewModel.articlesFeedModel.allData.map(DataHolder.Article::toPeopleArticleDisplayItem),
-        )
-        2 -> RegisterReadingQueueSource(
-            sourceId = requireNotNull(readingQueueSourceId),
-            items = viewModel.activitiesFeedModel.displayItems,
-        )
-        5 -> RegisterReadingQueueSource(
-            sourceId = requireNotNull(readingQueueSourceId),
-            items = viewModel.pinsFeedModel.allData.mapNotNull(DataHolder.Pin::toPeoplePinDisplayItem),
-        )
     }
 
     LaunchedEffect(viewModel) {

@@ -99,7 +99,6 @@ fun AnswerVerticalOverscroll(
     scrollState: ScrollState,
     answerSwitchSensitivity: Float = DEFAULT_ANSWER_SWITCH_SENSITIVITY,
     isContentNonScrollable: Boolean = scrollState.maxValue == 0,
-    onOverscrollOffsetChange: (Float) -> Unit = {},
     content: @Composable () -> Unit,
 ) {
     val density = LocalDensity.current
@@ -114,12 +113,6 @@ fun AnswerVerticalOverscroll(
     val overscrollOffset = remember { Animatable(0f) }
     var hasTriggeredHaptic by remember { mutableStateOf(false) }
     var rawDragAccumulator by remember { mutableFloatStateOf(0f) }
-    val currentOnOverscrollOffsetChange by rememberUpdatedState(onOverscrollOffsetChange)
-
-    LaunchedEffect(overscrollOffset) {
-        snapshotFlow { overscrollOffset.value }
-            .collect { currentOnOverscrollOffsetChange(it) }
-    }
 
     // nestedScrollConnection 没有带 key 重新 remember，因此用 rememberUpdatedState 保证它总能读到最新值。
     val currentCanGoPrevious by rememberUpdatedState(previousAnswer != null)

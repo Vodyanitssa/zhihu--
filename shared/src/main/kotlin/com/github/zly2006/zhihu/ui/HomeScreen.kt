@@ -104,7 +104,6 @@ import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberAppPrivateDirectory
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.reading.RegisterReadingQueueSource
 import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
 import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
@@ -155,7 +154,6 @@ fun HomeScreen(
     scrollToTopTrigger: Int,
     innerPadding: PaddingValues,
 ) {
-    val readingPlayerOverlayPadding = LocalReadingPlayerOverlayPadding.current
     val navigator = LocalNavigator.current
     val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = true)
     val settings = rememberSettingsStore()
@@ -204,10 +202,6 @@ fun HomeScreen(
         RecommendationMode.ANDROID -> viewModel { AndroidHomeFeedViewModel() }
     }
     val readingQueueSourceId = "home:${currentRecommendationMode.name}"
-    RegisterReadingQueueSource(
-        sourceId = readingQueueSourceId,
-        items = viewModel.displayItems,
-    )
 
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
@@ -412,7 +406,7 @@ fun HomeScreen(
                     modifier = Modifier.testTag(HOME_FEED_LIST_TAG),
                     contentPadding = PaddingValues(
                         top = scaffoldPadding.calculateTopPadding() + 8.dp,
-                        bottom = innerPadding.calculateBottomPadding() + readingPlayerOverlayPadding,
+                        bottom = innerPadding.calculateBottomPadding(),
                     ),
                     onLoadMore = { viewModel.loadMore(paginationEnvironment) },
                     footer = ProgressIndicatorFooter,
@@ -497,14 +491,12 @@ fun HomeScreen(
                                 userMessages.showShortMessage("已复制调试数据")
                             },
                             preferenceName = "copyAll",
-                            bottomAvoidance = readingPlayerOverlayPadding,
                         ) {
                             Icon(Icons.Default.CopyAll, contentDescription = "复制")
                         }
                     }
                     DraggableRefreshButton(
                         modifier = Modifier.testTag(HOME_REFRESH_BUTTON_TAG),
-                        bottomAvoidance = readingPlayerOverlayPadding,
                         onClick = { viewModel.refresh(paginationEnvironment) },
                     ) {
                         if (viewModel.isLoading) {
@@ -540,7 +532,7 @@ fun HomeScreen(
                 .align(Alignment.BottomEnd)
                 .padding(
                     end = 16.dp,
-                    bottom = innerPadding.calculateBottomPadding() + readingPlayerOverlayPadding + 16.dp,
+                    bottom = innerPadding.calculateBottomPadding() + 16.dp,
                 ),
             horizontalAlignment = Alignment.End,
         ) {
