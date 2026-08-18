@@ -28,7 +28,6 @@ import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
-import androidx.annotation.RequiresApi
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -262,15 +261,11 @@ open class ArticleAnswerSwitchData :
     // 导航动画方向
     override var answerTransitionDirection = ArticleAnswerTransitionDirection.DEFAULT
 
-    // 沉浸式阅读模式
-    override var isImmersiveMode by mutableStateOf(false)
-
     override fun reset() {
         navigator = pendingNavigator
         pendingNavigator = null
         pendingInitialContent = null
         navigatingFromAnswerSwitch = false
-        isImmersiveMode = false
     }
 
     override fun promoteForNavigation(direction: ArticleAnswerTransitionDirection) = Unit
@@ -715,7 +710,6 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleFetchFailure(
         tag: String?,
         error: Exception,
@@ -733,7 +727,6 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleMobileHomeFeedFailure(error: Exception) {
         Log.e("AndroidHomeFeedViewModel", "Failed to fetch feeds", error)
         context.mainExecutor.execute {
@@ -752,14 +745,10 @@ open class SharedAndroidPaginationEnvironment(
     }
 
     override suspend fun isUserBlocked(userId: String): Boolean =
-        getContentFilterDatabase(context).let { database ->
-            database.blockedUserDao().isUserBlocked(userId)
-        }
+        getContentFilterDatabase(context).blockedUserDao().isUserBlocked(userId)
 
     override suspend fun isQuestionAuthorBlocked(userId: String): Boolean =
-        getContentFilterDatabase(context).let { database ->
-            database.blockedQuestionAuthorDao().isUserBlocked(userId)
-        }
+        getContentFilterDatabase(context).blockedQuestionAuthorDao().isUserBlocked(userId)
 
     override fun blockedUserIds(): Set<String> =
         kotlinx.coroutines.runBlocking {
@@ -951,7 +940,6 @@ open class SharedAndroidPaginationEnvironment(
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     override suspend fun handleCollectionExportFailure(error: Exception) {
         Log.e("CollectionContentViewModel", "Failed to export collection HTML zip", error)
         context.mainExecutor.execute {
@@ -983,7 +971,6 @@ open class SharedAndroidPaginationEnvironment(
         )
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun tryShowLoginExpiredDialog(error: HttpStatusException): Boolean {
         try {
             val body = json.parseToJsonElement(error.bodyText).jsonObject
@@ -1010,7 +997,6 @@ open class SharedAndroidPaginationEnvironment(
         return false
     }
 
-    @RequiresApi(Build.VERSION_CODES.P)
     private fun showDebugErrorDialog(error: HttpStatusException) {
         context.mainExecutor.execute {
             if (context.canSafelyShowDialog()) {

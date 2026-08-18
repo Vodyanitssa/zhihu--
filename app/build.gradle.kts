@@ -1,8 +1,6 @@
 @file:OptIn(ExperimentalEncodingApi::class)
 
 import buildlogic.gitHash
-import org.gradle.api.tasks.testing.Test
-import org.gradle.jvm.toolchain.JavaLanguageVersion
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 

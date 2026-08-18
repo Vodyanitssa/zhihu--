@@ -15,7 +15,6 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.github.zly2006.zhihu.ui
-import android.app.Activity
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -28,7 +27,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -41,10 +39,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import androidx.core.view.WindowInsetsCompat
-import androidx.core.view.WindowInsetsControllerCompat
 import androidx.navigation.NavHostController
-import com.fleeksoft.ksoup.Ksoup
 import com.github.zly2006.zhihu.data.AccountData
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.filter.ContentOpenFrom
@@ -59,7 +54,6 @@ import com.github.zly2006.zhihu.navigation.TopLevelDestination
 import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
-import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
@@ -299,7 +293,6 @@ interface ArticleAnswerSwitchState {
     var navigatingFromAnswerSwitch: Boolean
     var answerSwitchDisposeInProgress: Boolean
     var answerTransitionDirection: ArticleAnswerTransitionDirection
-    var isImmersiveMode: Boolean
 
     fun reset()
 
@@ -587,32 +580,3 @@ fun Context.articleHost(): ArticleHost? =
 
 fun Modifier.questionSelectionWorkaround(): Modifier = this
 
-@Composable
-fun ArticleImmersiveModeEffect(immersive: Boolean) {
-    val context = LocalContext.current
-    val window = remember(context) { (context as? Activity)?.window }
-    LaunchedEffect(window, immersive) {
-        window?.let { w ->
-            val ctrl = WindowInsetsControllerCompat(w, w.decorView)
-            if (immersive) {
-                ctrl.hide(WindowInsetsCompat.Type.statusBars())
-                ctrl.systemBarsBehavior =
-                    WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
-            } else {
-                ctrl.show(WindowInsetsCompat.Type.statusBars())
-            }
-        }
-    }
-}
-
-@Composable
-fun LeaveImmersiveModeCleanup() {
-    val context = LocalContext.current
-    val window = remember(context) { (context as? Activity)?.window }
-    LaunchedEffect(window) {
-        window?.let { w ->
-            WindowInsetsControllerCompat(w, w.decorView)
-                .show(WindowInsetsCompat.Type.statusBars())
-        }
-    }
-}

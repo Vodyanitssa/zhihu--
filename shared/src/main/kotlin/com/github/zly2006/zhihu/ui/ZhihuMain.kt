@@ -49,7 +49,6 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material.icons.filled.Whatshot
-import androidx.compose.material3.FabPosition
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -69,18 +68,15 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
-import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.compositeOver
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.layout.onSizeChanged
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
@@ -188,9 +184,7 @@ fun ZhihuMain(
     val startDestination = preferenceState.startDestination
     val reloadBottomBarPreferences = preferenceState::reload
     val settings = rememberSettingsStore()
-    var showReadingQueue by remember { mutableStateOf(false) }
     var isReadingPlayerExpandedByUser by remember { mutableStateOf(false) }
-    var readingPlayerHeightPx by remember { mutableIntStateOf(0) }
     val density = LocalDensity.current
 
     val navEntry by navController.currentBackStackEntryAsState()
@@ -201,16 +195,6 @@ fun ZhihuMain(
     val shouldCompactPlayerOnBackgroundInteraction by rememberUpdatedState(
         isReadingPlayerExpandedByUser && !isOnReadingDetail,
     )
-
-    // 离开文章页时恢复系统状态栏（只在实际切换时触发）
-    val isOnArticle = navEntry?.destination?.hasRoute<Article>() == true
-    var wasOnArticle by remember { mutableStateOf(false) }
-    if (!isOnArticle && wasOnArticle) {
-        LeaveImmersiveModeCleanup()
-    }
-    SideEffect {
-        wasOnArticle = isOnArticle
-    }
 
     var scrollToTopTrigger by remember { mutableIntStateOf(0) }
     // 滚动时自动隐藏底部导航栏
