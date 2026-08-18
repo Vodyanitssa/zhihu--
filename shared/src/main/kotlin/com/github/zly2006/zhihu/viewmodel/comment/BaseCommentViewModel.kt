@@ -24,7 +24,6 @@ import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.viewmodel.CommentItem
-import com.github.zly2006.zhihu.viewmodel.ContentBlocklistEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
@@ -47,8 +46,7 @@ abstract class BaseCommentViewModel(
     var sortOrder by mutableStateOf(CommentSortOrder.SCORE)
 
     override fun processResponse(environment: PaginationEnvironment, data: List<DataHolder.Comment>, rawData: JsonArray) {
-        debugData.addAll(rawData) // 保存原始JSON
-        filterBlockedComments(environment, data).forEach { comment ->
+        data.forEach { comment ->
             if (allData.none { it.id == comment.id }) {
                 // 避免服务器返回重复评论时重复添加，造成LazyColumn key冲突
                 allData.add(comment)
@@ -59,23 +57,6 @@ abstract class BaseCommentViewModel(
             comment.childComments.forEach {
                 val childCommentItem = createCommentItem(it, article)
                 commentsMap[it.id] = childCommentItem
-            }
-        }
-    }
-
-    private fun filterBlockedComments(
-        environment: ContentBlocklistEnvironment,
-        comments: List<DataHolder.Comment>,
-    ): List<DataHolder.Comment> {
-        val blockedUserIds = environment.blockedUserIds()
-        if (blockedUserIds.isEmpty()) return comments
-        return comments.mapNotNull { comment ->
-            if (comment.author.id in blockedUserIds) {
-                null
-            } else {
-                comment.copy(
-                    childComments = comment.childComments.filterNot { it.author.id in blockedUserIds },
-                )
             }
         }
     }

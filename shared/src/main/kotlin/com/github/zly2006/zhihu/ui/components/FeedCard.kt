@@ -229,13 +229,6 @@ private fun FeedCardMenuBox(
             onDismissRequest = { onShowMenuChange(false) },
         ) {
             menuItems { onShowMenuChange(false) }
-            DropdownMenuItem(
-                text = { Text("外观设置") },
-                onClick = {
-                    onShowMenuChange(false)
-                    navigator.onNavigate(Account.AppearanceSettings())
-                },
-            )
             if (item.isFiltered) {
                 DropdownMenuItem(
                     text = { Text("不再屏蔽低赞内容") },
@@ -252,8 +245,7 @@ private fun FeedCardMenuBox(
 /**
  * 信息流卡片正文内容。
  *
- * 这里决定标题、摘要、缩略图、作者信息和操作菜单在卡片内的排列方式。标准排版强调兼容既有 Material 3 卡片，
- * Duo3 排版则把作者移到底部、调整图片和摘要结构，并可使用更大的标题字号。
+ * 这里决定标题、摘要、缩略图、作者信息和操作菜单在卡片内的排列方式。
  */
 @Composable
 private fun FeedCardContent(

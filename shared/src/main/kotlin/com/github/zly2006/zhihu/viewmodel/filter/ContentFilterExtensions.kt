@@ -54,9 +54,8 @@ class ForegroundReadFilterPipeline(
                 ?.target
                 ?.author
                 ?.isFollowing ?: false
-            val isLowQualityAndroidFeed = isLowQualityForegroundFeed(item)
 
-            if (isFollowing || (!isViewed && !isLowQualityAndroidFeed)) {
+            if (isFollowing || !isViewed) {
                 keptItems.add(item)
                 contentFilterManager.recordContentView(identity.type, identity.id)
             } else {
@@ -73,11 +72,6 @@ class ForegroundReadFilterPipeline(
         return keptItems
     }
 }
-
-private fun isLowQualityForegroundFeed(item: FeedDisplayItem): Boolean =
-    item.details.contains("小时前") ||
-        item.details.contains("分钟前") ||
-        item.details.contains("浏览")
 
 data class FeedContentFilterResult(
     val kept: List<FilterableContent>,

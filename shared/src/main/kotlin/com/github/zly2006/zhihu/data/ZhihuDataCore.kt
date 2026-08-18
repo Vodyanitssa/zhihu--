@@ -53,12 +53,8 @@ fun List<Feed>.flattenFeeds(): List<Feed> = flatMap {
     (it as? GroupFeed)?.list ?: listOf(it)
 }
 
-fun Feed.toDisplayItem(
-    enableQualityFilter: Boolean = true,
-): FeedDisplayItem = when (this) {
-    is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is HotListFeed, is TopicFeed -> toTargetDisplayItem(
-        enableQualityFilter = enableQualityFilter,
-    )
+fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
+    is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is HotListFeed, is TopicFeed -> toTargetDisplayItem()
 
     is AdvertisementFeed -> FeedDisplayItem(
         title = ad.creatives
@@ -87,66 +83,49 @@ fun Feed.toDisplayItem(
     )
 }
 
-private fun Feed.toTargetDisplayItem(
-    enableQualityFilter: Boolean,
-): FeedDisplayItem {
-    val target = target
-    val filterReason = if (!enableQualityFilter) null else target?.filterReason()
+private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = target) {
+    is Feed.AnswerTarget,
+    is Feed.ArticleTarget,
+    is Feed.QuestionTarget,
+    -> FeedDisplayItem(
+        title = target.title,
+        summary = target.excerpt,
+        details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
+        avatarSrc = target.author?.avatarUrl,
+        authorName = target.author?.name,
+        authorBadgeV2 = target.author?.badgeV2,
+        feed = this,
+    )
 
-    if (filterReason != null) {
-        return FeedDisplayItem(
-            title = "已屏蔽",
-            summary = filterReason,
-            details = target!!.detailsText,
-            feed = this,
-            isFiltered = true,
-        )
-    }
+    is Feed.PinTarget -> {
+        val textContent = target.content
+            .filterIsInstance<DataHolder.Pin.ContentText>()
+            .firstOrNull()
+        val title = textContent?.title.orEmpty()
+        val contentSummary = textContent
+            ?.content
+            ?.let { Ksoup.parse(it).text() }
+            ?.takeIf { it.isNotBlank() }
+        val excerptSummary = target.excerpt
+            ?.let { Ksoup.parse(it).text() }
+            ?.takeIf { it.isNotBlank() }
+        val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
 
-    return when (target) {
-        is Feed.AnswerTarget,
-        is Feed.ArticleTarget,
-        is Feed.QuestionTarget,
-        -> FeedDisplayItem(
-            title = target.title,
-            summary = target.excerpt,
-            details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
-            avatarSrc = target.author?.avatarUrl,
-            authorName = target.author?.name,
-            authorBadgeV2 = target.author?.badgeV2,
-            feed = this,
-        )
-
-        is Feed.PinTarget -> {
-            val textContent = target.content
-                .filterIsInstance<DataHolder.Pin.ContentText>()
-                .firstOrNull()
-            val title = textContent?.title.orEmpty()
-            val contentSummary = textContent
-                ?.content
-                ?.let { Ksoup.parse(it).text() }
-                ?.takeIf { it.isNotBlank() }
-            val excerptSummary = target.excerpt
-                ?.let { Ksoup.parse(it).text() }
-                ?.takeIf { it.isNotBlank() }
-            val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
-
-            FeedDisplayItem(
-                title = title,
-                summary = summary,
-                details = target.detailsText,
-                avatarSrc = target.author.avatarUrl,
-                authorName = target.author.name,
-                authorBadgeV2 = target.author.badgeV2,
-                feed = this,
-            )
-        }
-
-        else -> FeedDisplayItem(
-            title = target?.description() ?: "广告",
-            summary = "Not Implemented",
-            details = target?.detailsText ?: "广告",
+        FeedDisplayItem(
+            title = title,
+            summary = summary,
+            details = target.detailsText,
+            avatarSrc = target.author.avatarUrl,
+            authorName = target.author.name,
+            authorBadgeV2 = target.author.badgeV2,
             feed = this,
         )
     }
+
+    else -> FeedDisplayItem(
+        title = target?.description() ?: "广告",
+        summary = "Not Implemented",
+        details = target?.detailsText ?: "广告",
+        feed = this,
+    )
 }

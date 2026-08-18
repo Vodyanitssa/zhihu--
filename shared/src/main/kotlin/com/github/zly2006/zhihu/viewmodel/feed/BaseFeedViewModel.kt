@@ -32,9 +32,7 @@ import com.github.zly2006.zhihu.viewmodel.HomeFeedFilterResult
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedTopic
-import com.github.zly2006.zhihu.viewmodel.filter.ContentDetailProvider
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
-import com.github.zly2006.zhihu.viewmodel.getOrFetchContentDetail
 import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
 import kotlin.reflect.typeOf
@@ -75,55 +73,12 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
         isPullToRefresh = false
     }
 
-    open fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem {
-        val settings = environment.feedDisplaySettings()
-        return feed.toDisplayItem(
-            enableQualityFilter = settings.enableQualityFilter,
-        )
-    }
+    open fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem = feed.toDisplayItem()
 
     fun addDisplayItems(newItems: List<FeedDisplayItem>) {
         newItems.forEach {
             if (displayItems.none { existing -> existing.stableKey == it.stableKey }) {
                 displayItems.add(it)
-            }
-        }
-    }
-
-    fun handleBlockUser(
-        environment: PaginationEnvironment,
-        userMessages: UserMessageSink,
-        feedItem: FeedDisplayItem,
-        onShowDialog: (Pair<String, String>) -> Unit,
-    ) {
-        viewModelScope.launch {
-            val authorInfo = resolveFeedBlockAuthorInfo(
-                feedItem,
-                ContentDetailProvider(environment::getOrFetchContentDetail),
-            )
-            if (authorInfo != null) {
-                onShowDialog(authorInfo)
-            } else {
-                userMessages.showLongMessage("无法获取屏蔽用户所需的数据，请尝试进入内容详情页操作")
-            }
-        }
-    }
-
-    fun handleBlockQuestionAuthor(
-        environment: PaginationEnvironment,
-        userMessages: UserMessageSink,
-        feedItem: FeedDisplayItem,
-        onShowDialog: (Pair<String, String>) -> Unit,
-    ) {
-        viewModelScope.launch {
-            val authorInfo = resolveFeedQuestionAuthorInfo(
-                feedItem,
-                ContentDetailProvider(environment::getOrFetchContentDetail),
-            )
-            if (authorInfo != null) {
-                onShowDialog(authorInfo)
-            } else {
-                userMessages.showLongMessage("当前条目没有可用的提问者数据，无法屏蔽提问者")
             }
         }
     }

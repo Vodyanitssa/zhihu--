@@ -95,7 +95,6 @@ import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.util.raiseForStatus
-import com.github.zly2006.zhihu.viewmodel.ContentBlocklistEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
 import com.github.zly2006.zhihu.viewmodel.ProfileLoadEnvironment
@@ -345,8 +344,6 @@ class PersonViewModel(
     var articleCount by mutableIntStateOf(0)
     var isFollowing by mutableStateOf(false)
     var isBlocking by mutableStateOf(false)
-    var isBlockedInRecommendations by mutableStateOf(false)
-    var isBlockedAsQuestionAuthor by mutableStateOf(false)
     var memberHashId by mutableStateOf(person.id)
 
     // 只实现已有数据类型的 ViewModel
@@ -399,21 +396,6 @@ class PersonViewModel(
         isBlocking = newBlockingState
     }
 
-    suspend fun toggleRecommendationBlock(environment: ContentBlocklistEnvironment) {
-        if (isBlockedInRecommendations) {
-            environment.removeBlockedUser(person.id)
-            isBlockedInRecommendations = false
-        } else {
-            environment.addBlockedUser(
-                userId = person.id,
-                userName = name,
-                urlToken = person.urlToken,
-                avatarUrl = avatar,
-            )
-            isBlockedInRecommendations = true
-        }
-    }
-
     suspend fun load(environment: ProfileLoadEnvironment) {
         environment.addReadHistory(person.id, "profile")
 
@@ -442,8 +424,6 @@ class PersonViewModel(
         this.articleCount = loadedPerson.articlesCount
         this.isFollowing = loadedPerson.isFollowing
         this.isBlocking = loadedPerson.isBlocking
-        this.isBlockedInRecommendations = environment.isUserBlocked(loadedPerson.id)
-        this.isBlockedAsQuestionAuthor = environment.isQuestionAuthorBlocked(loadedPerson.id)
         this.memberHashId = loadedPerson.id
         this.person.id = loadedPerson.id
         if (urlToken != null) {
@@ -788,8 +768,7 @@ fun PeopleScreen(
                         // 回答
                         Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("people_screen_page_$page"),
+                                .fillMaxSize(),
                         ) {
                             SortBar(
                                 currentSort = viewModel.answersFeedModel.sortBy,

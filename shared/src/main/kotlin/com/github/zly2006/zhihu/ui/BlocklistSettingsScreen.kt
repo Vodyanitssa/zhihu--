@@ -17,7 +17,6 @@
 
 package com.github.zly2006.zhihu.ui
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -26,12 +25,10 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
@@ -39,8 +36,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.FloatingActionButton
 import androidx.compose.material3.Icon
@@ -54,7 +49,6 @@ import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -63,72 +57,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import coil3.compose.AsyncImage
 import com.github.zly2006.zhihu.navigation.LocalNavigator
-import com.github.zly2006.zhihu.navigation.Person
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedKeyword
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedQuestionAuthor
 import com.github.zly2006.zhihu.viewmodel.filter.BlockedTopic
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedUser
-import com.github.zly2006.zhihu.viewmodel.filter.BlocklistStats
 import com.github.zly2006.zhihu.viewmodel.filter.KeywordType
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import kotlinx.coroutines.launch
-
-object BlocklistSettingsTestTags {
-    const val ROOT = "blocklistSettings:root"
-    const val STATS_CARD = "blocklistSettings:statsCard"
-    const val IMPORT_BUTTON = "blocklistSettings:import"
-    const val EXPORT_BUTTON = "blocklistSettings:export"
-    const val TAB_ROW = "blocklistSettings:tabs"
-    const val FAB = "blocklistSettings:add"
-    const val KEYWORD_LIST = "blocklistSettings:keywords:list"
-    const val KEYWORD_CLEAR_BUTTON = "blocklistSettings:keywords:clear"
-    const val TOPIC_LIST = "blocklistSettings:topics:list"
-    const val TOPIC_CLEAR_BUTTON = "blocklistSettings:topics:clear"
-    const val TOPIC_CLEAR_CONFIRM = "blocklistSettings:topics:clearConfirm"
-    const val TOPIC_CLEAR_DISMISS = "blocklistSettings:topics:clearDismiss"
-    const val KEYWORD_DIALOG_INPUT = "blocklistSettings:keywordDialog:input"
-    const val KEYWORD_DIALOG_CASE_SENSITIVE = "blocklistSettings:keywordDialog:caseSensitive"
-    const val KEYWORD_DIALOG_REGEX = "blocklistSettings:keywordDialog:regex"
-    const val KEYWORD_DIALOG_CONFIRM = "blocklistSettings:keywordDialog:confirm"
-    const val KEYWORD_DIALOG_DISMISS = "blocklistSettings:keywordDialog:dismiss"
-    const val USER_DIALOG_ID_INPUT = "blocklistSettings:userDialog:userId"
-    const val USER_DIALOG_NAME_INPUT = "blocklistSettings:userDialog:userName"
-    const val USER_DIALOG_CONFIRM = "blocklistSettings:userDialog:confirm"
-    const val USER_DIALOG_DISMISS = "blocklistSettings:userDialog:dismiss"
-    const val TOPIC_DIALOG_ID_INPUT = "blocklistSettings:topicDialog:topicId"
-    const val TOPIC_DIALOG_NAME_INPUT = "blocklistSettings:topicDialog:topicName"
-    const val TOPIC_DIALOG_CONFIRM = "blocklistSettings:topicDialog:confirm"
-    const val TOPIC_DIALOG_DISMISS = "blocklistSettings:topicDialog:dismiss"
-}
-
-data class BlocklistSettingsTestConfig(
-    val blockedKeywords: List<BlockedKeyword> = emptyList(),
-    val blockedUsers: List<BlockedUser> = emptyList(),
-    val blockedQuestionAuthors: List<BlockedQuestionAuthor> = emptyList(),
-    val blockedTopics: List<BlockedTopic> = emptyList(),
-    val stats: BlocklistStats? = null,
-    val onImportRequested: (() -> Unit)? = null,
-    val onExportRequested: (() -> Unit)? = null,
-    val onAddKeyword: ((String, Boolean, Boolean) -> Unit)? = null,
-    val onDeleteKeyword: ((BlockedKeyword) -> Unit)? = null,
-    val onClearKeywords: (() -> Unit)? = null,
-    val onAddUser: ((String, String) -> Unit)? = null,
-    val onDeleteUser: ((BlockedUser) -> Unit)? = null,
-    val onClearUsers: (() -> Unit)? = null,
-    val onAddQuestionAuthor: ((String, String) -> Unit)? = null,
-    val onDeleteQuestionAuthor: ((BlockedQuestionAuthor) -> Unit)? = null,
-    val onClearQuestionAuthors: (() -> Unit)? = null,
-    val onAddTopic: ((String, String) -> Unit)? = null,
-    val onDeleteTopic: ((BlockedTopic) -> Unit)? = null,
-    val onClearTopics: (() -> Unit)? = null,
-)
 
 /**
  * 屏蔽列表管理页。
@@ -137,34 +74,22 @@ data class BlocklistSettingsTestConfig(
  * 新增屏蔽类型时要同步数据管理、设置页入口和 Feed 卡片菜单。
  */
 @Composable
-fun BlocklistSettingsScreen(
-    testConfig: BlocklistSettingsTestConfig? = null,
-) {
+fun BlocklistSettingsScreen() {
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
-    val requestImport = rememberBlocklistRuleImporter(userMessages)
-    val exportRules = rememberBlocklistRuleExporter()
     val database = remember { getContentFilterDatabase() }
     val coroutineScope = rememberCoroutineScope()
 
     var selectedTab by remember { mutableIntStateOf(0) }
-    val tabs = listOf("屏蔽关键词", "屏蔽用户", "屏蔽提问者", "屏蔽主题")
+    val tabs = listOf("屏蔽关键词", "屏蔽主题")
 
     var loadedBlockedKeywords by remember { mutableStateOf<List<BlockedKeyword>>(emptyList()) }
-    var loadedBlockedUsers by remember { mutableStateOf<List<BlockedUser>>(emptyList()) }
-    var loadedBlockedQuestionAuthors by remember { mutableStateOf<List<BlockedQuestionAuthor>>(emptyList()) }
     var loadedBlockedTopics by remember { mutableStateOf<List<BlockedTopic>>(emptyList()) }
-    var loadedStats by remember { mutableStateOf<BlocklistStats?>(null) }
 
-    val blockedKeywords = testConfig?.blockedKeywords ?: loadedBlockedKeywords
-    val blockedUsers = testConfig?.blockedUsers ?: loadedBlockedUsers
-    val blockedQuestionAuthors = testConfig?.blockedQuestionAuthors ?: loadedBlockedQuestionAuthors
-    val blockedTopics = testConfig?.blockedTopics ?: loadedBlockedTopics
-    val stats = testConfig?.stats ?: loadedStats
+    val blockedKeywords = loadedBlockedKeywords
+    val blockedTopics = loadedBlockedTopics
 
     var showAddKeywordDialog by remember { mutableStateOf(false) }
-    var showAddUserDialog by remember { mutableStateOf(false) }
-    var showAddQuestionAuthorDialog by remember { mutableStateOf(false) }
     var showAddTopicDialog by remember { mutableStateOf(false) }
 
     // 加载数据
@@ -176,15 +101,7 @@ fun BlocklistSettingsScreen(
                     .blockedKeywordDao()
                     .getAllKeywords()
                     .filter { it.getKeywordTypeEnum() == KeywordType.EXACT_MATCH }
-                loadedBlockedUsers = database.blockedUserDao().getAllUsers()
-                loadedBlockedQuestionAuthors = database.blockedQuestionAuthorDao().getAllUsers()
                 loadedBlockedTopics = database.blockedTopicDao().getAllTopics()
-                loadedStats = BlocklistStats(
-                    keywordCount = database.blockedKeywordDao().getKeywordCount(),
-                    userCount = database.blockedUserDao().getUserCount(),
-                    questionAuthorCount = database.blockedQuestionAuthorDao().getUserCount(),
-                    topicCount = database.blockedTopicDao().getTopicCount(),
-                )
             } catch (e: Exception) {
                 Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
                 userMessages.showShortMessage("加载数据失败: ${e.message}")
@@ -192,25 +109,17 @@ fun BlocklistSettingsScreen(
         }
     }
 
-    LaunchedEffect(testConfig) {
-        if (testConfig == null) {
-            loadData()
-        }
-    }
-
     Scaffold(
         modifier = Modifier.fillMaxSize(),
         floatingActionButton = {
-            // 只在传统关键词、用户屏蔽、提问者屏蔽和主题屏蔽标签页显示添加按钮
-            if (selectedTab == 0 || selectedTab == 2 || selectedTab == 3 || selectedTab == 4) {
+            // 只在关键词和主题屏蔽标签页显示添加按钮
+            if (selectedTab == 0 || selectedTab == 1) {
                 FloatingActionButton(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.FAB),
+                    modifier = Modifier,
                     onClick = {
                         when (selectedTab) {
                             0 -> showAddKeywordDialog = true
-                            1 -> showAddUserDialog = true
-                            2 -> showAddQuestionAuthorDialog = true
-                            3 -> showAddTopicDialog = true
+                            1 -> showAddTopicDialog = true
                         }
                     },
                 ) {
@@ -222,135 +131,16 @@ fun BlocklistSettingsScreen(
         Column(
             modifier = Modifier
                 .padding(scaffoldPadding)
-                .testTag(BlocklistSettingsTestTags.ROOT)
                 .fillMaxWidth(),
         ) {
-            // 统计信息卡片
-            stats?.let { statsData ->
-                Card(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp)
-                        .testTag(BlocklistSettingsTestTags.STATS_CARD),
-                    colors = CardDefaults.cardColors(
-                        containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    ),
-                ) {
-                    Column(
-                        modifier = Modifier.padding(16.dp),
-                    ) {
-                        Text(
-                            "屏蔽统计",
-                            style = MaterialTheme.typography.titleMedium,
-                            color = MaterialTheme.colorScheme.onSecondaryContainer,
-                        )
-                        Spacer(modifier = Modifier.height(8.dp))
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceAround,
-                        ) {
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "屏蔽关键词",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                Text(
-                                    "${statsData.keywordCount}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "屏蔽用户",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                Text(
-                                    "${statsData.userCount}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "屏蔽提问者",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                Text(
-                                    "${statsData.questionAuthorCount}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                                Text(
-                                    "屏蔽主题",
-                                    style = MaterialTheme.typography.bodySmall,
-                                )
-                                Text(
-                                    "${statsData.topicCount}",
-                                    style = MaterialTheme.typography.headlineMedium,
-                                    color = MaterialTheme.colorScheme.primary,
-                                )
-                            }
-                        }
-                    }
-                }
-            }
-
-            // 全局导入/导出按钮
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 4.dp),
-                horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.End),
-            ) {
-                TextButton(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.IMPORT_BUTTON),
-                    onClick = {
-                        val importAction = testConfig?.onImportRequested
-                        if (importAction != null) {
-                            importAction()
-                        } else {
-                            requestImport { summary ->
-                                userMessages.showLongMessage("导入成功：$summary")
-                                loadData()
-                            }
-                        }
-                    },
-                ) {
-                    Text("导入规则")
-                }
-                TextButton(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.EXPORT_BUTTON),
-                    onClick = {
-                        val exportAction = testConfig?.onExportRequested
-                        if (exportAction != null) {
-                            exportAction()
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    userMessages.showLongMessage(exportRules())
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("导出失败: ${e.message}")
-                                }
-                            }
-                        }
-                    },
-                ) {
-                    Text("导出规则")
-                }
-            }
-
             // 标签页
             SecondaryTabRow(
                 selectedTabIndex = selectedTab,
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.TAB_ROW),
+                modifier = Modifier,
             ) {
                 tabs.forEachIndexed { index, title ->
                     Tab(
-                        modifier = Modifier.testTag("blocklistSettings:tab:$index"),
+                        modifier = Modifier,
                         selected = selectedTab == index,
                         onClick = { selectedTab = index },
                         text = { Text(title) },
@@ -363,175 +153,55 @@ fun BlocklistSettingsScreen(
                 0 -> BlockedKeywordsList(
                     keywords = blockedKeywords,
                     onDeleteKeyword = { keyword ->
-                        val onDeleteKeyword = testConfig?.onDeleteKeyword
-                        if (onDeleteKeyword != null) {
-                            onDeleteKeyword(keyword)
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedKeywordDao().deleteKeywordById(keyword.id)
-                                    userMessages.showShortMessage("已删除关键词")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("删除失败: ${e.message}")
-                                }
+
+                        coroutineScope.launch {
+                            try {
+                                database.blockedKeywordDao().deleteKeywordById(keyword.id)
+                                userMessages.showShortMessage("已删除关键词")
+                                loadData()
+                            } catch (e: Exception) {
+                                Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                                userMessages.showShortMessage("删除失败: ${e.message}")
                             }
                         }
                     },
                     onClearAll = {
-                        val onClearKeywords = testConfig?.onClearKeywords
-                        if (onClearKeywords != null) {
-                            onClearKeywords()
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedKeywordDao().clearAllKeywords()
-                                    userMessages.showShortMessage("已清空所有关键词")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("清空失败: ${e.message}")
-                                }
+                        coroutineScope.launch {
+                            try {
+                                database.blockedKeywordDao().clearAllKeywords()
+                                userMessages.showShortMessage("已清空所有关键词")
+                                loadData()
+                            } catch (e: Exception) {
+                                Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                                userMessages.showShortMessage("清空失败: ${e.message}")
                             }
                         }
                     },
                 )
-                1 -> BlockedPeopleList(
-                    users = blockedUsers,
-                    category = "users",
-                    emptyText = "暂无屏蔽用户",
-                    userId = { it.userId },
-                    userName = { it.userName },
-                    avatarUrl = { it.avatarUrl },
-                    onDelete = { user ->
-                        val onDeleteUser = testConfig?.onDeleteUser
-                        if (onDeleteUser != null) {
-                            onDeleteUser(user)
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedUserDao().deleteUserById(user.userId)
-                                    userMessages.showShortMessage("已删除用户")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("删除失败: ${e.message}")
-                                }
-                            }
-                        }
-                    },
-                    onClearAll = {
-                        val onClearUsers = testConfig?.onClearUsers
-                        if (onClearUsers != null) {
-                            onClearUsers()
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedUserDao().clearAllUsers()
-                                    userMessages.showShortMessage("已清空所有用户")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("清空失败: ${e.message}")
-                                }
-                            }
-                        }
-                    },
-                    onNavigate = { user ->
-                        navigator.onNavigate(
-                            Person(
-                                id = user.userId,
-                                urlToken = user.urlToken ?: "",
-                                name = user.userName,
-                            ),
-                        )
-                    },
-                )
-                2 -> BlockedPeopleList(
-                    users = blockedQuestionAuthors,
-                    category = "questionAuthors",
-                    emptyText = "暂无屏蔽提问者",
-                    userId = { it.userId },
-                    userName = { it.userName },
-                    avatarUrl = { it.avatarUrl },
-                    onDelete = { user ->
-                        val onDeleteUser = testConfig?.onDeleteQuestionAuthor
-                        if (onDeleteUser != null) {
-                            onDeleteUser(user)
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedQuestionAuthorDao().deleteUserById(user.userId)
-                                    userMessages.showShortMessage("已删除提问者")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("删除失败: ${e.message}")
-                                }
-                            }
-                        }
-                    },
-                    onClearAll = {
-                        val onClearUsers = testConfig?.onClearQuestionAuthors
-                        if (onClearUsers != null) {
-                            onClearUsers()
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedQuestionAuthorDao().clearAllUsers()
-                                    userMessages.showShortMessage("已清空所有屏蔽提问者")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("清空失败: ${e.message}")
-                                }
-                            }
-                        }
-                    },
-                    onNavigate = { user ->
-                        navigator.onNavigate(
-                            Person(
-                                id = user.userId,
-                                urlToken = user.urlToken ?: "",
-                                name = user.userName,
-                            ),
-                        )
-                    },
-                )
-                3 -> BlockedTopicsList(
+                1 -> BlockedTopicsList(
                     topics = blockedTopics,
                     onDeleteTopic = { topic ->
-                        val onDeleteTopic = testConfig?.onDeleteTopic
-                        if (onDeleteTopic != null) {
-                            onDeleteTopic(topic)
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedTopicDao().deleteTopicById(topic.topicId)
-                                    userMessages.showShortMessage("已删除主题")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("删除失败: ${e.message}")
-                                }
+
+                        coroutineScope.launch {
+                            try {
+                                database.blockedTopicDao().deleteTopicById(topic.topicId)
+                                userMessages.showShortMessage("已删除主题")
+                                loadData()
+                            } catch (e: Exception) {
+                                Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                                userMessages.showShortMessage("删除失败: ${e.message}")
                             }
                         }
                     },
                     onClearAll = {
-                        val onClearTopics = testConfig?.onClearTopics
-                        if (onClearTopics != null) {
-                            onClearTopics()
-                        } else {
-                            coroutineScope.launch {
-                                try {
-                                    database.blockedTopicDao().clearAllTopics()
-                                    userMessages.showShortMessage("已清空所有主题")
-                                    loadData()
-                                } catch (e: Exception) {
-                                    Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                                    userMessages.showShortMessage("清空失败: ${e.message}")
-                                }
+                        coroutineScope.launch {
+                            try {
+                                database.blockedTopicDao().clearAllTopics()
+                                userMessages.showShortMessage("已清空所有主题")
+                                loadData()
+                            } catch (e: Exception) {
+                                Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                                userMessages.showShortMessage("清空失败: ${e.message}")
                             }
                         }
                     },
@@ -545,28 +215,23 @@ fun BlocklistSettingsScreen(
         AddKeywordDialog(
             onDismiss = { showAddKeywordDialog = false },
             onConfirm = { keyword, caseSensitive, isRegex ->
-                val onAddKeyword = testConfig?.onAddKeyword
-                if (onAddKeyword != null) {
-                    onAddKeyword(keyword, caseSensitive, isRegex)
-                    showAddKeywordDialog = false
-                } else {
-                    coroutineScope.launch {
-                        try {
-                            database.blockedKeywordDao().insertKeyword(
-                                BlockedKeyword(
-                                    keyword = keyword.trim(),
-                                    keywordType = KeywordType.EXACT_MATCH.name,
-                                    caseSensitive = caseSensitive,
-                                    isRegex = isRegex,
-                                ),
-                            )
-                            userMessages.showShortMessage("已添加关键词")
-                            loadData()
-                            showAddKeywordDialog = false
-                        } catch (e: Exception) {
-                            Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                            userMessages.showShortMessage("添加失败: ${e.message}")
-                        }
+
+                coroutineScope.launch {
+                    try {
+                        database.blockedKeywordDao().insertKeyword(
+                            BlockedKeyword(
+                                keyword = keyword.trim(),
+                                keywordType = KeywordType.EXACT_MATCH.name,
+                                caseSensitive = caseSensitive,
+                                isRegex = isRegex,
+                            ),
+                        )
+                        userMessages.showShortMessage("已添加关键词")
+                        loadData()
+                        showAddKeywordDialog = false
+                    } catch (e: Exception) {
+                        Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                        userMessages.showShortMessage("添加失败: ${e.message}")
                     }
                 }
             },
@@ -578,76 +243,15 @@ fun BlocklistSettingsScreen(
         AddTopicDialog(
             onDismiss = { showAddTopicDialog = false },
             onConfirm = { topicId, topicName ->
-                val onAddTopic = testConfig?.onAddTopic
-                if (onAddTopic != null) {
-                    onAddTopic(topicId, topicName)
-                    showAddTopicDialog = false
-                } else {
-                    coroutineScope.launch {
-                        try {
-                            database.blockedTopicDao().insertTopic(BlockedTopic(topicId = topicId, topicName = topicName))
-                            userMessages.showShortMessage("已添加主题")
-                            loadData()
-                            showAddTopicDialog = false
-                        } catch (e: Exception) {
-                            Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                            userMessages.showShortMessage("添加失败: ${e.message}")
-                        }
-                    }
-                }
-            },
-        )
-    }
-
-    // 添加用户对话框
-    if (showAddUserDialog) {
-        AddUserDialog(
-            onDismiss = { showAddUserDialog = false },
-            onConfirm = { userId, userName ->
-                val onAddUser = testConfig?.onAddUser
-                if (onAddUser != null) {
-                    onAddUser(userId, userName)
-                    showAddUserDialog = false
-                } else {
-                    coroutineScope.launch {
-                        try {
-                            database.blockedUserDao().insertUser(BlockedUser(userId = userId, userName = userName))
-                            userMessages.showShortMessage("已添加用户")
-                            loadData()
-                            showAddUserDialog = false
-                        } catch (e: Exception) {
-                            Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                            userMessages.showShortMessage("添加失败: ${e.message}")
-                        }
-                    }
-                }
-            },
-        )
-    }
-
-    if (showAddQuestionAuthorDialog) {
-        AddUserDialog(
-            title = "添加屏蔽提问者",
-            hint = "添加后会屏蔽该用户提出的问题，不影响该用户回答别人问题的内容",
-            onDismiss = { showAddQuestionAuthorDialog = false },
-            onConfirm = { userId, userName ->
-                val onAddUser = testConfig?.onAddQuestionAuthor
-                if (onAddUser != null) {
-                    onAddUser(userId, userName)
-                    showAddQuestionAuthorDialog = false
-                } else {
-                    coroutineScope.launch {
-                        try {
-                            database.blockedQuestionAuthorDao().insertUser(
-                                BlockedQuestionAuthor(userId = userId, userName = userName),
-                            )
-                            userMessages.showShortMessage("已添加屏蔽提问者")
-                            loadData()
-                            showAddQuestionAuthorDialog = false
-                        } catch (e: Exception) {
-                            Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
-                            userMessages.showShortMessage("添加失败: ${e.message}")
-                        }
+                coroutineScope.launch {
+                    try {
+                        database.blockedTopicDao().insertTopic(BlockedTopic(topicId = topicId, topicName = topicName))
+                        userMessages.showShortMessage("已添加主题")
+                        loadData()
+                        showAddTopicDialog = false
+                    } catch (e: Exception) {
+                        Log.e("BlocklistSettingsScreen", "Blocklist settings action failed", e)
+                        userMessages.showShortMessage("添加失败: ${e.message}")
                     }
                 }
             },
@@ -672,7 +276,7 @@ fun BlockedKeywordsList(
                 horizontalArrangement = Arrangement.End,
             ) {
                 Button(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_CLEAR_BUTTON),
+                    modifier = Modifier,
                     onClick = onClearAll,
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.error,
@@ -704,11 +308,11 @@ fun BlockedKeywordsList(
             }
         } else {
             LazyColumn(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_LIST),
+                modifier = Modifier,
             ) {
                 items(keywords, key = { it.id }) { keyword ->
                     ListItem(
-                        modifier = Modifier.testTag("blocklistSettings:keywords:item:${keyword.id}"),
+                        modifier = Modifier,
                         headlineContent = { Text(keyword.keyword) },
                         supportingContent = {
                             val options = mutableListOf<String>()
@@ -722,101 +326,8 @@ fun BlockedKeywordsList(
                         },
                         trailingContent = {
                             IconButton(
-                                modifier = Modifier.testTag("blocklistSettings:keywords:delete:${keyword.id}"),
+                                modifier = Modifier,
                                 onClick = { onDeleteKeyword(keyword) },
-                            ) {
-                                Icon(
-                                    Icons.Default.Delete,
-                                    contentDescription = "删除",
-                                    tint = MaterialTheme.colorScheme.error,
-                                )
-                            }
-                        },
-                    )
-                }
-            }
-        }
-    }
-}
-
-@Composable
-private fun <T> BlockedPeopleList(
-    users: List<T>,
-    category: String,
-    emptyText: String,
-    userId: (T) -> String,
-    userName: (T) -> String,
-    avatarUrl: (T) -> String?,
-    onDelete: (T) -> Unit,
-    onClearAll: () -> Unit,
-    onNavigate: (T) -> Unit,
-) {
-    Column(
-        modifier = Modifier.fillMaxWidth(),
-    ) {
-        if (users.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = 16.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                Button(
-                    modifier = Modifier.testTag("blocklistSettings:$category:clear"),
-                    onClick = onClearAll,
-                    colors = ButtonDefaults.buttonColors(
-                        containerColor = MaterialTheme.colorScheme.error,
-                    ),
-                ) {
-                    Text("清空全部")
-                }
-            }
-        }
-
-        if (users.isEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(32.dp),
-                horizontalAlignment = Alignment.CenterHorizontally,
-            ) {
-                Text(
-                    emptyText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    "点击右下角的 + 按钮添加",
-                    style = MaterialTheme.typography.bodyMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        } else {
-            LazyColumn(
-                modifier = Modifier.testTag("blocklistSettings:$category:list"),
-            ) {
-                items(users, key = userId) { user ->
-                    val id = userId(user)
-                    ListItem(
-                        modifier = Modifier
-                            .testTag("blocklistSettings:$category:item:$id")
-                            .clickable { onNavigate(user) },
-                        headlineContent = { Text(userName(user)) },
-                        supportingContent = { Text("ID: $id") },
-                        leadingContent = {
-                            AsyncImage(
-                                model = avatarUrl(user),
-                                contentDescription = "头像",
-                                modifier = Modifier
-                                    .size(40.dp)
-                                    .clip(CircleShape),
-                            )
-                        },
-                        trailingContent = {
-                            IconButton(
-                                modifier = Modifier.testTag("blocklistSettings:$category:delete:$id"),
-                                onClick = { onDelete(user) },
                             ) {
                                 Icon(
                                     Icons.Default.Delete,
@@ -854,8 +365,7 @@ fun AddKeywordDialog(
                     label = { Text("关键词") },
                     placeholder = { Text("输入要屏蔽的关键词") },
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.KEYWORD_DIALOG_INPUT),
+                        .fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 Row(
@@ -863,7 +373,7 @@ fun AddKeywordDialog(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Checkbox(
-                        modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_DIALOG_CASE_SENSITIVE),
+                        modifier = Modifier,
                         checked = caseSensitive,
                         onCheckedChange = { caseSensitive = it },
                     )
@@ -875,7 +385,7 @@ fun AddKeywordDialog(
                     modifier = Modifier.fillMaxWidth(),
                 ) {
                     Checkbox(
-                        modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_DIALOG_REGEX),
+                        modifier = Modifier,
                         checked = isRegex,
                         onCheckedChange = { isRegex = it },
                     )
@@ -894,7 +404,7 @@ fun AddKeywordDialog(
         },
         confirmButton = {
             Button(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_DIALOG_CONFIRM),
+                modifier = Modifier,
                 onClick = {
                     if (keyword.isNotBlank()) {
                         onConfirm(keyword, caseSensitive, isRegex)
@@ -907,73 +417,7 @@ fun AddKeywordDialog(
         },
         dismissButton = {
             TextButton(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.KEYWORD_DIALOG_DISMISS),
-                onClick = onDismiss,
-            ) {
-                Text("取消")
-            }
-        },
-    )
-}
-
-@Composable
-fun AddUserDialog(
-    title: String = "添加屏蔽用户",
-    hint: String = "提示：可以从用户主页的URL中获取用户ID",
-    onDismiss: () -> Unit,
-    onConfirm: (String, String) -> Unit,
-) {
-    var userId by remember { mutableStateOf("") }
-    var userName by remember { mutableStateOf("") }
-
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(title) },
-        text = {
-            Column {
-                OutlinedTextField(
-                    value = userId,
-                    onValueChange = { userId = it },
-                    label = { Text("用户ID") },
-                    placeholder = { Text("输入用户ID") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.USER_DIALOG_ID_INPUT),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                OutlinedTextField(
-                    value = userName,
-                    onValueChange = { userName = it },
-                    label = { Text("用户名") },
-                    placeholder = { Text("输入用户名（可选）") },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.USER_DIALOG_NAME_INPUT),
-                )
-                Spacer(modifier = Modifier.height(8.dp))
-                Text(
-                    hint,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-            }
-        },
-        confirmButton = {
-            Button(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.USER_DIALOG_CONFIRM),
-                onClick = {
-                    if (userId.isNotBlank()) {
-                        onConfirm(userId, userName.ifBlank { userId })
-                    }
-                },
-                enabled = userId.isNotBlank(),
-            ) {
-                Text("添加")
-            }
-        },
-        dismissButton = {
-            TextButton(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.USER_DIALOG_DISMISS),
+                modifier = Modifier,
                 onClick = onDismiss,
             ) {
                 Text("取消")
@@ -1019,7 +463,7 @@ fun BlockedTopicsList(
                 horizontalArrangement = Arrangement.End,
             ) {
                 Button(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_CLEAR_BUTTON),
+                    modifier = Modifier,
                     onClick = { showClearConfirmDialog = true },
                     colors = ButtonDefaults.buttonColors(
                         containerColor = MaterialTheme.colorScheme.errorContainer,
@@ -1031,16 +475,16 @@ fun BlockedTopicsList(
             }
 
             LazyColumn(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_LIST),
+                modifier = Modifier,
             ) {
                 items(topics, key = { it.topicId }) { topic ->
                     ListItem(
-                        modifier = Modifier.testTag("blocklistSettings:topics:item:${topic.topicId}"),
+                        modifier = Modifier,
                         headlineContent = { Text(topic.topicName) },
                         supportingContent = { Text("ID: ${topic.topicId}") },
                         trailingContent = {
                             IconButton(
-                                modifier = Modifier.testTag("blocklistSettings:topics:delete:${topic.topicId}"),
+                                modifier = Modifier,
                                 onClick = { onDeleteTopic(topic) },
                             ) {
                                 Icon(
@@ -1063,7 +507,7 @@ fun BlockedTopicsList(
             text = { Text("确定要清空所有屏蔽主题吗？此操作不可撤销。") },
             confirmButton = {
                 Button(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_CLEAR_CONFIRM),
+                    modifier = Modifier,
                     onClick = {
                         onClearAll()
                         showClearConfirmDialog = false
@@ -1077,7 +521,7 @@ fun BlockedTopicsList(
             },
             dismissButton = {
                 TextButton(
-                    modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_CLEAR_DISMISS),
+                    modifier = Modifier,
                     onClick = { showClearConfirmDialog = false },
                 ) {
                     Text("取消")
@@ -1112,8 +556,7 @@ fun AddTopicDialog(
                     placeholder = { Text("例如: 19550517") },
                     singleLine = true,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.TOPIC_DIALOG_ID_INPUT),
+                        .fillMaxWidth(),
                 )
                 Spacer(modifier = Modifier.height(8.dp))
                 OutlinedTextField(
@@ -1123,14 +566,13 @@ fun AddTopicDialog(
                     placeholder = { Text("例如: 娱乐") },
                     singleLine = true,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag(BlocklistSettingsTestTags.TOPIC_DIALOG_NAME_INPUT),
+                        .fillMaxWidth(),
                 )
             }
         },
         confirmButton = {
             Button(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_DIALOG_CONFIRM),
+                modifier = Modifier,
                 onClick = {
                     if (topicId.isNotBlank()) {
                         onConfirm(topicId, topicName.ifBlank { topicId })
@@ -1143,7 +585,7 @@ fun AddTopicDialog(
         },
         dismissButton = {
             TextButton(
-                modifier = Modifier.testTag(BlocklistSettingsTestTags.TOPIC_DIALOG_DISMISS),
+                modifier = Modifier,
                 onClick = onDismiss,
             ) {
                 Text("取消")

@@ -32,12 +32,10 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.github.zly2006.zhihu.data.AccountData
@@ -52,27 +50,18 @@ import com.github.zly2006.zhihu.navigation.Pin
 import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.TopLevelDestination
 import com.github.zly2006.zhihu.platform.SettingsStore
-import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
 import com.github.zly2006.zhihu.util.EmojiManager
-import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.util.createEmojiInlineContent
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
-import com.github.zly2006.zhihu.viewmodel.filter.encodeBlocklistBackup
-import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
-import com.github.zly2006.zhihu.viewmodel.filter.importBlocklistBackupFromJsonText
 import com.github.zly2006.zhihu.viewmodel.getOrFetchContentDetail
-import kotlinx.coroutines.Dispatchers
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
-import java.io.File
 
 data class PinLikeResult(
     val isLiked: Boolean,
@@ -462,93 +451,6 @@ fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
 fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = this
 
 @Composable
-fun rememberHomeIsDebuggable(): Boolean {
-    val context = LocalContext.current
-    return (context.applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0
-}
-
-@Composable
-fun rememberBlocklistRuleImporter(
-    userMessages: UserMessageSink,
-): (((String) -> Unit) -> Unit) {
-    val context = LocalContext.current
-    val database = remember(context) { getContentFilterDatabase(context) }
-    val coroutineScope = rememberCoroutineScope()
-    var importCallback by remember { mutableStateOf<((String) -> Unit)?>(null) }
-    val importLauncher = rememberLauncherForActivityResult(
-        contract = ActivityResultContracts.OpenDocument(),
-    ) { uri ->
-        if (uri != null) {
-            coroutineScope.launch {
-                try {
-                    val summary = withContext(Dispatchers.IO) {
-                        val text = context.contentResolver
-                            .openInputStream(uri)
-                            ?.bufferedReader()
-                            ?.readText()
-                            ?: return@withContext "读取文件失败"
-                        importBlocklistBackupFromJsonText(
-                            keywordDao = database.blockedKeywordDao(),
-                            userDao = database.blockedUserDao(),
-                            questionAuthorDao = database.blockedQuestionAuthorDao(),
-                            topicDao = database.blockedTopicDao(),
-                            text = text,
-                        )
-                    }
-                    importCallback?.invoke(summary)
-                } catch (e: Exception) {
-                    Log.e("BlocklistSettings", "Failed to import blocklist", e)
-                    userMessages.showShortMessage("导入失败: ${e.message}")
-                }
-            }
-        }
-    }
-    return remember(context, database, userMessages, importLauncher) {
-        { onImported ->
-            importCallback = onImported
-            importLauncher.launch(arrayOf("application/json", "text/plain", "*/*"))
-        }
-    }
-}
-
-@Composable
-fun rememberBlocklistRuleExporter(): suspend () -> String {
-    val context = LocalContext.current
-    val database = remember(context) { getContentFilterDatabase(context) }
-    return remember(context, database) {
-        suspend {
-            val file = withContext(Dispatchers.IO) {
-                val dir = context.getExternalFilesDir(null) ?: context.filesDir
-                val file = File(dir, "zhihupp_blocklist.json")
-                file.writeText(
-                    encodeBlocklistBackup(
-                        keywordDao = database.blockedKeywordDao(),
-                        userDao = database.blockedUserDao(),
-                        questionAuthorDao = database.blockedQuestionAuthorDao(),
-                        topicDao = database.blockedTopicDao(),
-                    ),
-                )
-                file
-            }
-            val intent = Intent().apply {
-                action = Intent.ACTION_VIEW
-                setDataAndType(
-                    FileProvider.getUriForFile(
-                        context,
-                        "${context.packageName}.provider",
-                        file,
-                    ),
-                    "application/json",
-                )
-                addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            }
-            context.startActivity(Intent.createChooser(intent, "查看屏蔽规则"))
-            "已导出到 ${file.absolutePath}"
-        }
-    }
-}
-
-@Composable
 fun rememberCommentEmojiInlineContent(
     emojiKeys: Set<String>,
     context: Context = LocalContext.current,
@@ -579,4 +481,3 @@ fun Context.articleHost(): ArticleHost? =
     (this as? ArticleHost) ?: (this as? ContextWrapper)?.baseContext?.takeIf { it !== this }?.articleHost()
 
 fun Modifier.questionSelectionWorkaround(): Modifier = this
-

@@ -267,7 +267,7 @@ fun parseMobileHomeFeedDisplayItem(card: JsonObject): FeedDisplayItem? {
         authorName = authorName,
         summary = summary,
         title = title,
-        details = "$footerText · 手机版推荐",
+        details = footerText,
         feed = feed,
     )
 }

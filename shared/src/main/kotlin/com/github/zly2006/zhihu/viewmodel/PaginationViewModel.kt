@@ -81,8 +81,6 @@ import com.github.zly2006.zhihu.util.exportCollectionItemsToZip
 import com.github.zly2006.zhihu.util.saveBitmapToGallery
 import com.github.zly2006.zhihu.util.signZhihuFetchRequest
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedQuestionAuthor
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedUser
 import com.github.zly2006.zhihu.viewmodel.filter.ContentFilterManager
 import com.github.zly2006.zhihu.viewmodel.filter.ContentType
 import com.github.zly2006.zhihu.viewmodel.filter.FeedContentFilterPipeline
@@ -159,14 +157,12 @@ abstract class PaginationViewModel<T : Any>(
         currentJob = null
         isLoading = false
         errorMessage = null
-        debugData.clear()
         allData.clear()
         lastPaging = null // 重置 lastPaging
         loadMore(environment)
     }
 
     protected open fun processResponse(environment: PaginationEnvironment, data: List<T>, rawData: JsonArray) {
-        debugData.addAll(rawData) // 保存原始JSON
         allData.addAll(data) // 保存未flatten的数据
     }
 
@@ -458,8 +454,6 @@ interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
 }
 
 interface FeedDisplayEnvironment {
-    fun feedDisplaySettings(): FeedDisplaySettings = FeedDisplaySettings()
-
     suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): HomeFeedFilterResult =
         HomeFeedFilterResult(
             foregroundItems = items,
@@ -493,10 +487,6 @@ interface ContentOpenEnvironment {
 }
 
 interface ContentBlocklistEnvironment {
-    suspend fun isUserBlocked(userId: String): Boolean = false
-
-    suspend fun isQuestionAuthorBlocked(userId: String): Boolean = false
-
     fun blockedUserIds(): Set<String> = emptySet()
 
     suspend fun addBlockedUser(
@@ -591,10 +581,6 @@ interface PaginationEnvironment :
     ProfileLoadEnvironment,
     ArticleLoadEnvironment,
     ArticleExportContentEnvironment
-
-data class FeedDisplaySettings(
-    val enableQualityFilter: Boolean = true,
-)
 
 data class HomeFeedFilterResult(
     val foregroundItems: List<FeedDisplayItem>,
@@ -734,21 +720,11 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 
-    override fun feedDisplaySettings(): FeedDisplaySettings = FeedDisplaySettings(
-        enableQualityFilter = settingsStore.getBoolean("enableQualityFilter", true),
-    )
-
     override fun localHistory(): List<NavDestination> = HistoryStorage(context).history
 
     override suspend fun postHistoryDestination(destination: NavDestination) {
         HistoryStorage(context).add(destination)
     }
-
-    override suspend fun isUserBlocked(userId: String): Boolean =
-        getContentFilterDatabase(context).blockedUserDao().isUserBlocked(userId)
-
-    override suspend fun isQuestionAuthorBlocked(userId: String): Boolean =
-        getContentFilterDatabase(context).blockedQuestionAuthorDao().isUserBlocked(userId)
 
     override fun blockedUserIds(): Set<String> =
         kotlinx.coroutines.runBlocking {
@@ -759,50 +735,6 @@ open class SharedAndroidPaginationEnvironment(
                 .map { it.userId }
                 .toSet()
         }
-
-    override suspend fun addBlockedUser(
-        userId: String,
-        userName: String,
-        urlToken: String?,
-        avatarUrl: String?,
-    ) {
-        val database = getContentFilterDatabase(context)
-        database.blockedUserDao().insertUser(
-            BlockedUser(
-                userId = userId,
-                userName = userName,
-                urlToken = urlToken,
-                avatarUrl = avatarUrl,
-            ),
-        )
-    }
-
-    override suspend fun addBlockedQuestionAuthor(
-        userId: String,
-        userName: String,
-        urlToken: String?,
-        avatarUrl: String?,
-    ) {
-        val database = getContentFilterDatabase(context)
-        database.blockedQuestionAuthorDao().insertUser(
-            BlockedQuestionAuthor(
-                userId = userId,
-                userName = userName,
-                urlToken = urlToken,
-                avatarUrl = avatarUrl,
-            ),
-        )
-    }
-
-    override suspend fun removeBlockedUser(userId: String) {
-        val database = getContentFilterDatabase(context)
-        database.blockedUserDao().deleteUserById(userId)
-    }
-
-    override suspend fun removeBlockedQuestionAuthor(userId: String) {
-        val database = getContentFilterDatabase(context)
-        database.blockedQuestionAuthorDao().deleteUserById(userId)
-    }
 
     override suspend fun recordContentOpenEvent(
         destination: NavDestination,
@@ -828,7 +760,6 @@ open class SharedAndroidPaginationEnvironment(
     }
 
     override suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): HomeFeedFilterResult {
-        val settings = feedDisplaySettings()
         val filterSettings = context.contentFilterSettings()
         val filterDatabase = getContentFilterDatabase(context)
         val foregroundItems = ForegroundReadFilterPipeline(

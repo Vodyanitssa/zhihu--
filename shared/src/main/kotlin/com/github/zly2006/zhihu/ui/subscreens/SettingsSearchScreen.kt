@@ -52,7 +52,6 @@ import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.navigation.NavDestination
 import com.github.zly2006.zhihu.navigation.Notification
 import com.github.zly2006.zhihu.notification.NotificationType
-import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 
@@ -194,11 +193,9 @@ private val settingsSearchEntries = buildList {
 
     add(recommendEntry("recommend.recommendationMode", "推荐算法", "选择 Web 或 Android 推荐。", "recommendationMode", listOf("推荐来源", "Web 推荐", "Android 推荐")))
     add(recommendEntry("recommend.loginForRecommendation", "推荐内容时登录", "获取推荐内容时是否带登录凭证。", "loginForRecommendation"))
-    add(recommendEntry("recommend.enableQualityFilter", "启用质量过滤规则", "按赞同数、关注数等指标过滤内容。", "enableQualityFilter", listOf("低质量")))
     add(recommendEntry("recommend.enableContentFilter", "启用智能内容过滤", "过滤重复出现但未点击内容。", "enableContentFilter"))
     add(recommendEntry("recommend.filterFollowedUserContent", "过滤已关注用户内容", "控制是否过滤已关注用户的内容。", "filterFollowedUserContent"))
     add(recommendEntry("recommend.enableKeywordBlocking", "启用关键词屏蔽", "按关键词过滤内容。", "enableKeywordBlocking", listOf("关键词", "屏蔽词")))
-    add(recommendEntry("recommend.enableUserBlocking", "启用用户屏蔽", "按用户过滤内容。", "enableUserBlocking", listOf("作者屏蔽", "屏蔽用户")))
     add(recommendEntry("recommend.enableTopicBlocking", "启用主题屏蔽", "按命中主题过滤内容。", "enableTopicBlocking", listOf("话题屏蔽", "屏蔽话题")))
     add(recommendEntry("recommend.topicBlockingThreshold", "主题屏蔽阈值", "设置命中多少个被屏蔽主题后才过滤内容。", "topicBlockingThreshold", listOf("主题阈值")))
     add(recommendEntry("recommend.blockZhihuAdPlatform", "屏蔽知乎广告平台内容", "过滤知乎广告平台推广内容。", "blockZhihuAdPlatform", listOf("广告")))
@@ -210,9 +207,9 @@ private val settingsSearchEntries = buildList {
             id = "recommend.blocklist",
             title = "管理屏蔽列表",
             section = "推荐系统与内容过滤",
-            description = "管理关键词、用户和主题屏蔽。",
+            description = "管理关键词和主题屏蔽。",
             destination = Account.RecommendSettings.Blocklist,
-            keywords = listOf("黑名单", "屏蔽词", "屏蔽用户", "屏蔽话题"),
+            keywords = listOf("黑名单", "屏蔽词", "屏蔽话题"),
         ),
     )
     add(
@@ -256,7 +253,6 @@ private val settingsSearchEntries = buildList {
 @Composable
 fun SettingsSearchScreen() {
     val navigator = LocalNavigator.current
-    val settings = rememberSettingsStore()
     var query by rememberSaveable { mutableStateOf("") }
     val results = remember(query) {
         settingsSearchEntries

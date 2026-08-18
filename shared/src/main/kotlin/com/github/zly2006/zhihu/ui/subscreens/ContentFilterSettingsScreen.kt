@@ -233,19 +233,6 @@ fun ContentFilterSettingsScreen(
 
             val enableContentFilter = remember { mutableStateOf(settings.getBoolean("enableContentFilter", true)) }
             SettingItemGroup {
-                val enableQualityFilter = remember { mutableStateOf(settings.getBoolean("enableQualityFilter", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("启用质量过滤规则") },
-                    description = { Text("根据赞同数、关注数等指标过滤低质量内容") },
-                    checked = enableQualityFilter.value,
-                    onCheckedChange = {
-                        enableQualityFilter.value = it
-                        settings.putBoolean("enableQualityFilter", it)
-                    },
-                    settingKey = "enableQualityFilter",
-                    highlightedKey = highlightedSetting,
-                )
-
                 SettingItemWithSwitch(
                     modifier = Modifier.testTag("contentFilterSettings:enableContentFilter"),
                     title = { Text("启用智能内容过滤") },
@@ -286,19 +273,6 @@ fun ContentFilterSettingsScreen(
                         settings.putBoolean("enableKeywordBlocking", it)
                     },
                     settingKey = "enableKeywordBlocking",
-                    highlightedKey = highlightedSetting,
-                )
-
-                val enableUserBlocking = remember { mutableStateOf(settings.getBoolean("enableUserBlocking", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("启用用户屏蔽") },
-                    description = { Text("屏蔽特定用户发布的内容，或由特定用户提出的问题") },
-                    checked = enableUserBlocking.value,
-                    onCheckedChange = {
-                        enableUserBlocking.value = it
-                        settings.putBoolean("enableUserBlocking", it)
-                    },
-                    settingKey = "enableUserBlocking",
                     highlightedKey = highlightedSetting,
                 )
 

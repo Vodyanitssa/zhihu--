@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -93,10 +92,6 @@ import com.github.zly2006.zhihu.platform.SettingsStore
 import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockType
 import com.github.zly2006.zhihu.ui.components.FeedCard
 import com.github.zly2006.zhihu.ui.components.FeedPullToRefresh
 import com.github.zly2006.zhihu.ui.components.PaginatedList
@@ -150,7 +145,6 @@ private fun saveSearchHistory(
 fun SearchScreen(
     search: Search,
     testHotSearchQueries: List<String>? = null,
-    onTestHotSearchRefresh: (() -> Unit)? = null,
 ) {
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
@@ -192,7 +186,6 @@ fun SearchScreen(
     var hotSearchMoreMenuExpanded by remember { mutableStateOf(false) }
     var historyMoreMenuExpanded by remember { mutableStateOf(false) }
     var filterMenuExpanded by remember { mutableStateOf(false) }
-    var feedAuthorBlockRequest by remember { mutableStateOf<FeedAuthorBlockRequest?>(null) }
     val useTestHotSearchQueries = testHotSearchQueries != null
     val showSearchHistory = remember { mutableStateOf(!isMemberSearch && settings.getBoolean("showSearchHistory", true)) }
     val searchHistoryItems = remember {
@@ -484,11 +477,7 @@ fun SearchScreen(
                                 Row(verticalAlignment = Alignment.CenterVertically) {
                                     IconButton(
                                         onClick = {
-                                            if (useTestHotSearchQueries) {
-                                                onTestHotSearchRefresh?.invoke()
-                                            } else {
-                                                coroutineScope.launch { runCatching { fetchHotSearch() } }
-                                            }
+                                            coroutineScope.launch { runCatching { fetchHotSearch() } }
                                         },
                                         modifier = Modifier
                                             .size(40.dp)
@@ -745,52 +734,12 @@ fun SearchScreen(
                         FeedCard(
                             item = item,
                             readingQueueSourceId = readingQueueSourceId,
-                            menuItems = { dismissMenu ->
-                                DropdownMenuItem(
-                                    text = { Text("屏蔽用户") },
-                                    onClick = {
-                                        dismissMenu()
-                                        viewModel.handleBlockUser(paginationEnvironment, userMessages, item) { authorInfo ->
-                                            feedAuthorBlockRequest = FeedAuthorBlockRequest(
-                                                FeedAuthorBlockType.CONTENT_AUTHOR,
-                                                authorInfo.first,
-                                                authorInfo.second,
-                                            )
-                                        }
-                                    },
-                                )
-                            },
                         )
-                    }
-
-                    val showRefreshFab = remember { settings.getBoolean("showRefreshFab", true) }
-                    if (showRefreshFab) {
-                        DraggableRefreshButton(
-                            onClick = {
-                                viewModel.refresh(paginationEnvironment)
-                            },
-                        ) {
-                            if (viewModel.isLoading) {
-                                CircularProgressIndicator(modifier = Modifier.size(36.dp))
-                            } else {
-                                Icon(Icons.Default.Refresh, contentDescription = "刷新")
-                            }
-                        }
                     }
                 }
             }
         }
     }
-
-    FeedAuthorBlockConfirmDialog(
-        request = feedAuthorBlockRequest,
-        displayItems = viewModel.displayItems,
-        onDismiss = { feedAuthorBlockRequest = null },
-        onConfirm = {
-            viewModel.refresh(paginationEnvironment)
-            feedAuthorBlockRequest = null
-        },
-    )
 }
 
 @Composable

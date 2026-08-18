@@ -51,15 +51,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.HelpOutline
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.CopyAll
 import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.MarkUnreadChatAlt
-import androidx.compose.material.icons.filled.Refresh
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FloatingActionButton
@@ -104,10 +101,6 @@ import com.github.zly2006.zhihu.platform.UserMessageDuration
 import com.github.zly2006.zhihu.platform.rememberAppPrivateDirectory
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockConfirmDialog
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockRequest
-import com.github.zly2006.zhihu.ui.components.FeedAuthorBlockType
 import com.github.zly2006.zhihu.ui.components.FeedCard
 import com.github.zly2006.zhihu.ui.components.FeedPullToRefresh
 import com.github.zly2006.zhihu.ui.components.MyModalBottomSheet
@@ -127,7 +120,6 @@ import kotlinx.io.files.Path
 import kotlinx.io.files.SystemFileSystem
 import kotlinx.io.readString
 import kotlinx.io.writeString
-import kotlinx.serialization.json.Json
 
 const val PREFERENCE_NAME = "com.github.zly2006.zhihu_preferences"
 const val HOME_TOP_ACTIONS_TAG = "home_top_actions"
@@ -162,7 +154,6 @@ fun HomeScreen(
     val userMessages = rememberUserMessageSink()
     val lifecycleOwner = LocalLifecycleOwner.current
 
-    val showRefreshFab = settings.getBoolean("showRefreshFab", true)
     val autoRefreshOnStartup = settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true)
     val showUnreadBadge = notificationSettings.getUnreadBadgeEnabled()
     var showAccountBottomSheet by remember { mutableStateOf(false) }
@@ -195,7 +186,6 @@ fun HomeScreen(
             },
         )
     }
-    val isDebuggable = rememberHomeIsDebuggable()
 
     val viewModel: BaseFeedViewModel = when (currentRecommendationMode) {
         RecommendationMode.WEB -> viewModel { HomeFeedViewModel() }
@@ -284,8 +274,6 @@ fun HomeScreen(
             userMessages.showMessage(it, UserMessageDuration.Long)
         }
     }
-
-    var feedAuthorBlockRequest by remember { mutableStateOf<FeedAuthorBlockRequest?>(null) }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
@@ -420,38 +408,6 @@ fun HomeScreen(
                             else -> null
                         },
                         menuItems = { dismissMenu ->
-                            DropdownMenuItem(
-                                text = { Text("屏蔽用户") },
-                                onClick = {
-                                    dismissMenu()
-                                    viewModel.handleBlockUser(paginationEnvironment, userMessages, item) { authorInfo ->
-                                        feedAuthorBlockRequest = FeedAuthorBlockRequest(
-                                            type = FeedAuthorBlockType.CONTENT_AUTHOR,
-                                            userId = authorInfo.first,
-                                            userName = authorInfo.second,
-                                        )
-                                    }
-                                },
-                            )
-                            val canBlockQuestionAuthor = when (item.feed?.target) {
-                                is Feed.AnswerTarget, is Feed.QuestionTarget -> true
-                                else -> item.raw is DataHolder.Answer || item.raw is DataHolder.Question
-                            }
-                            if (canBlockQuestionAuthor) {
-                                DropdownMenuItem(
-                                    text = { Text("屏蔽提问者") },
-                                    onClick = {
-                                        dismissMenu()
-                                        viewModel.handleBlockQuestionAuthor(paginationEnvironment, userMessages, item) { authorInfo ->
-                                            feedAuthorBlockRequest = FeedAuthorBlockRequest(
-                                                type = FeedAuthorBlockType.QUESTION_AUTHOR,
-                                                userId = authorInfo.first,
-                                                userName = authorInfo.second,
-                                            )
-                                        }
-                                    },
-                                )
-                            }
                             val topics = when (val raw = item.raw) {
                                 is DataHolder.Answer -> raw.question.topics
                                 is DataHolder.Question -> raw.topics
@@ -478,31 +434,6 @@ fun HomeScreen(
                         }
                         if (destination != null) {
                             navigator.onNavigate(destination)
-                        }
-                    }
-                }
-
-                if (showRefreshFab) {
-                    if (isDebuggable) {
-                        DraggableRefreshButton(
-                            onClick = {
-                                val data = Json.encodeToString(viewModel.debugData)
-                                paginationEnvironment.setPlainTextClipboard("data", data)
-                                userMessages.showShortMessage("已复制调试数据")
-                            },
-                            preferenceName = "copyAll",
-                        ) {
-                            Icon(Icons.Default.CopyAll, contentDescription = "复制")
-                        }
-                    }
-                    DraggableRefreshButton(
-                        modifier = Modifier.testTag(HOME_REFRESH_BUTTON_TAG),
-                        onClick = { viewModel.refresh(paginationEnvironment) },
-                    ) {
-                        if (viewModel.isLoading) {
-                            CircularProgressIndicator(modifier = Modifier.size(30.dp))
-                        } else {
-                            Icon(Icons.Default.Refresh, contentDescription = "刷新")
                         }
                     }
                 }
@@ -621,14 +552,4 @@ fun HomeScreen(
             }
         }
     }
-
-    FeedAuthorBlockConfirmDialog(
-        request = feedAuthorBlockRequest,
-        displayItems = viewModel.displayItems,
-        onDismiss = { feedAuthorBlockRequest = null },
-        onConfirm = {
-            viewModel.refresh(paginationEnvironment)
-            feedAuthorBlockRequest = null
-        },
-    )
 }

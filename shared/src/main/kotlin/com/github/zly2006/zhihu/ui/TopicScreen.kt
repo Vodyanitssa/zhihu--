@@ -287,7 +287,7 @@ class TopicViewModel(
                 val feeds = responseItems.mapNotNull { element ->
                     runCatching { ZhihuJson.decodeJson<Feed>(element) }.getOrNull()
                 }
-                feeds.flattenFeeds().map { it.toDisplayItem(enableQualityFilter = false) }
+                feeds.flattenFeeds().map { it.toDisplayItem() }
             }
             if (responseItems.isNotEmpty() && loadedItems.isEmpty()) {
                 error("话题内容解码失败：服务端返回 ${responseItems.size} 项，但没有可显示内容")

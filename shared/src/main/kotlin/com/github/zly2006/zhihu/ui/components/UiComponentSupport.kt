@@ -29,7 +29,6 @@ import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
@@ -45,103 +44,9 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.DpOffset
-import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.platform.rememberImageSaver
 import com.github.zly2006.zhihu.platform.rememberImageSharer
-import com.github.zly2006.zhihu.platform.rememberUserMessageSink
-import com.github.zly2006.zhihu.util.Log
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedQuestionAuthor
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedUser
-import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
-import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.intOrNull
-import kotlinx.serialization.json.jsonPrimitive
-
-@Composable
-fun FeedAuthorBlockConfirmDialog(
-    request: FeedAuthorBlockRequest?,
-    displayItems: List<FeedDisplayItem>,
-    onDismiss: () -> Unit,
-    onConfirm: () -> Unit,
-) {
-    val coroutineScope = rememberCoroutineScope()
-    val userMessages = rememberUserMessageSink()
-    val database = remember { getContentFilterDatabase() }
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
-    var questionAuthorStats by remember(request) { mutableStateOf<QuestionAuthorActivityStats?>(null) }
-    var isQuestionAuthorStatsLoading by remember(request) {
-        mutableStateOf(request?.type == FeedAuthorBlockType.QUESTION_AUTHOR)
-    }
-
-    LaunchedEffect(request) {
-        if (request?.type != FeedAuthorBlockType.QUESTION_AUTHOR) return@LaunchedEffect
-
-        isQuestionAuthorStatsLoading = true
-        questionAuthorStats = try {
-            environment
-                .fetchJson(
-                    "https://api.zhihu.com/people/${request.userId}",
-                    "answer_count,question_count",
-                )?.let { profile ->
-                    val questionCount = profile["question_count"]?.jsonPrimitive?.intOrNull
-                    val answerCount = profile["answer_count"]?.jsonPrimitive?.intOrNull
-                    if (questionCount != null && answerCount != null) {
-                        QuestionAuthorActivityStats(questionCount, answerCount)
-                    } else {
-                        null
-                    }
-                }
-        } catch (error: CancellationException) {
-            throw error
-        } catch (error: Exception) {
-            Log.e("FeedBlocking", "Failed to load question author activity stats", error)
-            null
-        } finally {
-            isQuestionAuthorStatsLoading = false
-        }
-    }
-
-    FeedAuthorBlockConfirmDialogContent(
-        request = request,
-        displayItems = displayItems,
-        questionAuthorStats = questionAuthorStats,
-        isQuestionAuthorStatsLoading = isQuestionAuthorStatsLoading,
-        onDismiss = onDismiss,
-        onConfirmBlock = { author ->
-            coroutineScope.launch {
-                try {
-                    when (request?.type) {
-                        FeedAuthorBlockType.CONTENT_AUTHOR -> database.blockedUserDao().insertUser(
-                            BlockedUser(
-                                userId = author.id,
-                                userName = author.name,
-                                urlToken = author.urlToken,
-                                avatarUrl = author.avatarUrl,
-                            ),
-                        )
-                        FeedAuthorBlockType.QUESTION_AUTHOR -> database.blockedQuestionAuthorDao().insertUser(
-                            BlockedQuestionAuthor(
-                                userId = author.id,
-                                userName = author.name,
-                                urlToken = author.urlToken,
-                                avatarUrl = author.avatarUrl,
-                            ),
-                        )
-                        null -> return@launch
-                    }
-                    onConfirm()
-                    val targetName = if (request.type == FeedAuthorBlockType.QUESTION_AUTHOR) "提问者" else "用户"
-                    userMessages.showShortMessage("已屏蔽$targetName：${author.name}")
-                } catch (e: Exception) {
-                    Log.e("FeedBlocking", "Failed to block feed author", e)
-                    userMessages.showShortMessage("屏蔽失败: ${e.message}")
-                }
-            }
-        },
-    )
-}
 
 @OptIn(ExperimentalFoundationApi::class)
 @Composable

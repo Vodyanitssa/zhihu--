@@ -18,19 +18,14 @@
 package com.github.zly2006.zhihu.viewmodel.feed
 
 import androidx.lifecycle.viewModelScope
-import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.flattenFeeds
-import com.github.zly2006.zhihu.data.navDestination
-import com.github.zly2006.zhihu.data.questionAuthor
 import com.github.zly2006.zhihu.data.target
-import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.ContentInteractionEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
-import com.github.zly2006.zhihu.viewmodel.filter.ContentDetailProvider
 import com.github.zly2006.zhihu.viewmodel.filter.extractTopicIds
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -39,65 +34,11 @@ import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
-
-suspend fun resolveFeedBlockAuthorInfo(
-    feedItem: FeedDisplayItem,
-    contentDetailProvider: ContentDetailProvider?,
-): Pair<String, String>? {
-    feedItem.feed?.target?.author?.let { author ->
-        return Pair(author.id, author.name)
-    }
-
-    return when (val content = resolveFeedBlockContentDetail(feedItem, contentDetailProvider)) {
-        is DataHolder.Answer -> content.author.let { Pair(it.id, it.name) }
-        is DataHolder.Article -> content.author.let { Pair(it.id, it.name) }
-        is DataHolder.Question -> content.author.let { Pair(it.id, it.name) }
-        is DataHolder.Pin -> content.author.let { Pair(it.id, it.name) }
-        else -> null
-    }
-}
-
-suspend fun resolveFeedQuestionAuthorInfo(
-    feedItem: FeedDisplayItem,
-    contentDetailProvider: ContentDetailProvider?,
-): Pair<String, String>? {
-    feedItem.feed?.target?.questionAuthor?.let { author ->
-        return Pair(author.id, author.name)
-    }
-
-    val questionDestination = when (val raw = feedItem.raw) {
-        is DataHolder.Question -> return raw.author.let { Pair(it.id, it.name) }
-        is DataHolder.Answer -> {
-            raw.question.author?.let { return Pair(it.id, it.name) }
-            Question(questionId = raw.question.id, title = raw.question.title)
-        }
-        else -> when (val target = feedItem.feed?.target) {
-            is Feed.AnswerTarget -> Question(questionId = target.question.id, title = target.question.title)
-            is Feed.QuestionTarget -> Question(questionId = target.id, title = target.title)
-            else -> null
-        }
-    } ?: return null
-
-    val questionDetail = try {
-        contentDetailProvider?.get(questionDestination) as? DataHolder.Question
-    } catch (error: CancellationException) {
-        throw error
-    } catch (error: Exception) {
-        Log.e("HomeFeedViewModel", "Failed to resolve feed question author from question detail", error)
-        null
-    }
-    return questionDetail
-        ?.author
-        ?.let { author ->
-            Pair(author.id, author.name)
-        }
-}
 
 fun removeFeedItemsByBlockedTopic(
     viewModel: BaseFeedViewModel,
@@ -107,19 +48,6 @@ fun removeFeedItemsByBlockedTopic(
         val raw = item.raw
         raw != null && extractTopicIds(raw)?.any { topic -> topic == topicId } == true
     }
-}
-
-private suspend fun resolveFeedBlockContentDetail(
-    feedItem: FeedDisplayItem,
-    contentDetailProvider: ContentDetailProvider?,
-): DataHolder.Content? {
-    val raw = feedItem.raw
-    if (raw != null && raw !is DataHolder.DummyContent) {
-        return raw
-    }
-
-    val navDestination = feedItem.navDestination ?: return null
-    return contentDetailProvider?.get(navDestination)
 }
 
 interface HomeFeedInteractionViewModel {

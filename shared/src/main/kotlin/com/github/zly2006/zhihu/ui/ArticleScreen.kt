@@ -55,10 +55,8 @@ import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Bookmark
 import androidx.compose.material.icons.filled.BookmarkBorder
 import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material.icons.filled.SkipNext
 import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExperimentalMaterial3ExpressiveApi
 import androidx.compose.material3.Icon
@@ -118,7 +116,6 @@ import com.github.zly2006.zhihu.ui.components.AnswerVerticalOverscroll
 import com.github.zly2006.zhihu.ui.components.AuthorBadge
 import com.github.zly2006.zhihu.ui.components.CollectionDialogComponent
 import com.github.zly2006.zhihu.ui.components.CommentScreenComponent
-import com.github.zly2006.zhihu.ui.components.DraggableRefreshButton
 import com.github.zly2006.zhihu.ui.components.ExportDialogComponent
 import com.github.zly2006.zhihu.ui.components.VerticalReadingProgressBar
 import com.github.zly2006.zhihu.ui.components.VotersSheet
@@ -392,8 +389,7 @@ fun ArticleScreen(
                             ),
                         )
                     }
-
-            },
+                },
             bottomBar = @Composable {
                 // 防止在导航动画和预测性返回手势过程中，底部操作栏闪烁。
                 @Composable
@@ -782,17 +778,6 @@ fun ArticleScreen(
                         answerNavigationState.navigateToNext()
                     }
                     fabClickCount = 0
-                }
-            }
-            DraggableRefreshButton(
-                modifier = Modifier.graphicsLayer { alpha = skipButtonAlpha },
-                onClick = { fabClickCount++ },
-                preferenceName = "buttonSkipAnswer",
-            ) {
-                if (answerNavigationState.navigatingToNextAnswer) {
-                    CircularProgressIndicator(modifier = Modifier.size(30.dp))
-                } else {
-                    Icon(Icons.Filled.SkipNext, contentDescription = "下一个回答")
                 }
             }
         }
