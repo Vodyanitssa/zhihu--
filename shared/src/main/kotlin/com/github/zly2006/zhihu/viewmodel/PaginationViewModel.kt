@@ -83,9 +83,6 @@ import com.github.zly2006.zhihu.util.signZhihuFetchRequest
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
 import com.github.zly2006.zhihu.viewmodel.filter.ContentFilterManager
 import com.github.zly2006.zhihu.viewmodel.filter.ContentType
-import com.github.zly2006.zhihu.viewmodel.filter.FeedContentFilterPipeline
-import com.github.zly2006.zhihu.viewmodel.filter.FeedDisplayFilterPipeline
-import com.github.zly2006.zhihu.viewmodel.filter.ForegroundReadFilterPipeline
 import com.github.zly2006.zhihu.viewmodel.filter.contentFilterSettings
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import io.ktor.client.HttpClient
@@ -454,11 +451,7 @@ interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
 }
 
 interface FeedDisplayEnvironment {
-    suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): HomeFeedFilterResult =
-        HomeFeedFilterResult(
-            foregroundItems = items,
-            filteredItems = items,
-        )
+    suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): List<FeedDisplayItem> = items
 }
 
 interface HistoryEnvironment {
@@ -581,11 +574,6 @@ interface PaginationEnvironment :
     ProfileLoadEnvironment,
     ArticleLoadEnvironment,
     ArticleExportContentEnvironment
-
-data class HomeFeedFilterResult(
-    val foregroundItems: List<FeedDisplayItem>,
-    val filteredItems: List<FeedDisplayItem>,
-)
 
 interface AndroidContextPaginationEnvironment : PaginationEnvironment {
     val context: Context
@@ -726,15 +714,7 @@ open class SharedAndroidPaginationEnvironment(
         HistoryStorage(context).add(destination)
     }
 
-    override fun blockedUserIds(): Set<String> =
-        kotlinx.coroutines.runBlocking {
-            val database = getContentFilterDatabase(context)
-            database
-                .blockedUserDao()
-                .getAllUsers()
-                .map { it.userId }
-                .toSet()
-        }
+    override fun blockedUserIds(): Set<String> = emptySet()
 
     override suspend fun recordContentOpenEvent(
         destination: NavDestination,
@@ -757,38 +737,6 @@ open class SharedAndroidPaginationEnvironment(
         questionId: Long?,
     ) {
         recordContentOpenEvent(destination, questionId)
-    }
-
-    override suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): HomeFeedFilterResult {
-        val filterSettings = context.contentFilterSettings()
-        val filterDatabase = getContentFilterDatabase(context)
-        val foregroundItems = ForegroundReadFilterPipeline(
-            settings = filterSettings,
-            contentFilterManager = ContentFilterManager(filterDatabase.contentFilterDao()),
-            blockedFeedRecordDao = filterDatabase.blockedFeedRecordDao(),
-        ).filter(items)
-        val filteredItems = FeedDisplayFilterPipeline(
-            settings = filterSettings,
-            contentDetailProvider = this::getOrFetchContentDetail,
-            contentFilterPipeline = FeedContentFilterPipeline(
-                settings = filterSettings,
-                blockedKeywordDao = filterDatabase.blockedKeywordDao(),
-                blockedUserDao = filterDatabase.blockedUserDao(),
-                blockedQuestionAuthorDao = filterDatabase.blockedQuestionAuthorDao(),
-                blockedTopicDao = filterDatabase.blockedTopicDao(),
-            ),
-            blockedFeedRecordDao = filterDatabase.blockedFeedRecordDao(),
-            onDetailFetchFailed = { item ->
-                Log.w("ContentFilterExtensions", "Failed to fetch content details for item '${item.title}'. Using dummy content for filtering.")
-            },
-            onDetailsKeywordFiltered = { item, keyword ->
-                Log.e("ContentFilterExtensions", "Filtered item '${item.title}' due to keyword '$keyword' in details: ${item.content}")
-            },
-        ).filter(foregroundItems)
-        return HomeFeedFilterResult(
-            foregroundItems = foregroundItems,
-            filteredItems = filteredItems,
-        )
     }
 
     override suspend fun recordContentInteraction(feed: Feed) {

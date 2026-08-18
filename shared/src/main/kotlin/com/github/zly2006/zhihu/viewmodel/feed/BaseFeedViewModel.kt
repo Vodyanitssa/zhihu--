@@ -21,19 +21,13 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.viewModelScope
 import com.github.zly2006.zhihu.data.Feed
 import com.github.zly2006.zhihu.data.FeedDisplayItem
 import com.github.zly2006.zhihu.data.flattenFeeds
 import com.github.zly2006.zhihu.data.toDisplayItem
-import com.github.zly2006.zhihu.platform.UserMessageSink
 import com.github.zly2006.zhihu.viewmodel.FeedDisplayEnvironment
-import com.github.zly2006.zhihu.viewmodel.HomeFeedFilterResult
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationViewModel
-import com.github.zly2006.zhihu.viewmodel.filter.BlockedTopic
-import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
-import kotlinx.coroutines.launch
 import kotlinx.serialization.json.JsonArray
 import kotlin.reflect.typeOf
 
@@ -80,55 +74,6 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
             if (displayItems.none { existing -> existing.stableKey == it.stableKey }) {
                 displayItems.add(it)
             }
-        }
-    }
-
-    fun handleBlockTopic(
-        userMessages: UserMessageSink,
-        topicId: String,
-        topicName: String,
-    ) {
-        viewModelScope.launch {
-            try {
-                getContentFilterDatabase()
-                    .blockedTopicDao()
-                    .insertTopic(BlockedTopic(topicId = topicId, topicName = topicName))
-                userMessages.showShortMessage("已屏蔽主题「$topicName」")
-                removeFeedItemsByBlockedTopic(this@BaseFeedViewModel, topicId)
-            } catch (e: Exception) {
-                userMessages.showShortMessage("屏蔽失败: ${e.message}")
-            }
-        }
-    }
-}
-
-/**
- * Merges the final home-feed filter result back into the list that was already shown optimistically.
- *
- * Only items from [HomeFeedFilterResult.foregroundItems] are touched, so older or unrelated cards in the
- * list keep their current state. A foreground item is removed when it is absent from
- * [HomeFeedFilterResult.filteredItems], and replaced when the final filter pipeline returns a matching item
- * with the same [FeedDisplayItem.stableKey]. This lets delayed quality/content filters swap an already
- * rendered card with an `已屏蔽` placeholder while preserving existing raw content if the replacement has not
- * loaded one.
- */
-internal fun MutableList<FeedDisplayItem>.replaceHomeFeedItemsWithFilteredResult(filterResult: HomeFeedFilterResult) {
-    val foregroundKeys = filterResult.foregroundItems.map { it.stableKey }.toSet()
-    val filteredItemsByKey = filterResult.filteredItems.associateBy { it.stableKey }
-    var index = 0
-    while (index < size) {
-        val item = this[index]
-        if (item.stableKey !in foregroundKeys) {
-            index++
-            continue
-        }
-
-        val filteredVersion = filteredItemsByKey[item.stableKey]
-        if (filteredVersion == null) {
-            removeAt(index)
-        } else {
-            this[index] = filteredVersion.copy(raw = filteredVersion.raw ?: item.raw)
-            index++
         }
     }
 }

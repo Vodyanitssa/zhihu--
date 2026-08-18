@@ -26,7 +26,6 @@ import com.github.zly2006.zhihu.data.target
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.ContentInteractionEnvironment
 import com.github.zly2006.zhihu.viewmodel.PaginationEnvironment
-import com.github.zly2006.zhihu.viewmodel.filter.extractTopicIds
 import com.github.zly2006.zhihu.viewmodel.postSigned
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
@@ -39,16 +38,6 @@ import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
-
-fun removeFeedItemsByBlockedTopic(
-    viewModel: BaseFeedViewModel,
-    topicId: String,
-) {
-    viewModel.displayItems.removeAll { item ->
-        val raw = item.raw
-        raw != null && extractTopicIds(raw)?.any { topic -> topic == topicId } == true
-    }
-}
 
 interface HomeFeedInteractionViewModel {
     suspend fun recordContentInteraction(environment: ContentInteractionEnvironment, feed: Feed)
@@ -83,12 +72,9 @@ class HomeFeedViewModel :
             val newItems = data
                 .flattenFeeds()
                 .map { feed -> createDisplayItem(environment, feed) }
-
-            val filterResult = environment.applyHomeFeedFilters(newItems)
             withContext(Dispatchers.Main) {
-                addDisplayItems(filterResult.foregroundItems)
-                displayItems.replaceHomeFeedItemsWithFilteredResult(filterResult)
-                latestLoadedDisplayItems.value = filterResult.filteredItems
+                addDisplayItems(newItems)
+                latestLoadedDisplayItems.value = newItems
             }
         }
     }

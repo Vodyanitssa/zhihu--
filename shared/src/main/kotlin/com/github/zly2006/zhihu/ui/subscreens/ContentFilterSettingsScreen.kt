@@ -18,28 +18,18 @@
 package com.github.zly2006.zhihu.ui.subscreens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.ExposedDropdownMenuAnchorType
-import androidx.compose.material3.ExposedDropdownMenuBox
-import androidx.compose.material3.ExposedDropdownMenuDefaults
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
@@ -61,11 +51,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
-import com.github.zly2006.zhihu.data.RecommendationMode
-import com.github.zly2006.zhihu.filter.ContentFilterStats
-import com.github.zly2006.zhihu.filter.cleanupOldData
-import com.github.zly2006.zhihu.filter.clearAllData
-import com.github.zly2006.zhihu.filter.loadFilterStats
 import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
@@ -74,10 +59,8 @@ import com.github.zly2006.zhihu.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.ui.components.SettingItemWithSwitch
-import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.filter.getContentFilterDatabase
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.time.Duration.Companion.milliseconds
 
 /**
@@ -145,59 +128,6 @@ fun ContentFilterSettingsScreen(
                 .padding(vertical = 16.dp),
         ) {
             SettingItemGroup {
-                SettingItem(
-                    title = { Text("推荐算法") },
-                    settingKey = "recommendationMode",
-                    highlightedKey = highlightedSetting,
-                    endAction = {
-                        // 推荐模式
-                        val currentRecommendationMode = remember {
-                            mutableStateOf(
-                                RecommendationMode.entries.find {
-                                    it.key == settings.getString("recommendationMode", RecommendationMode.ANDROID.key)
-                                } ?: RecommendationMode.ANDROID,
-                            )
-                        }
-                        var expanded by remember { mutableStateOf(false) }
-
-                        ExposedDropdownMenuBox(
-                            expanded = expanded,
-                            onExpandedChange = { expanded = !expanded },
-                            modifier = Modifier.width(256.dp),
-                        ) {
-                            OutlinedTextField(
-                                value = currentRecommendationMode.value.displayName,
-                                onValueChange = { },
-                                readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = expanded) },
-                                modifier = Modifier
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable, true)
-                                    .testTag("contentFilterSettings:recommendationModeField"),
-                            )
-                            ExposedDropdownMenu(
-                                expanded = expanded,
-                                onDismissRequest = { expanded = false },
-                            ) {
-                                RecommendationMode.entries.forEach { mode ->
-                                    DropdownMenuItem(
-                                        text = {
-                                            Column {
-                                                Text(mode.displayName)
-                                                Text(mode.description, style = MaterialTheme.typography.bodySmall)
-                                            }
-                                        },
-                                        onClick = {
-                                            currentRecommendationMode.value = mode
-                                            settings.putString("recommendationMode", mode.key)
-                                            expanded = false
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    },
-                )
-
                 val isLoginForRecommendation = remember {
                     mutableStateOf(settings.getBoolean("loginForRecommendation", true))
                 }
@@ -243,21 +173,6 @@ fun ContentFilterSettingsScreen(
                         settings.putBoolean("enableContentFilter", it)
                     },
                     settingKey = "enableContentFilter",
-                    highlightedKey = highlightedSetting,
-                )
-
-                val filterFollowedUserContent = remember { mutableStateOf(settings.getBoolean("filterFollowedUserContent", false)) }
-                SettingItemWithSwitch(
-                    modifier = Modifier.testTag("contentFilterSettings:filterFollowedUserContent"),
-                    title = { Text("过滤已关注用户内容") },
-                    description = { Text("是否对已关注用户的内容也应用过滤规则。关闭此选项可确保关注用户的内容始终显示") },
-                    checked = filterFollowedUserContent.value,
-                    onCheckedChange = {
-                        filterFollowedUserContent.value = it
-                        settings.putBoolean("filterFollowedUserContent", it)
-                    },
-                    enabled = enableContentFilter.value,
-                    settingKey = "filterFollowedUserContent",
                     highlightedKey = highlightedSetting,
                 )
             }
@@ -436,88 +351,6 @@ fun ContentFilterSettingsScreen(
                             contentDescription = null,
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
-                    },
-                )
-            }
-
-            // 过滤统计（简化版）
-            var filterStats by remember { mutableStateOf<ContentFilterStats?>(null) }
-            var showStatsDialog by remember { mutableStateOf(false) }
-
-            LaunchedEffect(Unit) {
-                try {
-                    filterStats = contentFilterDao.loadFilterStats()
-                } catch (e: Exception) {
-                    Log.e("ContentFilterSettingsScreen", "Failed to load filter stats", e)
-                }
-            }
-
-            SettingItemGroup {
-                AnimatedVisibility(visible = enableContentFilter.value && filterStats != null) {
-                    SettingItem(
-                        title = { Text("过滤统计") },
-                        description = {
-                            Text(
-                                "已累计过滤 ${filterStats?.filteredCount ?: 0} 条内容，点击查看详情",
-                            )
-                        },
-                        onClick = { showStatsDialog = true },
-                    )
-                }
-            }
-
-            if (showStatsDialog && filterStats != null) {
-                AlertDialog(
-                    onDismissRequest = { showStatsDialog = false },
-                    title = { Text("过滤统计详情") },
-                    text = {
-                        Column {
-                            Row(
-                                modifier = Modifier.fillMaxWidth(),
-                                horizontalArrangement = Arrangement.SpaceBetween,
-                            ) {
-                                Text("总记录数: ${filterStats?.totalRecords}")
-                                Text("过滤率: ${(filterStats?.filterRate ?: 0f) * 100}%%")
-                            }
-                            Spacer(modifier = Modifier.height(16.dp))
-                            Button(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        try {
-                                            filterStats = contentFilterDao.cleanupOldData()
-                                            userMessages.showMessage("已清理过期数据")
-                                        } catch (e: Exception) {
-                                            // 忽略导出异常。
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                            ) {
-                                Text("清理过期数据")
-                            }
-                            Button(
-                                onClick = {
-                                    coroutineScope.launch {
-                                        try {
-                                            filterStats = contentFilterDao.clearAllData()
-                                            userMessages.showMessage("已重置所有数据")
-                                            showStatsDialog = false
-                                        } catch (e: Exception) {
-                                            // 忽略分享异常。
-                                        }
-                                    }
-                                },
-                                modifier = Modifier.fillMaxWidth(),
-                                colors = ButtonDefaults.buttonColors(containerColor = MaterialTheme.colorScheme.error),
-                            ) {
-                                Text("重置所有数据")
-                            }
-                        }
-                    },
-                    confirmButton = {
-                        TextButton(onClick = { showStatsDialog = false }) {
-                            Text("关闭")
-                        }
                     },
                 )
             }

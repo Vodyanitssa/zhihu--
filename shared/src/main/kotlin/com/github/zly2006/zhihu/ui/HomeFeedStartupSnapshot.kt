@@ -18,22 +18,19 @@
 package com.github.zly2006.zhihu.ui
 
 import com.github.zly2006.zhihu.data.FeedDisplayItem
-import com.github.zly2006.zhihu.data.RecommendationMode
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.util.Log
 
 const val AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY = "autoRefreshHomeOnStartup"
-const val LEGACY_HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"
-private const val HOME_FEED_STARTUP_CACHE_FILE_PREFIX = "home_feed_startup_cache_"
-private const val HOME_FEED_STARTUP_CACHE_FILE_SUFFIX = ".json"
+const val HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"
 
 private const val HOME_FEED_STARTUP_SNAPSHOT_MAX_ITEMS = 10
 
-fun homeFeedStartupCacheFileName(recommendationMode: RecommendationMode): String =
-    HOME_FEED_STARTUP_CACHE_FILE_PREFIX + recommendationMode.key + HOME_FEED_STARTUP_CACHE_FILE_SUFFIX
+fun homeFeedStartupCacheFileName(): String =
+    HOME_FEED_STARTUP_CACHE_FILE_NAME
 
 fun homeFeedStartupCacheFileNames(): List<String> =
-    listOf(LEGACY_HOME_FEED_STARTUP_CACHE_FILE_NAME) + RecommendationMode.entries.map(::homeFeedStartupCacheFileName)
+    listOf(HOME_FEED_STARTUP_CACHE_FILE_NAME, "WEB")
 
 fun encodeHomeFeedStartupSnapshot(items: List<FeedDisplayItem>): String? {
     // raw 的多态内容自带 type 字段，会与 kotlinx.serialization 的默认类型判别字段冲突；启动恢复也不需要这份可重新获取的详情缓存。

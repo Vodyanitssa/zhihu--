@@ -86,9 +86,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.Feed
-import com.github.zly2006.zhihu.data.RecommendationMode
 import com.github.zly2006.zhihu.data.ZHIHU_ME_URL
 import com.github.zly2006.zhihu.data.ZhihuJson
 import com.github.zly2006.zhihu.data.ZhihuMeNotifications
@@ -112,7 +110,6 @@ import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedInteractionViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
-import com.github.zly2006.zhihu.viewmodel.za.AndroidHomeFeedViewModel
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
@@ -164,13 +161,8 @@ fun HomeScreen(
         label = "createMenuBlurRadius",
     )
 
-    // 获取当前推荐算法设置
-    val currentRecommendationMode =
-        RecommendationMode.entries.find {
-            it.key == settings.getString("recommendationMode", RecommendationMode.ANDROID.key)
-        } ?: RecommendationMode.ANDROID
-    val startupCacheFile = remember(appPrivateDirectory, currentRecommendationMode) {
-        Path(appPrivateDirectory, homeFeedStartupCacheFileName(currentRecommendationMode))
+    val startupCacheFile = remember(appPrivateDirectory) {
+        Path(appPrivateDirectory, homeFeedStartupCacheFileName())
     }
 
     val account = rememberAccountSettingsAccountState().value
@@ -187,11 +179,8 @@ fun HomeScreen(
         )
     }
 
-    val viewModel: BaseFeedViewModel = when (currentRecommendationMode) {
-        RecommendationMode.WEB -> viewModel { HomeFeedViewModel() }
-        RecommendationMode.ANDROID -> viewModel { AndroidHomeFeedViewModel() }
-    }
-    val readingQueueSourceId = "home:${currentRecommendationMode.name}"
+    val viewModel: BaseFeedViewModel = viewModel { HomeFeedViewModel() }
+    val readingQueueSourceId = "home:WEB"
 
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
@@ -236,7 +225,7 @@ fun HomeScreen(
     }
 
     // 初始加载
-    LaunchedEffect(currentRecommendationMode, account.login, autoRefreshOnStartup) {
+    LaunchedEffect(account.login, autoRefreshOnStartup) {
         if (!account.login &&
             settings.getBoolean("loginForRecommendation", true)
         ) {
@@ -406,24 +395,6 @@ fun HomeScreen(
                         thumbnailUrl = when (val target = item.feed?.target) {
                             is Feed.AnswerTarget -> target.thumbnail
                             else -> null
-                        },
-                        menuItems = { dismissMenu ->
-                            val topics = when (val raw = item.raw) {
-                                is DataHolder.Answer -> raw.question.topics
-                                is DataHolder.Question -> raw.topics
-                                is DataHolder.Article -> raw.topics ?: emptyList()
-                                is DataHolder.Pin -> raw.topics ?: emptyList()
-                                else -> emptyList()
-                            }
-                            topics.forEach { topic ->
-                                DropdownMenuItem(
-                                    text = { Text("屏蔽「${topic.name}」") },
-                                    onClick = {
-                                        dismissMenu()
-                                        viewModel.handleBlockTopic(userMessages, topic.id, topic.name)
-                                    },
-                                )
-                            }
                         },
                     ) { clickedItem, destination ->
                         val feed = clickedItem.feed
