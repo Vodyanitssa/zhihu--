@@ -107,7 +107,6 @@ import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.ui.subscreens.DEFAULT_FAB_OPACITY
 import com.github.zly2006.zhihu.ui.subscreens.PREF_FAB_OPACITY
 import com.github.zly2006.zhihu.viewmodel.feed.BaseFeedViewModel
-import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedInteractionViewModel
 import com.github.zly2006.zhihu.viewmodel.feed.HomeFeedViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.Dispatchers
@@ -400,7 +399,7 @@ fun HomeScreen(
                         val feed = clickedItem.feed
                         if (feed != null) {
 //                            DataHolder.putFeed(feed)
-                            (viewModel as? HomeFeedInteractionViewModel)
+                            (viewModel as? HomeFeedViewModel)
                                 ?.onUiContentClick(paginationEnvironment, feed, clickedItem)
                         }
                         if (destination != null) {

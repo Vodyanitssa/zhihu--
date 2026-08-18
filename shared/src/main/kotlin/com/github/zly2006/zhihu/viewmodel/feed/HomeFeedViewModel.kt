@@ -39,15 +39,7 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 
-interface HomeFeedInteractionViewModel {
-    suspend fun recordContentInteraction(environment: ContentInteractionEnvironment, feed: Feed)
-
-    fun onUiContentClick(environment: ContentInteractionEnvironment, feed: Feed, item: FeedDisplayItem)
-}
-
-class HomeFeedViewModel :
-    BaseFeedViewModel(),
-    HomeFeedInteractionViewModel {
+class HomeFeedViewModel : BaseFeedViewModel() {
     private val reportedTouchedItems = hashSetOf<Pair<String, String>>()
 
     override val initialUrl: String
@@ -83,7 +75,7 @@ class HomeFeedViewModel :
      * 记录用户与内容的交互行为
      * 应该在用户点击、点赞等操作时调用
      */
-    override suspend fun recordContentInteraction(environment: ContentInteractionEnvironment, feed: Feed) {
+    suspend fun recordContentInteraction(environment: ContentInteractionEnvironment, feed: Feed) {
         try {
             environment.recordContentInteraction(feed)
         } catch (e: Exception) {
@@ -95,7 +87,7 @@ class HomeFeedViewModel :
      * 记录用户点击内容
      * 在viewModelScope中运行，使用viewModelScope代替GlobalScope
      */
-    override fun onUiContentClick(environment: ContentInteractionEnvironment, feed: Feed, item: FeedDisplayItem) {
+    fun onUiContentClick(environment: ContentInteractionEnvironment, feed: Feed, item: FeedDisplayItem) {
         viewModelScope.launch(Dispatchers.Default) {
             if (environment.authenticatedCookies()["d_c0"] != null) {
                 val payloadItem = when (val target = feed.target) {

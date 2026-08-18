@@ -87,6 +87,31 @@ fun zhihuQuestionFeedsUrl(
     }
 
 /**
+ * 将 DataHolder.Answer 转换为用于导航预览的 CachedAnswerContent。
+ * 消除 QuestionAnswerNavigator、CollectionAnswerNavigator 和 PaginationInfoNavigator
+ * 中 5 处重复的 CachedAnswerContent 构造逻辑。
+ */
+private fun DataHolder.Answer.toCachedAnswerContent(
+    article: Article,
+    sourceName: String,
+): CachedAnswerContent = CachedAnswerContent(
+    article = article,
+    title = question.title,
+    authorName = author.name,
+    authorBio = author.headline,
+    authorAvatarUrl = author.avatarUrl,
+    authorBadge = author.badgeV2.officialBadge(),
+    content = content,
+    voteUpCount = voteupCount,
+    commentCount = commentCount,
+    createdAt = createdTime,
+    updatedAt = updatedTime,
+    ipInfo = ipInfo,
+    endorsements = endorsementItems,
+    sourceLabel = sourceName,
+)
+
+/**
  * 回答导航器：封装回答切换的来源、历史记录和预取逻辑。
  *
  * @param sourceName 来源名称，用于 UI 标签，例如 "此问题"、"「收藏夹名称」"
@@ -120,6 +145,19 @@ abstract class AnswerNavigator(
         } else {
             nextAnswerContent
         }
+
+    /** 构建用于预览卡片的占位 CachedAnswerContent（题目标题/作者已知，但完整内容尚未加载）。 */
+    protected fun articlePreview(article: Article): CachedAnswerContent = CachedAnswerContent(
+        article = article,
+        title = article.title,
+        authorName = article.authorName,
+        authorBio = article.authorBio,
+        authorAvatarUrl = article.avatarSrc ?: "",
+        content = "",
+        voteUpCount = 0,
+        commentCount = 0,
+        sourceLabel = sourceName,
+    )
 
     /** 将当前回答推入历史，截断前向分支。 */
     fun pushAnswer(cached: CachedAnswerContent) {
@@ -283,39 +321,12 @@ class QuestionAnswerNavigator(
     }
 
     override val previousAnswerPreview: CachedAnswerContent?
-        get() {
-            val article = previousQueue.firstOrNull() ?: return null
-            return CachedAnswerContent(
-                article = article,
-                title = article.title,
-                authorName = article.authorName,
-                authorBio = article.authorBio,
-                authorAvatarUrl = article.avatarSrc ?: "",
-                content = "",
-                voteUpCount = 0,
-                commentCount = 0,
-                sourceLabel = sourceName,
-            )
-        }
+        get() = previousQueue.firstOrNull()?.let { articlePreview(it) }
 
     private suspend fun fetchCached(article: Article): CachedAnswerContent? {
-        val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer ?: return null
-        return CachedAnswerContent(
-            article = article,
-            title = detail.question.title,
-            authorName = detail.author.name,
-            authorBio = detail.author.headline,
-            authorAvatarUrl = detail.author.avatarUrl,
-            authorBadge = detail.author.badgeV2.officialBadge(),
-            content = detail.content,
-            voteUpCount = detail.voteupCount,
-            commentCount = detail.commentCount,
-            createdAt = detail.createdTime,
-            updatedAt = detail.updatedTime,
-            ipInfo = detail.ipInfo,
-            endorsements = detail.endorsementItems,
-            sourceLabel = sourceName,
-        )
+        val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer
+            ?: return null
+        return detail.toCachedAnswerContent(article, sourceName)
     }
 
     private suspend fun ensureDestinationsLocked(
@@ -504,20 +515,7 @@ class CollectionAnswerNavigator(
     }
 
     override val previousAnswerPreview: CachedAnswerContent?
-        get() {
-            val article = previousQueue.firstOrNull() ?: return null
-            return CachedAnswerContent(
-                article = article,
-                title = article.title,
-                authorName = article.authorName,
-                authorBio = article.authorBio,
-                authorAvatarUrl = article.avatarSrc ?: "",
-                content = "",
-                voteUpCount = 0,
-                commentCount = 0,
-                sourceLabel = sourceName,
-            )
-        }
+        get() = previousQueue.firstOrNull()?.let { articlePreview(it) }
 
     private suspend fun ensureQueueLocked(minimumCount: Int) {
         val fetchedUrls = mutableSetOf<String>()
@@ -556,22 +554,7 @@ class CollectionAnswerNavigator(
         val cached = try {
             val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer
             if (detail != null) {
-                CachedAnswerContent(
-                    article = article,
-                    title = detail.question.title,
-                    authorName = detail.author.name,
-                    authorBio = detail.author.headline,
-                    authorAvatarUrl = detail.author.avatarUrl,
-                    authorBadge = detail.author.badgeV2.officialBadge(),
-                    content = detail.content,
-                    voteUpCount = detail.voteupCount,
-                    commentCount = detail.commentCount,
-                    createdAt = detail.createdTime,
-                    updatedAt = detail.updatedTime,
-                    ipInfo = detail.ipInfo,
-                    endorsements = detail.endorsementItems,
-                    sourceLabel = sourceName,
-                )
+                detail.toCachedAnswerContent(article, sourceName)
             } else {
                 // 加载失败时退回 previousQueue
                 previousQueue.add(0, article)
@@ -592,22 +575,7 @@ class CollectionAnswerNavigator(
         val article = previousQueue.firstOrNull() ?: return@withLock
         try {
             val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer ?: return@withLock
-            previousAnswerContent = CachedAnswerContent(
-                article = article,
-                title = detail.question.title,
-                authorName = detail.author.name,
-                authorBio = detail.author.headline,
-                authorAvatarUrl = detail.author.avatarUrl,
-                authorBadge = detail.author.badgeV2.officialBadge(),
-                content = detail.content,
-                voteUpCount = detail.voteupCount,
-                commentCount = detail.commentCount,
-                createdAt = detail.createdTime,
-                updatedAt = detail.updatedTime,
-                ipInfo = detail.ipInfo,
-                endorsements = detail.endorsementItems,
-                sourceLabel = sourceName,
-            )
+            previousAnswerContent = detail.toCachedAnswerContent(article, sourceName)
         } catch (e: Exception) {
             Log.w("CollectionAnswerNavigator", "Failed to pre-load previous answer content", e)
         }
@@ -622,22 +590,7 @@ class CollectionAnswerNavigator(
         }
         try {
             val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer ?: return@withLock
-            nextAnswerContent = CachedAnswerContent(
-                article = article,
-                title = detail.question.title,
-                authorName = detail.author.name,
-                authorBio = detail.author.headline,
-                authorAvatarUrl = detail.author.avatarUrl,
-                authorBadge = detail.author.badgeV2.officialBadge(),
-                content = detail.content,
-                voteUpCount = detail.voteupCount,
-                commentCount = detail.commentCount,
-                createdAt = detail.createdTime,
-                updatedAt = detail.updatedTime,
-                ipInfo = detail.ipInfo,
-                endorsements = detail.endorsementItems,
-                sourceLabel = sourceName,
-            )
+            nextAnswerContent = detail.toCachedAnswerContent(article, sourceName)
         } catch (e: Exception) {
             Log.w("CollectionAnswerNavigator", "Failed to pre-load next answer content", e)
         }
@@ -754,22 +707,7 @@ class PaginationInfoNavigator(
     private suspend fun fetchCached(answerId: Long): CachedAnswerContent? {
         val dest = Article(id = answerId, type = ArticleType.Answer)
         val detail = environment.getOrFetchContentDetail(dest) as? DataHolder.Answer ?: return null
-        return CachedAnswerContent(
-            article = dest,
-            title = detail.question.title,
-            authorName = detail.author.name,
-            authorBio = detail.author.headline,
-            authorAvatarUrl = detail.author.avatarUrl,
-            authorBadge = detail.author.badgeV2.officialBadge(),
-            content = detail.content,
-            voteUpCount = detail.voteupCount,
-            commentCount = detail.commentCount,
-            createdAt = detail.createdTime,
-            updatedAt = detail.updatedTime,
-            ipInfo = detail.ipInfo,
-            endorsements = detail.endorsementItems,
-            sourceLabel = sourceName,
-        )
+        return detail.toCachedAnswerContent(dest, sourceName)
     }
 
     override suspend fun loadPrevious(): CachedAnswerContent? = nextQueueMutex.withLock {

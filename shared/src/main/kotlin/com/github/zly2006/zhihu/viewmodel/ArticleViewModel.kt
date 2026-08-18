@@ -171,146 +171,150 @@ class ArticleViewModel(
     val isFavorited: Boolean
         get() = collections.any { it.isFavorited }
 
-    // todo: replace this with sqlite
-    open class ArticlesSharedData : ArticleAnswerSwitchData()
-
     @OptIn(ExperimentalStdlibApi::class)
     fun loadArticle(environment: ArticleLoadEnvironment) {
         if (httpClient == null) return
         viewModelScope.launch {
             withContext(Dispatchers.Default) {
                 try {
-                    if (article.type == ArticleType.Answer) {
-                        val sharedData = environment.articleAnswerSwitchState()
-                        val answer = environment.fetchContentDetail(article) as? DataHolder.Answer
-                        if (answer != null) {
-                            exportSourceContent = answer
-                            title = answer.question.title
-                            authorName = answer.author.name
-                            authorId = answer.author.id
-                            authorUrlToken = answer.author.urlToken
-                            content = applySegmentInfosToHtml(
-                                content = answer.content,
-                                segmentInfos = answer.segmentInfos,
-                                sourceUrl = "https://www.zhihu.com/question/${answer.question.id}/answer/${answer.id}",
-                                contentId = answer.id.toString(),
-                                contentType = "answer",
-                            )
-                            attachment = answer.attachment
-                            authorBio = answer.author.headline
-                            authorAvatarSrc = answer.author.avatarUrl
-                            authorBadge = answer.author.badgeV2.officialBadge()
-                            voteUpCount = answer.voteupCount
-                            votersTotal = answer.voteupCount
-                            commentCount = answer.commentCount
-                            questionId = answer.question.id
-                            answerNextIds = answer.paginationInfo?.nextAnswerIds.orEmpty()
-                            voteUpState = VoteUpState.from(answer.reaction?.relation?.vote)
-                            updatedAt = answer.updatedTime
-                            createdAt = answer.createdTime
-                            ipInfo = answer.ipInfo
-                            endorsements = answer.endorsementItems
-                            topics = emptyList()
-
-                            environment.postHistoryDestination(
-                                Article(
-                                    id = answer.id,
-                                    type = ArticleType.Answer,
-                                    title = answer.question.title,
-                                    authorName = answer.author.name,
-                                    authorBio = answer.author.headline,
-                                    avatarSrc = answer.author.avatarUrl,
-                                    excerpt = answer.excerpt,
-                                ),
-                            )
-                            environment.recordOpenEvent(article, answer.question.id)
-                            withContext(Dispatchers.Main.immediate) {
-                                // 设置问题回答导航器（如果当前不是收藏夹导航器）
-                                if (sharedData?.navigator !is CollectionAnswerNavigator) {
-                                    val existingNav = sharedData?.navigator
-                                    val isSameQuestion = when (existingNav) {
-                                        is QuestionAnswerNavigator -> existingNav.questionId == questionId
-                                        is PaginationInfoNavigator -> existingNav.questionId == questionId
-                                        else -> false
-                                    }
-                                    if (!isSameQuestion) {
-                                        sharedData?.navigator = QuestionAnswerNavigator(
-                                            questionId = questionId,
-                                            environment = environment,
-                                        )
-                                    }
-                                }
-                                sharedData?.navigator?.pushAnswer(
-                                    toCachedContent(sourceLabel = sharedData.navigator?.sourceName ?: "此问题"),
-                                )
-                            }
-                            loadAnswerRelationshipEndorsement(environment)
-                            loadMoreVoters(environment, reset = true)
-
-                            // 仅在无前向历史时预取下一个回答
-                            withContext(Dispatchers.Main.immediate) {
-                                sharedData?.navigator?.let { nav ->
-                                    if (nav.currentAnswerIndex >= nav.answerHistory.size - 1) {
-                                        nav.prefetchNext(article.id)
-                                    }
-                                    nav.prefetchPrevious(article.id)
-                                }
-                            }
-                        } else {
-                            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
-                            endorsements = emptyList()
-                            Log.e("ArticleViewModel", "Answer not found")
-                        }
-                    } else if (article.type == ArticleType.Article) {
-                        val article = environment.fetchContentDetail(article) as? DataHolder.Article
-                        if (article != null) {
-                            endorsements = emptyList()
-                            exportSourceContent = article
-                            title = article.title
-                            content = applySegmentInfosToHtml(
-                                content = article.content,
-                                segmentInfos = article.segmentInfos,
-                                sourceUrl = "https://zhuanlan.zhihu.com/p/${article.id}",
-                                contentId = article.id.toString(),
-                                contentType = "article",
-                            )
-                            voteUpCount = article.voteupCount
-                            votersTotal = article.voteupCount
-                            commentCount = article.commentCount
-                            authorId = article.author.id
-                            authorUrlToken = article.author.urlToken
-                            authorName = article.author.name
-                            authorBio = article.author.headline
-                            authorAvatarSrc = article.author.avatarUrl
-                            authorBadge = article.author.badgeV2.officialBadge()
-                            voteUpState = VoteUpState.from(article.reaction?.relation?.vote)
-                            updatedAt = article.updated
-                            createdAt = article.created
-                            ipInfo = article.ipInfo
-                            topics = article.topics.orEmpty()
-
-                            environment.postHistoryDestination(
-                                Article(
-                                    id = article.id,
-                                    type = ArticleType.Article,
-                                    title = article.title,
-                                    authorName = article.author.name,
-                                    authorBio = article.author.headline,
-                                    avatarSrc = article.author.avatarUrl,
-                                    excerpt = article.excerpt,
-                                ),
-                            )
-                            environment.recordOpenEvent(this@ArticleViewModel.article, null)
-                        } else {
-                            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
-                            Log.e("ArticleViewModel", "Article not found")
-                        }
+                    when (article.type) {
+                        ArticleType.Answer -> loadAnswerContent(environment)
+                        ArticleType.Article -> loadArticleContent(environment)
                     }
                 } catch (e: Exception) {
                     Log.e("ArticleViewModel", "Failed to load content", e)
                 }
             }
         }
+    }
+
+    private suspend fun loadAnswerContent(environment: ArticleLoadEnvironment) {
+        val sharedData = environment.articleAnswerSwitchState()
+        val answer = environment.fetchContentDetail(article) as? DataHolder.Answer
+        if (answer == null) {
+            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
+            endorsements = emptyList()
+            Log.e("ArticleViewModel", "Answer not found")
+            return
+        }
+        exportSourceContent = answer
+        title = answer.question.title
+        authorName = answer.author.name
+        authorId = answer.author.id
+        authorUrlToken = answer.author.urlToken
+        content = applySegmentInfosToHtml(
+            content = answer.content,
+            segmentInfos = answer.segmentInfos,
+            sourceUrl = "https://www.zhihu.com/question/${answer.question.id}/answer/${answer.id}",
+            contentId = answer.id.toString(),
+            contentType = "answer",
+        )
+        attachment = answer.attachment
+        authorBio = answer.author.headline
+        authorAvatarSrc = answer.author.avatarUrl
+        authorBadge = answer.author.badgeV2.officialBadge()
+        voteUpCount = answer.voteupCount
+        votersTotal = answer.voteupCount
+        commentCount = answer.commentCount
+        questionId = answer.question.id
+        answerNextIds = answer.paginationInfo?.nextAnswerIds.orEmpty()
+        voteUpState = VoteUpState.from(answer.reaction?.relation?.vote)
+        updatedAt = answer.updatedTime
+        createdAt = answer.createdTime
+        ipInfo = answer.ipInfo
+        endorsements = answer.endorsementItems
+        topics = emptyList()
+
+        environment.postHistoryDestination(
+            Article(
+                id = answer.id,
+                type = ArticleType.Answer,
+                title = answer.question.title,
+                authorName = answer.author.name,
+                authorBio = answer.author.headline,
+                avatarSrc = answer.author.avatarUrl,
+                excerpt = answer.excerpt,
+            ),
+        )
+        environment.recordOpenEvent(article, answer.question.id)
+        withContext(Dispatchers.Main.immediate) {
+            // 设置问题回答导航器（如果当前不是收藏夹导航器）
+            if (sharedData?.navigator !is CollectionAnswerNavigator) {
+                val existingNav = sharedData?.navigator
+                val isSameQuestion = when (existingNav) {
+                    is QuestionAnswerNavigator -> existingNav.questionId == questionId
+                    is PaginationInfoNavigator -> existingNav.questionId == questionId
+                    else -> false
+                }
+                if (!isSameQuestion) {
+                    sharedData?.navigator = QuestionAnswerNavigator(
+                        questionId = questionId,
+                        environment = environment,
+                    )
+                }
+            }
+            sharedData?.navigator?.pushAnswer(
+                toCachedContent(sourceLabel = sharedData.navigator?.sourceName ?: "此问题"),
+            )
+        }
+        loadAnswerRelationshipEndorsement(environment)
+        loadMoreVoters(environment, reset = true)
+
+        // 仅在无前向历史时预取下一个回答
+        withContext(Dispatchers.Main.immediate) {
+            sharedData?.navigator?.let { nav ->
+                if (nav.currentAnswerIndex >= nav.answerHistory.size - 1) {
+                    nav.prefetchNext(article.id)
+                }
+                nav.prefetchPrevious(article.id)
+            }
+        }
+    }
+
+    private suspend fun loadArticleContent(environment: ArticleLoadEnvironment) {
+        val articleDetail = environment.fetchContentDetail(article) as? DataHolder.Article
+        if (articleDetail == null) {
+            content = "<h1>你似乎来到了没有知识存在的荒原</h1>"
+            Log.e("ArticleViewModel", "Article not found")
+            return
+        }
+        endorsements = emptyList()
+        exportSourceContent = articleDetail
+        title = articleDetail.title
+        content = applySegmentInfosToHtml(
+            content = articleDetail.content,
+            segmentInfos = articleDetail.segmentInfos,
+            sourceUrl = "https://zhuanlan.zhihu.com/p/${articleDetail.id}",
+            contentId = articleDetail.id.toString(),
+            contentType = "article",
+        )
+        voteUpCount = articleDetail.voteupCount
+        votersTotal = articleDetail.voteupCount
+        commentCount = articleDetail.commentCount
+        authorId = articleDetail.author.id
+        authorUrlToken = articleDetail.author.urlToken
+        authorName = articleDetail.author.name
+        authorBio = articleDetail.author.headline
+        authorAvatarSrc = articleDetail.author.avatarUrl
+        authorBadge = articleDetail.author.badgeV2.officialBadge()
+        voteUpState = VoteUpState.from(articleDetail.reaction?.relation?.vote)
+        updatedAt = articleDetail.updated
+        createdAt = articleDetail.created
+        ipInfo = articleDetail.ipInfo
+        topics = articleDetail.topics.orEmpty()
+
+        environment.postHistoryDestination(
+            Article(
+                id = articleDetail.id,
+                type = ArticleType.Article,
+                title = articleDetail.title,
+                authorName = articleDetail.author.name,
+                authorBio = articleDetail.author.headline,
+                avatarSrc = articleDetail.author.avatarUrl,
+                excerpt = articleDetail.excerpt,
+            ),
+        )
+        environment.recordOpenEvent(this.article, null)
     }
 
     fun toggleFavorite(collectionId: String, remove: Boolean, environment: ZhihuApiEnvironment) {

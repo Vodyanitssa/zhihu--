@@ -91,13 +91,11 @@ internal class ArticleAnswerNavigationState(
         val previous = answerNavigator.goToPrevious()
         if (previous != null) {
             state.pendingInitialContent = previous
-            state.promoteForNavigation(state.answerTransitionDirection)
             navigate(previous.article)
             return
         }
 
         state.pendingInitialContent = answerNavigator.previousAnswerPreview
-        state.promoteForNavigation(state.answerTransitionDirection)
         coroutineScope.launch {
             val loaded = answerNavigator.loadPrevious() ?: return@launch
             state.pendingInitialContent = loaded
@@ -120,13 +118,11 @@ internal class ArticleAnswerNavigationState(
         val historyNext = answerNavigator.goToNext()
         if (historyNext != null) {
             state.pendingInitialContent = historyNext
-            state.promoteForNavigation(state.answerTransitionDirection)
             navigate(historyNext.article)
             return
         }
 
         state.pendingInitialContent = answerNavigator.nextAnswer
-        state.promoteForNavigation(state.answerTransitionDirection)
         navigatingToNextAnswer = true
         coroutineScope.launch {
             try {

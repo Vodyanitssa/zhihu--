@@ -280,12 +280,9 @@ interface ArticleAnswerSwitchState {
     var pendingNavigator: AnswerNavigator?
     var pendingInitialContent: CachedAnswerContent?
     var navigatingFromAnswerSwitch: Boolean
-    var answerSwitchDisposeInProgress: Boolean
     var answerTransitionDirection: ArticleAnswerTransitionDirection
 
     fun reset()
-
-    fun promoteForNavigation(direction: ArticleAnswerTransitionDirection)
 }
 
 enum class ArticleAnswerTransitionDirection {
