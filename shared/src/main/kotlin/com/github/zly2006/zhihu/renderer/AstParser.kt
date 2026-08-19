@@ -1,0 +1,217 @@
+package com.github.zly2006.zhihu.renderer
+
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+
+/*
+ * 对外暴露两个函数:
+ * ContentNodeParse 将 html 解析为 ContentNode 列表
+ * InlineNodeParse 将文字表情混合文本解析为 InlineNode 列表
+ */
+
+object AstParser {
+    fun ParseContent(text: String): List<ContentNode> {
+        val document = Jsoup.parseBodyFragment(text)
+        return document
+            .body()
+            .children()
+            .mapNotNull(::parseBlock)
+    }
+
+    fun ParseInline(text: String): List<InlineNode> {
+        val result = mutableListOf<InlineNode>()
+        val textBuffer = StringBuilder()
+        var i = 0
+        while (i < text.length) {
+            if (text[i] == '[') {
+                val closeIdx = text.indexOf(']', i + 1)
+                if (closeIdx != -1) {
+                    val key = text.substring(i, closeIdx + 1)
+                    if (EmojiManager.mapping.containsKey(key)) {
+                        if (textBuffer.isNotEmpty()) {
+                            result.add(InlineNode.Text(textBuffer.toString()))
+                            textBuffer.clear()
+                        }
+                        result.add(
+                            InlineNode.Emoji(
+                                name = key,
+                            ),
+                        )
+                        i = closeIdx + 1
+                        continue
+                    }
+                }
+            }
+            textBuffer.append(text[i])
+            i++
+        }
+        if (textBuffer.isNotEmpty()) {
+            result.add(InlineNode.Text(textBuffer.toString()))
+        }
+        return result
+    }
+
+    private fun parseBlock(element: Element): ContentNode? = when (element.tagName()) {
+        "h1", "h2", "h3", "h4", "h5", "h6" -> {
+            ContentNode.Heading(
+                level = element.tagName().substring(1).toInt(),
+                content = element.text(),
+            )
+        }
+
+        "p" -> parseParagraph(element)
+        "blockquote" -> {
+            ContentNode.Quote(
+                content = ParseInline(element.wholeText()),
+            )
+        }
+
+        "pre" -> parseCode(element)
+        "div" -> {
+            if (element.hasClass("highlight")) {
+                element.selectFirst("pre")?.let(::parseCode)
+            } else {
+                null
+            }
+        }
+
+        "ol", "ul" -> {
+            ContentNode.Listing(
+                items = element
+                    .children()
+                    .filter { it.tagName() == "li" }
+                    .map { it.text() },
+                isSorted = element.tagName() == "ol",
+            )
+        }
+
+        "figure" -> parseFigure(element)
+        "img" -> parseImage(element)
+        "a" -> {
+            if (element.hasClass("video-box")) {
+                parseVideo(element)
+            } else {
+                parseLink(element)
+            }
+        }
+
+        "table" -> parseTable(element)
+        // <hr> 当前 AST 没有对应节点，所以直接忽略
+        "hr" -> null
+        else -> null
+    }
+
+    private fun parseParagraph(element: Element): ContentNode {
+        // <p><img ... /></p>
+        // 例如知乎的公式图片
+        val image = element
+            .children()
+            .singleOrNull { it.tagName() == "img" }
+        if (image != null && element.text().isBlank()) {
+            return parseImage(image) ?: ContentNode.Paragraph(emptyList())
+        }
+        return ContentNode.Paragraph(
+            content = ParseInline(element.text()),
+        )
+    }
+
+    private fun parseImage(element: Element): ContentNode.Image? {
+        val url = element
+            .attr("data-original")
+            .ifBlank { element.attr("src") }
+            .takeIf { it.isNotBlank() }
+            ?: return null
+        return ContentNode.Image(
+            url = url,
+            caption = element.attr("alt").ifBlank { null },
+        )
+    }
+
+    private fun parseFigure(element: Element): ContentNode.Image? {
+        val image = element.selectFirst(":scope > img")
+            ?: return null
+
+        val url = image
+            .attr("data-original")
+            .ifBlank { image.attr("src") }
+            .takeIf { it.isNotBlank() }
+            ?: return null
+
+        return ContentNode.Image(
+            url = url,
+            caption = element
+                .selectFirst(":scope > figcaption")
+                ?.text()
+                ?.ifBlank { null },
+        )
+    }
+
+    private fun parseVideo(element: Element): ContentNode.Video? {
+        val url = element
+            .attr("href")
+            .takeIf { it.isNotBlank() }
+            ?: return null
+        return ContentNode.Video(
+            url = url,
+            caption = element.attr("data-name").ifBlank { null },
+        )
+    }
+
+    private fun parseLink(element: Element): ContentNode.Link? {
+        val content = element.text().ifBlank {
+            return null
+        }
+        return ContentNode.Link(
+            content = content,
+        )
+    }
+
+    private fun parseCode(element: Element): ContentNode.Code? {
+        val code = element.selectFirst("code") ?: element
+        val language = code
+            .classNames()
+            .firstOrNull { it.startsWith("language-") }
+            ?.removePrefix("language-")
+            ?.ifBlank { null }
+            ?: "text"
+        return ContentNode.Code(
+            // wholeText() 比 text() 更适合代码，因为需要保留换行和缩进
+            content = code.wholeText().trimEnd(),
+            language = language,
+        )
+    }
+
+    private fun parseTable(element: Element): ContentNode.Table? {
+        val rowElements = element.select("tbody > tr")
+        if (rowElements.isEmpty()) {
+            return null
+        }
+        val rows = rowElements
+            .map { row ->
+                ContentNode.TableRow(
+                    content = row
+                        .children()
+                        .filter {
+                            it.tagName() == "th" || it.tagName() == "td"
+                        }.map { cell ->
+                            ContentNode.TableCell(
+                                content = cell.text(),
+                                isHeader = cell.tagName() == "th",
+                            )
+                        },
+                )
+            }.filter {
+                it.content.isNotEmpty()
+            }
+        if (rows.isEmpty()) {
+            return null
+        }
+        val header = rows.firstOrNull { row ->
+            row.content.any(ContentNode.TableCell::isHeader)
+        } ?: rows.first()
+        return ContentNode.Table(
+            rows = rows,
+            header = header,
+        )
+    }
+}

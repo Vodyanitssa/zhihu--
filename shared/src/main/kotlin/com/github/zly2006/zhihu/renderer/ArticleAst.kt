@@ -1,15 +1,29 @@
 package com.github.zly2006.zhihu.renderer
 
-import androidx.compose.foundation.text.InlineTextContent
-
+/*
+ * 块内容，可为多种类型
+ */
 sealed interface ContentNode {
     data class Paragraph(
-        val content: InlineNode,
+        val content: List<InlineNode>,
     ) : ContentNode
 
     data class Heading(
         val level: Int,
-        val content: InlineTextContent,
+        val content: String,
+    ) : ContentNode
+
+    data class Link(
+        val content: String,
+    ) : ContentNode
+
+    data class Code(
+        val content: String,
+        val language: String,
+    ) : ContentNode
+
+    data class Quote(
+        val content: List<InlineNode>,
     ) : ContentNode
 
     data class Image(
@@ -17,21 +31,35 @@ sealed interface ContentNode {
         val caption: String?,
     ) : ContentNode
 
-    data class Code(
-        val code: String,
-        val language: String?,
+    data class Video(
+        val url: String,
+        val caption: String?,
     ) : ContentNode
 
-    data class Quote(
-        val content: InlineTextContent,
+    // avoid naming collision with List
+    data class Listing(
+        val items: List<String>,
+        val isSorted: Boolean,
     ) : ContentNode
 
-    data class List(
-        val items: kotlin.collections.List<InlineTextContent>,
-        val ordered: Boolean,
+    data class Table(
+        val rows: List<TableRow>,
+        val header: TableRow,
     ) : ContentNode
+
+    data class TableRow(
+        val content: List<TableCell>,
+    )
+
+    data class TableCell(
+        val content: String,
+        val isHeader: Boolean,
+    )
 }
 
+/*
+ * 行内内容，文字表情混合文本
+ */
 sealed interface InlineNode {
     data class Text(
         val text: String,
@@ -40,37 +68,4 @@ sealed interface InlineNode {
     data class Emoji(
         val name: String,
     ) : InlineNode
-}
-
-fun InlineNodeParser(text: String): List<InlineNode> {
-    val result = mutableListOf<InlineNode>()
-    val textBuffer = StringBuilder()
-    var i = 0
-    while (i < text.length) {
-        if (text[i] == '[') {
-            val closeIdx = text.indexOf(']', i + 1)
-            if (closeIdx != -1) {
-                val key = text.substring(i, closeIdx + 1)
-                if (EmojiManager.mapping.containsKey(key)) {
-                    if (textBuffer.isNotEmpty()) {
-                        result.add(InlineNode.Text(textBuffer.toString()))
-                        textBuffer.clear()
-                    }
-                    result.add(
-                        InlineNode.Emoji(
-                            name = key,
-                        ),
-                    )
-                    i = closeIdx + 1
-                    continue
-                }
-            }
-        }
-        textBuffer.append(text[i])
-        i++
-    }
-    if (textBuffer.isNotEmpty()) {
-        result.add(InlineNode.Text(textBuffer.toString()))
-    }
-    return result
 }

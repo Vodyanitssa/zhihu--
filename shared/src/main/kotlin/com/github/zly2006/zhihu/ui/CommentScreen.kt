@@ -148,9 +148,9 @@ import com.github.zly2006.zhihu.platform.rememberImagePreviewOpener
 import com.github.zly2006.zhihu.platform.rememberImageSaver
 import com.github.zly2006.zhihu.platform.rememberImageSharer
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
+import com.github.zly2006.zhihu.renderer.AstParser
 import com.github.zly2006.zhihu.renderer.EmojiItem
 import com.github.zly2006.zhihu.renderer.EmojiManager
-import com.github.zly2006.zhihu.renderer.InlineNodeParser
 import com.github.zly2006.zhihu.renderer.RenderInlineNodes
 import com.github.zly2006.zhihu.ui.components.replaceSelection
 import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
@@ -1299,7 +1299,7 @@ private fun CommentItem(
                     SelectionContainer(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
-                        val inlineNodes = InlineNodeParser(commentData.content)
+                        val inlineNodes = AstParser.ParseInline(commentData.content)
                         RenderInlineNodes(inlineNodes)
                     }
                     if (commentImg != null) {
