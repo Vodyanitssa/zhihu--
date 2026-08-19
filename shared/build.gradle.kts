@@ -103,6 +103,8 @@ dependencies {
     api(project(":shared-local-db"))
     implementation(project(":markdown-parser"))
     implementation(project(":markdown-renderer"))
+    implementation("androidx.compose.foundation:foundation:1.12.0")
+    implementation("androidx.compose.material3:material3:1.4.0")
 
     // Compose
     implementation("org.jetbrains.compose.runtime:runtime:$composeVersion")
@@ -135,6 +137,7 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-core:$coilVersion")
     implementation("io.coil-kt.coil3:coil-network-ktor3-android:$coilVersion")
     implementation("io.coil-kt.coil3:coil-gif:$coilVersion")
+    implementation("io.coil-kt.coil3:coil-svg:$coilVersion")
     implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:2.10.0")
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:2.10.0")

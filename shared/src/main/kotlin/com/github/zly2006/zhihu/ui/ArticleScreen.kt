@@ -94,7 +94,6 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.VoteUpState
-import com.github.zly2006.zhihu.markdown.RenderMarkdown
 import com.github.zly2006.zhihu.navigation.Article
 import com.github.zly2006.zhihu.navigation.ArticleType
 import com.github.zly2006.zhihu.navigation.LocalNavigator
@@ -102,9 +101,10 @@ import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.Topic
 import com.github.zly2006.zhihu.platform.PlatformBackHandler
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
+import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.article.ArticleActionsMenu
-import com.github.zly2006.zhihu.ui.article.ArticleVideoAttachmentContent
 import com.github.zly2006.zhihu.ui.article.CachedAnswerPreview
 import com.github.zly2006.zhihu.ui.article.rememberArticleAnswerNavigationState
 import com.github.zly2006.zhihu.ui.article.rememberArticleBottomBarState
@@ -262,7 +262,8 @@ fun ArticleScreen(
                         modifier = Modifier
                             .onSizeChanged {
                                 topBarState.heightPx = it.height.toFloat()
-                            }.graphicsLayer {
+                            }
+                            .graphicsLayer {
                                 translationY = topBarState.offset.value
                                 alpha = if (topBarState.heightPx > 0f) 1f + (topBarState.offset.value / topBarState.heightPx) else 1f
                             },
@@ -427,7 +428,8 @@ fun ArticleScreen(
                                                 environment,
                                                 if (viewModel.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up,
                                             )
-                                        }.padding(6.dp, 8.dp, 12.dp, 8.dp),
+                                        }
+                                        .padding(6.dp, 8.dp, 12.dp, 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Icon(
@@ -467,7 +469,8 @@ fun ArticleScreen(
                                                 environment,
                                                 if (viewModel.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down,
                                             )
-                                        }.padding(6.dp, 8.dp, 8.dp, 8.dp),
+                                        }
+                                        .padding(6.dp, 8.dp, 8.dp, 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     AnimatedVisibility(visible = viewModel.voteUpState != VoteUpState.Down) {
@@ -635,7 +638,9 @@ fun ArticleScreen(
                             val hasEndorsements = endorsements.isNotEmpty()
                             if (hasPinnedDate || hasSocialCredit || hasEndorsements) {
                                 Column(
-                                    modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(top = 8.dp),
                                     horizontalAlignment = Alignment.Start,
                                 ) {
                                     if (hasPinnedDate) {
@@ -658,32 +663,9 @@ fun ArticleScreen(
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
-                            RenderMarkdown(
-                                html = viewModel.content,
-                                modifier = Modifier.articleMarkdownSelectionWorkaround(),
-                                scrollState = scrollState,
-                                selectable = true,
-                                enableScroll = false,
-                                header = {},
-                                footer = {
-                                    ArticleVideoAttachmentContent(viewModel.attachment)
-                                    Column(
-                                        modifier = Modifier.fillMaxWidth(),
-                                        horizontalAlignment = Alignment.End,
-                                    ) {
-                                        if (!articleSettings.pinAnswerDate) {
-                                            DateTexts()
-                                        }
-                                        if (viewModel.ipInfo != null) {
-                                            Text(
-                                                "IP属地：${viewModel.ipInfo}",
-                                                color = Color.Gray,
-                                                fontSize = 11.sp,
-                                            )
-                                        }
-                                    }
-                                    Spacer(modifier = Modifier.height((16 + 36).dp))
-                                },
+                            val contentNodes = AstParser.ParseContent(viewModel.content)
+                            RenderContentNodes(
+                                nodes = contentNodes,
                             )
                         }
                     }
@@ -726,6 +708,7 @@ fun ArticleScreen(
                     MainContent()
                 }
             }
+
             ArticleType.Answer if articleSettings.answerSwitchMode == "horizontal" -> {
                 AnswerHorizontalOverscroll(
                     canGoPrevious = nav?.previousAnswer != null,
@@ -743,6 +726,7 @@ fun ArticleScreen(
                     MainContent()
                 }
             }
+
             else -> {
                 MainContent()
             }
@@ -818,7 +802,7 @@ fun ArticleScreen(
         onDismiss = { showComments = false },
         content = article,
         isZhPlusAuthorContent = article.type == ArticleType.Answer &&
-            viewModel.authorId == DataHolder.ZH_PLUS_AUTHOR_USER_ID,
+                viewModel.authorId == DataHolder.ZH_PLUS_AUTHOR_USER_ID,
     )
     VotersSheet(
         show = showVoters,

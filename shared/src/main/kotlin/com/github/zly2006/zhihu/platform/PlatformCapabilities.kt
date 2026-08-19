@@ -84,6 +84,7 @@ data class SettingsStore(
 )
 
 private const val WEBVIEW_ACTIVITY_CLASS = "com.github.zly2006.zhihu.WebviewActivity"
+private const val VIDEO_PLAYER_ACTIVITY_CLASS = "com.github.zly2006.zhihu.VideoPlayerActivity"
 
 @Composable
 fun rememberExternalUrlOpener(): (String) -> Unit {
@@ -101,6 +102,22 @@ fun rememberSystemUrlOpener(): (String) -> Unit {
 fun rememberZhihuWebUrlOpener(): (String) -> Unit {
     val context = LocalContext.current
     return remember(context) { { url -> context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).setClassName(context, WEBVIEW_ACTIVITY_CLASS)) } }
+}
+
+@Composable
+fun rememberVideoPlayerOpener(): (url: String, id: Long) -> Unit {
+    val context = LocalContext.current
+    return remember(context) {
+        { url, id ->
+            context.startActivity(
+                Intent().apply {
+                    setClassName(context, VIDEO_PLAYER_ACTIVITY_CLASS)
+                    putExtra("video_url", url)
+                    putExtra("video_id", id)
+                },
+            )
+        }
+    }
 }
 
 @Composable
