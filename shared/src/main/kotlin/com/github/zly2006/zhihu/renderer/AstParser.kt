@@ -15,7 +15,7 @@ object AstParser {
         return document
             .body()
             .children()
-            .mapNotNull(::parseBlock)
+            .flatMap(::parseBlock)
     }
 
     fun ParseInline(text: String): List<InlineNode> {
@@ -51,65 +51,97 @@ object AstParser {
         return result
     }
 
-    private fun parseBlock(element: Element): ContentNode? = when (element.tagName()) {
+    private fun parseBlock(element: Element): List<ContentNode> = when (element.tagName()) {
         "h1", "h2", "h3", "h4", "h5", "h6" -> {
-            ContentNode.Heading(
-                level = element.tagName().substring(1).toInt(),
-                content = element.text(),
+            listOf(
+                ContentNode.Heading(
+                    level = element.tagName().substring(1).toInt(),
+                    content = element.text(),
+                ),
             )
         }
 
         "p" -> {
             val children = element.children()
-            if (children.size == 1) {
-                when (children.first()!!.tagName()) {
-                    "img" -> children.first()?.let(::parseImage)
-                    "a" -> children.first()?.let(::parseLink)
-                    else -> parseParagraph(element)
-                }
-            } else {
-                parseParagraph(element)
-            }
-        }
-
-        "blockquote" -> {
-            ContentNode.Quote(
-                content = ParseInline(element.wholeText()),
+            listOfNotNull(
+                if (children.size == 1) {
+                    when (children.first()!!.tagName()) {
+                        "img" -> children.first()?.let(::parseImage)
+                        "a" -> children.first()?.let(::parseLink)
+                        else -> parseParagraph(element)
+                    }
+                } else {
+                    parseParagraph(element)
+                },
             )
         }
 
-        "pre" -> parseCode(element)
+        "blockquote" -> {
+            listOf(
+                ContentNode.Quote(
+                    content = ParseInline(element.wholeText()),
+                ),
+            )
+        }
+
+        "pre" -> {
+            listOfNotNull(parseCode(element))
+        }
+
         "div" -> {
-            if (element.hasClass("highlight")) {
-                element.selectFirst("pre")?.let(::parseCode)
-            } else {
-                null
+            buildList {
+                element
+                    .ownText()
+                    .trim()
+                    .takeIf { it.isNotEmpty() }
+                    ?.let {
+                        add(
+                            ContentNode.Heading(
+                                level = 1,
+                                content = it,
+                            ),
+                        )
+                    }
+
+                element.children().forEach {
+                    if (it.tagName() == "p") {
+                        addAll(parseBlock(it))
+                    }
+                }
             }
         }
 
         "ol", "ul" -> {
-            ContentNode.Listing(
-                items = element
-                    .children()
-                    .filter { it.tagName() == "li" }
-                    .map { it.text() },
-                isSorted = element.tagName() == "ol",
+            listOf(
+                ContentNode.Listing(
+                    items = element
+                        .children()
+                        .filter { it.tagName() == "li" }
+                        .map { it.text() },
+                    isSorted = element.tagName() == "ol",
+                ),
             )
         }
 
-        "figure" -> parseFigure(element)
-        "img" -> parseImage(element)
+        "figure" -> listOfNotNull(parseFigure(element))
+
+        "img" -> listOfNotNull(parseImage(element))
+
         "a" -> {
-            if (element.hasClass("video-box")) {
-                parseVideo(element)
-            } else {
-                parseLink(element)
-            }
+            listOfNotNull(
+                if (element.hasClass("video-box")) {
+                    parseVideo(element)
+                } else {
+                    parseLink(element)
+                },
+            )
         }
 
-        "table" -> parseTable(element)
-        "hr" -> ContentNode.Splitter
-        else -> null
+        "table" -> listOfNotNull(parseTable(element))
+
+        "hr" -> listOf(ContentNode.Splitter)
+
+        else -> emptyList()
     }
 
     private fun parseParagraph(element: Element): ContentNode = ContentNode.Paragraph(
@@ -130,9 +162,7 @@ object AstParser {
     }
 
     private fun parseFigure(element: Element): ContentNode.Image? {
-        val image = element
-            .children()
-            .firstOrNull { it.tagName() == "img" }
+        val image = element.selectFirst("img")
             ?: return null
 
         return ContentNode.Image(

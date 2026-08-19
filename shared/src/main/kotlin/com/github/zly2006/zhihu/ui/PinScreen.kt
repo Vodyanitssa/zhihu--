@@ -86,6 +86,8 @@ import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.resolveContent
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
+import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.ui.components.AuthorBadge
 import com.github.zly2006.zhihu.ui.components.CommentScreenComponent
 import com.github.zly2006.zhihu.ui.components.ShareDialog
@@ -519,10 +521,20 @@ private fun PinContent(
         Text(
             buildString {
                 append("发布于")
-                append(Instant.fromEpochSeconds(pin.created).toLocalDateTime(TimeZone.currentSystemDefault()).run { "$year-${(month.ordinal + 1).twoDigitString()}-${day.twoDigitString()} ${hour.twoDigitString()}:${minute.twoDigitString()}" })
+                append(
+                    Instant
+                        .fromEpochSeconds(pin.created)
+                        .toLocalDateTime(TimeZone.currentSystemDefault())
+                        .run { "$year-${(month.ordinal + 1).twoDigitString()}-${day.twoDigitString()} ${hour.twoDigitString()}:${minute.twoDigitString()}" },
+                )
                 if (pin.updated > pin.created) {
                     append(" · 编辑于")
-                    append(Instant.fromEpochSeconds(pin.updated).toLocalDateTime(TimeZone.currentSystemDefault()).run { "$year-${(month.ordinal + 1).twoDigitString()}-${day.twoDigitString()} ${hour.twoDigitString()}:${minute.twoDigitString()}" })
+                    append(
+                        Instant
+                            .fromEpochSeconds(pin.updated)
+                            .toLocalDateTime(TimeZone.currentSystemDefault())
+                            .run { "$year-${(month.ordinal + 1).twoDigitString()}-${day.twoDigitString()} ${hour.twoDigitString()}:${minute.twoDigitString()}" },
+                    )
                 }
             },
             style = MaterialTheme.typography.bodySmall,
@@ -548,7 +560,8 @@ private fun PinContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 想法正文。
-        PinHtmlContent(pin.contentHtml)
+        val contentNodes = AstParser.ParseContent(pin.contentHtml)
+        RenderContentNodes(contentNodes)
 
         val votingPoll = pin.bottomPoll?.voting
         if (votingPoll != null) {
