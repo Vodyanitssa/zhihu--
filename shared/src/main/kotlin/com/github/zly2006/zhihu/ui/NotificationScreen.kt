@@ -86,6 +86,7 @@ import com.github.zly2006.zhihu.notification.NotificationSettingsStore
 import com.github.zly2006.zhihu.notification.rememberNotificationSettingsStore
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
+import com.github.zly2006.zhihu.renderer.EmojiManager
 import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.util.formatRelativeTime
@@ -482,14 +483,11 @@ fun NotificationItemView(
                         }
                     }
 
-                    // 创建inlineContent映射
-                    val inlineContent = rememberCommentEmojiInlineContent(emojisUsed)
-
                     if (displayText.isNotEmpty()) {
                         Spacer(modifier = Modifier.height(4.dp))
                         Text(
                             text = displayText,
-                            inlineContent = inlineContent,
+                            inlineContent = EmojiManager.inlineContent,
                             style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 3,

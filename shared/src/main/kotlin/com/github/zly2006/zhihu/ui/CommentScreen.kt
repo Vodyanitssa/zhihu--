@@ -120,7 +120,6 @@ import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.withLink
@@ -149,8 +148,11 @@ import com.github.zly2006.zhihu.platform.rememberImagePreviewOpener
 import com.github.zly2006.zhihu.platform.rememberImageSaver
 import com.github.zly2006.zhihu.platform.rememberImageSharer
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
+import com.github.zly2006.zhihu.renderer.EmojiItem
+import com.github.zly2006.zhihu.renderer.EmojiManager
+import com.github.zly2006.zhihu.renderer.InlineNodeParser
+import com.github.zly2006.zhihu.renderer.RenderInlineNodes
 import com.github.zly2006.zhihu.ui.components.replaceSelection
-import com.github.zly2006.zhihu.ui.subscreens.PREF_FONT_SIZE
 import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
 import com.github.zly2006.zhihu.util.twoDigitString
 import com.github.zly2006.zhihu.viewmodel.CommentItem
@@ -469,10 +471,6 @@ fun CommentScreen(
             ),
         )
     }
-    val commentEmojis = rememberCommentEmojis()
-    val emojiInlineContent = rememberCommentEmojiInlineContent(
-        remember(commentEmojis) { commentEmojis.mapTo(mutableSetOf(), CommentEmoji::inlineKey) },
-    )
 
     LaunchedEffect(commentInput) {
         if (commentInput != commentFieldValue.text) {
@@ -1129,7 +1127,7 @@ fun CommentScreen(
                             enter = expandVertically() + fadeIn(),
                             exit = shrinkVertically() + fadeOut(),
                         ) {
-                            if (commentEmojis.isEmpty()) {
+                            if (EmojiManager.mapping.isEmpty()) {
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
@@ -1152,30 +1150,26 @@ fun CommentScreen(
                                     contentPadding = PaddingValues(8.dp),
                                 ) {
                                     items(
-                                        items = commentEmojis,
-                                        key = CommentEmoji::placeholder,
-                                    ) { emoji ->
+                                        items = EmojiManager.mapping.entries.toList(),
+                                        key = { it.key },
+                                    ) { entry ->
+                                        val placeholder = entry.key
                                         IconButton(
                                             onClick = {
                                                 val updatedValue = commentFieldValue.replaceSelection(
-                                                    insert = emoji.placeholder,
-                                                    cursorOffsetInInsert = emoji.placeholder.length,
+                                                    insert = placeholder,
+                                                    cursorOffsetInInsert = placeholder.length,
                                                 )
                                                 commentFieldValue = updatedValue
                                                 onCommentInputChange(updatedValue.text)
                                             },
                                             modifier = Modifier
-                                                .size(48.dp)
-                                                .testTag(COMMENT_EMOJI_ITEM_TAG_PREFIX + emoji.placeholder),
+                                                .size(48.dp),
                                         ) {
-                                            Text(
-                                                text = remember(emoji) {
-                                                    buildAnnotatedString {
-                                                        appendInlineContent(emoji.inlineKey, emoji.placeholder)
-                                                    }
-                                                },
-                                                inlineContent = emojiInlineContent,
-                                                fontSize = 28.sp,
+                                            EmojiItem(
+                                                name = entry.key,
+                                                resource = entry.value,
+                                                modifier = Modifier.size(36.dp),
                                             )
                                         }
                                     }
@@ -1298,41 +1292,15 @@ private fun CommentItem(
                     document.selectFirst("a.comment_img")?.attr("href")
                         ?: document.selectFirst("a.comment_gif")?.attr("href")
                         ?: document.selectFirst("a.comment_sticker")?.attr("href")
-                // 收集所有使用的emoji
-                val emojisUsed = remember { mutableSetOf<String>() }
-                val openExternalUrl = rememberExternalUrlOpener()
-                val string = remember(commentData.content) {
-                    emojisUsed.clear()
-                    buildAnnotatedString {
-                        val stripped = document.body().clone()
-                        stripped.select("a.comment_img").forEach { it.remove() }
-                        stripped.select("a.comment_gif").forEach { it.remove() }
-                        stripped.select("a.comment_sticker").forEach { it.remove() }
-                        dfsSimple(
-                            node = stripped,
-                            onNavigate = navigator.onNavigate,
-                            openExternalUrl = openExternalUrl,
-                            componentUsed = emojisUsed,
-                        )
-                    }
-                }
-
-                // 创建inlineContent映射
-                val inlineContent = rememberCommentEmojiInlineContent(emojisUsed)
 
                 Column {
                     val settings = rememberSettingsStore()
-                    val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
                     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
                     SelectionContainer(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
-                        Text(
-                            text = string,
-                            fontSize = 16.sp * fontSizePercent / 100,
-                            lineHeight = 16.sp * fontSizePercent / 100 * lineHeightPercent / 100,
-                            inlineContent = inlineContent,
-                        )
+                        val inlineNodes = InlineNodeParser(commentData.content)
+                        RenderInlineNodes(inlineNodes)
                     }
                     if (commentImg != null) {
                         ClickableImageWithMenu(

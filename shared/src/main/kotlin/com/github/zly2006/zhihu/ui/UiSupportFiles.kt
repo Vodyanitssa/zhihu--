@@ -24,10 +24,8 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -55,7 +53,6 @@ import com.github.zly2006.zhihu.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFEREN
 import com.github.zly2006.zhihu.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
 import com.github.zly2006.zhihu.ui.components.normalizedAnswerSwitchSensitivity
 import com.github.zly2006.zhihu.util.EmojiManager
-import com.github.zly2006.zhihu.util.createEmojiInlineContent
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
 import com.github.zly2006.zhihu.viewmodel.ZhihuApiEnvironment
 import com.github.zly2006.zhihu.viewmodel.getOrFetchContentDetail
@@ -369,17 +366,6 @@ data class CommentEmoji(
     val inlineKey: String,
 )
 
-/**
- * 沉浸式阅读时控制系统栏（状态栏/导航栏）的显隐。
- * Android 会隐藏状态栏并允许滑动唤出；Desktop/iOS 为空操作。
- */
-
-/**
- * 离开沉浸式阅读时恢复系统状态栏。
- * 调用时机：导航目的地从 Article 切换到非 Article 时。
- * Android 会显示状态栏；Desktop/iOS 为空操作。
- */
-
 private const val QR_CODE_SCAN_ACTIVITY_CLASS = "com.github.zly2006.zhihu.QRCodeScanActivity"
 private const val WEBVIEW_ACTIVITY_CLASS = "com.github.zly2006.zhihu.WebviewActivity"
 private const val QR_SCAN_RESULT_EXTRA = "scan_result"
@@ -446,25 +432,6 @@ private fun Context.zhihuVersionInfo(): String {
 fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
 
 fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = this
-
-@Composable
-fun rememberCommentEmojiInlineContent(
-    emojiKeys: Set<String>,
-    context: Context = LocalContext.current,
-): Map<String, InlineTextContent> =
-    remember(emojiKeys) { createEmojiInlineContent(context, emojiKeys) }
-
-@Composable
-fun rememberCommentEmojis(): List<CommentEmoji> {
-    val placeholders by EmojiManager.placeholders.collectAsState()
-    return remember(placeholders) {
-        placeholders.mapNotNull { placeholder ->
-            commentEmojiInlineKey(placeholder)?.let { inlineKey ->
-                CommentEmoji(placeholder = placeholder, inlineKey = inlineKey)
-            }
-        }
-    }
-}
 
 fun commentEmojiInlineKey(placeholder: String): String? {
     val emojiPath = EmojiManager.getEmojiPath(placeholder) ?: return null

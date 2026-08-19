@@ -25,13 +25,6 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
-import androidx.compose.foundation.Image
-import androidx.compose.foundation.text.InlineTextContent
-import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.text.Placeholder
-import androidx.compose.ui.text.PlaceholderVerticalAlign
-import androidx.compose.ui.unit.em
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.github.zly2006.zhihu.data.DataHolder
@@ -179,37 +172,6 @@ private fun saveImageToMediaStore(
         resolver.delete(imageUri, null, null)
         throw e
     }
-}
-
-fun createEmojiInlineContent(
-    context: Context,
-    emojiKeys: Set<String>,
-): Map<String, InlineTextContent> {
-    return emojiKeys
-        .filter { it.startsWith("emoji_") }
-        .mapNotNull { emojiKey ->
-            val fileName = emojiKey.removePrefix("emoji_")
-            val path = EmojiManager.getEmojiPathByFileName(fileName) ?: return@mapNotNull null
-
-            emojiKey to InlineTextContent(
-                placeholder = Placeholder(
-                    width = 1.3.em,
-                    height = 1.3.em,
-                    placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
-                ),
-            ) {
-                val bitmap = context.assets.open(path).use { inputStream ->
-                    android.graphics.BitmapFactory.decodeStream(inputStream)
-                }
-                if (bitmap != null) {
-                    Image(
-                        bitmap = bitmap.asImageBitmap(),
-                        contentDescription = emojiKey,
-                        modifier = Modifier,
-                    )
-                }
-            }
-        }.toMap()
 }
 
 /**

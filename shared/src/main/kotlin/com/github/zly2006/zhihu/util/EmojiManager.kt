@@ -81,17 +81,10 @@ object EmojiManager {
     /**
      * 根据emoji占位符获取本地assets路径
      * @param placeholder emoji占位符，例如 "[感谢]"
-     * @return assets路径，例如 "emojis/images/ganxie.png"，如果emoji不存在返回null
+     * @return assets路径，例如 "emojis/images/emoji_1.png"，如果emoji不存在返回null
      */
     fun getEmojiPath(placeholder: String): String? {
         val fileName = emojiMapping[placeholder] ?: return null
         return emojiAssetPath[fileName]
     }
-
-    /**
-     * 根据emoji文件名获取本地assets路径
-     * @param fileName emoji文件名，例如 "ganxie.png"
-     * @return assets路径，例如 "emojis/images/ganxie.png"，如果emoji不存在返回null
-     */
-    fun getEmojiPathByFileName(fileName: String): String? = emojiAssetPath[fileName]
 }
