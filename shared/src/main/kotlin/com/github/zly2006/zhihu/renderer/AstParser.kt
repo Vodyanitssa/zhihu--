@@ -59,7 +59,19 @@ object AstParser {
             )
         }
 
-        "p" -> parseParagraph(element)
+        "p" -> {
+            val children = element.children()
+            if (children.size == 1) {
+                when (children.first()!!.tagName()) {
+                    "img" -> children.first()?.let(::parseImage)
+                    "a" -> children.first()?.let(::parseLink)
+                    else -> parseParagraph(element)
+                }
+            } else {
+                parseParagraph(element)
+            }
+        }
+
         "blockquote" -> {
             ContentNode.Quote(
                 content = ParseInline(element.wholeText()),
@@ -101,19 +113,9 @@ object AstParser {
         else -> null
     }
 
-    private fun parseParagraph(element: Element): ContentNode {
-        // <p><img ... /></p>
-        // 例如知乎的公式图片
-        val image = element
-            .children()
-            .singleOrNull { it.tagName() == "img" }
-        if (image != null && element.text().isBlank()) {
-            return parseImage(image) ?: ContentNode.Paragraph(emptyList())
-        }
-        return ContentNode.Paragraph(
-            content = ParseInline(element.text()),
-        )
-    }
+    private fun parseParagraph(element: Element): ContentNode = ContentNode.Paragraph(
+        content = ParseInline(element.text()),
+    )
 
     private fun parseImage(element: Element): ContentNode.Image? {
         val url = element
@@ -123,24 +125,26 @@ object AstParser {
             ?: return null
         return ContentNode.Image(
             url = url,
-            caption = element.attr("alt").ifBlank { null },
+            caption = null,
+            // 由于知乎用 img 渲染 latex，直接渲染 img 则不显示 caption
         )
     }
 
     private fun parseFigure(element: Element): ContentNode.Image? {
-        val image = element.selectFirst(":scope > img")
-            ?: return null
-
-        val url = image
-            .attr("data-original")
-            .ifBlank { image.attr("src") }
-            .takeIf { it.isNotBlank() }
+        val image = element
+            .children()
+            .firstOrNull { it.tagName() == "img" }
             ?: return null
 
         return ContentNode.Image(
-            url = url,
+            url = element
+                .attr("data-original")
+                .ifBlank { image.attr("src") }
+                .takeIf { it.isNotBlank() }
+                ?: return null,
             caption = element
-                .selectFirst(":scope > figcaption")
+                .children()
+                .firstOrNull { it.tagName() == "figcaption" }
                 ?.text()
                 ?.ifBlank { null },
         )
@@ -154,15 +158,23 @@ object AstParser {
         return ContentNode.Video(
             url = url,
             caption = element.attr("data-name").ifBlank { null },
+            coverUrl = element
+                .children()
+                .firstOrNull { it.className() == "thumbnail" }
+                ?.text()
+                ?.ifBlank { null },
         )
     }
 
     private fun parseLink(element: Element): ContentNode.Link? {
-        val content = element.text().ifBlank {
-            return null
-        }
         return ContentNode.Link(
-            content = content,
+            content = element.text().ifBlank {
+                return null
+            },
+            url = element.attr("href").ifBlank {
+                return null
+            },
+            isCard = element.attr("data-draft-type") == "link-card",
         )
     }
 

@@ -15,6 +15,8 @@ sealed interface ContentNode {
 
     data class Link(
         val content: String,
+        val url: String,
+        val isCard: Boolean,
     ) : ContentNode
 
     data class Code(
@@ -34,6 +36,7 @@ sealed interface ContentNode {
     data class Video(
         val url: String,
         val caption: String?,
+        val coverUrl: String?,
     ) : ContentNode
 
     // avoid naming collision with List
