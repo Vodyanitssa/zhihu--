@@ -13,6 +13,8 @@ sealed interface ContentNode {
         val content: String,
     ) : ContentNode
 
+    data object Splitter : ContentNode
+
     data class Link(
         val content: String,
         val url: String,

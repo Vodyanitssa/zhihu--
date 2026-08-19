@@ -262,8 +262,7 @@ fun ArticleScreen(
                         modifier = Modifier
                             .onSizeChanged {
                                 topBarState.heightPx = it.height.toFloat()
-                            }
-                            .graphicsLayer {
+                            }.graphicsLayer {
                                 translationY = topBarState.offset.value
                                 alpha = if (topBarState.heightPx > 0f) 1f + (topBarState.offset.value / topBarState.heightPx) else 1f
                             },
@@ -428,8 +427,7 @@ fun ArticleScreen(
                                                 environment,
                                                 if (viewModel.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up,
                                             )
-                                        }
-                                        .padding(6.dp, 8.dp, 12.dp, 8.dp),
+                                        }.padding(6.dp, 8.dp, 12.dp, 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     Icon(
@@ -469,8 +467,7 @@ fun ArticleScreen(
                                                 environment,
                                                 if (viewModel.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down,
                                             )
-                                        }
-                                        .padding(6.dp, 8.dp, 8.dp, 8.dp),
+                                        }.padding(6.dp, 8.dp, 8.dp, 8.dp),
                                     verticalAlignment = Alignment.CenterVertically,
                                 ) {
                                     AnimatedVisibility(visible = viewModel.voteUpState != VoteUpState.Down) {
@@ -802,7 +799,7 @@ fun ArticleScreen(
         onDismiss = { showComments = false },
         content = article,
         isZhPlusAuthorContent = article.type == ArticleType.Answer &&
-                viewModel.authorId == DataHolder.ZH_PLUS_AUTHOR_USER_ID,
+            viewModel.authorId == DataHolder.ZH_PLUS_AUTHOR_USER_ID,
     )
     VotersSheet(
         show = showVoters,

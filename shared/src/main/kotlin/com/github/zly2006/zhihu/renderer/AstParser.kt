@@ -108,8 +108,7 @@ object AstParser {
         }
 
         "table" -> parseTable(element)
-        // <hr> 当前 AST 没有对应节点，所以直接忽略
-        "hr" -> null
+        "hr" -> ContentNode.Splitter
         else -> null
     }
 

@@ -131,6 +131,8 @@ private fun RenderContentNode(node: ContentNode) {
             )
         }
 
+        is ContentNode.Splitter -> HorizontalDivider()
+
         is ContentNode.Link -> {
             RenderLink(node)
         }
