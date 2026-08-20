@@ -70,7 +70,10 @@ android {
         release {
             isMinifyEnabled = true
             isShrinkResources = true
-            proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
             buildConfigField("String", "GIT_HASH", "\"$gitHash\"")
             manifestPlaceholders["zhihuBuildType"] = "release"
             manifestPlaceholders["zhihuGitHash"] = gitHash
@@ -139,7 +142,8 @@ dependencies {
     implementation("androidx.browser:browser:1.10.0")
 
     // Media3 ExoPlayer
-    implementation("androidx.media3:media3-exoplayer:1.7.1")
+    implementation("androidx.media3:media3-exoplayer:1.11.0")
+    implementation("androidx.media3:media3-ui:1.11.0")
 
     implementation(project(":markdown-parser"))
     implementation(project(":markdown-renderer"))
