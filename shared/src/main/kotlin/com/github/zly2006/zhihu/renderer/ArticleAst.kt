@@ -36,7 +36,7 @@ sealed interface ContentNode {
     ) : ContentNode
 
     data class Video(
-        val url: String,
+        val videoId: Long,
         val caption: String?,
         val coverUrl: String?,
     ) : ContentNode

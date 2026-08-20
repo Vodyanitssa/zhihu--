@@ -1,5 +1,8 @@
 package com.github.zly2006.zhihu.renderer
 
+import com.github.zly2006.zhihu.navigation.Video
+import com.github.zly2006.zhihu.navigation.resolveContent
+import com.github.zly2006.zhihu.util.extractImageUrl
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
@@ -199,18 +202,18 @@ object AstParser {
     }
 
     private fun parseVideo(element: Element): ContentNode.Video? {
-        val url = element
-            .attr("href")
-            .takeIf { it.isNotBlank() }
-            ?: return null
+        val href = element.attr("href")
+        val videoId = href.takeIf { it.isNotBlank() }?.let { destination ->
+            val resolved = resolveContent(destination)
+            if (resolved is Video) resolved.id else null
+        } ?: element.attr("data-lens-id").toLongOrNull() ?: return null
+        val coverUrl = element.selectFirst("img")?.let { image ->
+            extractImageUrl(image::attr)
+        } ?: element.attr("data-poster").ifBlank { null }
         return ContentNode.Video(
-            url = url,
+            videoId = videoId,
             caption = element.attr("data-name").ifBlank { null },
-            coverUrl = element
-                .children()
-                .firstOrNull { it.className() == "thumbnail" }
-                ?.text()
-                ?.ifBlank { null },
+            coverUrl = coverUrl,
         )
     }
 

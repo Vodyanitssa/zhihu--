@@ -44,8 +44,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.github.zly2006.zhihu.navigation.LocalNavigator
+import com.github.zly2006.zhihu.navigation.Video
 import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
-import com.github.zly2006.zhihu.platform.rememberVideoPlayerOpener
 
 /*
  * 渲染段落、表情包
@@ -290,7 +291,7 @@ private fun RenderImage(node: ContentNode.Image) {
 
 @Composable
 private fun RenderVideo(node: ContentNode.Video) {
-    val openVideoPlayer = rememberVideoPlayerOpener()
+    val navigator = LocalNavigator.current
 
     Column(
         modifier = Modifier
@@ -332,7 +333,7 @@ private fun RenderVideo(node: ContentNode.Video) {
             }
 
             IconButton(
-                onClick = { openVideoPlayer(node.url, 0L) },
+                onClick = { navigator.onNavigate(Video(node.videoId)) },
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)
