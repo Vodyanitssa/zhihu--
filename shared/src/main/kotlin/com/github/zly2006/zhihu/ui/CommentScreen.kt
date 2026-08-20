@@ -151,6 +151,7 @@ import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.renderer.AstParser
 import com.github.zly2006.zhihu.renderer.EmojiItem
 import com.github.zly2006.zhihu.renderer.EmojiManager
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.renderer.RenderInlineNodes
 import com.github.zly2006.zhihu.ui.components.replaceSelection
 import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
@@ -1072,7 +1073,8 @@ fun CommentScreen(
                                     .focusRequester(commentInputFocusRequester)
                                     .onFocusChanged {
                                         if (it.isFocused) showEmojiPicker = false
-                                    }.testTag(COMMENT_INPUT_TAG),
+                                    }
+                                    .testTag(COMMENT_INPUT_TAG),
                                 decorationBox = { inner ->
                                     Box {
                                         if (commentFieldValue.text.isEmpty()) {
@@ -1287,32 +1289,14 @@ private fun CommentItem(
                     }
                 }
 
-                val document = Ksoup.parseBodyFragment(commentData.content)
-                val commentImg =
-                    document.selectFirst("a.comment_img")?.attr("href")
-                        ?: document.selectFirst("a.comment_gif")?.attr("href")
-                        ?: document.selectFirst("a.comment_sticker")?.attr("href")
-
                 Column {
                     val settings = rememberSettingsStore()
                     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
                     SelectionContainer(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
-                        val inlineNodes = AstParser.ParseInline(commentData.content)
-                        RenderInlineNodes(inlineNodes)
-                    }
-                    if (commentImg != null) {
-                        ClickableImageWithMenu(
-                            imageUrl = commentImg,
-                            modifier = Modifier
-                                .testTag("comment_image_${commentData.id}")
-                                .padding(top = 8.dp)
-                                .sizeIn(maxHeight = 100.dp, maxWidth = 240.dp)
-                                .clip(RoundedCornerShape(12.dp)),
-                            contentDescription = "评论图片",
-                            onAction = onImageMenuAction,
-                        )
+                        val contentNodes = AstParser.ParseContent(commentData.content)
+                        RenderContentNodes(contentNodes)
                     }
                 }
             }
@@ -1572,7 +1556,8 @@ fun AuthorTag(authorTag: String) {
                 width = 0.5.dp,
                 color = Color.Gray,
                 shape = RoundedCornerShape(3.dp),
-            ).padding(horizontal = 3.dp),
+            )
+            .padding(horizontal = 3.dp),
     ) {
         Text(
             text = authorTag,

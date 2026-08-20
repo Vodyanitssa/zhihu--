@@ -2,6 +2,8 @@ package com.github.zly2006.zhihu.renderer
 
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.TextNode
+import kotlin.collections.emptyList
 
 /*
  * 对外暴露两个函数:
@@ -12,10 +14,24 @@ import org.jsoup.nodes.Element
 object AstParser {
     fun ParseContent(text: String): List<ContentNode> {
         val document = Jsoup.parseBodyFragment(text)
-        return document
-            .body()
-            .children()
-            .flatMap(::parseBlock)
+        return document.body().childNodes().flatMap { node ->
+            when (node) {
+                is TextNode -> {
+                    if (node.isBlank) {
+                        emptyList()
+                    } else {
+                        listOf(
+                            ContentNode.Paragraph(
+                                content = ParseInline(node.text()),
+                            ),
+                        )
+                    }
+                }
+
+                is Element -> parseBlock(node)
+                else -> emptyList()
+            }
+        }
     }
 
     fun ParseInline(text: String): List<InlineNode> {
@@ -131,6 +147,8 @@ object AstParser {
             listOfNotNull(
                 if (element.hasClass("video-box")) {
                     parseVideo(element)
+                } else if (element.hasClass("comment_img")) {
+                    parseImage(element)
                 } else {
                     parseLink(element)
                 },
@@ -152,8 +170,10 @@ object AstParser {
         val url = element
             .attr("data-original")
             .ifBlank { element.attr("src") }
+            .ifBlank { element.attr("href") }
             .takeIf { it.isNotBlank() }
             ?: return null
+        // 知乎使用 a 渲染评论图片，因此最终可能需要用 href
         return ContentNode.Image(
             url = url,
             caption = null,
