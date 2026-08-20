@@ -86,7 +86,6 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.lerp
 import com.github.zly2006.zhihu.platform.PlatformPredictiveBackHandler
-import com.github.zly2006.zhihu.platform.exportTestTagsForUiAutomation
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import kotlin.math.max
@@ -139,7 +138,7 @@ fun MyModalBottomSheet(
                 .imePadding()
                 .semantics {
                     isTraversalGroup = true
-                }.exportTestTagsForUiAutomation(),
+                },
         ) {
             MyBottomSheetScrim(
                 color = scrimColor,

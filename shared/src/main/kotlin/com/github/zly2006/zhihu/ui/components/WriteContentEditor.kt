@@ -47,7 +47,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.input.VisualTransformation
@@ -60,7 +59,6 @@ fun WriteContentMarkdownEditor(
     value: TextFieldValue,
     onValueChange: (TextFieldValue) -> Unit,
     placeholder: String,
-    contentTag: String,
     enabled: Boolean,
     modifier: Modifier = Modifier,
     topPadding: Dp = 16.dp,
@@ -94,8 +92,7 @@ fun WriteContentMarkdownEditor(
             onValueChange = onValueChange,
             modifier =
                 Modifier
-                    .fillMaxSize()
-                    .testTag(contentTag),
+                    .fillMaxSize(),
             enabled = enabled,
             visualTransformation = visualTransformation,
             textStyle =
@@ -145,9 +142,6 @@ fun WriteContentFabColumn(
     saveEnabled: Boolean,
     showImageButton: Boolean,
     isUploadingImage: Boolean,
-    previewTag: String,
-    imageTag: String,
-    saveTag: String,
     onPreview: () -> Unit,
     onImage: () -> Unit,
     onSave: () -> Unit,
@@ -175,7 +169,7 @@ fun WriteContentFabColumn(
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-            modifier = Modifier.testTag(previewTag),
+            modifier = Modifier,
             icon = {
                 Icon(Icons.Filled.Visibility, contentDescription = "预览")
             },
@@ -198,7 +192,7 @@ fun WriteContentFabColumn(
                     } else {
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
-                modifier = Modifier.testTag(imageTag),
+                modifier = Modifier,
                 icon = {
                     if (isUploadingImage) {
                         CircularProgressIndicator(
@@ -228,7 +222,7 @@ fun WriteContentFabColumn(
                 } else {
                     MaterialTheme.colorScheme.onSurfaceVariant
                 },
-            modifier = Modifier.testTag(saveTag),
+            modifier = Modifier,
             icon = {
                 Icon(Icons.Filled.Save, contentDescription = "保存草稿")
             },

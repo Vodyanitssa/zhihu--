@@ -45,7 +45,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.ImageBitmap
 import androidx.compose.ui.graphics.asImageBitmap
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.data.ZHIHU_ME_URL
@@ -468,8 +467,7 @@ fun SharedQrLoginPane(
     if (!currentRiskControlUrl.isNullOrBlank()) {
         Column(
             modifier = modifier
-                .fillMaxSize()
-                .testTag("qr_risk_control_content"),
+                .fillMaxSize(),
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
             Text(
@@ -486,8 +484,7 @@ fun SharedQrLoginPane(
                     refreshKey += 1
                 },
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("qr_risk_control_continue"),
+                    .fillMaxWidth(),
             ) {
                 Text("完成验证后继续扫码")
             }
@@ -515,8 +512,7 @@ fun SharedQrLoginPane(
 
     Column(
         modifier = modifier
-            .fillMaxSize()
-            .testTag("qr_login_content"),
+            .fillMaxSize(),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.Center,
     ) {
@@ -525,13 +521,12 @@ fun SharedQrLoginPane(
                 bitmap = qrBitmap!!,
                 contentDescription = "知乎登录二维码",
                 modifier = Modifier
-                    .size(260.dp)
-                    .testTag("qr_login_image"),
+                    .size(260.dp),
             )
             Spacer(modifier = Modifier.size(16.dp))
         } else if (isWorking) {
             CircularProgressIndicator(
-                modifier = Modifier.testTag("qr_login_loading"),
+                modifier = Modifier,
             )
             Spacer(modifier = Modifier.size(16.dp))
         }
@@ -542,8 +537,7 @@ fun SharedQrLoginPane(
             textAlign = TextAlign.Center,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(horizontal = 16.dp)
-                .testTag("qr_login_status"),
+                .padding(horizontal = 16.dp),
         )
 
         if (!riskControlMessage.isNullOrBlank()) {
@@ -570,7 +564,7 @@ fun SharedQrLoginPane(
                     riskControlMessage = null
                     refreshKey += 1
                 },
-                modifier = Modifier.testTag("qr_login_retry"),
+                modifier = Modifier,
             ) {
                 Text("刷新二维码")
             }

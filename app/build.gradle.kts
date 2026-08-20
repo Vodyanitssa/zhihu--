@@ -39,19 +39,11 @@ android {
         targetSdk = 35
         versionCode = property("app.versionCode").toString().toIntOrNull() ?: 1
         versionName = property("app.versionName").toString()
-
-        testInstrumentationRunner = "com.github.zly2006.zhihu.ZhihuInstrumentedTestRunner"
     }
 
     androidResources {
         @Suppress("UnstableApiUsage")
         localeFilters += listOf("en", "zh")
-    }
-
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-        }
     }
 
     signingConfigs {
@@ -117,14 +109,6 @@ android {
 
 tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
     compilerOptions.freeCompilerArgs.add("-Xdebug")
-}
-
-tasks.withType<Test>().configureEach {
-    javaLauncher.set(
-        javaToolchains.launcherFor {
-            languageVersion.set(JavaLanguageVersion.of(21))
-        },
-    )
 }
 
 val ktor = "3.5.0"
@@ -198,16 +182,4 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.mikepenz:aboutlibraries-compose-m3:$aboutLibraries")
     debugImplementation("androidx.compose.ui:ui-tooling")
-    debugImplementation("androidx.compose.ui:ui-test-manifest")
-    androidTestImplementation(platform("androidx.compose:compose-bom:2026.06.00"))
-    androidTestImplementation("androidx.compose.ui:ui-test-junit4")
-
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("io.ktor:ktor-client-cio:$ktor")
-    testImplementation("io.ktor:ktor-client-content-negotiation:$ktor")
-    testImplementation("io.ktor:ktor-serialization-kotlinx-json:$ktor")
-    //noinspection GradleDependency
-    androidTestImplementation("androidx.test.ext:junit:1.3.0")
-    androidTestImplementation("androidx.test.espresso:espresso-core:3.7.0")
-    androidTestImplementation("io.ktor:ktor-client-mock:$ktor")
 }

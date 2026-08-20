@@ -32,8 +32,6 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
@@ -200,7 +198,7 @@ class MainActivity :
         setContent {
             navController = rememberNavController()
             ZhihuTheme {
-                Box(Modifier.semantics { testTagsAsResourceId = true }) {
+                Box(Modifier) {
                     AndroidZhihuMain(navController = navController)
                 }
             }

@@ -70,7 +70,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -244,7 +243,7 @@ fun DailyScreen(
                             style = MaterialTheme.typography.titleLarge.copy(
                                 fontWeight = FontWeight.Bold,
                             ),
-                            modifier = Modifier.testTag(DAILY_SCREEN_TITLE_TAG),
+                            modifier = Modifier,
                         )
                         if (currentViewingDate.isNotEmpty()) {
                             Text(
@@ -252,7 +251,7 @@ fun DailyScreen(
                                 style = MaterialTheme.typography.bodySmall.copy(
                                     color = MaterialTheme.colorScheme.onSurface.copy(alpha = 0.6f),
                                 ),
-                                modifier = Modifier.testTag(DAILY_SCREEN_CURRENT_DATE_TAG),
+                                modifier = Modifier,
                             )
                         }
                     }
@@ -260,7 +259,7 @@ fun DailyScreen(
                 actions = {
                     IconButton(
                         onClick = { showDatePicker = true },
-                        modifier = Modifier.testTag(DAILY_SCREEN_DATE_PICKER_BUTTON_TAG),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.Filled.DateRange, contentDescription = "选择日期")
                     }
@@ -283,8 +282,7 @@ fun DailyScreen(
                 viewModel.isLoading -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(DAILY_SCREEN_LOADING_TAG),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         Column(
@@ -305,8 +303,7 @@ fun DailyScreen(
                 viewModel.error != null -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(DAILY_SCREEN_ERROR_TAG),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -319,8 +316,7 @@ fun DailyScreen(
                 viewModel.sections.isEmpty() -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(DAILY_SCREEN_EMPTY_TAG),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         Text(
@@ -335,8 +331,7 @@ fun DailyScreen(
                     LazyColumn(
                         state = listState,
                         modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(DAILY_SCREEN_LIST_TAG),
+                            .fillMaxSize(),
                         contentPadding = PaddingValues(vertical = 8.dp),
                     ) {
                         viewModel.sections.forEach { section ->
@@ -344,14 +339,14 @@ fun DailyScreen(
                             item(key = "header_${section.date}") {
                                 DateHeader(
                                     date = formatDailyDate(section.date),
-                                    modifier = Modifier.testTag("daily_screen_section_${section.date}"),
+                                    modifier = Modifier,
                                 )
                             }
                             // 当前日期的日报条目。
                             items(section.stories, key = { "story_${it.id}" }) { story ->
                                 DailyStoryCard(
                                     story = story,
-                                    modifier = Modifier.testTag("daily_screen_story_${story.id}"),
+                                    modifier = Modifier,
                                     onClick = {
                                         scope.launch {
                                             val response: JsonObject = withContext(Dispatchers.Default) {
@@ -542,11 +537,3 @@ private fun formatDailyDatePickerSelection(millis: Long): String {
         (date.month.ordinal + 1).twoDigitString() +
         date.day.twoDigitString()
 }
-
-private const val DAILY_SCREEN_TITLE_TAG = "daily_screen_title"
-private const val DAILY_SCREEN_CURRENT_DATE_TAG = "daily_screen_current_date"
-private const val DAILY_SCREEN_DATE_PICKER_BUTTON_TAG = "daily_screen_date_picker_button"
-private const val DAILY_SCREEN_LOADING_TAG = "daily_screen_loading"
-private const val DAILY_SCREEN_ERROR_TAG = "daily_screen_error"
-private const val DAILY_SCREEN_EMPTY_TAG = "daily_screen_empty"
-private const val DAILY_SCREEN_LIST_TAG = "daily_screen_list"

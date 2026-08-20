@@ -51,7 +51,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastJoinToString
@@ -104,13 +103,13 @@ fun CollectionContentScreen(
                 title = {
                     Text(
                         text = screenViewModel.title,
-                        modifier = Modifier.testTag("collection_content_title"),
+                        modifier = Modifier,
                     )
                 },
                 navigationIcon = {
                     IconButton(
                         onClick = navigator.onNavigateBack,
-                        modifier = Modifier.testTag("collection_content_back_button"),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
@@ -120,17 +119,17 @@ fun CollectionContentScreen(
                         IconButton(
                             onClick = { showActionsMenu = true },
                             enabled = screenViewModel.exportDialogState?.isCompleted != false,
-                            modifier = Modifier.testTag("collection_content_more_button"),
+                            modifier = Modifier,
                         ) {
                             Icon(Icons.Filled.MoreVert, contentDescription = "更多")
                         }
                         DropdownMenu(
                             expanded = showActionsMenu,
                             onDismissRequest = { showActionsMenu = false },
-                            modifier = Modifier.testTag("collection_content_more_menu"),
+                            modifier = Modifier,
                         ) {
                             DropdownMenuItem(
-                                modifier = Modifier.testTag("collection_content_export_action"),
+                                modifier = Modifier,
                                 text = { Text("全部导出HTML") },
                                 enabled = screenViewModel.exportDialogState?.isCompleted != false,
                                 onClick = {
@@ -170,7 +169,6 @@ fun CollectionContentScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
             listState = listState,
-            tagPrefix = "collection_content",
         )
     }
 }
@@ -182,7 +180,6 @@ internal fun CollectionContentBody(
     collectionId: String,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    tagPrefix: String,
     displayItems: List<FeedDisplayItem> = viewModel.displayItems,
 ) {
     val navigator = LocalNavigator.current
@@ -199,7 +196,7 @@ internal fun CollectionContentBody(
         onLoadMore = { viewModel.loadMore(environment) },
         isEnd = { viewModel.isEnd },
         listState = listState,
-        modifier = modifier.testTag("${tagPrefix}_list"),
+        modifier = modifier,
         footer = ProgressIndicatorFooter,
         topContent = {
             item(0) {
@@ -212,8 +209,7 @@ internal fun CollectionContentBody(
                     ).fastJoinToString(" · "),
                     modifier = Modifier
                         .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp)
-                        .testTag("${tagPrefix}_stats"),
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
                     textAlign = TextAlign.Center,
                 )
             }
@@ -224,8 +220,7 @@ internal fun CollectionContentBody(
             readingQueueSourceId = readingQueueSourceId,
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp)
-                .testTag("${tagPrefix}_item_${item.stableKey}"),
+                .padding(vertical = 8.dp),
         ) { _, destination ->
             if (destination is Article && destination.type == ArticleType.Answer && sharedData != null) {
                 val index = displayItems.indexOf(item)
@@ -264,7 +259,7 @@ private fun CollectionHtmlExportOptionsDialog(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Checkbox(
-                        modifier = Modifier.testTag("collection_content_export_include_images"),
+                        modifier = Modifier,
                         checked = includeImages,
                         onCheckedChange = { includeImages = it },
                     )
@@ -285,7 +280,7 @@ private fun CollectionHtmlExportOptionsDialog(
         confirmButton = {
             TextButton(
                 onClick = { onConfirm(includeImages) },
-                modifier = Modifier.testTag("collection_content_export_confirm"),
+                modifier = Modifier,
             ) {
                 Text("开始导出")
             }
@@ -293,7 +288,7 @@ private fun CollectionHtmlExportOptionsDialog(
         dismissButton = {
             TextButton(
                 onClick = onDismiss,
-                modifier = Modifier.testTag("collection_content_export_cancel"),
+                modifier = Modifier,
             ) {
                 Text("取消")
             }

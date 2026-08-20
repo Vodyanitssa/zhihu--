@@ -81,7 +81,6 @@ import androidx.compose.ui.draw.blur
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -118,16 +117,6 @@ import kotlinx.io.readString
 import kotlinx.io.writeString
 
 const val PREFERENCE_NAME = "com.github.zly2006.zhihu_preferences"
-const val HOME_TOP_ACTIONS_TAG = "home_top_actions"
-const val HOME_SEARCH_BUTTON_TAG = "home_search_button"
-const val HOME_CREATE_FAB_TAG = "home_create_fab"
-const val HOME_CREATE_MENU_TAG = "home_create_menu"
-const val HOME_WRITE_QUESTION_BUTTON_TAG = "home_write_question_button"
-const val HOME_WRITE_ANSWER_BUTTON_TAG = "home_write_answer_button"
-const val HOME_WRITE_PIN_BUTTON_TAG = "home_write_pin_button"
-const val HOME_ACCOUNT_BUTTON_TAG = "home_account_button"
-const val HOME_FEED_LIST_TAG = "home_feed_list"
-const val HOME_REFRESH_BUTTON_TAG = "home_refresh_button"
 
 /**
  * 首页信息流页面。
@@ -278,7 +267,6 @@ fun HomeScreen(
                     ) { }
                     Row(
                         modifier = Modifier
-                            .testTag(HOME_TOP_ACTIONS_TAG)
                             .fillMaxWidth()
                             .padding(top = WindowInsets.statusBars.asPaddingValues().calculateTopPadding())
                             .padding(16.dp, 8.dp, 16.dp, 0.dp),
@@ -287,8 +275,7 @@ fun HomeScreen(
                         Surface(
                             modifier = Modifier
                                 .weight(1f)
-                                .height(64.dp)
-                                .testTag(HOME_SEARCH_BUTTON_TAG),
+                                .height(64.dp),
                             shape = RoundedCornerShape(32.dp),
                             color = MaterialTheme.colorScheme.surfaceContainerHighest,
                             onClick = {
@@ -319,8 +306,7 @@ fun HomeScreen(
                                 IconButton(
                                     onClick = { showAccountBottomSheet = true },
                                     modifier = Modifier
-                                        .size(64.dp)
-                                        .testTag(HOME_ACCOUNT_BUTTON_TAG),
+                                        .size(64.dp),
                                 ) {
                                     Box(Modifier.padding(12.dp)) {
                                         BadgedBox(
@@ -379,7 +365,7 @@ fun HomeScreen(
                 PaginatedList(
                     items = viewModel.displayItems,
                     listState = listState,
-                    modifier = Modifier.testTag(HOME_FEED_LIST_TAG),
+                    modifier = Modifier,
                     contentPadding = PaddingValues(
                         top = scaffoldPadding.calculateTopPadding() + 8.dp,
                         bottom = innerPadding.calculateBottomPadding(),
@@ -457,8 +443,7 @@ fun HomeScreen(
                 Column(horizontalAlignment = Alignment.End) {
                     Surface(
                         modifier = Modifier
-                            .width(180.dp)
-                            .testTag(HOME_CREATE_MENU_TAG),
+                            .width(180.dp),
                         shape = RoundedCornerShape(16.dp),
                         color = MaterialTheme.colorScheme.surfaceContainer,
                         tonalElevation = 6.dp,
@@ -466,7 +451,7 @@ fun HomeScreen(
                     ) {
                         Column {
                             DropdownMenuItem(
-                                modifier = Modifier.testTag(HOME_WRITE_QUESTION_BUTTON_TAG),
+                                modifier = Modifier,
                                 text = { Text("提问题") },
                                 leadingIcon = {
                                     Icon(Icons.AutoMirrored.Default.HelpOutline, contentDescription = null)
@@ -477,7 +462,7 @@ fun HomeScreen(
                                 },
                             )
                             DropdownMenuItem(
-                                modifier = Modifier.testTag(HOME_WRITE_ANSWER_BUTTON_TAG),
+                                modifier = Modifier,
                                 text = { Text("写回答") },
                                 leadingIcon = {
                                     Icon(Icons.Default.Edit, contentDescription = null)
@@ -488,7 +473,7 @@ fun HomeScreen(
                                 },
                             )
                             DropdownMenuItem(
-                                modifier = Modifier.testTag(HOME_WRITE_PIN_BUTTON_TAG),
+                                modifier = Modifier,
                                 text = { Text("发想法") },
                                 leadingIcon = {
                                     Icon(Icons.Default.MarkUnreadChatAlt, contentDescription = null)
@@ -507,7 +492,7 @@ fun HomeScreen(
                 settings.getInt(PREF_FAB_OPACITY, DEFAULT_FAB_OPACITY).coerceIn(10, 100) / 100f
             }
             FloatingActionButton(
-                modifier = Modifier.testTag(HOME_CREATE_FAB_TAG),
+                modifier = Modifier,
                 onClick = { showCreateMenu = !showCreateMenu },
                 shape = CircleShape,
                 containerColor = FloatingActionButtonDefaults.containerColor.copy(alpha = createFabOpacity),

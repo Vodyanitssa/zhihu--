@@ -61,7 +61,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.clipToBounds
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
@@ -101,13 +100,6 @@ import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonPrimitive
-
-const val TOPIC_SCREEN_TAG = "topic_screen"
-const val TOPIC_SHARE_BUTTON_TAG = "topic_share_button"
-const val TOPIC_FOLLOW_BUTTON_TAG = "topic_follow_button"
-const val TOPIC_WRITE_PIN_BUTTON_TAG = "topic_write_pin_button"
-const val TOPIC_INTRODUCTION_TOGGLE_TAG = "topic_introduction_toggle"
-const val TOPIC_RETRY_BUTTON_TAG = "topic_retry_button"
 
 @Serializable
 data class TopicDetail(
@@ -371,6 +363,7 @@ fun topicFeedUrl(
             TopicDiscussionSort.Timeline -> "https://www.zhihu.com/api/v5.1/topics/$topicId/feeds/timeline_activity/v2?limit=20&offset=0"
         }
     }
+
     TopicFeedTab.Ideas -> "https://www.zhihu.com/api/v5.1/topics/$topicId/feeds/${ideasSort.endpoint}?offset=0&limit=10"
     TopicFeedTab.Unanswered -> "https://www.zhihu.com/api/v5.1/topics/$topicId/feeds/top_question/v2?limit=20&offset=0"
 }
@@ -431,7 +424,7 @@ fun TopicScreen(topic: Topic) {
     }
 
     Scaffold(
-        modifier = Modifier.testTag(TOPIC_SCREEN_TAG),
+        modifier = Modifier,
         topBar = {
             TopAppBar(
                 title = { Text(viewModel.detail?.name?.ifBlank { topic.name } ?: topic.name.ifBlank { "话题" }) },
@@ -442,7 +435,7 @@ fun TopicScreen(topic: Topic) {
                 },
                 actions = {
                     IconButton(
-                        modifier = Modifier.testTag(TOPIC_SHARE_BUTTON_TAG),
+                        modifier = Modifier,
                         onClick = {
                             val loadedTopic = topic.copy(name = viewModel.detail?.name ?: topic.name)
                             handleShareAction(loadedTopic, settings, executeShareAction) { showShareDialog = true }
@@ -457,7 +450,9 @@ fun TopicScreen(topic: Topic) {
             onLoadMore = { viewModel.loadMore(environment) },
             isEnd = { viewModel.isEnd },
             key = FeedDisplayItem::stableKey,
-            modifier = Modifier.fillMaxSize().padding(padding),
+            modifier = Modifier
+                .fillMaxSize()
+                .padding(padding),
             contentPadding = PaddingValues(bottom = 24.dp),
             footer = { listState ->
                 if (viewModel.errorMessage == null) {
@@ -465,7 +460,9 @@ fun TopicScreen(topic: Topic) {
                 } else {
                     TextButton(
                         onClick = { viewModel.retry(environment) },
-                        modifier = Modifier.fillMaxWidth().padding(8.dp).testTag(TOPIC_RETRY_BUTTON_TAG),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(8.dp),
                     ) { Text("加载失败：${viewModel.errorMessage}，点击重试") }
                 }
             },
@@ -504,13 +501,14 @@ fun TopicScreen(topic: Topic) {
                                 selected = viewModel.selectedTab == tab,
                                 onClick = { viewModel.selectTab(environment, tab) },
                                 text = { Text(tab.title) },
-                                modifier = Modifier.testTag("topic_tab_${tab.name.lowercase()}"),
                             )
                         }
                     }
                     if (viewModel.selectedTab == TopicFeedTab.Discussion) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             TopicDiscussionSort.entries.forEach { sort ->
@@ -518,14 +516,15 @@ fun TopicScreen(topic: Topic) {
                                     selected = viewModel.discussionSort == sort,
                                     onClick = { viewModel.selectDiscussionSort(environment, sort) },
                                     label = { Text(sort.title) },
-                                    modifier = Modifier.testTag("topic_discussion_sort_${sort.name.lowercase()}"),
                                 )
                             }
                         }
                     }
                     if (viewModel.selectedTab == TopicFeedTab.Ideas) {
                         Row(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
                         ) {
                             TopicIdeasSort.entries.forEach { sort ->
@@ -533,7 +532,6 @@ fun TopicScreen(topic: Topic) {
                                     selected = viewModel.ideasSort == sort,
                                     onClick = { viewModel.selectIdeasSort(environment, sort) },
                                     label = { Text(sort.title) },
-                                    modifier = Modifier.testTag("topic_ideas_sort_${sort.name.lowercase()}"),
                                 )
                             }
                         }
@@ -541,7 +539,7 @@ fun TopicScreen(topic: Topic) {
                 }
             },
         ) { item ->
-            FeedCard(item = item, modifier = Modifier.testTag("topic_feed_${item.stableKey}"))
+            FeedCard(item = item, modifier = Modifier)
         }
     }
     val loadedTopic = topic.copy(name = viewModel.detail?.name ?: topic.name)
@@ -567,12 +565,19 @@ private fun TopicHeader(
     onFollowingChange: (Boolean) -> Unit,
     onWritePin: () -> Unit,
 ) {
-    Column(Modifier.fillMaxWidth().padding(16.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+    Column(
+        Modifier
+            .fillMaxWidth()
+            .padding(16.dp),
+        verticalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             AsyncImage(
                 model = detail?.avatarUrl,
                 contentDescription = "话题头像",
-                modifier = Modifier.size(64.dp).clip(CircleShape),
+                modifier = Modifier
+                    .size(64.dp)
+                    .clip(CircleShape),
             )
             Spacer(Modifier.width(16.dp))
             Column {
@@ -586,9 +591,11 @@ private fun TopicHeader(
                             "${detail.questionsCount} 问题",
                         ).joinToString(" · "),
                     )
+
                     detailErrorMessage != null -> TextButton(onClick = onRetryDetail) {
                         Text("话题信息加载失败：$detailErrorMessage，点击重试", color = MaterialTheme.colorScheme.error)
                     }
+
                     else -> Text("正在加载话题信息…")
                 }
             }
@@ -611,7 +618,6 @@ private fun TopicHeader(
                 modifier =
                     Modifier
                         .weight(3f)
-                        .testTag(TOPIC_FOLLOW_BUTTON_TAG)
                         .semantics { selected = detail?.isFollowing == true },
             ) {
                 if (isFollowingChanging) {
@@ -623,7 +629,7 @@ private fun TopicHeader(
             FilledTonalButton(
                 onClick = onWritePin,
                 enabled = detail?.topicId != null,
-                modifier = Modifier.weight(2f).testTag(TOPIC_WRITE_PIN_BUTTON_TAG),
+                modifier = Modifier.weight(2f),
                 colors = ButtonDefaults.filledTonalButtonColors(),
             ) {
                 Text("发想法", maxLines = 1)
@@ -689,8 +695,7 @@ private fun TopicIntroduction(
                     Modifier
                         .align(Alignment.BottomEnd)
                         .offset(y = 4.dp)
-                        .padding(end = 4.dp)
-                        .testTag(TOPIC_INTRODUCTION_TOGGLE_TAG),
+                        .padding(end = 4.dp),
             ) {
                 Icon(
                     imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,

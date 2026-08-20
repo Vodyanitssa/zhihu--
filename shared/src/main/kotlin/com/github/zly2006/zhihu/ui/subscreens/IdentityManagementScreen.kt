@@ -60,7 +60,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.github.zly2006.zhihu.account.ZhihuIdentityAccount
@@ -70,11 +69,6 @@ import com.github.zly2006.zhihu.ui.components.SettingItem
 import com.github.zly2006.zhihu.ui.components.SettingItemGroup
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
-
-const val IDENTITY_MANAGEMENT_SCREEN_TAG = "identityManagement.screen"
-const val IDENTITY_MANAGEMENT_CREATE_TAG = "identityManagement.create"
-const val IDENTITY_MANAGEMENT_RETRY_TAG = "identityManagement.retry"
-const val IDENTITY_MANAGEMENT_CREATE_CONFIRM_TAG = "identityManagement.createConfirm"
 
 data class IdentityManagementState(
     val supported: Boolean = true,
@@ -148,7 +142,6 @@ fun IdentityManagementScreen() {
     Scaffold(
         modifier = Modifier
             .fillMaxSize()
-            .testTag(IDENTITY_MANAGEMENT_SCREEN_TAG)
             .nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
@@ -209,7 +202,7 @@ fun IdentityManagementScreen() {
                         description = { Text(errorMessage) },
                         icon = { Icon(Icons.Default.ErrorOutline, null) },
                         endAction = { Icon(Icons.Default.Refresh, contentDescription = "重试") },
-                        modifier = Modifier.testTag(IDENTITY_MANAGEMENT_RETRY_TAG),
+                        modifier = Modifier,
                         enabled = !state.busy,
                         onClick = {
                             coroutineScope.launch {
@@ -261,7 +254,7 @@ fun IdentityManagementScreen() {
                                     else -> Icon(Icons.Default.SwitchAccount, contentDescription = "切换")
                                 }
                             },
-                            modifier = Modifier.testTag("identityManagement.account.$index"),
+                            modifier = Modifier,
                             enabled = !state.busy,
                             onClick = if (isCurrent) {
                                 null
@@ -300,7 +293,7 @@ fun IdentityManagementScreen() {
                         title = { Text("创建新账号") },
                         description = { Text("共用当前手机号，数据相互独立") },
                         icon = { Icon(Icons.Default.Add, null) },
-                        modifier = Modifier.testTag(IDENTITY_MANAGEMENT_CREATE_TAG),
+                        modifier = Modifier,
                         enabled = state.canCreateSubAccount && !state.busy,
                         endAction = {
                             if (state.creating) {
@@ -404,7 +397,7 @@ fun IdentityManagementScreen() {
             },
             confirmButton = {
                 TextButton(
-                    modifier = Modifier.testTag(IDENTITY_MANAGEMENT_CREATE_CONFIRM_TAG),
+                    modifier = Modifier,
                     enabled = acceptedCreateRules && !state.busy,
                     onClick = {
                         showCreateDialog = false

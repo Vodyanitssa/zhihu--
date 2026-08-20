@@ -76,7 +76,6 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -236,8 +235,7 @@ fun SearchScreen(
             IconButton(
                 onClick = { historyMoreMenuExpanded = true },
                 modifier = Modifier
-                    .size(40.dp)
-                    .testTag("search_history_more_button"),
+                    .size(40.dp),
             ) {
                 Icon(Icons.Default.MoreVert, contentDescription = "更多", modifier = Modifier.size(18.dp))
                 DropdownMenu(
@@ -328,8 +326,7 @@ fun SearchScreen(
                                     onValueChange = { searchText = it },
                                     modifier = Modifier
                                         .weight(1f)
-                                        .focusRequester(searchInputFocusRequester)
-                                        .testTag("search_input"),
+                                        .focusRequester(searchInputFocusRequester),
                                     textStyle = MaterialTheme.typography.bodyLarge.copy(
                                         color = MaterialTheme.colorScheme.onSurface,
                                     ),
@@ -357,8 +354,7 @@ fun SearchScreen(
                                     IconButton(
                                         onClick = { searchText = "" },
                                         modifier = Modifier
-                                            .size(32.dp)
-                                            .testTag("search_clear_button"),
+                                            .size(32.dp),
                                     ) {
                                         Icon(
                                             Icons.Default.Clear,
@@ -375,7 +371,7 @@ fun SearchScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = navigator.onNavigateBack,
-                        modifier = Modifier.testTag("search_back_button"),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
@@ -385,7 +381,7 @@ fun SearchScreen(
                         IconButton(
                             onClick = { filterMenuExpanded = true },
                             enabled = search.query.isNotEmpty(),
-                            modifier = Modifier.testTag("search_filter_button"),
+                            modifier = Modifier,
                         ) {
                             Icon(Icons.Default.FilterList, contentDescription = "筛选搜索结果")
                         }
@@ -412,7 +408,7 @@ fun SearchScreen(
                             selected = viewModel.searchTab == tab,
                             onClick = { viewModel.updateSearchTab(paginationEnvironment, tab) },
                             text = { Text(tab.label) },
-                            modifier = Modifier.testTag("search_tab_${tab.name}"),
+                            modifier = Modifier,
                         )
                     }
                 }
@@ -425,8 +421,7 @@ fun SearchScreen(
                         modifier = Modifier
                             .fillMaxWidth()
                             .verticalScroll(rememberScrollState())
-                            .padding(16.dp)
-                            .testTag("search_hot_list"),
+                            .padding(16.dp),
                     ) {
                         if (shouldShowHistory) {
                             SearchHistoryHeader(showClearAction = true)
@@ -480,8 +475,7 @@ fun SearchScreen(
                                             coroutineScope.launch { runCatching { fetchHotSearch() } }
                                         },
                                         modifier = Modifier
-                                            .size(40.dp)
-                                            .testTag("search_hot_refresh_button"),
+                                            .size(40.dp),
                                     ) {
                                         Icon(Icons.Default.Refresh, contentDescription = "刷新热搜", modifier = Modifier.size(18.dp))
                                     }
@@ -489,8 +483,7 @@ fun SearchScreen(
                                     IconButton(
                                         onClick = { hotSearchMoreMenuExpanded = true },
                                         modifier = Modifier
-                                            .size(40.dp)
-                                            .testTag("search_hot_more_button"),
+                                            .size(40.dp),
                                     ) {
                                         Icon(Icons.Default.MoreVert, contentDescription = "更多", modifier = Modifier.size(18.dp))
                                         DropdownMenu(
@@ -602,16 +595,21 @@ fun SearchScreen(
                                     Modifier
                                         .fillMaxWidth()
                                         .clickable { navigator.onNavigate(Topic(topic.id, topic.name)) }
-                                        .padding(horizontal = 16.dp, vertical = 12.dp)
-                                        .testTag("search_topic_result_${topic.id}"),
+                                        .padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 AsyncImage(
                                     model = topic.avatarUrl,
                                     contentDescription = "${topic.name}的话题头像",
-                                    modifier = Modifier.size(48.dp).clip(CircleShape),
+                                    modifier = Modifier
+                                        .size(48.dp)
+                                        .clip(CircleShape),
                                 )
-                                Column(Modifier.weight(1f).padding(horizontal = 12.dp)) {
+                                Column(
+                                    Modifier
+                                        .weight(1f)
+                                        .padding(horizontal = 12.dp),
+                                ) {
                                     Text(topic.name, style = MaterialTheme.typography.titleMedium)
                                     result.excerpt.takeIf(String::isNotBlank)?.let {
                                         Text(
@@ -629,7 +627,7 @@ fun SearchScreen(
                                     )
                                 }
                                 TextButton(
-                                    modifier = Modifier.testTag("search_topic_follow_${topic.id}"),
+                                    modifier = Modifier,
                                     enabled = topic.id !in viewModel.changingTopicIds,
                                     onClick = {
                                         coroutineScope.launch {
@@ -655,8 +653,7 @@ fun SearchScreen(
                                                 name = people.name,
                                             ),
                                         )
-                                    }.padding(horizontal = 16.dp, vertical = 12.dp)
-                                    .testTag("search_people_result_${people.id}"),
+                                    }.padding(horizontal = 16.dp, vertical = 12.dp),
                                 verticalAlignment = Alignment.CenterVertically,
                             ) {
                                 AsyncImage(
@@ -699,12 +696,13 @@ fun SearchScreen(
                         when {
                             viewModel.errorMessage != null -> {
                                 TextButton(
-                                    modifier = Modifier.fillMaxWidth().testTag("search_retry_button"),
+                                    modifier = Modifier.fillMaxWidth(),
                                     onClick = { viewModel.retry(paginationEnvironment) },
                                 ) {
                                     Text("加载失败：${viewModel.errorMessage}，点击重试")
                                 }
                             }
+
                             !viewModel.isEnd -> ProgressIndicatorFooter(resultListState)
                         }
                     }
@@ -758,7 +756,6 @@ private fun SearchFilterMenu(
             SearchFilterMenuItem(
                 text = option.label,
                 selected = viewModel.sortOption == option,
-                testTag = "search_filter_sort_${option.name}",
                 onClick = {
                     onDismissRequest()
                     viewModel.updateSortOption(paginationEnvironment, option)
@@ -771,7 +768,6 @@ private fun SearchFilterMenu(
             SearchFilterMenuItem(
                 text = type.label,
                 selected = viewModel.contentType == type,
-                testTag = "search_filter_type_${type.name}",
                 onClick = {
                     onDismissRequest()
                     viewModel.updateContentType(paginationEnvironment, type)
@@ -784,7 +780,6 @@ private fun SearchFilterMenu(
             SearchFilterMenuItem(
                 text = range.label,
                 selected = viewModel.timeRange == range,
-                testTag = "search_filter_time_${range.name}",
                 onClick = {
                     onDismissRequest()
                     viewModel.updateTimeRange(paginationEnvironment, range)
@@ -808,7 +803,6 @@ private fun SearchFilterHeader(text: String) {
 private fun SearchFilterMenuItem(
     text: String,
     selected: Boolean,
-    testTag: String,
     onClick: () -> Unit,
 ) {
     DropdownMenuItem(
@@ -820,6 +814,6 @@ private fun SearchFilterMenuItem(
             )
         },
         onClick = onClick,
-        modifier = Modifier.testTag(testTag),
+        modifier = Modifier,
     )
 }

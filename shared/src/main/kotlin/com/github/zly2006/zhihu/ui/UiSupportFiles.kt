@@ -15,6 +15,7 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 package com.github.zly2006.zhihu.ui
+
 import android.content.Context
 import android.content.ContextWrapper
 import android.content.Intent
@@ -22,8 +23,6 @@ import android.content.pm.ApplicationInfo
 import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
-import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.height
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
@@ -33,13 +32,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.github.zly2006.zhihu.data.AccountData
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.filter.ContentOpenFrom
-import com.github.zly2006.zhihu.markdown.RenderMarkdown
 import com.github.zly2006.zhihu.navigation.AnswerNavigator
 import com.github.zly2006.zhihu.navigation.Article
 import com.github.zly2006.zhihu.navigation.ArticleType
@@ -77,13 +74,16 @@ internal suspend fun fetchPinLinkCardPreview(
                     title = compactTitle(detail.title),
                     preview = compactPreview(detail.excerpt.ifBlank { detail.content }),
                 )
+
                 is DataHolder.Answer -> PinLinkCardPreview(
                     title = compactTitle(detail.question.title),
                     preview = compactPreview(detail.excerpt.ifBlank { detail.content }),
                 )
+
                 else -> null
             }
         }
+
         is Question -> {
             (env.getOrFetchContentDetail(destination) as? DataHolder.Question)?.let { detail ->
                 PinLinkCardPreview(
@@ -92,6 +92,7 @@ internal suspend fun fetchPinLinkCardPreview(
                 )
             }
         }
+
         is Pin -> {
             (env.getOrFetchContentDetail(destination) as? DataHolder.Pin)?.let { detail ->
                 PinLinkCardPreview(
@@ -100,6 +101,7 @@ internal suspend fun fetchPinLinkCardPreview(
                 )
             }
         }
+
         else -> null
     }
 }
@@ -109,23 +111,6 @@ internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
     return keys.firstNotNullOfOrNull { key ->
         get(key)?.jsonPrimitive?.booleanOrNull
     } ?: false
-}
-
-/**
- * 想法正文的 HTML 渲染入口。
- *
- * 根据当前 WebView 设置选择平台 WebView 或 Compose Markdown 渲染。这样想法页、问题详情和文章页可以共享同一条“正文渲染模式”
- * 语义，避免用户打开 WebView 后只有部分内容类型生效。
- */
-@Composable
-fun PinHtmlContent(html: String) {
-    Spacer(Modifier.height(10.dp))
-    RenderMarkdown(
-        html = html,
-        modifier = Modifier.questionSelectionWorkaround(),
-        selectable = true,
-        enableScroll = false,
-    )
 }
 
 /**
@@ -210,24 +195,6 @@ fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
 
 /** 过滤部分设备文本选择菜单中的非预期系统项。 */
 
-/**
- * 问题描述正文的渲染入口。
- *
- * 与文章和想法一致，Compose Markdown。
- */
-@Composable
-fun QuestionDetailContent(
-    questionId: Long,
-    html: String,
-) {
-    RenderMarkdown(
-        html = html,
-        modifier = Modifier.questionSelectionWorkaround(),
-        selectable = true,
-        enableScroll = false,
-    )
-}
-
 fun articleActionText(
     article: Article,
     questionId: Long,
@@ -238,6 +205,7 @@ fun articleActionText(
         ArticleType.Answer -> {
             "https://www.zhihu.com/question/$questionId/answer/${article.id}\n【$title - $authorName 的回答】"
         }
+
         ArticleType.Article -> {
             "https://zhuanlan.zhihu.com/p/${article.id}\n【$title - $authorName 的文章】"
         }

@@ -17,172 +17,30 @@
 
 package com.github.zly2006.zhihu.markdown
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.gestures.detectTapGestures
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.foundation.text.selection.DisableSelection
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.PlayArrow
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.CompositionLocalProvider
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.hapticfeedback.HapticFeedbackType
-import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.LocalHapticFeedback
-import androidx.compose.ui.unit.DpOffset
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.github.zly2006.zhihu.navigation.LocalNavigator
-import com.github.zly2006.zhihu.navigation.SegmentCommentHolder
 import com.github.zly2006.zhihu.navigation.Video
-import com.github.zly2006.zhihu.navigation.resolveContent
-import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
-import com.github.zly2006.zhihu.platform.rememberImageGalleryOpener
-import com.github.zly2006.zhihu.platform.rememberImageSaver
-import com.github.zly2006.zhihu.platform.rememberImageSharer
-import com.github.zly2006.zhihu.platform.rememberSettingsStore
-import com.github.zly2006.zhihu.ui.components.CommentScreenComponent
-import com.github.zly2006.zhihu.ui.components.LocalSegmentActionSheetHost
-import com.github.zly2006.zhihu.ui.components.LocalSegmentCommentHost
-import com.github.zly2006.zhihu.ui.components.SegmentActionSheet
-import com.github.zly2006.zhihu.ui.components.SegmentActionSheetState
-import com.github.zly2006.zhihu.ui.components.SegmentHighlightInteractionHost
-import com.github.zly2006.zhihu.ui.subscreens.PREF_BLOCK_SPACING
-import com.github.zly2006.zhihu.ui.subscreens.PREF_FONT_SIZE
-import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
-import com.hrm.markdown.parser.ast.Document
-import com.hrm.markdown.renderer.Markdown
-import com.hrm.markdown.renderer.MarkdownImageData
-import com.hrm.markdown.renderer.MarkdownTheme
-
-@Composable
-fun RenderImage(
-    data: MarkdownImageData,
-    modifier: Modifier,
-    imageUrls: List<String> = listOf(data.url),
-) {
-    val openImageGallery = rememberImageGalleryOpener()
-    val openExternalUrl = rememberExternalUrlOpener()
-    val saveImage = rememberImageSaver()
-    val shareImage = rememberImageSharer()
-    var expanded by remember { mutableStateOf(false) }
-    var pressOffset by remember { mutableStateOf(DpOffset.Zero) }
-    val density = LocalDensity.current
-    val hapticFeedback = LocalHapticFeedback.current
-    val previewUrls = remember(imageUrls, data.url) {
-        imageUrls.ifEmpty { listOf(data.url) }
-    }
-    val imageWidth = data.width
-    val imageHeight = data.height
-    val imageAspectRatio =
-        if (imageWidth != null && imageHeight != null && imageWidth > 0 && imageHeight > 0) {
-            imageWidth.toFloat() / imageHeight
-        } else {
-            null
-        }
-
-    fun openGallery() {
-        val initialIndex = previewUrls.indexOf(data.url).takeIf { it >= 0 } ?: 0
-        openImageGallery(previewUrls, initialIndex)
-    }
-
-    Box(
-        modifier = Modifier.fillMaxWidth(),
-        contentAlignment = Alignment.Center,
-    ) {
-        AsyncImage(
-            model = rememberMarkdownImageModel(data.url),
-            contentDescription = data.altText,
-            modifier = modifier
-                .fillMaxWidth(0.8f)
-                .then(
-                    if (imageAspectRatio != null) {
-                        Modifier.aspectRatio(imageAspectRatio)
-                    } else {
-                        Modifier
-                    },
-                ).pointerInput(Unit) {
-                    detectTapGestures(
-                        onTap = {
-                            openGallery()
-                        },
-                        onLongPress = { offset ->
-                            hapticFeedback.performHapticFeedback(HapticFeedbackType.LongPress)
-                            pressOffset = with(density) {
-                                DpOffset(offset.x.toDp(), offset.y.toDp() - 20.dp)
-                            }
-                            expanded = true
-                        },
-                    )
-                },
-        )
-
-        // DropdownMenu 在独立的 Popup 窗口中渲染，但其 Text 会注册到父级 SelectionRegistrar。
-        // 当文本选择上下文菜单触发 isEntireContainerSelected → sort 时，
-        // 跨窗口比较坐标会抛出 IllegalArgumentException: layouts are not part of the same hierarchy。
-        DisableSelection {
-            DropdownMenu(
-                expanded = expanded,
-                onDismissRequest = { expanded = false },
-                offset = pressOffset,
-            ) {
-                DropdownMenuItem(
-                    text = { Text("查看图片") },
-                    onClick = {
-                        expanded = false
-                        openGallery()
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("在浏览器中打开") },
-                    onClick = {
-                        expanded = false
-                        openExternalUrl(data.url)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("保存图片") },
-                    onClick = {
-                        expanded = false
-                        saveImage(data.url)
-                    },
-                )
-                DropdownMenuItem(
-                    text = { Text("分享图片") },
-                    onClick = {
-                        expanded = false
-                        shareImage(data.url)
-                    },
-                )
-            }
-        }
-    }
-}
 
 @Composable
 fun RenderVideoBox(
@@ -227,132 +85,5 @@ fun RenderVideoBox(
                 modifier = Modifier.padding(16.dp),
             )
         }
-    }
-}
-
-@Composable
-fun RenderMarkdown(
-    html: String,
-    modifier: Modifier = Modifier,
-    scrollState: ScrollState = rememberScrollState(),
-    selectable: Boolean = true,
-    enableScroll: Boolean = true,
-    header: (@Composable () -> Unit)? = null,
-    footer: (@Composable () -> Unit)? = null,
-) {
-    val document = remember(html) { htmlToMdAst(html) }
-    RenderMarkdownDocument(
-        document = document,
-        modifier = modifier,
-        scrollState = scrollState,
-        selectable = selectable,
-        enableScroll = enableScroll,
-        header = header,
-        footer = footer,
-    )
-}
-
-@Composable
-fun RenderMarkdownText(
-    markdown: String,
-    modifier: Modifier = Modifier,
-    scrollState: ScrollState = rememberScrollState(),
-    selectable: Boolean = true,
-    enableScroll: Boolean = true,
-    header: (@Composable () -> Unit)? = null,
-    footer: (@Composable () -> Unit)? = null,
-) {
-    val document = remember(markdown) { markdownToMdAst(markdown) }
-    RenderMarkdownDocument(
-        document = document,
-        modifier = modifier,
-        scrollState = scrollState,
-        selectable = selectable,
-        enableScroll = enableScroll,
-        header = header,
-        footer = footer,
-    )
-}
-
-@Composable
-private fun RenderMarkdownDocument(
-    document: Document,
-    modifier: Modifier,
-    scrollState: ScrollState,
-    selectable: Boolean,
-    enableScroll: Boolean,
-    header: (@Composable () -> Unit)?,
-    footer: (@Composable () -> Unit)?,
-) {
-    val previewImageUrls = remember(document) { document.previewImageUrls() }
-    val navigator = LocalNavigator.current
-    val mathFont = rememberMarkdownMathFont()
-    val codeFontFamily = rememberMarkdownCodeFontFamily()
-    val openExternalUrl = rememberExternalUrlOpener()
-    val settings = rememberSettingsStore()
-    val fontSize = settings.getInt(PREF_FONT_SIZE, 100)
-    val lineHeight = settings.getInt(PREF_LINE_HEIGHT, 160)
-    val blockSpacing = settings.getInt(PREF_BLOCK_SPACING, 100)
-    val defaultTheme = MarkdownTheme.material3()
-
-    val scaledFontSize = 16f * fontSize / 100
-    val scaledLineHeight = scaledFontSize * lineHeight / 100
-    val scaledCodeFontSize = 14f * fontSize / 100
-    val scaledCodeLineHeight = scaledCodeFontSize * lineHeight / 100
-    val theme = defaultTheme.copy(
-        bodyStyle = defaultTheme.bodyStyle.copy(
-            fontSize = scaledFontSize.sp,
-            lineHeight = scaledLineHeight.sp,
-        ),
-        codeBlockStyle = defaultTheme.codeBlockStyle.copy(
-            fontSize = scaledCodeFontSize.sp,
-            lineHeight = scaledCodeLineHeight.sp,
-            letterSpacing = 0.sp,
-            fontFamily = codeFontFamily,
-        ),
-        blockSpacing = defaultTheme.blockSpacing * (blockSpacing / 100f),
-        mathFontSize = 18f * fontSize / 100,
-        mathFont = mathFont ?: defaultTheme.mathFont,
-    )
-    var segmentCommentTarget by remember { mutableStateOf<SegmentCommentHolder?>(null) }
-    var segmentActionSheetState by remember { mutableStateOf<SegmentActionSheetState?>(null) }
-    CompositionLocalProvider(
-        LocalSegmentCommentHost provides { target ->
-            segmentCommentTarget = target
-        },
-        LocalSegmentActionSheetHost provides { state -> segmentActionSheetState = state },
-    ) {
-        SegmentHighlightInteractionHost {
-            Box(modifier = modifier) {
-                Markdown(
-                    document = document,
-                    imageContent = { data, imageModifier ->
-                        RenderImage(
-                            data = data,
-                            modifier = imageModifier,
-                            imageUrls = previewImageUrls,
-                        )
-                    },
-                    scrollState = scrollState,
-                    enableScroll = enableScroll,
-                    enableSelection = selectable,
-                    onLinkClick = { url ->
-                        resolveContent(url)?.let { navigator.onNavigate(it) }
-                            ?: openExternalUrl(url)
-                    },
-                    header = header,
-                    footer = footer,
-                    theme = theme,
-                )
-            }
-        }
-    }
-    CommentScreenComponent(
-        showComments = segmentCommentTarget != null,
-        onDismiss = { segmentCommentTarget = null },
-        content = segmentCommentTarget ?: SegmentCommentHolder("dummy", "dummy", "dummy", "", "", 0, 0),
-    )
-    segmentActionSheetState?.let { state ->
-        SegmentActionSheet(state)
     }
 }

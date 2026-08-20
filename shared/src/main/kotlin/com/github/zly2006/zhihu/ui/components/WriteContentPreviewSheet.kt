@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.fillMaxHeight
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
@@ -35,8 +34,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.github.zly2006.zhihu.markdown.RenderMarkdownText
-import com.github.zly2006.zhihu.ui.questionSelectionWorkaround
+import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -51,7 +50,9 @@ fun WriteContentPreviewSheet(
         contentWindowInsets = { WindowInsets(0, 0, 0, 0) },
     ) {
         Row(
-            modifier = Modifier.fillMaxWidth().padding(horizontal = 20.dp, vertical = 8.dp),
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 20.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(
@@ -75,17 +76,8 @@ fun WriteContentPreviewSheet(
         ) {
             when {
                 markdown != null -> {
-                    RenderMarkdownText(
-                        markdown = markdown,
-                        modifier =
-                            Modifier
-                                .fillMaxSize()
-                                .padding(horizontal = 16.dp)
-                                .padding(top = 8.dp)
-                                .questionSelectionWorkaround(),
-                        selectable = true,
-                        enableScroll = true,
-                    )
+                    val contentNodes = AstParser.ParseContent(markdown)
+                    RenderContentNodes(contentNodes)
                 }
 
                 else -> {

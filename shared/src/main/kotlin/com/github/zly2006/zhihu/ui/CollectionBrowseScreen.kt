@@ -56,7 +56,6 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -197,7 +196,7 @@ fun CollectionBrowseScreen(
                 title = {
                     Text(
                         text = contentViewModel?.title ?: "收藏夹",
-                        modifier = Modifier.testTag(COLLECTION_BROWSE_TITLE_TAG),
+                        modifier = Modifier,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                     )
@@ -206,7 +205,7 @@ fun CollectionBrowseScreen(
                     if (showBackButton) {
                         IconButton(
                             onClick = navigator.onNavigateBack,
-                            modifier = Modifier.testTag(COLLECTION_BROWSE_BACK_BUTTON_TAG),
+                            modifier = Modifier,
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
@@ -217,14 +216,14 @@ fun CollectionBrowseScreen(
                         IconButton(
                             onClick = { folderMenuExpanded = true },
                             enabled = collections.isNotEmpty(),
-                            modifier = Modifier.testTag(COLLECTION_BROWSE_FOLDER_SWITCH_BUTTON_TAG),
+                            modifier = Modifier,
                         ) {
                             Icon(Icons.Filled.Folder, contentDescription = "切换收藏夹")
                         }
                         DropdownMenu(
                             expanded = folderMenuExpanded,
                             onDismissRequest = { folderMenuExpanded = false },
-                            modifier = Modifier.testTag(COLLECTION_BROWSE_FOLDER_MENU_TAG),
+                            modifier = Modifier,
                         ) {
                             collections.forEach { collection ->
                                 DropdownMenuItem(
@@ -242,9 +241,7 @@ fun CollectionBrowseScreen(
                                                         folderMenuExpanded = false
                                                     },
                                                     enabled = collectionsViewModel.deletingCollectionId == null,
-                                                    modifier = Modifier.testTag(
-                                                        "collection_browse_delete_button_${collection.id}",
-                                                    ),
+                                                    modifier = Modifier,
                                                 ) {
                                                     Icon(
                                                         Icons.Filled.Delete,
@@ -258,7 +255,7 @@ fun CollectionBrowseScreen(
                                         selectedCollectionId = collection.id
                                         folderMenuExpanded = false
                                     },
-                                    modifier = Modifier.testTag("collection_browse_folder_menu_item_${collection.id}"),
+                                    modifier = Modifier,
                                 )
                             }
                         }
@@ -270,7 +267,7 @@ fun CollectionBrowseScreen(
                             if (enabled) randomSeed = Random.nextInt()
                             userMessages.showShortMessage(if (enabled) "已切换为随机模式" else "已切换为顺序模式")
                         },
-                        modifier = Modifier.testTag(COLLECTION_BROWSE_MODE_BUTTON_TAG),
+                        modifier = Modifier,
                         colors = IconButtonDefaults.iconToggleButtonColors(
                             checkedContainerColor = MaterialTheme.colorScheme.primaryContainer,
                             checkedContentColor = MaterialTheme.colorScheme.onPrimaryContainer,
@@ -301,7 +298,7 @@ fun CollectionBrowseScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    Text("还没有收藏夹", modifier = Modifier.testTag(COLLECTION_BROWSE_EMPTY_COLLECTIONS_TAG))
+                    Text("还没有收藏夹", modifier = Modifier)
                 }
             }
             contentViewModel == null -> {
@@ -311,7 +308,7 @@ fun CollectionBrowseScreen(
                         .padding(innerPadding),
                     contentAlignment = Alignment.Center,
                 ) {
-                    CircularProgressIndicator(modifier = Modifier.testTag(COLLECTION_BROWSE_LOADING_COLLECTIONS_TAG))
+                    CircularProgressIndicator(modifier = Modifier)
                 }
             }
             else -> {
@@ -329,8 +326,7 @@ fun CollectionBrowseScreen(
                     },
                     modifier = Modifier
                         .fillMaxSize()
-                        .padding(innerPadding)
-                        .testTag(COLLECTION_BROWSE_PULL_TO_REFRESH_TAG),
+                        .padding(innerPadding),
                 ) {
                     if (contentViewModel.allData.isEmpty() && contentViewModel.isEnd) {
                         Box(
@@ -339,7 +335,7 @@ fun CollectionBrowseScreen(
                         ) {
                             Text(
                                 "这个收藏夹是空的",
-                                modifier = Modifier.testTag(COLLECTION_BROWSE_EMPTY_CONTENT_TAG),
+                                modifier = Modifier,
                             )
                         }
                     } else {
@@ -349,7 +345,6 @@ fun CollectionBrowseScreen(
                             collectionId = selectedCollectionId.orEmpty(),
                             modifier = Modifier.fillMaxSize(),
                             listState = listState,
-                            tagPrefix = "collection_browse",
                             displayItems = orderedDisplayItems,
                         )
                     }
@@ -361,7 +356,7 @@ fun CollectionBrowseScreen(
     collectionPendingDeletion?.let { collection ->
         val isDeleting = collectionsViewModel.deletingCollectionId != null
         AlertDialog(
-            modifier = Modifier.testTag("collection_browse_delete_dialog_${collection.id}"),
+            modifier = Modifier,
             onDismissRequest = {
                 if (!isDeleting) {
                     collectionPendingDeletion = null
@@ -397,7 +392,7 @@ fun CollectionBrowseScreen(
                         }
                     },
                     enabled = !isDeleting,
-                    modifier = Modifier.testTag("collection_browse_delete_confirm_${collection.id}"),
+                    modifier = Modifier,
                 ) {
                     Text(if (isDeleting) "删除中…" else "删除")
                 }
@@ -452,14 +447,5 @@ internal fun orderCollectionItems(
     items
 }
 
-private const val COLLECTION_BROWSE_TITLE_TAG = "collection_browse_title"
-private const val COLLECTION_BROWSE_BACK_BUTTON_TAG = "collection_browse_back_button"
-private const val COLLECTION_BROWSE_FOLDER_SWITCH_BUTTON_TAG = "collection_browse_folder_switch_button"
-private const val COLLECTION_BROWSE_FOLDER_MENU_TAG = "collection_browse_folder_menu"
-private const val COLLECTION_BROWSE_EMPTY_COLLECTIONS_TAG = "collection_browse_empty_collections"
-private const val COLLECTION_BROWSE_LOADING_COLLECTIONS_TAG = "collection_browse_loading_collections"
-private const val COLLECTION_BROWSE_EMPTY_CONTENT_TAG = "collection_browse_empty_content"
-private const val COLLECTION_BROWSE_PULL_TO_REFRESH_TAG = "collection_browse_pull_to_refresh"
-private const val COLLECTION_BROWSE_MODE_BUTTON_TAG = "collection_browse_mode_button"
 private const val COLLECTION_RANDOM_ORDER_OFFSET_BASIS = -3750763034362895579L
 private const val COLLECTION_RANDOM_ORDER_PRIME = 1099511628211L

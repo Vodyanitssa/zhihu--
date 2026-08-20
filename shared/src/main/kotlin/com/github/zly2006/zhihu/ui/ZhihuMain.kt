@@ -77,7 +77,6 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -328,7 +327,6 @@ fun ZhihuMain(
                                 label: String,
                                 icon: ImageVector,
                             ) {
-                                val tag = "nav_tab_${destination.name.lowercase()}"
                                 NavigationBarItem(
                                     currentBottomDestination?.let { it::class == destination::class } == true,
                                     onClick = {
@@ -354,7 +352,7 @@ fun ZhihuMain(
                                     icon = {
                                         Icon(icon, contentDescription = label)
                                     },
-                                    modifier = Modifier.padding(top = 4.dp).testTag(tag),
+                                    modifier = Modifier.padding(top = 4.dp),
                                 )
                             }
 

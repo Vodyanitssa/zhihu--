@@ -38,7 +38,6 @@ import androidx.compose.runtime.saveable.Saver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
@@ -205,7 +204,7 @@ fun CommentScreenComponent(
 
     if (commentsVisible && isZhPlusAuthorContent && !authorCommentPolicyAcknowledged) {
         AlertDialog(
-            modifier = Modifier.testTag(ZH_PLUS_AUTHOR_COMMENT_POLICY_DIALOG_TAG),
+            modifier = Modifier,
             onDismissRequest = {},
             title = { Text("评论区使用须知") },
             text = {
@@ -224,7 +223,7 @@ fun CommentScreenComponent(
             },
             confirmButton = {
                 TextButton(
-                    modifier = Modifier.testTag(ZH_PLUS_AUTHOR_COMMENT_POLICY_CONFIRM_TAG),
+                    modifier = Modifier,
                     onClick = {
                         settings.putBoolean(ZH_PLUS_AUTHOR_COMMENT_POLICY_ACKNOWLEDGED_KEY, true)
                         authorCommentPolicyAcknowledged = true
@@ -238,8 +237,6 @@ fun CommentScreenComponent(
 }
 
 const val ZH_PLUS_AUTHOR_COMMENT_POLICY_ACKNOWLEDGED_KEY = "zhPlusAuthorCommentPolicyAcknowledged"
-const val ZH_PLUS_AUTHOR_COMMENT_POLICY_DIALOG_TAG = "zh_plus_author_comment_policy_dialog"
-const val ZH_PLUS_AUTHOR_COMMENT_POLICY_CONFIRM_TAG = "zh_plus_author_comment_policy_confirm"
 
 private val activeChildCommentSaver = Saver<MutableState<CommentItem?>, List<String>>(
     save = { state ->

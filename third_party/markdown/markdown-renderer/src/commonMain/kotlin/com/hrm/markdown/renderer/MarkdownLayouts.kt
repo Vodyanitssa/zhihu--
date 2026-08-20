@@ -1,14 +1,11 @@
 package com.hrm.markdown.renderer
 
-import androidx.compose.foundation.ScrollState
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.verticalScroll
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableFloatStateOf
@@ -17,7 +14,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.onSizeChanged
@@ -50,58 +46,9 @@ import com.hrm.markdown.parser.ast.Text
 import com.hrm.markdown.parser.ast.ThematicBreak
 import com.hrm.markdown.renderer.block.BlockRenderer
 import com.hrm.markdown.renderer.block.blockRenderRevision
-import com.hrm.markdown.renderer.selection.PersistentSelectionContainer
 import com.hrm.markdown.renderer.selection.PersistentSelectionGroup
 import com.hrm.markdown.renderer.selection.PersistentSelectionScope
 import kotlin.math.ceil
-
-@Composable
-internal fun MarkdownDocumentLayout(
-    renderMode: MarkdownRenderMode,
-    renderState: MarkdownBlockRenderState,
-    modifier: Modifier,
-    enableScroll: Boolean,
-    scrollState: ScrollState,
-    lazyListState: LazyListState,
-    header: (@Composable () -> Unit)? = null,
-    footer: (@Composable () -> Unit)? = null,
-) {
-    when (renderMode) {
-        MarkdownRenderMode.LazyColumn -> {
-            MarkdownBlockLazyColumn(
-                blocks = renderState.blockNodes,
-                lazyListState = lazyListState,
-                modifier = modifier.graphicsLayer { },
-                header = header,
-                footer = footer,
-            )
-        }
-
-        MarkdownRenderMode.SelectableColumn,
-        MarkdownRenderMode.StaticColumn -> {
-            val markdownBody: @Composable () -> Unit = {
-                MarkdownBlockColumn(blocks = renderState.renderBlocks)
-            }
-            val theme = LocalMarkdownTheme.current
-            Column(
-                modifier = modifier
-                    .then(if (enableScroll) Modifier.verticalScroll(scrollState) else Modifier)
-                    .graphicsLayer { },
-                verticalArrangement = Arrangement.spacedBy(theme.blockSpacing),
-            ) {
-                header?.invoke()
-                if (renderMode == MarkdownRenderMode.SelectableColumn) {
-                    PersistentSelectionContainer(documentKey = LocalRendererDocument.current) {
-                        markdownBody()
-                    }
-                } else {
-                    markdownBody()
-                }
-                footer?.invoke()
-            }
-        }
-    }
-}
 
 @Composable
 internal fun MarkdownBlockChildren(
@@ -225,7 +172,7 @@ private fun <T : Node> DeferredMarkdownBlockLayout(
                 val bottom = top + blockHeights[index]
                 val requestedByNavigation = footnoteNavigationState?.let { navigationState ->
                     (node is FootnoteDefinition && navigationState.isDefinitionRequested(node.label)) ||
-                        node.hasRequestedFootnoteReference(navigationState)
+                            node.hasRequestedFootnoteReference(navigationState)
                 } == true
                 if (bottom >= visibleTop && top <= visibleBottom || requestedByNavigation) {
                     val blockKey = blockKeys[index]
@@ -289,6 +236,7 @@ internal fun estimateMarkdownBlockHeightDp(
             val forcedLines = node.countLineBreaks()
             (ceil(widthUnits / safeWidth).toInt().coerceAtLeast(1) + forcedLines) * lineHeight
         }
+
         is Heading -> lineHeight * (1.9f - node.level.coerceIn(1, 6) * 0.1f)
         is SetextHeading -> lineHeight * 1.7f
         is MathBlock -> {
@@ -296,24 +244,28 @@ internal fun estimateMarkdownBlockHeightDp(
             val tallCommands = listOf("\\frac", "\\dfrac", "\\sqrt", "\\sum", "\\int")
                 .count { it in node.literal }
             theme.codeBlockPadding.value * 2f +
-                theme.mathFontSize * 1.2f * (1.4f * rows + 0.25f * tallCommands)
+                    theme.mathFontSize * 1.2f * (1.4f * rows + 0.25f * tallCommands)
         }
+
         is Figure -> {
             val ratio = node.imageWidth
                 ?.takeIf { it > 0 }
                 ?.let { width -> node.imageHeight?.toFloat()?.div(width) }
                 ?: 0.75f
             safeWidth * 0.8f * ratio.coerceIn(0.25f, 3f) +
-                if (node.caption.isBlank()) 0f else lineHeight
+                    if (node.caption.isBlank()) 0f else lineHeight
         }
+
         is FencedCodeBlock ->
             node.literal.lineSequence().count().coerceAtLeast(1) * lineHeight + theme.codeBlockPadding.value * 2f
+
         is ThematicBreak -> theme.dividerThickness.value.coerceAtLeast(1f)
         is ContainerNode -> {
             val children = node.children.filterNot { it is BlankLine }
             children.sumOf { estimateMarkdownBlockHeightDp(it, safeWidth, theme).toDouble() }.toFloat() +
-                theme.blockSpacing.value * (children.size - 1).coerceAtLeast(0)
+                    theme.blockSpacing.value * (children.size - 1).coerceAtLeast(0)
         }
+
         else -> lineHeight * 1.5f
     }.coerceAtLeast(0f)
 }
@@ -332,6 +284,7 @@ internal fun Node.estimatedInlineWidthDp(
                 else -> 0.6
             }
         }.toFloat() * fontSize
+
     is InlineMath -> (literal.length * 0.7f).coerceIn(1.5f, 20f) * fontSize * 1.125f
     is InlineCode -> literal.length.coerceAtLeast(1) * fontSize * 0.65f
     is Image, is HardLineBreak, is SoftLineBreak -> availableWidth

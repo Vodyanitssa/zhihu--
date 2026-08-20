@@ -63,7 +63,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
@@ -227,7 +226,6 @@ private fun NotificationCategoryRow(
                 modifier = Modifier
                     .weight(1f)
                     .clip(RoundedCornerShape(12.dp))
-                    .testTag("notification_category_${category.entryName}")
                     .clickable { onCategoryClick(category) }
                     .padding(vertical = 4.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
@@ -270,7 +268,6 @@ private fun NotificationInvitationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("notification_invitation")
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 14.dp),
         verticalAlignment = Alignment.CenterVertically,
@@ -320,7 +317,6 @@ private fun NotificationConversationRow(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("notification_message_${notification.stableId}")
             .clickable(onClick = onClick)
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,

@@ -58,7 +58,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalUriHandler
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -395,16 +394,15 @@ private fun PinFeedImages(
                 modifier = modifier
                     .fillMaxWidth(1f / 3f)
                     .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp))
-                    .testTag("pin_feed_image_0"),
+                    .clip(RoundedCornerShape(8.dp)),
                 contentScale = ContentScale.Crop,
             )
         }
+
         PinFeedImageLayout.MULTI_ROW -> {
             Row(
                 modifier = modifier
-                    .fillMaxWidth()
-                    .testTag("pin_feed_images"),
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 images.forEachIndexed { index, image ->
@@ -426,12 +424,12 @@ private fun PinFeedImages(
                 }
             }
         }
+
         PinFeedImageLayout.NINE_GRID -> {
             val visibleImages = images.take(9)
             Column(
                 modifier = modifier
-                    .fillMaxWidth()
-                    .testTag("pin_feed_images"),
+                    .fillMaxWidth(),
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 visibleImages.chunked(3).forEachIndexed { rowIndex, rowImages ->
@@ -475,8 +473,7 @@ private fun PinFeedImage(
 ) {
     Box(
         modifier = modifier
-            .clip(RoundedCornerShape(8.dp))
-            .testTag("pin_feed_image_$index"),
+            .clip(RoundedCornerShape(8.dp)),
     ) {
         AsyncImage(
             model = image.feedThumbnailUrl,

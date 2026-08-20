@@ -58,7 +58,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -85,12 +84,6 @@ import kotlinx.coroutines.launch
 class FollowScreenData : ViewModel() {
     var selectedTabIndex by mutableIntStateOf(0)
 }
-
-const val FOLLOW_SCREEN_TAB_ROW_TAG = "follow_screen_tab_row"
-const val FOLLOW_SCREEN_PAGER_TAG = "follow_screen_pager"
-const val FOLLOWING_USERS_ROW_TAG = "following_users_row"
-const val FOLLOW_RECOMMEND_LIST_TAG = "follow_recommend_list"
-const val FOLLOW_DYNAMIC_LIST_TAG = "follow_dynamic_list"
 
 /**
  * 关注顶层页的生产入口。
@@ -160,7 +153,7 @@ private fun FollowScreenContent(
                         parentState = parentPagerState,
                         childState = pagerState,
                     ),
-                ).testTag(FOLLOW_SCREEN_PAGER_TAG),
+                ),
             pageNestedScrollConnection = NoOpPagerNestedScrollConnection,
         ) { page ->
             when (page) {
@@ -189,7 +182,7 @@ private fun FollowTabRow(
     val tabs: @Composable () -> Unit = {
         titles.forEachIndexed { index, title ->
             Tab(
-                modifier = Modifier.testTag("follow_screen_tab_$index"),
+                modifier = Modifier,
                 selected = selectedTabIndex == index,
                 onClick = { onTabSelected(index) },
                 text = {
@@ -210,7 +203,7 @@ private fun FollowTabRow(
             val tabWidth = maxWidth / titles.size
             PrimaryTabRow(
                 selectedTabIndex = selectedTabIndex,
-                modifier = Modifier.testTag(FOLLOW_SCREEN_TAB_ROW_TAG),
+                modifier = Modifier,
                 indicator = {
                     val page = (pagerState.currentPage + pagerState.currentPageOffsetFraction)
                         .coerceIn(0f, (titles.size - 1).toFloat())
@@ -227,7 +220,7 @@ private fun FollowTabRow(
     } else {
         PrimaryTabRow(
             selectedTabIndex = selectedTabIndex,
-            modifier = modifier.testTag(FOLLOW_SCREEN_TAB_ROW_TAG),
+            modifier = modifier,
         ) {
             tabs()
         }
@@ -261,7 +254,7 @@ fun FollowingUsersRow() {
         }
         viewModel.users.isNotEmpty() -> {
             LazyRow(
-                modifier = Modifier.testTag(FOLLOWING_USERS_ROW_TAG),
+                modifier = Modifier,
                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
             ) {
@@ -269,7 +262,6 @@ fun FollowingUsersRow() {
                     Column(
                         horizontalAlignment = Alignment.CenterHorizontally,
                         modifier = Modifier
-                            .testTag("following_users_item_${user.actor.id}")
                             .clickable {
                                 navigator.onNavigate(
                                     Person(
@@ -356,7 +348,7 @@ fun FollowRecommendScreen(
             PaginatedList(
                 items = viewModel.displayItems,
                 listState = listState,
-                modifier = Modifier.testTag(FOLLOW_RECOMMEND_LIST_TAG),
+                modifier = Modifier,
                 topContent = {
                     item {
                         FollowingUsersRow()
@@ -368,7 +360,7 @@ fun FollowRecommendScreen(
                 FeedCard(
                     item = item,
                     readingQueueSourceId = readingQueueSourceId.takeIf { isActive },
-                    modifier = Modifier.testTag("follow_recommend_item_${item.stableKey}"),
+                    modifier = Modifier,
                 )
             }
         }
@@ -419,7 +411,7 @@ fun FollowDynamicScreen(
             PaginatedList(
                 items = viewModel.displayItems,
                 listState = listState,
-                modifier = Modifier.testTag(FOLLOW_DYNAMIC_LIST_TAG),
+                modifier = Modifier,
                 onLoadMore = { viewModel.loadMore(environment) },
                 topContent = {
                     item {
@@ -431,7 +423,7 @@ fun FollowDynamicScreen(
                 FeedCard(
                     item = item,
                     readingQueueSourceId = readingQueueSourceId.takeIf { isActive },
-                    modifier = Modifier.testTag("follow_dynamic_item_${item.stableKey}"),
+                    modifier = Modifier,
                     showSourceLabel = true,
                 )
             }

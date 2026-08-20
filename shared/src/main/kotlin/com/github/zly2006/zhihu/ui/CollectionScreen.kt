@@ -48,7 +48,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.zly2006.zhihu.data.Collection
@@ -96,14 +95,14 @@ fun CollectionScreen(
                 title = {
                     Text(
                         text = "我的收藏夹",
-                        modifier = Modifier.testTag(COLLECTION_SCREEN_TITLE_TAG),
+                        modifier = Modifier,
                     )
                 },
                 navigationIcon = {
                     if (showBackButton) {
                         IconButton(
                             onClick = navigator.onNavigateBack,
-                            modifier = Modifier.testTag(COLLECTION_SCREEN_BACK_BUTTON_TAG),
+                            modifier = Modifier,
                         ) {
                             Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                         }
@@ -119,7 +118,7 @@ fun CollectionScreen(
                         showCreateCollectionDialog = true
                     }
                 },
-                modifier = Modifier.testTag(COLLECTION_SCREEN_CREATE_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Icon(Icons.Filled.Add, contentDescription = "新建收藏夹")
             }
@@ -136,15 +135,13 @@ fun CollectionScreen(
             listState = listState,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding)
-                .testTag(COLLECTION_SCREEN_LIST_TAG),
+                .padding(innerPadding),
             footer = ProgressIndicatorFooter,
         ) { collection ->
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(vertical = 8.dp)
-                    .testTag("collection_screen_item_${collection.id}"),
+                    .padding(vertical = 8.dp),
                 elevation = CardDefaults.cardElevation(4.dp),
                 onClick = {
                     navigator.onNavigate(CollectionContent(collection.id))
@@ -168,7 +165,7 @@ fun CollectionScreen(
                                 collectionPendingDeletion = collection
                             },
                             enabled = !viewModel.isCreatingCollection && viewModel.deletingCollectionId == null,
-                            modifier = Modifier.testTag("collection_screen_delete_button_${collection.id}"),
+                            modifier = Modifier,
                         ) {
                             Icon(
                                 Icons.Filled.Delete,
@@ -210,7 +207,7 @@ fun CollectionScreen(
     collectionPendingDeletion?.let { collection ->
         val isDeleting = viewModel.deletingCollectionId != null
         AlertDialog(
-            modifier = Modifier.testTag("collection_screen_delete_dialog_${collection.id}"),
+            modifier = Modifier,
             onDismissRequest = {
                 if (!isDeleting) {
                     collectionPendingDeletion = null
@@ -241,7 +238,7 @@ fun CollectionScreen(
                         }
                     },
                     enabled = !isDeleting,
-                    modifier = Modifier.testTag("collection_screen_delete_confirm_${collection.id}"),
+                    modifier = Modifier,
                 ) {
                     Text(if (isDeleting) "删除中…" else "删除")
                 }
@@ -259,8 +256,3 @@ fun CollectionScreen(
         )
     }
 }
-
-private const val COLLECTION_SCREEN_TITLE_TAG = "collection_screen_title"
-private const val COLLECTION_SCREEN_BACK_BUTTON_TAG = "collection_screen_back_button"
-private const val COLLECTION_SCREEN_LIST_TAG = "collection_screen_list"
-private const val COLLECTION_SCREEN_CREATE_BUTTON_TAG = "collection_screen_create_button"

@@ -71,7 +71,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -94,21 +93,6 @@ import com.github.zly2006.zhihu.ui.subscreens.normalizeBottomBarSelection
 import com.github.zly2006.zhihu.ui.subscreens.shouldShowAccountHistoryShortcut
 import com.github.zly2006.zhihu.util.Log
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
-
-const val ACCOUNT_SETTINGS_SCROLL_TAG = "accountSettings.scroll"
-const val ACCOUNT_SETTINGS_LOGIN_ITEM_TAG = "accountSettings.loginItem"
-const val ACCOUNT_SETTINGS_PROFILE_HEADER_TAG = "accountSettings.profileHeader"
-const val ACCOUNT_SETTINGS_PROFILE_NAME_TAG = "accountSettings.profileName"
-const val ACCOUNT_SETTINGS_SHORTCUT_COLLECTIONS_TAG = "accountSettings.shortcutCollections"
-const val ACCOUNT_SETTINGS_SHORTCUT_SUBSCRIPTIONS_TAG = "accountSettings.shortcutSubscriptions"
-const val ACCOUNT_SETTINGS_SHORTCUT_NOTIFICATION_TAG = "accountSettings.shortcutNotification"
-const val ACCOUNT_SETTINGS_SHORTCUT_HISTORY_TAG = "accountSettings.shortcutHistory"
-const val ACCOUNT_SETTINGS_APPEARANCE_TAG = "accountSettings.appearance"
-const val ACCOUNT_SETTINGS_RECOMMEND_TAG = "accountSettings.recommend"
-const val ACCOUNT_SETTINGS_SEARCH_TAG = "accountSettings.search"
-const val ACCOUNT_SETTINGS_SYSTEM_TAG = "accountSettings.system"
-const val ACCOUNT_SETTINGS_LICENSES_TAG = "accountSettings.licenses"
-const val ACCOUNT_SETTINGS_IDENTITY_MANAGEMENT_TAG = "accountSettings.identityManagement"
 
 /**
  * 账号与设置入口页。
@@ -160,7 +144,6 @@ fun AccountSettingScreen(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(innerPadding)
-                .testTag(ACCOUNT_SETTINGS_SCROLL_TAG)
                 .verticalScroll(rememberScrollState())
                 .padding(padding),
         ) {
@@ -178,7 +161,6 @@ fun AccountSettingScreen(
             if (data.login) {
                 Row(
                     Modifier
-                        .testTag(ACCOUNT_SETTINGS_PROFILE_HEADER_TAG)
                         .padding(16.dp, 0.dp, 16.dp, 16.dp)
                         .clickable {
                             navigator.onNavigate(
@@ -203,7 +185,7 @@ fun AccountSettingScreen(
                     Text(
                         text = data.username,
                         style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier.testTag(ACCOUNT_SETTINGS_PROFILE_NAME_TAG),
+                        modifier = Modifier,
                     )
                     Spacer(Modifier.weight(1f))
                     FilledTonalIconButton(
@@ -241,7 +223,7 @@ fun AccountSettingScreen(
                     SettingItem(
                         title = { Text("登录知乎") },
                         icon = { Icon(Icons.AutoMirrored.Filled.Login, null) },
-                        modifier = Modifier.testTag(ACCOUNT_SETTINGS_LOGIN_ITEM_TAG),
+                        modifier = Modifier,
                         onClick = {
                             if (!environment.requestLogin()) {
                                 userMessages.showShortMessage("当前平台暂不支持登录")
@@ -261,7 +243,6 @@ fun AccountSettingScreen(
                 if (data.login) {
                     Column(
                         Modifier
-                            .testTag(ACCOUNT_SETTINGS_SHORTCUT_COLLECTIONS_TAG)
                             .weight(1f)
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
@@ -285,7 +266,6 @@ fun AccountSettingScreen(
                     }
                     Column(
                         Modifier
-                            .testTag(ACCOUNT_SETTINGS_SHORTCUT_SUBSCRIPTIONS_TAG)
                             .weight(1f)
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
@@ -316,7 +296,6 @@ fun AccountSettingScreen(
                     }
                     Column(
                         Modifier
-                            .testTag(ACCOUNT_SETTINGS_SHORTCUT_NOTIFICATION_TAG)
                             .weight(1f)
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
@@ -350,7 +329,6 @@ fun AccountSettingScreen(
                     if (shouldShowAccountHistoryShortcut(selectedBottomBarItemKeys)) {
                         Column(
                             Modifier
-                                .testTag(ACCOUNT_SETTINGS_SHORTCUT_HISTORY_TAG)
                                 .weight(1f)
                                 .clip(RoundedCornerShape(4.dp))
                                 .background(MaterialTheme.colorScheme.primaryContainer)
@@ -380,8 +358,7 @@ fun AccountSettingScreen(
             Column(Modifier.padding(horizontal = 16.dp)) {
                 Surface(
                     modifier = Modifier
-                        .height(36.dp)
-                        .testTag(ACCOUNT_SETTINGS_SEARCH_TAG),
+                        .height(36.dp),
                     shape = RoundedCornerShape(24.dp),
                     color = MaterialTheme.colorScheme.surfaceVariant,
                     onClick = {
@@ -417,7 +394,7 @@ fun AccountSettingScreen(
                         title = { Text("身份管理") },
                         description = { Text("创建马甲号或切换当前账号") },
                         icon = { Icon(Icons.Default.SwitchAccount, null) },
-                        modifier = Modifier.testTag(ACCOUNT_SETTINGS_IDENTITY_MANAGEMENT_TAG),
+                        modifier = Modifier,
                         onClick = { navigator.onNavigate(Account.IdentityManagement) },
                     )
                 }
@@ -426,7 +403,7 @@ fun AccountSettingScreen(
                     title = { Text("外观与阅读体验") },
                     description = { Text("主题颜色、字体大小等") },
                     icon = { Icon(Icons.Default.Palette, null) },
-                    modifier = Modifier.testTag(ACCOUNT_SETTINGS_APPEARANCE_TAG),
+                    modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
                 )
 
@@ -434,7 +411,7 @@ fun AccountSettingScreen(
                     title = { Text("推荐系统与内容过滤") },
                     description = { Text("推荐、智能过滤、关键词屏蔽等") },
                     icon = { Icon(Icons.Default.FilterAlt, null) },
-                    modifier = Modifier.testTag(ACCOUNT_SETTINGS_RECOMMEND_TAG),
+                    modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.RecommendSettings()) },
                 )
 
@@ -442,7 +419,7 @@ fun AccountSettingScreen(
                     title = { Text("系统与更新") },
                     description = { Text("GitHub、更新设置等") },
                     icon = { Icon(Icons.Default.Settings, null) },
-                    modifier = Modifier.testTag(ACCOUNT_SETTINGS_SYSTEM_TAG),
+                    modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.SystemAndUpdateSettings()) },
                 )
             }
@@ -507,7 +484,7 @@ fun AccountSettingScreen(
                     title = { Text("开源许可") },
                     description = { Text("查看第三方组件许可证") },
                     icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
-                    modifier = Modifier.testTag(ACCOUNT_SETTINGS_LICENSES_TAG),
+                    modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.OpenSourceLicenses) },
                 )
             }

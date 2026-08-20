@@ -76,7 +76,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.Daily
@@ -109,11 +108,7 @@ const val PREF_LINE_HEIGHT = "contentLineHeight"
 const val PREF_BLOCK_SPACING = "contentBlockSpacing"
 const val PREF_FAB_OPACITY = "fabOpacity"
 const val DEFAULT_FAB_OPACITY = 100
-const val APPEARANCE_SETTINGS_SCROLL_TAG = "appearanceSettings.scroll"
-const val APPEARANCE_SETTINGS_START_DESTINATION_TAG = "appearanceSettings.startDestination"
-const val APPEARANCE_SETTINGS_ANSWER_SWITCH_SENSITIVITY_TAG = "appearanceSettings.answerSwitchSensitivity"
 const val APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY = "appearanceSettings.bottomBarSection"
-const val APPEARANCE_SETTINGS_COLLECTION_DIRECT_BROWSE_TAG = "appearanceSettings.collectionDirectBrowse"
 
 const val START_DESTINATION_PREFERENCE_KEY = "startDestination"
 const val BOTTOM_BAR_ITEMS_PREFERENCE_KEY = "bottom_bar_items"
@@ -247,6 +242,7 @@ fun AppearanceSettingsScreen(
 
     fun requesterFor(settingKey: String): BringIntoViewRequester =
         bringIntoViewRequesters.getOrPut(settingKey) { BringIntoViewRequester() }
+
     val selectedBottomBarItemKeys = remember {
         val normalizedSelection = normalizeBottomBarSelection(
             settings.getStringSet(
@@ -282,7 +278,9 @@ fun AppearanceSettingsScreen(
     }
 
     Scaffold(
-        modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
         containerColor = MaterialTheme.colorScheme.surfaceContainer,
         topBar = {
             LargeTopAppBar(
@@ -310,7 +308,6 @@ fun AppearanceSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .testTag(APPEARANCE_SETTINGS_SCROLL_TAG)
                 .padding(innerPadding)
                 .padding(vertical = 16.dp),
         ) {
@@ -331,7 +328,9 @@ fun AppearanceSettingsScreen(
                     bottomAction = {
                         Row(
                             horizontalArrangement = Arrangement.spacedBy(8.dp),
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                         ) {
                             val themeModes = listOf(
                                 ThemeMode.SYSTEM to "自动",
@@ -512,7 +511,9 @@ fun AppearanceSettingsScreen(
                             },
                             valueRange = 10f..100f,
                             steps = 17,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                         )
                     },
                 )
@@ -537,7 +538,9 @@ fun AppearanceSettingsScreen(
                             },
                             valueRange = 50f..200f,
                             steps = 14,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                         )
                     },
                 )
@@ -555,7 +558,9 @@ fun AppearanceSettingsScreen(
                             },
                             valueRange = 100f..300f,
                             steps = 19,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                         )
                     },
                 )
@@ -577,7 +582,9 @@ fun AppearanceSettingsScreen(
                             },
                             valueRange = 0f..300f,
                             steps = 29,
-                            modifier = Modifier.fillMaxWidth().padding(top = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(top = 8.dp),
                         )
                     },
                 )
@@ -821,8 +828,7 @@ fun AppearanceSettingsScreen(
                                 steps = 24,
                                 modifier = Modifier
                                     .fillMaxWidth()
-                                    .padding(top = 8.dp)
-                                    .testTag(APPEARANCE_SETTINGS_ANSWER_SWITCH_SENSITIVITY_TAG),
+                                    .padding(top = 8.dp),
                             )
                         },
                     )
@@ -917,8 +923,7 @@ fun AppearanceSettingsScreen(
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = startDestinationExpanded) },
                                 modifier = Modifier
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                    .width(160.dp)
-                                    .testTag(APPEARANCE_SETTINGS_START_DESTINATION_TAG),
+                                    .width(160.dp),
                                 colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
                             )
                             ExposedDropdownMenu(
@@ -927,7 +932,7 @@ fun AppearanceSettingsScreen(
                             ) {
                                 startDestinationItems.forEach { (key, label) ->
                                     DropdownMenuItem(
-                                        modifier = Modifier.testTag("appearanceSettings:startDestination:option:$key"),
+                                        modifier = Modifier,
                                         text = { Text(label) },
                                         onClick = {
                                             startDestinationKey = key
@@ -978,8 +983,7 @@ fun AppearanceSettingsScreen(
                                             fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
                                             fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
                                             placementSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                        ).testTag("appearanceSettings:bottomBar:item:$key")
-                                        .fillMaxWidth()
+                                        ).fillMaxWidth()
                                         .height(bottomBarSettingItemHeight)
                                         .clickable(enabled = isEnabled) {
                                             when {
@@ -1025,14 +1029,14 @@ fun AppearanceSettingsScreen(
                                             IconButton(
                                                 onClick = { moveBottomBarItem(key, -1) },
                                                 enabled = selectedIndex > 0,
-                                                modifier = Modifier.testTag("appearanceSettings:bottomBar:moveUp:$key"),
+                                                modifier = Modifier,
                                             ) {
                                                 Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "上移$label")
                                             }
                                             IconButton(
                                                 onClick = { moveBottomBarItem(key, 1) },
                                                 enabled = selectedIndex in 0 until selectedBottomBarItemKeys.value.lastIndex,
-                                                modifier = Modifier.testTag("appearanceSettings:bottomBar:moveDown:$key"),
+                                                modifier = Modifier,
                                             ) {
                                                 Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "下移$label")
                                             }
@@ -1048,7 +1052,7 @@ fun AppearanceSettingsScreen(
                     mutableStateOf(settings.getBoolean(COLLECTION_DIRECT_BROWSE_PREFERENCE_KEY, false))
                 }
                 SettingItemWithSwitch(
-                    modifier = Modifier.testTag(APPEARANCE_SETTINGS_COLLECTION_DIRECT_BROWSE_TAG),
+                    modifier = Modifier,
                     title = { Text("收藏直达浏览（测试）") },
                     description = {
                         Text("测试功能，请谨慎开启，可能存在问题。开启后支持收藏夹直览、顺序模式与随机模式，欢迎提交 Issue。")

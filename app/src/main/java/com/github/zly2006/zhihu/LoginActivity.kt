@@ -48,9 +48,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.core.net.toUri
@@ -88,7 +85,6 @@ class LoginActivity : ComponentActivity() {
                 Surface(
                     modifier = Modifier
                         .fillMaxSize()
-                        .semantics { testTagsAsResourceId = true }
                         .systemBarsPadding(),
                 ) {
                     if (currentNoticeStep >= 3) {
@@ -101,7 +97,6 @@ class LoginActivity : ComponentActivity() {
                         when (currentNoticeStep) {
                             0 ->
                                 LoginNoticeScreen(
-                                    stepTag = "login_notice_step_1",
                                     message = "我清楚，本应用由开源社区开发和维护，不由知乎官方开发并运营，也不受到知乎官方的承认或支持，使用本应用的一切后果由我本人承担。我可以在 https://www.zhihu.com/app/ 下载官方应用。",
                                     secondaryButtonText = "下载官方App",
                                     onSecondaryAction = {
@@ -114,9 +109,9 @@ class LoginActivity : ComponentActivity() {
                                         currentNoticeStep = 1
                                     },
                                 )
+
                             1 ->
                                 LoginNoticeScreen(
-                                    stepTag = "login_notice_step_2",
                                     message = "在使用本应用的过程中，我承诺遵守知乎使用协议 https://www.zhihu.com/term/zhihu-terms 。我保证在使用过程中不侵犯知乎及其他作者的著作权，使用本应用产生的一切输出仅用于个人浏览和备份，不会进行传播等其他影响作者著作权的行为。",
                                     secondaryButtonText = "查看协议",
                                     onSecondaryAction = {
@@ -129,9 +124,9 @@ class LoginActivity : ComponentActivity() {
                                         currentNoticeStep = 2
                                     },
                                 )
+
                             else ->
                                 LoginNoticeScreen(
-                                    stepTag = "login_notice_step_3",
                                     message = "我知晓，本应用可能会收集部分匿名化的使用信息来确定使用人数，我可以在设置中随时关闭此项遥测。",
                                     secondaryButtonText = "查看设置",
                                     onSecondaryAction = {
@@ -284,21 +279,18 @@ private fun LoginModeScreen(
             LoginModeButton(
                 text = "手机号登录",
                 selected = loginMode == LOGIN_MODE_PHONE,
-                tag = "login_mode_phone",
                 modifier = Modifier.weight(1f),
                 onClick = { onModeChanged(LOGIN_MODE_PHONE) },
             )
             LoginModeButton(
                 text = "扫码登录",
                 selected = loginMode == LOGIN_MODE_QR,
-                tag = "login_mode_qr",
                 modifier = Modifier.weight(1f),
                 onClick = { onModeChanged(LOGIN_MODE_QR) },
             )
             LoginModeButton(
                 text = "备用网页登录",
                 selected = loginMode == LOGIN_MODE_WEB,
-                tag = "login_mode_web",
                 modifier = Modifier.weight(1f),
                 onClick = { onModeChanged(LOGIN_MODE_WEB) },
             )
@@ -330,21 +322,20 @@ private fun LoginModeScreen(
 private fun LoginModeButton(
     text: String,
     selected: Boolean,
-    tag: String,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {
     if (selected) {
         Button(
             onClick = onClick,
-            modifier = modifier.testTag(tag),
+            modifier = modifier,
         ) {
             Text(text)
         }
     } else {
         OutlinedButton(
             onClick = onClick,
-            modifier = modifier.testTag(tag),
+            modifier = modifier,
         ) {
             Text(text)
         }
@@ -361,8 +352,7 @@ private fun QrLoginPane(activity: LoginActivity) {
         riskControlContent = { url, cookies, onCookiesChanged ->
             WebviewComp(
                 modifier = Modifier
-                    .fillMaxSize()
-                    .testTag("qr_risk_control_webview"),
+                    .fillMaxSize(),
                 onLoad = { webView ->
                     activity.configureRiskControlWebView(
                         webView = webView,
@@ -380,7 +370,6 @@ private fun QrLoginPane(activity: LoginActivity) {
 
 @Composable
 private fun LoginNoticeScreen(
-    stepTag: String,
     message: String,
     secondaryButtonText: String,
     onConfirm: () -> Unit,
@@ -388,8 +377,7 @@ private fun LoginNoticeScreen(
 ) {
     Box(
         modifier = Modifier
-            .fillMaxSize()
-            .testTag(stepTag),
+            .fillMaxSize(),
     ) {
         Column(
             modifier = Modifier
@@ -420,16 +408,14 @@ private fun LoginNoticeScreen(
                 OutlinedButton(
                     onClick = onSecondaryAction,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("login_notice_secondary_action"),
+                        .fillMaxWidth(),
                 ) {
                     Text(secondaryButtonText)
                 }
                 Button(
                     onClick = onConfirm,
                     modifier = Modifier
-                        .fillMaxWidth()
-                        .testTag("login_notice_confirm"),
+                        .fillMaxWidth(),
                 ) {
                     Text("确认")
                 }

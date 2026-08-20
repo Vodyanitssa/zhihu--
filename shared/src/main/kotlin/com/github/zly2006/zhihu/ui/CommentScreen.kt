@@ -47,7 +47,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyListState
@@ -113,7 +112,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -128,7 +126,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
@@ -152,7 +149,6 @@ import com.github.zly2006.zhihu.renderer.AstParser
 import com.github.zly2006.zhihu.renderer.EmojiItem
 import com.github.zly2006.zhihu.renderer.EmojiManager
 import com.github.zly2006.zhihu.renderer.RenderContentNodes
-import com.github.zly2006.zhihu.renderer.RenderInlineNodes
 import com.github.zly2006.zhihu.ui.components.replaceSelection
 import com.github.zly2006.zhihu.ui.subscreens.PREF_LINE_HEIGHT
 import com.github.zly2006.zhihu.util.twoDigitString
@@ -175,24 +171,6 @@ import kotlin.time.Clock
 import kotlin.time.Instant
 
 typealias CommentModel = CommentItem
-
-const val COMMENT_SCREEN_LIST_TAG = "comment_screen_list"
-const val COMMENT_REPLY_BANNER_TAG = "comment_reply_banner"
-const val COMMENT_CANCEL_REPLY_TAG = "comment_cancel_reply"
-const val COMMENT_INPUT_TAG = "comment_input"
-const val COMMENT_EMOJI_BUTTON_TAG = "comment_emoji_button"
-const val COMMENT_EMOJI_PICKER_TAG = "comment_emoji_picker"
-const val COMMENT_EMOJI_ITEM_TAG_PREFIX = "comment_emoji_item_"
-const val COMMENT_SEND_BUTTON_TAG = "comment_send_button"
-const val COMMENT_SORT_SCORE_TAG = "comment_sort_score"
-const val COMMENT_SORT_TIME_TAG = "comment_sort_time"
-const val COMMENT_IMAGE_MENU_OPEN_TAG = "comment_image_menu_open"
-const val COMMENT_IMAGE_MENU_BROWSER_TAG = "comment_image_menu_browser"
-const val COMMENT_IMAGE_MENU_SAVE_TAG = "comment_image_menu_save"
-const val COMMENT_IMAGE_MENU_SHARE_TAG = "comment_image_menu_share"
-const val COMMENT_DELETE_DIALOG_TAG = "comment_delete_dialog"
-const val COMMENT_DELETE_CONFIRM_TAG = "comment_delete_confirm"
-const val COMMENT_DELETE_CANCEL_TAG = "comment_delete_cancel"
 
 enum class CommentImageMenuAction {
     Open,
@@ -396,7 +374,7 @@ private fun ClickableImageWithMenu(
             onDismissRequest = { showContextMenu = false },
         ) {
             DropdownMenuItem(
-                modifier = Modifier.testTag(COMMENT_IMAGE_MENU_OPEN_TAG),
+                modifier = Modifier,
                 text = { Text("查看图片") },
                 onClick = {
                     handleAction(CommentImageMenuAction.Open)
@@ -404,7 +382,7 @@ private fun ClickableImageWithMenu(
                 },
             )
             DropdownMenuItem(
-                modifier = Modifier.testTag(COMMENT_IMAGE_MENU_BROWSER_TAG),
+                modifier = Modifier,
                 text = { Text("在浏览器中打开") },
                 onClick = {
                     handleAction(CommentImageMenuAction.OpenInBrowser)
@@ -412,7 +390,7 @@ private fun ClickableImageWithMenu(
                 },
             )
             DropdownMenuItem(
-                modifier = Modifier.testTag(COMMENT_IMAGE_MENU_SAVE_TAG),
+                modifier = Modifier,
                 text = { Text("保存图片") },
                 onClick = {
                     handleAction(CommentImageMenuAction.Save)
@@ -420,7 +398,7 @@ private fun ClickableImageWithMenu(
                 },
             )
             DropdownMenuItem(
-                modifier = Modifier.testTag(COMMENT_IMAGE_MENU_SHARE_TAG),
+                modifier = Modifier,
                 text = { Text("分享图片") },
                 onClick = {
                     showContextMenu = false
@@ -540,7 +518,7 @@ fun CommentScreen(
 
     commentPendingDeletion?.let { target ->
         AlertDialog(
-            modifier = Modifier.testTag(COMMENT_DELETE_DIALOG_TAG),
+            modifier = Modifier,
             onDismissRequest = {
                 if (!isDeletingComment) {
                     commentPendingDeletion = null
@@ -562,7 +540,7 @@ fun CommentScreen(
             },
             confirmButton = {
                 TextButton(
-                    modifier = Modifier.testTag(COMMENT_DELETE_CONFIRM_TAG),
+                    modifier = Modifier,
                     enabled = !isDeletingComment,
                     onClick = {
                         isDeletingComment = true
@@ -586,7 +564,7 @@ fun CommentScreen(
             },
             dismissButton = {
                 TextButton(
-                    modifier = Modifier.testTag(COMMENT_DELETE_CANCEL_TAG),
+                    modifier = Modifier,
                     enabled = !isDeletingComment,
                     onClick = {
                         commentPendingDeletion = null
@@ -750,7 +728,7 @@ fun CommentScreen(
                                                     )
                                                     CommentItem(
                                                         comment = childCommentItem,
-                                                        modifier = Modifier.testTag("comment_row_${childComment.id}"),
+                                                        modifier = Modifier,
                                                         isLiked = liked,
                                                         likeCount = likeCount,
                                                         toggleLike = {
@@ -780,8 +758,7 @@ fun CommentScreen(
                                             Button(
                                                 onClick = { onChildCommentClick(commentItem) },
                                                 modifier = Modifier
-                                                    .height(28.dp)
-                                                    .testTag("comment_child_button_${commentItem.item.id}"),
+                                                    .height(28.dp),
                                                 shape = RoundedCornerShape(50),
                                                 colors = ButtonDefaults.buttonColors(
                                                     containerColor = actionChipColor,
@@ -808,8 +785,7 @@ fun CommentScreen(
                             LazyColumn(
                                 state = listState,
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .testTag(COMMENT_SCREEN_LIST_TAG),
+                                    .fillMaxSize(),
                                 contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
                                 verticalArrangement = Arrangement.spacedBy(16.dp),
                             ) {
@@ -860,7 +836,6 @@ fun CommentScreen(
                                             horizontalArrangement = Arrangement.End,
                                         ) {
                                             SuggestionChip(
-                                                modifier = Modifier.testTag(COMMENT_SORT_SCORE_TAG),
                                                 label = {
                                                     Text(
                                                         "最热",
@@ -882,7 +857,6 @@ fun CommentScreen(
                                             )
                                             Spacer(Modifier.width(12.dp))
                                             SuggestionChip(
-                                                modifier = Modifier.testTag(COMMENT_SORT_TIME_TAG),
                                                 label = {
                                                     Text(
                                                         "最新",
@@ -912,7 +886,6 @@ fun CommentScreen(
                                 ) { dto ->
                                     val commentItem = viewModel.createCommentItem(dto, article = rootContent)
                                     SwipeToReplyContainer(
-                                        modifier = Modifier.testTag("comment_row_${dto.id}"),
                                         onReply = {
                                             if (activeCommentItem == null) {
                                                 if (commentItem.clickTarget != null) {
@@ -980,8 +953,7 @@ fun CommentScreen(
                             Surface(
                                 color = MaterialTheme.colorScheme.secondaryContainer,
                                 modifier = Modifier
-                                    .fillMaxWidth()
-                                    .testTag(COMMENT_REPLY_BANNER_TAG),
+                                    .fillMaxWidth(),
                             ) {
                                 Row(
                                     modifier = Modifier
@@ -1005,8 +977,7 @@ fun CommentScreen(
                                     IconButton(
                                         onClick = { replyToComment = null },
                                         modifier = Modifier
-                                            .size(24.dp)
-                                            .testTag(COMMENT_CANCEL_REPLY_TAG),
+                                            .size(24.dp),
                                     ) {
                                         Icon(
                                             Icons.Default.Close,
@@ -1039,8 +1010,7 @@ fun CommentScreen(
                                     }
                                 },
                                 modifier = Modifier
-                                    .size(40.dp)
-                                    .testTag(COMMENT_EMOJI_BUTTON_TAG),
+                                    .size(40.dp),
                             ) {
                                 Icon(
                                     imageVector = if (showEmojiPicker) {
@@ -1073,8 +1043,7 @@ fun CommentScreen(
                                     .focusRequester(commentInputFocusRequester)
                                     .onFocusChanged {
                                         if (it.isFocused) showEmojiPicker = false
-                                    }
-                                    .testTag(COMMENT_INPUT_TAG),
+                                    },
                                 decorationBox = { inner ->
                                     Box {
                                         if (commentFieldValue.text.isEmpty()) {
@@ -1100,8 +1069,7 @@ fun CommentScreen(
                             IconButton(
                                 onClick = { submitComment() },
                                 modifier = Modifier
-                                    .size(24.dp)
-                                    .testTag(COMMENT_SEND_BUTTON_TAG),
+                                    .size(24.dp),
                                 enabled = !isSending && commentFieldValue.text.isNotBlank(),
                             ) {
                                 if (isSending) {
@@ -1133,8 +1101,7 @@ fun CommentScreen(
                                 Box(
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(240.dp)
-                                        .testTag(COMMENT_EMOJI_PICKER_TAG),
+                                        .height(240.dp),
                                     contentAlignment = Alignment.Center,
                                 ) {
                                     Text(
@@ -1147,8 +1114,7 @@ fun CommentScreen(
                                     columns = GridCells.Adaptive(minSize = 48.dp),
                                     modifier = Modifier
                                         .fillMaxWidth()
-                                        .height(240.dp)
-                                        .testTag(COMMENT_EMOJI_PICKER_TAG),
+                                        .height(240.dp),
                                     contentPadding = PaddingValues(8.dp),
                                 ) {
                                     items(
@@ -1246,7 +1212,6 @@ private fun CommentItem(
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
                         modifier = Modifier
-                            .testTag("comment_author_${commentData.id}")
                             .clickable { navigator.onNavigate(authorPerson) },
                     )
 
@@ -1275,7 +1240,6 @@ private fun CommentItem(
                             fontWeight = FontWeight.Bold,
                             fontSize = 16.sp,
                             modifier = Modifier
-                                .testTag("comment_reply_to_author_${commentData.id}")
                                 .clickable {
                                     navigator.onNavigate(
                                         Person(
@@ -1341,8 +1305,7 @@ private fun CommentItem(
                     IconButton(
                         onClick = { showMoreMenu = true },
                         modifier = Modifier
-                            .size(24.dp)
-                            .testTag("comment_more_button_${commentData.id}"),
+                            .size(24.dp),
                     ) {
                         Icon(
                             Icons.Default.MoreVert,
@@ -1356,7 +1319,7 @@ private fun CommentItem(
                         onDismissRequest = { showMoreMenu = false },
                     ) {
                         DropdownMenuItem(
-                            modifier = Modifier.testTag("comment_delete_menu_item_${commentData.id}"),
+                            modifier = Modifier,
                             text = { Text("删除", color = MaterialTheme.colorScheme.error) },
                             leadingIcon = {
                                 Icon(
@@ -1379,7 +1342,6 @@ private fun CommentItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .testTag("comment_reply_button_${commentData.id}")
                     .clickable { onChildCommentClick(comment) },
             ) {
                 Spacer(modifier = Modifier.width(4.dp))
@@ -1398,7 +1360,7 @@ private fun CommentItem(
                 if (comment.item.childCommentCount > 0) {
                     Text(
                         text = comment.item.childCommentCount.toString(),
-                        modifier = Modifier.testTag("comment_reply_count_${commentData.id}"),
+                        modifier = Modifier,
                         fontSize = 12.sp,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
@@ -1412,7 +1374,6 @@ private fun CommentItem(
             Row(
                 verticalAlignment = Alignment.CenterVertically,
                 modifier = Modifier
-                    .testTag("comment_like_button_${commentData.id}")
                     .clickable(enabled = !isLikeLoading) { toggleLike() },
             ) {
                 Spacer(modifier = Modifier.width(4.dp))
@@ -1433,7 +1394,7 @@ private fun CommentItem(
                 Spacer(modifier = Modifier.width(4.dp))
                 Text(
                     text = likeCount.toString(),
-                    modifier = Modifier.testTag("comment_like_count_${commentData.id}"),
+                    modifier = Modifier,
                     fontSize = 12.sp,
                     color = if (isLiked) {
                         MaterialTheme.colorScheme.primary
@@ -1556,8 +1517,7 @@ fun AuthorTag(authorTag: String) {
                 width = 0.5.dp,
                 color = Color.Gray,
                 shape = RoundedCornerShape(3.dp),
-            )
-            .padding(horizontal = 3.dp),
+            ).padding(horizontal = 3.dp),
     ) {
         Text(
             text = authorTag,

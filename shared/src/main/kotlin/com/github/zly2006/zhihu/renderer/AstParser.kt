@@ -3,7 +3,6 @@ package com.github.zly2006.zhihu.renderer
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
-import kotlin.collections.emptyList
 
 /*
  * 对外暴露两个函数:

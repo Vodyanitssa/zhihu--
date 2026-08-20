@@ -49,7 +49,6 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import com.github.zly2006.zhihu.navigation.Account
 import com.github.zly2006.zhihu.navigation.LocalNavigator
@@ -123,7 +122,6 @@ fun ContentFilterSettingsScreen(
             modifier = Modifier
                 .fillMaxSize()
                 .verticalScroll(scrollState)
-                .testTag("contentFilterSettings:scroll")
                 .padding(innerPadding)
                 .padding(vertical = 16.dp),
         ) {
@@ -132,7 +130,7 @@ fun ContentFilterSettingsScreen(
                     mutableStateOf(settings.getBoolean("loginForRecommendation", true))
                 }
                 SettingItemWithSwitch(
-                    modifier = Modifier.testTag("contentFilterSettings:loginForRecommendation"),
+                    modifier = Modifier,
                     title = { Text("推荐内容时登录") },
                     description = { Text("获取推荐内容时携带登录凭证") },
                     checked = isLoginForRecommendation.value,
@@ -148,7 +146,7 @@ fun ContentFilterSettingsScreen(
                     mutableStateOf(settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true))
                 }
                 SettingItemWithSwitch(
-                    modifier = Modifier.testTag("contentFilterSettings:autoRefreshHomeOnStartup"),
+                    modifier = Modifier,
                     title = { Text("启动时自动刷新首页") },
                     description = { Text("关闭后优先显示上次获取的一批首页推荐；没有缓存时仍会加载新推荐") },
                     checked = autoRefreshHomeOnStartup.value,
@@ -164,7 +162,7 @@ fun ContentFilterSettingsScreen(
             val enableContentFilter = remember { mutableStateOf(settings.getBoolean("enableContentFilter", true)) }
             SettingItemGroup {
                 SettingItemWithSwitch(
-                    modifier = Modifier.testTag("contentFilterSettings:enableContentFilter"),
+                    modifier = Modifier,
                     title = { Text("启用智能内容过滤") },
                     description = { Text("自动过滤首页展示超过2次但用户未点击的内容，减少重复推荐") },
                     checked = enableContentFilter.value,
@@ -327,7 +325,7 @@ fun ContentFilterSettingsScreen(
 
             SettingItemGroup {
                 SettingItem(
-                    modifier = Modifier.testTag("contentFilterSettings:blocklist"),
+                    modifier = Modifier,
                     title = { Text("管理屏蔽列表") },
                     onClick = { navigator.onNavigate(Account.RecommendSettings.Blocklist) },
                     endAction = {
@@ -342,7 +340,7 @@ fun ContentFilterSettingsScreen(
 
             SettingItemGroup {
                 SettingItem(
-                    modifier = Modifier.testTag("contentFilterSettings:blockedFeedHistory"),
+                    modifier = Modifier,
                     title = { Text("屏蔽记录") },
                     onClick = { navigator.onNavigate(Account.RecommendSettings.BlockedFeedHistory) },
                     endAction = {

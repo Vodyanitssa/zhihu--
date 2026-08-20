@@ -46,7 +46,6 @@ tasks
 
 mapOf(
     "runKtlintFormatOverMainSourceSet" to "src/main/kotlin",
-    "runKtlintFormatOverTestSourceSet" to "src/test/kotlin",
 ).forEach { (taskName, sourcePath) ->
     tasks.withType<KtLintFormatTask>().matching { it.name == taskName }.configureEach {
         setSource(
@@ -78,12 +77,6 @@ android {
 
     kotlin {
         jvmToolchain(17)
-    }
-
-    testOptions {
-        unitTests {
-            isReturnDefaultValues = true
-        }
     }
 
     buildFeatures {
@@ -155,13 +148,4 @@ dependencies {
     implementation("com.google.zxing:core:3.5.4")
     implementation("me.saket.telephoto:zoomable-image-coil3:0.19.0")
     implementation("org.jsoup:jsoup:1.22.2")
-
-    // Test
-    testImplementation(kotlin("test"))
-    testImplementation("junit:junit:4.13.2")
-    testImplementation("org.jetbrains.kotlinx:kotlinx-coroutines-test:1.11.0")
-    testImplementation("io.ktor:ktor-client-mock:$ktorVersion")
-    testImplementation("io.ktor:ktor-client-cio:$ktorVersion")
-    testImplementation("io.ktor:ktor-client-content-negotiation:$ktorVersion")
-    testImplementation("io.ktor:ktor-serialization-kotlinx-json:$ktorVersion")
 }

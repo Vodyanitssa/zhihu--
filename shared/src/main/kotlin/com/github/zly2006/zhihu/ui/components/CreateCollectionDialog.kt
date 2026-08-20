@@ -39,7 +39,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.window.Dialog
@@ -68,8 +67,7 @@ fun CreateCollectionDialog(
                 color = MaterialTheme.colorScheme.surface,
                 modifier = Modifier
                     .fillMaxWidth()
-                    .padding(16.dp)
-                    .testTag(CREATE_COLLECTION_DIALOG_TAG),
+                    .padding(16.dp),
             ) {
                 Column(
                     modifier = Modifier
@@ -91,8 +89,7 @@ fun CreateCollectionDialog(
                         label = { Text("收藏夹名称") },
                         placeholder = { Text("请输入收藏夹名称") },
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(CREATE_COLLECTION_TITLE_INPUT_TAG),
+                            .fillMaxWidth(),
                         enabled = !isSubmitting,
                         singleLine = true,
                     )
@@ -151,7 +148,7 @@ fun CreateCollectionDialog(
                                 }
                             },
                             enabled = title.isNotBlank() && !isSubmitting,
-                            modifier = Modifier.testTag(CREATE_COLLECTION_CONFIRM_TAG),
+                            modifier = Modifier,
                         ) {
                             Text(if (isSubmitting) "创建中…" else "创建")
                         }
@@ -161,7 +158,3 @@ fun CreateCollectionDialog(
         }
     }
 }
-
-private const val CREATE_COLLECTION_DIALOG_TAG = "create_collection_dialog"
-private const val CREATE_COLLECTION_TITLE_INPUT_TAG = "create_collection_title_input"
-private const val CREATE_COLLECTION_CONFIRM_TAG = "create_collection_confirm"

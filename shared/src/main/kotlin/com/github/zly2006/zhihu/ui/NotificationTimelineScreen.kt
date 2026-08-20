@@ -50,7 +50,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -208,7 +207,6 @@ private fun InvitationAnswerItem(
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("invitation_${notification.stableId}")
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -306,7 +304,7 @@ private fun InvitationAnswerItem(
                     Spacer(Modifier.width(10.dp))
                     Button(
                         onClick = onAnswerClick,
-                        modifier = Modifier.testTag("invitation_answer_${notification.stableId}"),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.Default.Edit, contentDescription = null, modifier = Modifier.size(18.dp))
                         Spacer(Modifier.width(5.dp))

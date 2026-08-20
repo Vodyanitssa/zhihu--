@@ -28,10 +28,7 @@ import androidx.activity.compose.PredictiveBackHandler
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.testTagsAsResourceId
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.github.zly2006.zhihu.data.AccountData
@@ -101,7 +98,16 @@ fun rememberSystemUrlOpener(): (String) -> Unit {
 @Composable
 fun rememberZhihuWebUrlOpener(): (String) -> Unit {
     val context = LocalContext.current
-    return remember(context) { { url -> context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri()).setClassName(context, WEBVIEW_ACTIVITY_CLASS)) } }
+    return remember(context) {
+        { url ->
+            context.startActivity(
+                Intent(Intent.ACTION_VIEW, url.toUri()).setClassName(
+                    context,
+                    WEBVIEW_ACTIVITY_CLASS,
+                ),
+            )
+        }
+    }
 }
 
 @Composable
@@ -173,8 +179,6 @@ fun rememberSettingsStore(): SettingsStore {
     val context = LocalContext.current.applicationContext
     return remember(context) { androidSettingsStore(context) }
 }
-
-fun Modifier.exportTestTagsForUiAutomation(): Modifier = semantics { testTagsAsResourceId = true }
 
 @Composable
 fun rememberAppPrivateDirectory(): Path {

@@ -57,7 +57,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.github.zly2006.zhihu.markdown.RenderMarkdown
+import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.AnswerEndorsementChip
 import com.github.zly2006.zhihu.ui.components.AuthorBadge
@@ -203,14 +204,8 @@ internal fun CachedAnswerPreview(cached: CachedAnswerContent) {
             }
             if (cached.content.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
-                RenderMarkdown(
-                    html = cached.content,
-                    modifier = Modifier,
-                    selectable = true,
-                    enableScroll = false,
-                    header = {},
-                    footer = {},
-                )
+                val contentNodes = AstParser.ParseContent(cached.content)
+                RenderContentNodes(contentNodes)
             }
             Spacer(modifier = Modifier.height((16 + 36).dp))
         }

@@ -32,7 +32,6 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
@@ -66,8 +65,7 @@ fun MarkdownShortcutToolbar(
         modifier =
             modifier
                 .fillMaxWidth()
-                .padding(horizontal = 12.dp, vertical = 10.dp)
-                .testTag("markdown_shortcut_toolbar"),
+                .padding(horizontal = 12.dp, vertical = 10.dp),
         shape = MaterialTheme.shapes.large,
         color = MaterialTheme.colorScheme.surfaceContainerHigh,
         contentColor = MaterialTheme.colorScheme.onSurface,
@@ -178,6 +176,7 @@ private fun TextFieldValue.toggleHeading(
                 replaceWith = "",
             )
         }
+
         text.startsWith(otherPrefix, startIndex = lineStart) -> {
             replaceAt(
                 replaceStart = lineStart,
@@ -185,6 +184,7 @@ private fun TextFieldValue.toggleHeading(
                 replaceWith = targetPrefix,
             )
         }
+
         else -> {
             replaceAt(
                 replaceStart = lineStart,

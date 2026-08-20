@@ -63,7 +63,6 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -515,36 +514,6 @@ private val PEOPLE_SCREEN_SUBSCRIPTION_TITLES = listOf(
     "关注的收藏夹",
 )
 
-const val PEOPLE_SCREEN_ROOT_TAG = "people_screen_root"
-const val PEOPLE_SCREEN_HEADER_TAG = "people_screen_header"
-const val PEOPLE_SCREEN_AVATAR_TAG = "people_screen_avatar"
-const val PEOPLE_SCREEN_TAB_ROW_TAG = "people_screen_tab_row"
-const val PEOPLE_SCREEN_PAGER_TAG = "people_screen_pager"
-const val PEOPLE_SCREEN_ANSWERS_LIST_TAG = "people_screen_answers_list"
-const val PEOPLE_SCREEN_ARTICLES_LIST_TAG = "people_screen_articles_list"
-const val PEOPLE_SCREEN_ACTIVITIES_LIST_TAG = "people_screen_activities_list"
-const val PEOPLE_SCREEN_COLLECTIONS_LIST_TAG = "people_screen_collections_list"
-const val PEOPLE_SCREEN_QUESTIONS_LIST_TAG = "people_screen_questions_list"
-const val PEOPLE_SCREEN_PINS_LIST_TAG = "people_screen_pins_list"
-const val PEOPLE_SCREEN_COLUMNS_LIST_TAG = "people_screen_columns_list"
-const val PEOPLE_SCREEN_FOLLOWERS_LIST_TAG = "people_screen_followers_list"
-const val PEOPLE_SCREEN_FOLLOWING_LIST_TAG = "people_screen_following_list"
-const val PEOPLE_SCREEN_SUBSCRIPTION_TABS_TAG = "people_screen_subscription_tabs"
-const val PEOPLE_SCREEN_SUBSCRIPTIONS_LIST_TAG = "people_screen_subscriptions_list"
-const val PEOPLE_SCREEN_ANSWER_COUNT_TAG = "people_screen_stat_answers"
-const val PEOPLE_SCREEN_ARTICLE_COUNT_TAG = "people_screen_stat_articles"
-const val PEOPLE_SCREEN_FOLLOWER_COUNT_TAG = "people_screen_stat_followers"
-const val PEOPLE_SCREEN_FOLLOWING_COUNT_TAG = "people_screen_stat_following"
-const val PEOPLE_SCREEN_FOLLOW_BUTTON_TAG = "people_screen_follow_button"
-const val PEOPLE_SCREEN_BLOCK_BUTTON_TAG = "people_screen_block_button"
-const val PEOPLE_SCREEN_SEARCH_BUTTON_TAG = "people_screen_search_button"
-const val PEOPLE_SCREEN_GITHUB_STARS_TAG = "people_screen_github_stars"
-const val PEOPLE_SCREEN_ANSWER_SORT_HOT_TAG = "people_screen_answer_sort_voteups"
-const val PEOPLE_SCREEN_ANSWER_SORT_TIME_TAG = "people_screen_answer_sort_created"
-const val PEOPLE_SCREEN_ARTICLE_SORT_HOT_TAG = "people_screen_article_sort_voteups"
-const val PEOPLE_SCREEN_ARTICLE_SORT_TIME_TAG = "people_screen_article_sort_created"
-const val PEOPLE_SCREEN_OFFICIAL_BADGE_TAG = "people_screen_official_badge"
-
 private fun peopleScreenInitialPage(person: Person): Int {
     val jumpToIndex = PEOPLE_SCREEN_TITLES.indexOf(person.jumpTo)
     return if (jumpToIndex >= 0) jumpToIndex else 0
@@ -648,7 +617,6 @@ fun PeopleScreen(
 
     Scaffold(
         modifier = Modifier
-            .testTag(PEOPLE_SCREEN_ROOT_TAG)
             .nestedScroll(scrollBehavior.nestedScrollConnection)
             .fillMaxSize(),
         topBar = {
@@ -659,8 +627,7 @@ fun PeopleScreen(
                             viewModel = viewModel,
                             pagerState = pagerState,
                             modifier = Modifier
-                                .padding(horizontal = 8.dp)
-                                .testTag(PEOPLE_SCREEN_HEADER_TAG),
+                                .padding(horizontal = 8.dp),
                             onFollowToggle = {
                                 coroutineScope.launch {
                                     try {
@@ -720,8 +687,7 @@ fun PeopleScreen(
                         },
                         modifier = Modifier
                             .align(Alignment.TopEnd)
-                            .padding(top = 32.dp, end = 8.dp)
-                            .testTag(PEOPLE_SCREEN_SEARCH_BUTTON_TAG),
+                            .padding(top = 32.dp, end = 8.dp),
                     ) {
                         Icon(Icons.Default.Search, contentDescription = "搜索 TA 的创作")
                     }
@@ -736,7 +702,7 @@ fun PeopleScreen(
         ) {
             PrimaryScrollableTabRow(
                 selectedTabIndex = pagerState.currentPage,
-                modifier = Modifier.testTag(PEOPLE_SCREEN_TAB_ROW_TAG),
+                modifier = Modifier,
             ) {
                 PEOPLE_SCREEN_TITLES.forEachIndexed { index, title ->
                     Tab(
@@ -746,7 +712,7 @@ fun PeopleScreen(
                                 pagerState.animateScrollToPage(index)
                             }
                         },
-                        modifier = Modifier.testTag("people_screen_tab_$index"),
+                        modifier = Modifier,
                     ) {
                         Text(
                             text = title,
@@ -760,8 +726,7 @@ fun PeopleScreen(
             HorizontalPager(
                 state = pagerState,
                 modifier = Modifier
-                    .weight(1f)
-                    .testTag(PEOPLE_SCREEN_PAGER_TAG),
+                    .weight(1f),
             ) { page ->
                 when (page) {
                     0 -> {
@@ -773,8 +738,6 @@ fun PeopleScreen(
                             SortBar(
                                 currentSort = viewModel.answersFeedModel.sortBy,
                                 onSortChange = { viewModel.answersFeedModel.changeSortBy(it, paginationEnvironment) },
-                                hotTag = PEOPLE_SCREEN_ANSWER_SORT_HOT_TAG,
-                                timeTag = PEOPLE_SCREEN_ANSWER_SORT_TIME_TAG,
                             )
                             PaginatedList(
                                 items = viewModel.answersFeedModel.allData,
@@ -782,14 +745,13 @@ fun PeopleScreen(
                                 isEnd = { viewModel.answersFeedModel.isEnd },
                                 footer = ProgressIndicatorFooter,
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .testTag(PEOPLE_SCREEN_ANSWERS_LIST_TAG),
+                                    .fillMaxSize(),
                                 key = { it.id },
                             ) {
                                 FeedCard(
                                     it.toPeopleAnswerDisplayItem(),
                                     readingQueueSourceId = readingQueueSourceId,
-                                    modifier = Modifier.testTag("people_screen_answer_item_${it.id}"),
+                                    modifier = Modifier,
                                     horizontalPadding = 4.dp,
                                 ) { _, destination ->
                                     destination?.let(navigator.onNavigate)
@@ -802,14 +764,11 @@ fun PeopleScreen(
                         // 文章
                         Column(
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag("people_screen_page_$page"),
+                                .fillMaxSize(),
                         ) {
                             SortBar(
                                 currentSort = viewModel.articlesFeedModel.sortBy,
                                 onSortChange = { viewModel.articlesFeedModel.changeSortBy(it, paginationEnvironment) },
-                                hotTag = PEOPLE_SCREEN_ARTICLE_SORT_HOT_TAG,
-                                timeTag = PEOPLE_SCREEN_ARTICLE_SORT_TIME_TAG,
                             )
                             PaginatedList(
                                 items = viewModel.articlesFeedModel.allData,
@@ -817,14 +776,13 @@ fun PeopleScreen(
                                 isEnd = { viewModel.articlesFeedModel.isEnd },
                                 footer = ProgressIndicatorFooter,
                                 modifier = Modifier
-                                    .fillMaxSize()
-                                    .testTag(PEOPLE_SCREEN_ARTICLES_LIST_TAG),
+                                    .fillMaxSize(),
                                 key = { it.id },
                             ) {
                                 FeedCard(
                                     it.toPeopleArticleDisplayItem(),
                                     readingQueueSourceId = readingQueueSourceId,
-                                    modifier = Modifier.testTag("people_screen_article_item_${it.id}"),
+                                    modifier = Modifier,
                                     horizontalPadding = 4.dp,
                                 ) { _, destination ->
                                     destination?.let(navigator.onNavigate)
@@ -841,13 +799,12 @@ fun PeopleScreen(
                             isEnd = { viewModel.activitiesFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_ACTIVITIES_LIST_TAG),
+                                .fillMaxSize(),
                         ) {
                             FeedCard(
                                 it,
                                 readingQueueSourceId = readingQueueSourceId,
-                                modifier = Modifier.testTag("people_screen_activity_item_${it.stableKey}"),
+                                modifier = Modifier,
                                 horizontalPadding = 4.dp,
                             )
                         }
@@ -861,13 +818,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.collectionsFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_COLLECTIONS_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { collection ->
                             CollectionListItem(
                                 collection = collection,
-                                itemTag = "people_screen_collection_item_${collection.id}",
                             )
                         }
                     }
@@ -880,13 +835,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.questionsFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_QUESTIONS_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { question ->
                             QuestionListItem(
                                 question = question,
-                                itemTag = "people_screen_question_item_${question.id}",
                             )
                         }
                     }
@@ -899,13 +852,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.pinsFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_PINS_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { pin ->
                             PinListItem(
                                 pin = pin,
-                                itemTag = "people_screen_pin_item_${pin.id}",
                                 readingQueueSourceId = readingQueueSourceId,
                             )
                         }
@@ -919,13 +870,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.columnsFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_COLUMNS_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { column ->
                             ColumnListItem(
                                 column = column,
-                                itemTag = "people_screen_column_item_${column.id}",
                             )
                         }
                     }
@@ -938,14 +887,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.followersFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_FOLLOWERS_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { people ->
                             PeopleListItem(
                                 people = people,
-                                itemTag = "people_screen_follower_item_${people.id}",
-                                actionTag = "people_screen_follower_action_${people.id}",
                             )
                         }
                     }
@@ -958,14 +904,11 @@ fun PeopleScreen(
                             isEnd = { viewModel.followingFeedModel.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier
-                                .fillMaxSize()
-                                .testTag(PEOPLE_SCREEN_FOLLOWING_LIST_TAG),
+                                .fillMaxSize(),
                             key = { it.id },
                         ) { people ->
                             PeopleListItem(
                                 people = people,
-                                itemTag = "people_screen_following_item_${people.id}",
-                                actionTag = "people_screen_following_action_${people.id}",
                             )
                         }
                     }
@@ -981,7 +924,7 @@ fun PeopleScreen(
                                     3 -> viewModel.followingCollectionsFeedModel.loadMore(paginationEnvironment)
                                 }
                             },
-                            modifier = Modifier.testTag("people_screen_page_$page"),
+                            modifier = Modifier,
                         )
                     }
                 }
@@ -1009,7 +952,6 @@ private fun FollowingSubscriptionsPage(
         FlowRow(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(PEOPLE_SCREEN_SUBSCRIPTION_TABS_TAG)
                 .padding(vertical = 8.dp, horizontal = 4.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -1017,7 +959,7 @@ private fun FollowingSubscriptionsPage(
             PEOPLE_SCREEN_SUBSCRIPTION_TITLES.forEachIndexed { index, title ->
                 OutlinedButton(
                     onClick = { selectedPage = index },
-                    modifier = Modifier.testTag("people_screen_subscription_tab_$index"),
+                    modifier = Modifier,
                     shape = RoundedCornerShape(8.dp),
                     colors = if (selectedPage == index) {
                         ButtonDefaults.outlinedButtonColors(
@@ -1040,13 +982,11 @@ private fun FollowingSubscriptionsPage(
                 isEnd = { viewModel.followingColumnsFeedModel.isEnd },
                 footer = ProgressIndicatorFooter,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .testTag(PEOPLE_SCREEN_SUBSCRIPTIONS_LIST_TAG),
+                    .fillMaxSize(),
                 key = { it.id },
             ) { column ->
                 ColumnListItem(
                     column = column,
-                    itemTag = "people_screen_column_item_${column.id}",
                 )
             }
 
@@ -1056,8 +996,7 @@ private fun FollowingSubscriptionsPage(
                 isEnd = { viewModel.followingTopicsFeedModel.isEnd },
                 footer = ProgressIndicatorFooter,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .testTag(PEOPLE_SCREEN_SUBSCRIPTIONS_LIST_TAG),
+                    .fillMaxSize(),
                 key = { it.displayId },
             ) { topic ->
                 FollowedTopicListItem(topic)
@@ -1069,8 +1008,7 @@ private fun FollowingSubscriptionsPage(
                 isEnd = { viewModel.followingQuestionsFeedModel.isEnd },
                 footer = ProgressIndicatorFooter,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .testTag(PEOPLE_SCREEN_SUBSCRIPTIONS_LIST_TAG),
+                    .fillMaxSize(),
                 key = { it.id },
             ) { question ->
                 FollowedQuestionListItem(question)
@@ -1082,13 +1020,11 @@ private fun FollowingSubscriptionsPage(
                 isEnd = { viewModel.followingCollectionsFeedModel.isEnd },
                 footer = ProgressIndicatorFooter,
                 modifier = Modifier
-                    .fillMaxSize()
-                    .testTag(PEOPLE_SCREEN_SUBSCRIPTIONS_LIST_TAG),
+                    .fillMaxSize(),
                 key = { it.id },
             ) { collection ->
                 CollectionListItem(
                     collection = collection,
-                    itemTag = "people_screen_collection_item_${collection.id}",
                 )
             }
         }
@@ -1098,13 +1034,11 @@ private fun FollowingSubscriptionsPage(
 @Composable
 private fun CollectionListItem(
     collection: DataHolder.Collection,
-    itemTag: String? = null,
 ) {
     val navigator = LocalNavigator.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (itemTag != null) Modifier.testTag(itemTag) else Modifier)
             .clickable {
                 navigator.onNavigate(CollectionContent(collection.id))
             }.padding(vertical = 8.dp, horizontal = 4.dp),
@@ -1125,13 +1059,11 @@ private fun CollectionListItem(
 @Composable
 private fun QuestionListItem(
     question: DataHolder.Question,
-    itemTag: String? = null,
 ) {
     val navigator = LocalNavigator.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (itemTag != null) Modifier.testTag(itemTag) else Modifier)
             .clickable {
                 navigator.onNavigate(Question(question.id, question.title))
             }.padding(vertical = 8.dp, horizontal = 4.dp),
@@ -1152,14 +1084,12 @@ private fun QuestionListItem(
 @Composable
 private fun PinListItem(
     pin: DataHolder.Pin,
-    itemTag: String? = null,
     readingQueueSourceId: String? = null,
 ) {
     val navigator = LocalNavigator.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (itemTag != null) Modifier.testTag(itemTag) else Modifier)
             .clickable {
                 navigator.onNavigate(
                     Pin(
@@ -1189,13 +1119,11 @@ private fun PinListItem(
 @Composable
 private fun ColumnListItem(
     column: DataHolder.Column,
-    itemTag: String? = null,
 ) {
     val openZhihuWebUrl = rememberZhihuWebUrlOpener()
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (itemTag != null) Modifier.testTag(itemTag) else Modifier)
             .clickable {
                 openZhihuWebUrl(column.webUrl())
             }.padding(vertical = 8.dp, horizontal = 4.dp),
@@ -1232,7 +1160,6 @@ private fun FollowedQuestionListItem(question: FollowedQuestion) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("people_screen_followed_question_item_${question.id}")
             .clickable {
                 question.id.toLongOrNull()?.let {
                     navigator.onNavigate(Question(it, question.title))
@@ -1252,7 +1179,6 @@ private fun FollowedTopicListItem(topic: FollowedTopic) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("people_screen_followed_topic_item_${topic.displayId}")
             .clickable {
                 navigator.onNavigate(
                     com.github.zly2006.zhihu.navigation
@@ -1290,14 +1216,11 @@ private fun DataHolder.Column.webUrl(): String = when {
 @Composable
 private fun PeopleListItem(
     people: DataHolder.People,
-    itemTag: String? = null,
-    actionTag: String? = null,
 ) {
     val navigator = LocalNavigator.current
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .then(if (itemTag != null) Modifier.testTag(itemTag) else Modifier)
             .padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
@@ -1367,7 +1290,7 @@ private fun PeopleListItem(
                     ),
                 )
             },
-            modifier = if (actionTag != null) Modifier.testTag(actionTag) else Modifier,
+            modifier = Modifier,
         ) {
             Text("查看")
         }
@@ -1375,11 +1298,10 @@ private fun PeopleListItem(
 }
 
 @Composable
-private fun StatItem(label: String, value: Int, onClick: () -> Unit = {}, tag: String? = null) {
+private fun StatItem(label: String, value: Int, onClick: () -> Unit = {}) {
     Column(
         horizontalAlignment = Alignment.CenterHorizontally,
         modifier = Modifier
-            .then(if (tag != null) Modifier.testTag(tag) else Modifier)
             .clip(RoundedCornerShape(8.dp))
             .clickable(onClick = onClick)
             .padding(horizontal = 8.dp),
@@ -1442,8 +1364,6 @@ private val OfficialBadge.peopleDetailTitle: String
 private fun SortBar(
     currentSort: String,
     onSortChange: (String) -> Unit,
-    hotTag: String? = null,
-    timeTag: String? = null,
 ) {
     Row(
         modifier = Modifier
@@ -1454,8 +1374,7 @@ private fun SortBar(
         OutlinedButton(
             onClick = { onSortChange("voteups") },
             modifier = Modifier
-                .weight(1f)
-                .then(if (hotTag != null) Modifier.testTag(hotTag) else Modifier),
+                .weight(1f),
             shape = RoundedCornerShape(8.dp),
             colors = if (currentSort == "voteups") {
                 ButtonDefaults.outlinedButtonColors(
@@ -1471,8 +1390,7 @@ private fun SortBar(
         OutlinedButton(
             onClick = { onSortChange("created") },
             modifier = Modifier
-                .weight(1f)
-                .then(if (timeTag != null) Modifier.testTag(timeTag) else Modifier),
+                .weight(1f),
             shape = RoundedCornerShape(8.dp),
             colors = if (currentSort == "created") {
                 ButtonDefaults.outlinedButtonColors(
@@ -1514,7 +1432,6 @@ private fun UserInfoHeader(
                 model = viewModel.avatar,
                 contentDescription = "用户头像",
                 modifier = Modifier
-                    .testTag(PEOPLE_SCREEN_AVATAR_TAG)
                     .padding(end = 16.dp)
                     .size(80.dp)
                     .clip(CircleShape)
@@ -1535,8 +1452,7 @@ private fun UserInfoHeader(
                         AuthorBadge(
                             badge = badge,
                             modifier = Modifier
-                                .padding(start = 6.dp)
-                                .testTag(PEOPLE_SCREEN_OFFICIAL_BADGE_TAG),
+                                .padding(start = 6.dp),
                         )
                     }
                 }
@@ -1554,7 +1470,6 @@ private fun UserInfoHeader(
                     Row(
                         modifier = Modifier
                             .padding(top = 4.dp)
-                            .testTag(PEOPLE_SCREEN_GITHUB_STARS_TAG)
                             .clickable { openExternalUrl(githubSocial.profileUrl) },
                         verticalAlignment = Alignment.CenterVertically,
                         horizontalArrangement = Arrangement.spacedBy(4.dp),
@@ -1594,22 +1509,22 @@ private fun UserInfoHeader(
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(0)
                 }
-            }, tag = PEOPLE_SCREEN_ANSWER_COUNT_TAG)
+            })
             StatItem("文章", viewModel.articleCount, onClick = {
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(1)
                 }
-            }, tag = PEOPLE_SCREEN_ARTICLE_COUNT_TAG)
+            })
             StatItem("粉丝", viewModel.followerCount, onClick = {
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(7)
                 }
-            }, tag = PEOPLE_SCREEN_FOLLOWER_COUNT_TAG)
+            })
             StatItem("关注", viewModel.followingCount, onClick = {
                 coroutineScope.launch {
                     pagerState.animateScrollToPage(8)
                 }
-            }, tag = PEOPLE_SCREEN_FOLLOWING_COUNT_TAG)
+            })
         }
         FlowRow(
             modifier = Modifier
@@ -1620,25 +1535,25 @@ private fun UserInfoHeader(
         ) {
             OutlinedButton(
                 onClick = onFollowToggle,
-                modifier = Modifier.testTag(PEOPLE_SCREEN_FOLLOW_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Text(if (viewModel.isFollowing) "取消关注" else "关注")
             }
             OutlinedButton(
                 onClick = onBlockToggle,
-                modifier = Modifier.testTag(PEOPLE_SCREEN_BLOCK_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Text(if (viewModel.isBlocking) "取消拉黑" else "拉黑")
             }
             // OutlinedButton(
             //     onClick = onRecommendationBlockToggle,
-            //     modifier = Modifier.testTag(PEOPLE_SCREEN_RECOMMENDATION_BLOCK_BUTTON_TAG),
+            //     modifier = Modifier,
             // ) {
             //     Text(if (viewModel.isBlockedInRecommendations) "取消屏蔽推荐" else "屏蔽推荐")
             // }
             // OutlinedButton(
             //     onClick = onQuestionAuthorBlockToggle,
-            //     modifier = Modifier.testTag(PEOPLE_SCREEN_QUESTION_AUTHOR_BLOCK_BUTTON_TAG),
+            //     modifier = Modifier,
             // ) {
             //     Text(if (viewModel.isBlockedAsQuestionAuthor) "取消屏蔽其提问" else "屏蔽其提问")
             // }

@@ -67,7 +67,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -122,13 +121,6 @@ import kotlinx.serialization.json.putJsonArray
 import kotlin.time.Instant
 import androidx.compose.material.icons.outlined.ThumbUp as OutlinedThumbUp
 
-const val PIN_SCREEN_BACK_BUTTON_TAG = "pin_screen_back_button"
-const val PIN_SCREEN_SHARE_BUTTON_TAG = "pin_screen_share_button"
-const val PIN_SCREEN_LOADING_TAG = "pin_screen_loading"
-const val PIN_SCREEN_ERROR_TAG = "pin_screen_error"
-const val PIN_SCREEN_SCROLL_TAG = "pin_screen_scroll"
-const val PIN_SCREEN_POLL_CARD_TAG = "pin_screen_poll_card"
-
 fun pinScreenPollOptionTag(optionId: String): String = "pin_screen_poll_option_$optionId"
 
 private suspend fun togglePinLike(
@@ -176,11 +168,6 @@ private suspend fun loadPinDetail(
     environment.recordContentOpenEvent(destination = pin)
     return content
 }
-
-const val PIN_SCREEN_AUTHOR_TAG = "pin_screen_author"
-const val PIN_SCREEN_LINK_CARD_TAG = "pin_screen_link_card"
-const val PIN_SCREEN_LIKE_BUTTON_TAG = "pin_screen_like_button"
-const val PIN_SCREEN_COMMENT_BUTTON_TAG = "pin_screen_comment_button"
 
 /**
  * 想法详情页。
@@ -280,7 +267,7 @@ fun PinScreen(
                 navigationIcon = {
                     IconButton(
                         onClick = navigator.onNavigateBack,
-                        modifier = Modifier.testTag(PIN_SCREEN_BACK_BUTTON_TAG),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
@@ -295,7 +282,7 @@ fun PinScreen(
                                 }
                             }
                         },
-                        modifier = Modifier.testTag(PIN_SCREEN_SHARE_BUTTON_TAG),
+                        modifier = Modifier,
                     ) {
                         Icon(Icons.Default.Share, contentDescription = "分享")
                     }
@@ -312,8 +299,7 @@ fun PinScreen(
                 isLoading -> {
                     Box(
                         modifier = Modifier
-                            .fillMaxSize()
-                            .testTag(PIN_SCREEN_LOADING_TAG),
+                            .fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
                         CircularProgressIndicator()
@@ -328,7 +314,7 @@ fun PinScreen(
                         Text(
                             "加载失败: ${errorMessage.orEmpty()}",
                             color = MaterialTheme.colorScheme.error,
-                            modifier = Modifier.testTag(PIN_SCREEN_ERROR_TAG),
+                            modifier = Modifier,
                         )
                     }
                 }
@@ -435,14 +421,12 @@ private fun PinContent(
         modifier = Modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
-            .testTag(PIN_SCREEN_SCROLL_TAG)
             .padding(16.dp),
     ) {
         // 作者信息。
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .testTag(PIN_SCREEN_AUTHOR_TAG)
                 .clickable {
                     navigator.onNavigate(
                         Person(
@@ -601,7 +585,6 @@ private fun PinContent(
             Card(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .testTag(PIN_SCREEN_LINK_CARD_TAG)
                     .clickable {
                         val targetUrl = linkCard.url.takeIf { it.isNotBlank() }
                         val destination = targetUrl?.let(::resolveContent)
@@ -677,7 +660,7 @@ private fun PinContent(
         ) {
             FilledTonalButton(
                 onClick = onLikeClick,
-                modifier = Modifier.testTag(PIN_SCREEN_LIKE_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Icon(
                     if (isLiked) Icons.Filled.ThumbUp else Icons.Outlined.OutlinedThumbUp,
@@ -693,7 +676,7 @@ private fun PinContent(
 
             FilledTonalButton(
                 onClick = onCommentClick,
-                modifier = Modifier.testTag(PIN_SCREEN_COMMENT_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Icon(
                     Icons.AutoMirrored.Filled.Comment,
@@ -749,8 +732,7 @@ private fun PinPollCard(
     val pollVoterCount = poll.memberCount.takeIf { it > 0 } ?: poll.votingCount
     Card(
         modifier = Modifier
-            .fillMaxWidth()
-            .testTag(PIN_SCREEN_POLL_CARD_TAG),
+            .fillMaxWidth(),
         colors = CardDefaults.cardColors(
             containerColor = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
         ),
@@ -781,8 +763,7 @@ private fun PinPollCard(
                         onClick = { onPollVote(poll.id, option.id) },
                         enabled = votingOptionId == null,
                         modifier = Modifier
-                            .fillMaxWidth()
-                            .testTag(pinScreenPollOptionTag(option.id)),
+                            .fillMaxWidth(),
                     ) {
                         Text(
                             text = option.title,
@@ -825,8 +806,7 @@ private fun PinPollResultRow(
     }
     Surface(
         modifier = Modifier
-            .fillMaxWidth()
-            .testTag(pinScreenPollOptionTag(option.id)),
+            .fillMaxWidth(),
         shape = rowShape,
         color = if (option.isSelected) {
             MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f)

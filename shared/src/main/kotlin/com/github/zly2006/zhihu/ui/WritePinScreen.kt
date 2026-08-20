@@ -59,7 +59,6 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.input.OffsetMapping
@@ -97,14 +96,6 @@ import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlin.time.Duration.Companion.milliseconds
-
-const val WRITE_PIN_TITLE_TAG = "WritePinTitle"
-const val WRITE_PIN_CONTENT_TAG = "WritePinContent"
-const val WRITE_PIN_FAB_PREVIEW_TAG = "WritePinFabPreview"
-const val WRITE_PIN_FAB_IMAGE_TAG = "WritePinFabImage"
-const val WRITE_PIN_FAB_SAVE_TAG = "WritePinFabSave"
-const val WRITE_PIN_IMAGE_LIST_TAG = "WritePinImageList"
-const val WRITE_PIN_TOPIC_SUGGESTIONS_TAG = "WritePinTopicSuggestions"
 
 private const val PIN_IMAGE_LIMIT = 9
 
@@ -392,9 +383,6 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                 saveEnabled = !isSubmitting,
                 showImageButton = launchImagePicker != null,
                 isUploadingImage = isUploadingImage,
-                previewTag = WRITE_PIN_FAB_PREVIEW_TAG,
-                imageTag = WRITE_PIN_FAB_IMAGE_TAG,
-                saveTag = WRITE_PIN_FAB_SAVE_TAG,
                 onPreview = ::showPreview,
                 onImage = { launchImagePicker?.invoke() },
                 onSave = { submitPin(publish = false) },
@@ -416,8 +404,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                     onValueChange = { newValue -> title = newValue },
                     modifier =
                         Modifier
-                            .fillMaxWidth()
-                            .testTag(WRITE_PIN_TITLE_TAG),
+                            .fillMaxWidth(),
                     enabled = !isSubmitting,
                     textStyle =
                         MaterialTheme.typography.titleLarge.copy(
@@ -447,8 +434,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                         modifier =
                             Modifier
                                 .fillMaxWidth()
-                                .padding(bottom = 8.dp)
-                                .testTag(WRITE_PIN_IMAGE_LIST_TAG),
+                                .padding(bottom = 8.dp),
                         verticalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
                         Text(
@@ -499,7 +485,6 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                     value = content,
                     onValueChange = ::updateContent,
                     placeholder = "分享你此刻的想法... 输入 # 添加话题",
-                    contentTag = WRITE_PIN_CONTENT_TAG,
                     enabled = !isSubmitting,
                     modifier =
                         Modifier
@@ -511,7 +496,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                 )
                 if (topicSuggestions.isNotEmpty()) {
                     Surface(
-                        modifier = Modifier.fillMaxWidth().testTag(WRITE_PIN_TOPIC_SUGGESTIONS_TAG),
+                        modifier = Modifier.fillMaxWidth(),
                         tonalElevation = 4.dp,
                         shape = MaterialTheme.shapes.medium,
                     ) {
@@ -524,8 +509,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
                                 TextButton(
                                     modifier =
                                         Modifier
-                                            .fillMaxWidth()
-                                            .testTag("write_pin_topic_suggestion_${topic.topicId}"),
+                                            .fillMaxWidth(),
                                     onClick = {
                                         val query = activePinTopicQuery(content) ?: return@TextButton
                                         val previousContent = content

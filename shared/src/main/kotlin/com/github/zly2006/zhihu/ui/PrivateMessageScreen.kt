@@ -57,7 +57,6 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
@@ -144,8 +143,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                         value = draft,
                         onValueChange = { draft = it },
                         modifier = Modifier
-                            .weight(1f)
-                            .testTag("private_message_input"),
+                            .weight(1f),
                         placeholder = { Text("发私信") },
                         enabled = !viewModel.isSending,
                         maxLines = 4,
@@ -170,7 +168,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                             }
                         },
                         enabled = draft.isNotBlank() && !viewModel.isSending,
-                        modifier = Modifier.testTag("private_message_send"),
+                        modifier = Modifier,
                     ) {
                         Icon(
                             Icons.AutoMirrored.Outlined.Send,
@@ -220,7 +218,6 @@ private fun PrivateMessageBubble(
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .testTag("private_message_${message.stableId}")
             .padding(horizontal = 14.dp, vertical = 5.dp),
         horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End,
         verticalAlignment = Alignment.Bottom,

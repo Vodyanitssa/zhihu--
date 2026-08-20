@@ -89,7 +89,6 @@ import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.SubcomposeLayout
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
@@ -108,6 +107,8 @@ import com.github.zly2006.zhihu.navigation.WriteAnswer
 import com.github.zly2006.zhihu.platform.rememberSettingsStore
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.platform.rememberZhihuWebUrlOpener
+import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.ui.components.CommentScreenComponent
 import com.github.zly2006.zhihu.ui.components.FeedCard
 import com.github.zly2006.zhihu.ui.components.FeedPullToRefresh
@@ -124,23 +125,10 @@ import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 import kotlin.math.roundToInt
 
-const val QUESTION_SCREEN_LIST_TAG = "question_screen_list"
-const val QUESTION_TITLE_TAG = "question_title"
-const val QUESTION_DETAIL_TOGGLE_TAG = "question_detail_toggle"
-const val QUESTION_DETAIL_CONTENT_TAG = "question_detail_content"
-const val QUESTION_DETAIL_PREVIEW_TAG = "question_detail_preview"
-const val QUESTION_SORT_DEFAULT_TAG = "question_sort_default"
-const val QUESTION_SORT_UPDATED_TAG = "question_sort_updated"
-const val QUESTION_FOLLOW_BUTTON_TAG = "question_follow_button"
-const val QUESTION_VIEW_LOG_BUTTON_TAG = "question_view_log_button"
-const val QUESTION_SHARE_BUTTON_TAG = "question_share_button"
-const val QUESTION_WRITE_ANSWER_BUTTON_TAG = "question_write_answer_button"
-const val QUESTION_COMMENTS_BUTTON_TAG = "question_comments_button"
 private const val QUESTION_DETAIL_COLLAPSE_THRESHOLD = 100
 private val QUESTION_DETAIL_COLLAPSED_MAX_HEIGHT: Dp = 180.dp
 private val QUESTION_DETAIL_MASK_HEIGHT: Dp = 88.dp
 private val QUESTION_DETAIL_TOGGLE_ZONE_HEIGHT: Dp = 56.dp
-const val QUESTION_STATS_TAG = "question_stats"
 
 private suspend fun loadQuestion(
     environment: ContentLoadEnvironment,
@@ -263,13 +251,14 @@ fun QuestionScreen(
                 key = { it.stableKey },
                 listState = listState,
                 modifier = Modifier
-                    .padding(innerPadding)
-                    .testTag(QUESTION_SCREEN_LIST_TAG),
+                    .padding(innerPadding),
                 footer = ProgressIndicatorFooter,
                 topContent = {
                     item {
                         Column(
-                            modifier = Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 8.dp),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp, vertical = 8.dp),
                             verticalArrangement = Arrangement.spacedBy(16.dp),
                         ) {
                             QuestionHeaderSection(
@@ -322,7 +311,7 @@ fun QuestionScreen(
                 FeedCard(
                     item = item,
                     readingQueueSourceId = answerReadingQueueSourceId,
-                    modifier = Modifier.testTag("question_feed_item_${item.stableKey}"),
+                    modifier = Modifier,
                 ) { _, destination ->
                     answerSwitchState?.pendingNavigator = viewModel.createAnswerNavigatorFor(item, paginationEnvironment)
                     destination?.let(navigator.onNavigate)
@@ -380,13 +369,13 @@ private fun QuestionTopBar(
             }
         },
         actions = {
-            IconButton(onClick = onOpenLog, modifier = Modifier.testTag(QUESTION_VIEW_LOG_BUTTON_TAG)) {
+            IconButton(onClick = onOpenLog, modifier = Modifier) {
                 Icon(Icons.Filled.History, contentDescription = "日志")
             }
             IconButton(
                 onClick = onShare,
                 enabled = canShare,
-                modifier = Modifier.testTag(QUESTION_SHARE_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Icon(Icons.Filled.Share, contentDescription = "分享")
             }
@@ -408,7 +397,7 @@ private fun QuestionHeaderSection(
                 text = title,
                 style = MaterialTheme.typography.headlineSmall,
                 fontWeight = FontWeight.Bold,
-                modifier = Modifier.testTag(QUESTION_TITLE_TAG),
+                modifier = Modifier,
             )
         }
         Row(
@@ -417,7 +406,7 @@ private fun QuestionHeaderSection(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             FlowRow(
-                modifier = Modifier.weight(1f).testTag(QUESTION_STATS_TAG),
+                modifier = Modifier.weight(1f),
                 horizontalArrangement = Arrangement.spacedBy(16.dp), // 水平间距
                 verticalArrangement = Arrangement.spacedBy(8.dp), // 垂直间距
             ) {
@@ -427,7 +416,7 @@ private fun QuestionHeaderSection(
             }
             OutlinedButton(
                 onClick = onShowComments,
-                modifier = Modifier.testTag(QUESTION_COMMENTS_BUTTON_TAG),
+                modifier = Modifier,
             ) {
                 Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
                 Spacer(Modifier.width(8.dp))
@@ -555,7 +544,7 @@ private fun QuestionAnimatedBodyHeader(
                             selected = currentSort == "default",
                             onClick = { onSortChange("default") },
                             modifier =
-                                Modifier.testTag(QUESTION_SORT_DEFAULT_TAG).semantics {
+                                Modifier.semantics {
                                     selected = currentSort == "default"
                                 },
                             label = { Text("默认") },
@@ -564,7 +553,7 @@ private fun QuestionAnimatedBodyHeader(
                             selected = currentSort == "updated",
                             onClick = { onSortChange("updated") },
                             modifier =
-                                Modifier.testTag(QUESTION_SORT_UPDATED_TAG).semantics {
+                                Modifier.semantics {
                                     selected = currentSort == "updated"
                                 },
                             label = { Text("最新") },
@@ -593,8 +582,7 @@ private fun QuestionDetailStaticContent(
     SubcomposeLayout(
         modifier =
             Modifier
-                .fillMaxWidth()
-                .testTag(QUESTION_DETAIL_CONTENT_TAG),
+                .fillMaxWidth(),
     ) { constraints ->
         val placeable =
             subcompose("static_detail") {
@@ -638,8 +626,7 @@ private fun QuestionDetailAnimatedViewport(
         modifier =
             Modifier
                 .fillMaxWidth()
-                .clipToBounds()
-                .testTag(if (isExpanded) QUESTION_DETAIL_CONTENT_TAG else QUESTION_DETAIL_PREVIEW_TAG),
+                .clipToBounds(),
     ) { constraints ->
         val looseConstraints =
             constraints.copy(
@@ -709,7 +696,8 @@ private fun QuestionDetailWithTopics(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (questionContent.isNotEmpty()) {
-            QuestionDetailContent(questionId = questionId, html = questionContent)
+            val contentNodes = AstParser.ParseContent(questionContent)
+            RenderContentNodes(contentNodes)
         }
         if (topics.isNotEmpty()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -757,8 +745,7 @@ private fun QuestionDetailToggleButton(
         modifier =
             Modifier
                 .offset(y = 4.dp)
-                .padding(end = 4.dp, bottom = 0.dp)
-                .testTag(QUESTION_DETAIL_TOGGLE_TAG),
+                .padding(end = 4.dp, bottom = 0.dp),
     ) {
         Icon(
             imageVector = if (isExpanded) Icons.Filled.ExpandLess else Icons.Filled.ExpandMore,
@@ -778,7 +765,7 @@ private fun QuestionPrimaryActions(
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
         Button(
             onClick = onWriteAnswerClick,
-            modifier = Modifier.weight(1f).testTag(QUESTION_WRITE_ANSWER_BUTTON_TAG),
+            modifier = Modifier.weight(1f),
             colors =
                 ButtonDefaults.buttonColors(
                     containerColor = MaterialTheme.colorScheme.secondaryContainer,
@@ -792,9 +779,11 @@ private fun QuestionPrimaryActions(
         FilledTonalButton(
             onClick = onFollowClick,
             modifier =
-                Modifier.weight(1f).testTag(QUESTION_FOLLOW_BUTTON_TAG).semantics {
-                    selected = isFollowing
-                },
+                Modifier
+                    .weight(1f)
+                    .semantics {
+                        selected = isFollowing
+                    },
             colors =
                 if (isFollowing) {
                     ButtonDefaults.filledTonalButtonColors(

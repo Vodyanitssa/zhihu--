@@ -59,7 +59,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.asImageBitmap
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
@@ -199,8 +198,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                 imeAction = ImeAction.Next,
             ),
             modifier = Modifier
-                .fillMaxWidth()
-                .testTag("phone_login_phone"),
+                .fillMaxWidth(),
         )
 
         if (captchaRequired) {
@@ -219,8 +217,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                     contentScale = ContentScale.Fit,
                     modifier = Modifier
                         .fillMaxWidth()
-                        .height(96.dp)
-                        .testTag("phone_login_captcha_image"),
+                        .height(96.dp),
                 )
             }
             OutlinedTextField(
@@ -237,8 +234,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                     },
                 ),
                 modifier = Modifier
-                    .fillMaxWidth()
-                    .testTag("phone_login_captcha_input"),
+                    .fillMaxWidth(),
             )
             Row(
                 modifier = Modifier.fillMaxWidth(),
@@ -274,8 +270,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                     },
                     enabled = captchaInput.isNotBlank() && !isSendingDigits,
                     modifier = Modifier
-                        .weight(1f)
-                        .testTag("phone_login_verify_captcha"),
+                        .weight(1f),
                 ) {
                     Text("验证并发送")
                 }
@@ -299,8 +294,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                     imeAction = ImeAction.Done,
                 ),
                 modifier = Modifier
-                    .weight(1f)
-                    .testTag("phone_login_digits"),
+                    .weight(1f),
             )
             Button(
                 onClick = { scope.launch { sendDigits() } },
@@ -309,7 +303,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                     resendSeconds == 0 &&
                     !isSendingDigits &&
                     !isLoggingIn,
-                modifier = Modifier.testTag("phone_login_send_digits"),
+                modifier = Modifier,
             ) {
                 if (isSendingDigits) {
                     CircularProgressIndicator(
@@ -331,8 +325,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
         Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { agreementAccepted = !agreementAccepted }
-                .testTag("phone_login_agreement"),
+                .clickable { agreementAccepted = !agreementAccepted },
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Checkbox(
@@ -372,8 +365,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                 !isSendingDigits &&
                 !isLoggingIn,
             modifier = Modifier
-                .fillMaxWidth()
-                .testTag("phone_login_submit"),
+                .fillMaxWidth(),
         ) {
             if (isLoggingIn) {
                 CircularProgressIndicator(
@@ -390,7 +382,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                 text = message,
                 color = MaterialTheme.colorScheme.error,
                 style = MaterialTheme.typography.bodyMedium,
-                modifier = Modifier.testTag("phone_login_error"),
+                modifier = Modifier,
             )
         }
     }

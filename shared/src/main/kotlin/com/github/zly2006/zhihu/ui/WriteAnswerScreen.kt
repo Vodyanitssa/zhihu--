@@ -81,11 +81,6 @@ import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 
-const val WRITE_ANSWER_CONTENT_TAG = "WriteAnswerContent"
-const val WRITE_ANSWER_FAB_PREVIEW_TAG = "WriteAnswerFabPreview"
-const val WRITE_ANSWER_FAB_IMAGE_TAG = "WriteAnswerFabImage"
-const val WRITE_ANSWER_FAB_SAVE_TAG = "WriteAnswerFabSave"
-
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun WriteAnswerScreen(
@@ -304,9 +299,6 @@ fun WriteAnswerScreen(
                     saveEnabled = !isSubmitting,
                     showImageButton = launchImagePicker != null,
                     isUploadingImage = isUploadingImage,
-                    previewTag = WRITE_ANSWER_FAB_PREVIEW_TAG,
-                    imageTag = WRITE_ANSWER_FAB_IMAGE_TAG,
-                    saveTag = WRITE_ANSWER_FAB_SAVE_TAG,
                     onPreview = ::showPreview,
                     onImage = { launchImagePicker?.invoke() },
                     onSave = { submitAnswer(publish = false) },
@@ -327,7 +319,6 @@ fun WriteAnswerScreen(
                 value = content,
                 onValueChange = { newValue -> content = newValue },
                 placeholder = "请输入图文回答内容……",
-                contentTag = WRITE_ANSWER_CONTENT_TAG,
                 enabled = !isSubmitting,
                 modifier = Modifier.fillMaxSize(),
                 bottomPadding = 280.dp,

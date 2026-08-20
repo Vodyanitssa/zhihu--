@@ -29,7 +29,6 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.github.zly2006.zhihu.data.HotListFeed
@@ -41,9 +40,6 @@ import com.github.zly2006.zhihu.ui.components.PaginatedList
 import com.github.zly2006.zhihu.ui.components.ProgressIndicatorFooter
 import com.github.zly2006.zhihu.viewmodel.feed.HotListViewModel
 import com.github.zly2006.zhihu.viewmodel.rememberPaginationEnvironment
-
-const val HOT_LIST_LIST_TAG = "hot_list_list"
-const val HOT_LIST_REFRESH_BUTTON_TAG = "hot_list_refresh_button"
 
 /**
  * 热榜页面。
@@ -98,8 +94,7 @@ fun HotListScreen(
                 listState = listState,
                 onLoadMore = { viewModel.loadMore(environment) },
                 modifier = Modifier
-                    .padding(innerPadding)
-                    .testTag(HOT_LIST_LIST_TAG),
+                    .padding(innerPadding),
                 isEnd = { viewModel.isEnd },
                 footer = ProgressIndicatorFooter,
             ) { item ->
