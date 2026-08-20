@@ -92,6 +92,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
+import com.github.zly2006.zhihu.R
 import com.github.zly2006.zhihu.data.DataHolder
 import com.github.zly2006.zhihu.data.VoteUpState
 import com.github.zly2006.zhihu.navigation.Article
@@ -107,7 +108,6 @@ import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.renderer.AstParser
 import com.github.zly2006.zhihu.renderer.ContentNode
 import com.github.zly2006.zhihu.renderer.RenderContentNodes
-import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.article.ArticleActionsMenu
 import com.github.zly2006.zhihu.ui.article.CachedAnswerPreview
 import com.github.zly2006.zhihu.ui.article.rememberArticleAnswerNavigationState

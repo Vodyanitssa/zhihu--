@@ -56,5 +56,7 @@ __pycache__/
 .codex/hooks/__pycache__/
 
 # Local replay corpus contains complete third-party Zhihu responses.
-shared/src/jvmTest/resources/zhihu-formula-corpus/raw/
 tools/zhihu-formula-corpus/
+
+# Sample zhihu html
+samples/

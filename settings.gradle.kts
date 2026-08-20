@@ -41,7 +41,6 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 
 rootProject.name = "Zhihu"
 include(":app")
-include(":shared")
 include(":shared-local-db")
 include(":markdown-parser")
 include(":markdown-renderer")

@@ -132,8 +132,9 @@ configurations.configureEach {
 }
 
 dependencies {
-    implementation(project(":shared"))
+    implementation(project(":shared-local-db"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
+    implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.1")
     implementation("io.ktor:ktor-client-core-jvm:$ktor")
     implementation("io.ktor:ktor-client-android:$ktor")
     implementation("io.ktor:ktor-client-content-negotiation-jvm:$ktor")
@@ -150,17 +151,20 @@ dependencies {
     implementation("io.github.zly2006:latex-renderer-android:0.0.1-alpha5")
 
     implementation("io.coil-kt.coil3:coil-compose:$coil")
+    implementation("io.coil-kt.coil3:coil-network-core:$coil")
     implementation("io.coil-kt.coil3:coil-network-ktor3-android:$coil")
     implementation("io.coil-kt.coil3:coil-gif:$coil")
     // implementation("io.coil-kt.coil3:coil-svg:$coil")
     implementation("me.saket.telephoto:zoomable-image-coil3:0.19.0")
 
-    implementation("com.materialkolor:material-kolor:4.1.1")
+    implementation("com.materialkolor:material-kolor:5.0.0")
 
-    implementation("org.jsoup:jsoup:1.22.2")
+    implementation("org.jsoup:jsoup:1.23.1")
+    implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
 
     // ZXing for QR code scanning
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
+    implementation("com.google.zxing:core:3.5.4")
 
     implementation("androidx.core:core-ktx:1.19.0")
     // Lifecycle (JetBrains KMP versions)

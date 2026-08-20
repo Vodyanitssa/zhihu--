@@ -57,9 +57,9 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.github.zly2006.zhihu.R
 import com.github.zly2006.zhihu.renderer.AstParser
 import com.github.zly2006.zhihu.renderer.RenderContentNodes
-import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.AnswerEndorsementChip
 import com.github.zly2006.zhihu.ui.components.AuthorBadge
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel.CachedAnswerContent
