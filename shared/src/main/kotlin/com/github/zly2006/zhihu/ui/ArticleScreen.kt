@@ -100,8 +100,12 @@ import com.github.zly2006.zhihu.navigation.LocalNavigator
 import com.github.zly2006.zhihu.navigation.Question
 import com.github.zly2006.zhihu.navigation.Topic
 import com.github.zly2006.zhihu.platform.PlatformBackHandler
+import com.github.zly2006.zhihu.platform.rememberExternalUrlOpener
+import com.github.zly2006.zhihu.platform.rememberImageSaver
+import com.github.zly2006.zhihu.platform.rememberImageSharer
 import com.github.zly2006.zhihu.platform.rememberUserMessageSink
 import com.github.zly2006.zhihu.renderer.AstParser
+import com.github.zly2006.zhihu.renderer.ContentNode
 import com.github.zly2006.zhihu.renderer.RenderContentNodes
 import com.github.zly2006.zhihu.shared.R
 import com.github.zly2006.zhihu.ui.article.ArticleActionsMenu
@@ -121,6 +125,8 @@ import com.github.zly2006.zhihu.ui.components.VerticalReadingProgressBar
 import com.github.zly2006.zhihu.ui.components.VotersSheet
 import com.github.zly2006.zhihu.ui.components.ZhihuTwoRowsTopAppBar
 import com.github.zly2006.zhihu.ui.components.rememberPreferCollapsedExitUntilCollapsedScrollBehavior
+import com.github.zly2006.zhihu.ui.image.ImagePreview
+import com.github.zly2006.zhihu.ui.image.ImagePreviewActions
 import com.github.zly2006.zhihu.util.formatCompactCount
 import com.github.zly2006.zhihu.util.smoothGradient
 import com.github.zly2006.zhihu.viewmodel.ArticleViewModel
@@ -178,6 +184,25 @@ fun ArticleScreen(
     var showActionsMenu by remember { mutableStateOf(false) }
     var showExportDialog by remember { mutableStateOf(false) }
     var showVoters by rememberSaveable(article.type, article.id) { mutableStateOf(false) }
+
+    // 图片预览状态。
+    // 使用 -1 表示“未在预览”。点击图片时直接记录其在 articleImages 中的 index，
+    // 避免通过 URL 反向查找带来的问题（多张图片可能使用相同 URL）。
+    var imagePreviewIndex by remember { mutableIntStateOf(-1) }
+    val openExternalUrl = rememberExternalUrlOpener()
+    val saveImage = rememberImageSaver()
+    val shareImage = rememberImageSharer()
+
+    val contentNodes = AstParser.ParseContent(viewModel.content)
+    // 从文章 AST 中提取图片列表，用于 gallery 预览。
+    // 顺序与 Renderer 中的 imageIndex 计数严格保持一致。
+    val articleImages = remember(viewModel.content) {
+        contentNodes
+            .filterIsInstance<ContentNode.Image>()
+            .filter { it.url.isNotBlank() }
+            .map { ImagePreview(url = it.url) }
+    }
+
     val topBarState = rememberArticleTopBarState(
         scrollState = scrollState,
         autoHide = articleSettings.isTitleAutoHide,
@@ -660,9 +685,11 @@ fun ArticleScreen(
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
-                            val contentNodes = AstParser.ParseContent(viewModel.content)
                             RenderContentNodes(
                                 nodes = contentNodes,
+                                onImageClick = { _, index ->
+                                    imagePreviewIndex = index
+                                },
                             )
                         }
                     }
@@ -762,6 +789,21 @@ fun ArticleScreen(
                 }
             }
         }
+
+        // 图片预览 overlay。
+        // 位于主内容之上，独立管理预览状态，不影响文章重组。
+        if (imagePreviewIndex >= 0 && articleImages.isNotEmpty()) {
+            ImagePreview(
+                images = articleImages,
+                initialIndex = imagePreviewIndex,
+                actions = ImagePreviewActions(
+                    onSave = { saveImage(it) },
+                    onShare = { shareImage(it) },
+                    onOpenInBrowser = { openExternalUrl(it) },
+                ),
+                onDismiss = { imagePreviewIndex = -1 },
+            )
+        }
     }
 
     // 全屏菜单
@@ -778,6 +820,10 @@ fun ArticleScreen(
 
     PlatformBackHandler(showActionsMenu) {
         showActionsMenu = false
+    }
+
+    PlatformBackHandler(imagePreviewIndex >= 0) {
+        imagePreviewIndex = -1
     }
 
     // 使用新的收藏夹对话框组件

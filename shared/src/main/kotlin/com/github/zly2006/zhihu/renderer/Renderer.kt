@@ -97,19 +97,30 @@ fun EmojiItem(
 fun RenderContentNodes(
     nodes: List<ContentNode>,
     modifier: Modifier = Modifier,
+    onImageClick: (ContentNode.Image, Int) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
+        var imageIndex = 0
         nodes.forEach { node ->
-            RenderContentNode(node)
+            if (node is ContentNode.Image && node.url.isNotBlank()) {
+                val capturedIndex = imageIndex
+                RenderContentNode(node, { onImageClick(node, capturedIndex) })
+                imageIndex++
+            } else {
+                RenderContentNode(node, {})
+            }
         }
     }
 }
 
 @Composable
-private fun RenderContentNode(node: ContentNode) {
+fun RenderContentNode(
+    node: ContentNode,
+    onImageClick: (ContentNode.Image) -> Unit = {},
+) {
     when (node) {
         is ContentNode.Paragraph -> {
             if (node.content.isNotEmpty()) {
@@ -147,7 +158,7 @@ private fun RenderContentNode(node: ContentNode) {
         }
 
         is ContentNode.Image -> {
-            RenderImage(node)
+            RenderImage(node, onImageClick)
         }
 
         is ContentNode.Video -> {
@@ -264,7 +275,10 @@ private fun RenderQuote(node: ContentNode.Quote) {
 }
 
 @Composable
-private fun RenderImage(node: ContentNode.Image) {
+fun RenderImage(
+    node: ContentNode.Image,
+    onImageClick: (ContentNode.Image) -> Unit = {},
+) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -275,7 +289,8 @@ private fun RenderImage(node: ContentNode.Image) {
             contentDescription = node.caption,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium),
+                .clip(MaterialTheme.shapes.medium)
+                .clickable { onImageClick(node) },
             contentScale = ContentScale.FillWidth,
         )
 
