@@ -138,6 +138,9 @@ dependencies {
     implementation("org.jetbrains.kotlinx:kotlinx-datetime:0.8.0")
     implementation("androidx.browser:browser:1.10.0")
 
+    // Media3 ExoPlayer
+    implementation("androidx.media3:media3-exoplayer:1.7.1")
+
     implementation(project(":markdown-parser"))
     implementation(project(":markdown-renderer"))
     implementation("io.github.zly2006:latex-renderer-android:0.0.1-alpha5")

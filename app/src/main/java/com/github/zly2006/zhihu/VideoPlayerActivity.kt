@@ -21,8 +21,6 @@ import android.content.ContentValues
 import android.content.res.Configuration
 import android.graphics.SurfaceTexture
 import android.media.MediaMetadataRetriever
-import android.media.MediaPlayer
-import android.media.PlaybackParams
 import android.net.Uri
 import android.os.Bundle
 import android.os.Environment
@@ -104,6 +102,12 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.media3.common.MediaItem
+import androidx.media3.common.PlaybackException
+import androidx.media3.common.PlaybackParameters
+import androidx.media3.common.Player
+import androidx.media3.common.VideoSize
+import androidx.media3.exoplayer.ExoPlayer
 import com.github.zly2006.zhihu.platform.androidSettingsStore
 import com.github.zly2006.zhihu.util.enableEdgeToEdgeCompat
 import kotlinx.coroutines.delay
@@ -111,7 +115,7 @@ import kotlin.math.abs
 import kotlin.time.Duration.Companion.milliseconds
 
 class VideoPlayerActivity : ComponentActivity() {
-    private var player: MediaPlayer? = null
+    private var player: ExoPlayer? = null
     private var videoId: Long = 0
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -200,8 +204,8 @@ class VideoPlayerActivity : ComponentActivity() {
         val p = player ?: return
         if (videoId == 0L) return
         try {
-            val pos = p.currentPosition.toLong()
-            val d = p.duration.toLong()
+            val pos = p.currentPosition
+            val d = p.duration
             if (pos > 1000 && d > 0) {
                 val store = androidSettingsStore(this)
                 if (d - pos > 3000) {
@@ -247,11 +251,11 @@ private fun VideoPlayerView(
     videoUrl: String,
     savedPosition: Long,
     isFastForwardingState: MutableState<Boolean>,
-    onPlayerReady: (MediaPlayer) -> Unit,
+    onPlayerReady: (ExoPlayer) -> Unit,
 ) {
     val isPlayingState = remember { mutableStateOf(true) }
     var videoEnded by remember { mutableStateOf(false) }
-    var mediaPlayer by remember { mutableStateOf<MediaPlayer?>(null) }
+    var mediaPlayer by remember { mutableStateOf<ExoPlayer?>(null) }
     var controlsVisible by remember { mutableStateOf(false) }
     var screenLocked by remember { mutableStateOf(false) }
     var lockHintVisible by remember { mutableStateOf(false) }
@@ -268,30 +272,30 @@ private fun VideoPlayerView(
             p.seekTo(0)
             videoEnded = false
         }
-        p.start()
+        p.play()
         isPlayingState.value = true
     }
 
     fun safeSetSpeed(speed: Float) {
         try {
-            mediaPlayer?.playbackParams = PlaybackParams().setSpeed(speed)
+            mediaPlayer?.setPlaybackParameters(PlaybackParameters(speed, 1f))
         } catch (_: Exception) {
         }
     }
 
     fun safeSeekTo(posMs: Long) {
         try {
-            val dur = duration.coerceAtLeast(0)
+            val dur = duration.coerceAtLeast(0L)
             if (dur > 0) {
-                val target = posMs.coerceIn(0, dur)
-                mediaPlayer?.seekTo(target, MediaPlayer.SEEK_CLOSEST)
+                val target = posMs.coerceIn(0L, dur)
+                mediaPlayer?.seekTo(target)
             }
         } catch (_: Exception) {
         }
     }
 
-    fun safeGetMediaTime(fallback: Long, value: MediaPlayer.() -> Int): Long = try {
-        mediaPlayer?.value()?.toLong()?.coerceAtLeast(0) ?: 0
+    fun safeGetMediaTime(fallback: Long, value: ExoPlayer.() -> Long): Long = try {
+        mediaPlayer?.value()?.coerceAtLeast(0L) ?: 0L
     } catch (_: Exception) {
         fallback
     }
@@ -326,26 +330,34 @@ private fun VideoPlayerView(
                             override fun onSurfaceTextureAvailable(surface: SurfaceTexture, width: Int, height: Int) {
                                 val existing = mediaPlayer
                                 if (existing != null) {
-                                    existing.setSurface(Surface(surface))
+                                    existing.setVideoSurface(Surface(surface))
                                     return
                                 }
-                                val player = MediaPlayer().apply {
-                                    setDataSource(viewCtx, Uri.parse(videoUrl))
-                                    setSurface(Surface(surface))
-                                    setOnPreparedListener {
-                                        if (savedPosition > 0) seekTo(savedPosition.toInt())
-                                        start()
-                                        isPlayingState.value = true
-                                    }
-                                    setOnVideoSizeChangedListener { _, w, h ->
-                                        if (w > 0 && h > 0) videoAspectRatio = w.toFloat() / h.toFloat()
-                                    }
-                                    setOnCompletionListener {
-                                        videoEnded = true
-                                        isPlayingState.value = false
-                                    }
-                                    setOnErrorListener { _, _, _ -> true }
-                                    prepareAsync()
+                                val player = ExoPlayer.Builder(viewCtx).build().apply {
+                                    setMediaItem(MediaItem.fromUri(videoUrl))
+                                    setVideoSurface(Surface(surface))
+                                    addListener(object : Player.Listener {
+                                        override fun onPlaybackStateChanged(playbackState: Int) {
+                                            if (playbackState == Player.STATE_ENDED) {
+                                                videoEnded = true
+                                                isPlayingState.value = false
+                                            }
+                                        }
+
+                                        override fun onVideoSizeChanged(videoSize: VideoSize) {
+                                            if (videoSize.width > 0 && videoSize.height > 0) {
+                                                videoAspectRatio = videoSize.width.toFloat() / videoSize.height
+                                            }
+                                        }
+
+                                        override fun onPlayerError(error: PlaybackException) {
+                                            // Error is handled (player will enter IDLE state)
+                                        }
+                                    })
+                                    if (savedPosition > 0) seekTo(savedPosition)
+                                    prepare()
+                                    playWhenReady = true
+                                    isPlayingState.value = true
                                 }
                                 mediaPlayer = player
                                 onPlayerReady(player)
@@ -354,7 +366,7 @@ private fun VideoPlayerView(
                             override fun onSurfaceTextureSizeChanged(surface: SurfaceTexture, width: Int, height: Int) {}
 
                             override fun onSurfaceTextureDestroyed(surface: SurfaceTexture): Boolean {
-                                mediaPlayer?.setSurface(null)
+                                mediaPlayer?.clearVideoSurface()
                                 return true
                             }
 
@@ -414,12 +426,12 @@ private fun VideoPlayerView(
                                         val mp = mediaPlayer
                                         if (mp != null) {
                                             try {
-                                                val dur = mp.duration.coerceAtLeast(0)
-                                                val pos = mp.currentPosition.coerceAtLeast(0)
+                                                val dur = mp.duration.coerceAtLeast(0L)
+                                                val pos = mp.currentPosition.coerceAtLeast(0L)
                                                 if (dur > 0) {
-                                                    val target = (pos.toLong() + ms).coerceIn(0L, dur.toLong())
-                                                    mp.seekTo(target, MediaPlayer.SEEK_CLOSEST)
-                                                    currentPosition = mp.currentPosition.coerceAtLeast(0).toLong()
+                                                    val target = (pos + ms).coerceIn(0L, dur)
+                                                    mp.seekTo(target)
+                                                    currentPosition = mp.currentPosition.coerceAtLeast(0L)
                                                 }
                                             } catch (_: Exception) {
                                             }
