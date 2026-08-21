@@ -321,7 +321,7 @@ class CustomWebView : WebView {
             val fontName = customFontName
             val format = if (fontName.endsWith(".otf", ignoreCase = true)) "opentype" else "truetype"
             "@font-face { font-family: 'ZhihuCustomFont'; src: url('https://zhihu-plus.internal/user-files/custom_font') format('$format'); }\n" +
-                    "body { font-family: 'ZhihuCustomFont', sans-serif; }"
+                "body { font-family: 'ZhihuCustomFont', sans-serif; }"
         } else {
             ""
         }

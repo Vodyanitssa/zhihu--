@@ -44,6 +44,7 @@ import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
+import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.filter.ContentOpenEventSupport
@@ -65,7 +66,6 @@ import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
-import com.zhihuminus.renderer.EmojiManager
 import com.zhihuminus.theme.AndroidThemeSettings
 import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain

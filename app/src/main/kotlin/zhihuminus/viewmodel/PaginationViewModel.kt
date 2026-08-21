@@ -976,8 +976,8 @@ open class SharedAndroidPaginationEnvironment(
 
     override fun hasImageExportPermission(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
-                ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
-                PackageManager.PERMISSION_GRANTED
+            ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+            PackageManager.PERMISSION_GRANTED
 
     override fun requiresHtmlExportPermission(): Boolean =
         Build.VERSION.SDK_INT < Build.VERSION_CODES.Q

@@ -75,6 +75,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
+import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.data.MobileNotificationColumnHead
 import com.zhihuminus.data.MobileNotificationTimelineItem
 import com.zhihuminus.navigation.LocalNavigator
@@ -86,7 +87,6 @@ import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.renderer.EmojiManager
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.util.formatRelativeTime

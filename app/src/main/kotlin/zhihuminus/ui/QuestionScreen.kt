@@ -98,6 +98,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fleeksoft.ksoup.Ksoup
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodeQuestionContentDetail
 import com.zhihuminus.navigation.LocalNavigator
@@ -107,8 +109,6 @@ import com.zhihuminus.navigation.WriteAnswer
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.platform.rememberZhihuWebUrlOpener
-import com.zhihuminus.renderer.AstParser
-import com.zhihuminus.renderer.RenderContentNodes
 import com.zhihuminus.ui.components.CommentScreenComponent
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh

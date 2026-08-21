@@ -1,4 +1,4 @@
-package com.zhihuminus.renderer
+package com.zhihuminus.core.content
 
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
@@ -6,12 +6,6 @@ import com.zhihuminus.util.extractImageUrl
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.TextNode
-
-/*
- * 对外暴露两个函数:
- * ContentNodeParse 将 html 解析为 ContentNode 列表
- * InlineNodeParse 将文字表情混合文本解析为 InlineNode 列表
- */
 
 object AstParser {
     fun ParseContent(text: String): List<ContentNode> {
@@ -164,9 +158,10 @@ object AstParser {
         else -> emptyList()
     }
 
-    private fun parseParagraph(element: Element): ContentNode = ContentNode.Paragraph(
-        content = ParseInline(element.text()),
-    )
+    private fun parseParagraph(element: Element): ContentNode =
+        ContentNode.Paragraph(
+            content = ParseInline(element.text()),
+        )
 
     private fun parseImage(element: Element): ContentNode.Image? {
         val url = element

@@ -1,4 +1,4 @@
-package com.zhihuminus.renderer
+package com.zhihuminus.core.content
 
 import android.content.Context
 import androidx.compose.foundation.Image

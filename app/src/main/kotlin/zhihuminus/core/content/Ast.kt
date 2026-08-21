@@ -1,4 +1,4 @@
-package com.zhihuminus.renderer
+package com.zhihuminus.core.content
 
 /*
  * 块内容，可为多种类型
@@ -62,9 +62,6 @@ sealed interface ContentNode {
     )
 }
 
-/*
- * 行内内容，文字表情混合文本
- */
 sealed interface InlineNode {
     data class Text(
         val text: String,

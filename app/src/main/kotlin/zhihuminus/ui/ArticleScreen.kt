@@ -94,6 +94,9 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import coil3.compose.AsyncImage
 import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.navigation.Article
@@ -106,9 +109,6 @@ import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.renderer.AstParser
-import com.zhihuminus.renderer.ContentNode
-import com.zhihuminus.renderer.RenderContentNodes
 import com.zhihuminus.ui.article.ArticleActionsMenu
 import com.zhihuminus.ui.article.CachedAnswerPreview
 import com.zhihuminus.ui.article.rememberArticleAnswerNavigationState

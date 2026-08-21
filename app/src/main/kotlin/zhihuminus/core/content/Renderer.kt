@@ -1,4 +1,4 @@
-package com.zhihuminus.renderer
+package com.zhihuminus.core.content
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border

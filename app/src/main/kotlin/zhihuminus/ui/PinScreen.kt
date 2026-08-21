@@ -72,6 +72,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodePinContentDetail
 import com.zhihuminus.data.officialBadge
@@ -85,8 +87,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.renderer.AstParser
-import com.zhihuminus.renderer.RenderContentNodes
 import com.zhihuminus.ui.components.AuthorBadge
 import com.zhihuminus.ui.components.CommentScreenComponent
 import com.zhihuminus.ui.components.ShareDialog

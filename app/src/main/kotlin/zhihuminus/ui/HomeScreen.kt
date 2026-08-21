@@ -426,19 +426,19 @@ fun HomeScreen(
             AnimatedVisibility(
                 visible = showCreateMenu,
                 enter = fadeIn(animationSpec = tween(durationMillis = 120)) +
-                        scaleIn(
-                            initialScale = 0.92f,
-                            transformOrigin = TransformOrigin(1f, 1f),
-                            animationSpec = tween(durationMillis = 180),
-                        ) +
-                        slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 8 },
+                    scaleIn(
+                        initialScale = 0.92f,
+                        transformOrigin = TransformOrigin(1f, 1f),
+                        animationSpec = tween(durationMillis = 180),
+                    ) +
+                    slideInVertically(animationSpec = tween(durationMillis = 180)) { it / 8 },
                 exit = fadeOut(animationSpec = tween(durationMillis = 90)) +
-                        scaleOut(
-                            targetScale = 0.96f,
-                            transformOrigin = TransformOrigin(1f, 1f),
-                            animationSpec = tween(durationMillis = 120),
-                        ) +
-                        slideOutVertically(animationSpec = tween(durationMillis = 120)) { it / 8 },
+                    scaleOut(
+                        targetScale = 0.96f,
+                        transformOrigin = TransformOrigin(1f, 1f),
+                        animationSpec = tween(durationMillis = 120),
+                    ) +
+                    slideOutVertically(animationSpec = tween(durationMillis = 120)) { it / 8 },
             ) {
                 Column(horizontalAlignment = Alignment.End) {
                     Surface(

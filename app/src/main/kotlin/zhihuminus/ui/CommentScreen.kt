@@ -129,6 +129,10 @@ import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.EmojiItem
+import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.content.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder
@@ -145,10 +149,6 @@ import com.zhihuminus.platform.rememberImagePreviewOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.renderer.AstParser
-import com.zhihuminus.renderer.EmojiItem
-import com.zhihuminus.renderer.EmojiManager
-import com.zhihuminus.renderer.RenderContentNodes
 import com.zhihuminus.ui.components.replaceSelection
 import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
 import com.zhihuminus.util.twoDigitString
