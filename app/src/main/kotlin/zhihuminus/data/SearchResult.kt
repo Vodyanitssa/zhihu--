@@ -159,7 +159,10 @@ object SearchResultSerializer : KSerializer<SearchResult> {
 
                     3 -> highlight = decodeNullableSerializableElement(descriptor, 3, Highlight.serializer())
                     4 -> index = decodeIntElement(descriptor, 4)
-                    5 -> hitLabels = decodeStringElement(descriptor, 5)
+                    5 -> {
+                        val element = decodeSerializableElement(descriptor, 5, JsonElement.serializer())
+                        hitLabels = if (element is JsonNull) null else element.jsonPrimitive.content
+                    }
                     CompositeDecoder.DECODE_DONE -> break
                     else -> throw IllegalArgumentException("Unknown index $i")
                 }
