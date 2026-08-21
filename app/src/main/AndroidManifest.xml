@@ -36,14 +36,14 @@
             android:enableOnBackInvokedCallback="true"
             tools:targetApi="33">
         <meta-data
-                android:name="com.github.zly2006.zhihu.BUILD_TYPE"
+                android:name="com.zhihuminus.BUILD_TYPE"
                 android:value="${zhihuBuildType}" />
         <meta-data
-                android:name="com.github.zly2006.zhihu.GIT_HASH"
+                android:name="com.zhihuminus.GIT_HASH"
                 android:value="${zhihuGitHash}" />
 
         <activity
-                android:name=".CaptureActivity"
+                android:name="com.zhihuminus.CaptureActivity"
                 android:exported="false"
                 android:label="CaptureActivity"
                 android:theme="@style/Theme.Zhihu"
@@ -52,7 +52,7 @@
                 android:enableOnBackInvokedCallback="true"
                 tools:ignore="DiscouragedApi,LockedOrientationActivity" />
         <activity
-                android:name=".MainActivity"
+                android:name="com.zhihuminus.MainActivity"
                 android:exported="true"
                 android:theme="@style/Theme.Zhihu"
                 android:windowSoftInputMode="adjustResize">
@@ -84,15 +84,15 @@
             </intent-filter>
         </activity>
         <activity
-                android:name=".LoginActivity"
+                android:name="com.zhihuminus.LoginActivity"
                 android:exported="false" />
         <activity
-                android:name=".VideoPlayerActivity"
+                android:name="com.zhihuminus.VideoPlayerActivity"
                 android:exported="false"
                 android:theme="@style/Theme.Zhihu"
                 android:configChanges="orientation|screenSize" />
         <activity
-                android:name=".QRCodeScanActivity"
+                android:name="com.zhihuminus.QRCodeScanActivity"
                 android:exported="false"
                 android:theme="@style/Theme.Zhihu" />
 

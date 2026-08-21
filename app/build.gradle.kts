@@ -30,11 +30,11 @@ aboutLibraries {
 }
 
 android {
-    namespace = "com.github.zly2006.zhihu"
+    namespace = "com.zhihuminus"
     compileSdk = 37
 
     defaultConfig {
-        applicationId = "com.github.zly2006.zhplus.lite"
+        applicationId = "com.zhihuminus"
         minSdk = 28
         targetSdk = 35
         versionCode = property("app.versionCode").toString().toIntOrNull() ?: 1
