@@ -1,4 +1,4 @@
-package com.zhihuminus.core.content
+package com.zhihuminus.core.renderer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -44,6 +44,9 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.platform.rememberExternalUrlOpener
@@ -52,7 +55,7 @@ import com.zhihuminus.platform.rememberExternalUrlOpener
  * 渲染段落、表情包
  */
 @Composable
-fun RenderInlineNodes(
+fun InlineNodes(
     nodes: List<InlineNode>,
 ) {
     val inlineContent = EmojiManager.inlineContent
@@ -94,7 +97,7 @@ fun EmojiItem(
 }
 
 @Composable
-fun RenderContentNodes(
+fun ContentNodes(
     nodes: List<ContentNode>,
     modifier: Modifier = Modifier,
     onImageClick: (ContentNode.Image, Int) -> Unit = { _, _ -> },
@@ -107,24 +110,24 @@ fun RenderContentNodes(
         nodes.forEach { node ->
             if (node is ContentNode.Image && node.url.isNotBlank()) {
                 val capturedIndex = imageIndex
-                RenderContentNode(node, { onImageClick(node, capturedIndex) })
+                ContentNode(node, { onImageClick(node, capturedIndex) })
                 imageIndex++
             } else {
-                RenderContentNode(node, {})
+                ContentNode(node, {})
             }
         }
     }
 }
 
 @Composable
-fun RenderContentNode(
+fun ContentNode(
     node: ContentNode,
     onImageClick: (ContentNode.Image) -> Unit = {},
 ) {
     when (node) {
         is ContentNode.Paragraph -> {
             if (node.content.isNotEmpty()) {
-                RenderInlineNodes(node.content)
+                InlineNodes(node.content)
             }
         }
 
@@ -146,37 +149,37 @@ fun RenderContentNode(
         is ContentNode.Splitter -> HorizontalDivider()
 
         is ContentNode.Link -> {
-            RenderLink(node)
+            Link(node)
         }
 
         is ContentNode.Code -> {
-            RenderCode(node)
+            Code(node)
         }
 
         is ContentNode.Quote -> {
-            RenderQuote(node)
+            Quote(node)
         }
 
         is ContentNode.Image -> {
-            RenderImage(node, onImageClick)
+            Image(node, onImageClick)
         }
 
         is ContentNode.Video -> {
-            RenderVideo(node)
+            Video(node)
         }
 
         is ContentNode.Listing -> {
-            RenderListing(node)
+            Listing(node)
         }
 
         is ContentNode.Table -> {
-            RenderTable(node)
+            Table(node)
         }
     }
 }
 
 @Composable
-private fun RenderLink(node: ContentNode.Link) {
+private fun Link(node: ContentNode.Link) {
     if (node.isCard) {
         val openExternalUrl = rememberExternalUrlOpener()
         Card(
@@ -224,7 +227,7 @@ private fun RenderLink(node: ContentNode.Link) {
 }
 
 @Composable
-private fun RenderCode(node: ContentNode.Code) {
+private fun Code(node: ContentNode.Code) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -252,7 +255,7 @@ private fun RenderCode(node: ContentNode.Code) {
 }
 
 @Composable
-private fun RenderQuote(node: ContentNode.Quote) {
+private fun Quote(node: ContentNode.Quote) {
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -270,12 +273,12 @@ private fun RenderQuote(node: ContentNode.Quote) {
                 .background(MaterialTheme.colorScheme.primary),
         )
 
-        RenderInlineNodes(node.content)
+        InlineNodes(node.content)
     }
 }
 
 @Composable
-fun RenderImage(
+fun Image(
     node: ContentNode.Image,
     onImageClick: (ContentNode.Image) -> Unit = {},
 ) {
@@ -305,7 +308,7 @@ fun RenderImage(
 }
 
 @Composable
-private fun RenderVideo(node: ContentNode.Video) {
+private fun Video(node: ContentNode.Video) {
     val navigator = LocalNavigator.current
 
     Column(
@@ -374,7 +377,7 @@ private fun RenderVideo(node: ContentNode.Video) {
 }
 
 @Composable
-private fun RenderListing(node: ContentNode.Listing) {
+private fun Listing(node: ContentNode.Listing) {
     Column(
         modifier = Modifier.fillMaxWidth(),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -400,7 +403,7 @@ private fun RenderListing(node: ContentNode.Listing) {
 }
 
 @Composable
-private fun RenderTable(node: ContentNode.Table) {
+private fun Table(node: ContentNode.Table) {
     val columnCount = node.rows.maxOfOrNull { it.content.size } ?: return
     val tableWidth = 120.dp * columnCount
 
@@ -416,7 +419,7 @@ private fun RenderTable(node: ContentNode.Table) {
                 Row(modifier = Modifier.fillMaxWidth()) {
                     repeat(columnCount) { columnIndex ->
                         val cell = row.content.getOrNull(columnIndex)
-                        RenderTableCell(
+                        TableCell(
                             text = cell?.content.orEmpty(),
                             isHeader = cell?.isHeader == true || row == node.header,
                             modifier = Modifier.weight(1f),
@@ -433,7 +436,7 @@ private fun RenderTable(node: ContentNode.Table) {
 }
 
 @Composable
-private fun RenderTableCell(
+private fun TableCell(
     text: String,
     isHeader: Boolean,
     modifier: Modifier = Modifier,
@@ -444,13 +447,15 @@ private fun RenderTableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            ).background(
+            )
+            .background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            ).padding(horizontal = 10.dp, vertical = 8.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )

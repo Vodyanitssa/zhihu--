@@ -73,7 +73,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.RenderContentNodes
+import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodePinContentDetail
 import com.zhihuminus.data.officialBadge
@@ -545,7 +545,7 @@ private fun PinContent(
 
         // 想法正文。
         val contentNodes = AstParser.ParseContent(pin.contentHtml)
-        RenderContentNodes(contentNodes)
+        ContentNodes(contentNodes)
 
         val votingPoll = pin.bottomPoll?.voting
         if (votingPoll != null) {

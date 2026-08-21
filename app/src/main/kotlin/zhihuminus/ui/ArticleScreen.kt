@@ -96,7 +96,7 @@ import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.content.RenderContentNodes
+import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.navigation.Article
@@ -700,7 +700,7 @@ fun ArticleScreen(
                                 }
                                 Spacer(modifier = Modifier.height(16.dp))
                             }
-                            RenderContentNodes(
+                            ContentNodes(
                                 nodes = contentNodes,
                                 onImageClick = { _, index ->
                                     imagePreviewIndex = index

@@ -130,9 +130,9 @@ import com.fleeksoft.ksoup.nodes.Element
 import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.EmojiItem
 import com.zhihuminus.core.content.EmojiManager
-import com.zhihuminus.core.content.RenderContentNodes
+import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.renderer.EmojiItem
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder
@@ -1269,7 +1269,7 @@ private fun CommentItem(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
                         val contentNodes = AstParser.ParseContent(commentData.content)
-                        RenderContentNodes(contentNodes)
+                        ContentNodes(contentNodes)
                     }
                 }
             }

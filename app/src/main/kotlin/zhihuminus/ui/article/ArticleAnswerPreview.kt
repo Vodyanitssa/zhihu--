@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.RenderContentNodes
+import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.ui.AnswerEndorsementChip
 import com.zhihuminus.ui.components.AuthorBadge
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
@@ -205,7 +205,7 @@ internal fun CachedAnswerPreview(cached: CachedAnswerContent) {
             if (cached.content.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
                 val contentNodes = AstParser.ParseContent(cached.content)
-                RenderContentNodes(contentNodes)
+                ContentNodes(contentNodes)
             }
             Spacer(modifier = Modifier.height((16 + 36).dp))
         }
