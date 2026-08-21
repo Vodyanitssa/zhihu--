@@ -154,7 +154,7 @@ dependencies {
     implementation("io.coil-kt.coil3:coil-network-core:$coil")
     implementation("io.coil-kt.coil3:coil-network-ktor3-android:$coil")
     implementation("io.coil-kt.coil3:coil-gif:$coil")
-    // implementation("io.coil-kt.coil3:coil-svg:$coil")
+    implementation("io.coil-kt.coil3:coil-svg:$coil")
     implementation("me.saket.telephoto:zoomable-image-coil3:0.19.0")
 
     implementation("com.materialkolor:material-kolor:5.0.0")
