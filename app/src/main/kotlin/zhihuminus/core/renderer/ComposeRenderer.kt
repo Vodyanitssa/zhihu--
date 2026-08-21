@@ -7,8 +7,10 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
@@ -303,7 +305,7 @@ private fun Quote(node: ContentNode.Quote) {
 }
 
 @Composable
-fun Image(
+private fun Image(
     node: ContentNode.Image,
     onImageClick: (ContentNode.Image) -> Unit = {},
 ) {
@@ -441,13 +443,19 @@ private fun Table(node: ContentNode.Table) {
     ) {
         Column(modifier = Modifier.width(tableWidth)) {
             node.rows.forEachIndexed { rowIndex, row ->
-                Row(modifier = Modifier.fillMaxWidth()) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .height(IntrinsicSize.Min),
+                ) {
                     repeat(columnCount) { columnIndex ->
                         val cell = row.content.getOrNull(columnIndex)
                         TableCell(
                             text = cell?.content.orEmpty(),
                             isHeader = cell?.isHeader == true || row == node.header,
-                            modifier = Modifier.weight(1f),
+                            modifier = Modifier
+                                .weight(1f)
+                                .fillMaxHeight(),
                         )
                     }
                 }
