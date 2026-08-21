@@ -76,7 +76,7 @@ fun WriteContentPreviewSheet(
         ) {
             when {
                 markdown != null -> {
-                    val contentNodes = AstParser.ParseContent(markdown)
+                    val contentNodes = AstParser.parseContent(markdown)
                     ContentNodes(contentNodes)
                 }
 

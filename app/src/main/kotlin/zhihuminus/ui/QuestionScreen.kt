@@ -702,7 +702,7 @@ private fun QuestionDetailWithTopics(
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (questionContent.isNotEmpty()) {
-            val contentNodes = AstParser.ParseContent(questionContent)
+            val contentNodes = AstParser.parseContent(questionContent)
             ContentNodes(contentNodes)
         }
         if (topics.isNotEmpty()) {

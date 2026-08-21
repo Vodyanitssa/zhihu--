@@ -544,7 +544,7 @@ private fun PinContent(
         Spacer(modifier = Modifier.height(16.dp))
 
         // 想法正文。
-        val contentNodes = AstParser.ParseContent(pin.contentHtml)
+        val contentNodes = AstParser.parseContent(pin.contentHtml)
         ContentNodes(contentNodes)
 
         val votingPoll = pin.bottomPoll?.voting

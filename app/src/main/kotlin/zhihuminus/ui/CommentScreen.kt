@@ -1268,7 +1268,7 @@ private fun CommentItem(
                     SelectionContainer(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
-                        val contentNodes = AstParser.ParseContent(commentData.content)
+                        val contentNodes = AstParser.parseContent(commentData.content)
                         ContentNodes(contentNodes)
                     }
                 }

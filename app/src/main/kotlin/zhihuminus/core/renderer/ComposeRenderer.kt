@@ -34,14 +34,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
+import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
+import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.ContentNode
@@ -60,16 +63,8 @@ fun InlineNodes(
 ) {
     val inlineContent = EmojiManager.inlineContent
     val text = buildAnnotatedString {
-        nodes.forEachIndexed { index, node ->
-            when (node) {
-                is InlineNode.Text -> {
-                    append(node.text)
-                }
-
-                is InlineNode.Emoji -> {
-                    appendInlineContent(node.name)
-                }
-            }
+        nodes.forEach { node ->
+            appendInlineNode(node)
         }
     }
     Text(
@@ -93,6 +88,36 @@ fun EmojiItem(
             contentDescription = name,
             modifier = Modifier.fillMaxSize(),
         )
+    }
+}
+
+private fun AnnotatedString.Builder.appendInlineNode(
+    node: InlineNode,
+) {
+    when (node) {
+        is InlineNode.Text -> {
+            append(node.text)
+        }
+
+        is InlineNode.Emoji -> {
+            appendInlineContent(node.name)
+        }
+
+        is InlineNode.Bold -> {
+            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                node.children.forEach { child ->
+                    appendInlineNode(child)
+                }
+            }
+        }
+
+        is InlineNode.Italic -> {
+            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                node.children.forEach { child ->
+                    appendInlineNode(child)
+                }
+            }
+        }
     }
 }
 
@@ -447,15 +472,13 @@ private fun TableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            )
-            .background(
+            ).background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            ).padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )

@@ -67,6 +67,14 @@ sealed interface InlineNode {
         val text: String,
     ) : InlineNode
 
+    data class Bold(
+        val children: List<InlineNode>,
+    ) : InlineNode
+
+    data class Italic(
+        val children: List<InlineNode>,
+    ) : InlineNode
+
     data class Emoji(
         val name: String,
     ) : InlineNode

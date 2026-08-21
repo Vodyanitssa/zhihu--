@@ -5,10 +5,11 @@ import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.util.extractImageUrl
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
 import org.jsoup.nodes.TextNode
 
 object AstParser {
-    fun ParseContent(text: String): List<ContentNode> {
+    fun parseContent(text: String): List<ContentNode> {
         val document = Jsoup.parseBodyFragment(text)
         return document.body().childNodes().flatMap { node ->
             when (node) {
@@ -18,7 +19,7 @@ object AstParser {
                     } else {
                         listOf(
                             ContentNode.Paragraph(
-                                content = ParseInline(node.text()),
+                                content = parseInline(node),
                             ),
                         )
                     }
@@ -30,7 +31,29 @@ object AstParser {
         }
     }
 
-    fun ParseInline(text: String): List<InlineNode> {
+    fun parseInline(node: Node): List<InlineNode> = when (node) {
+        is TextNode -> parseText(node.text())
+
+        is Element -> when (node.tagName()) {
+            "b" -> listOf(
+                InlineNode.Bold(
+                    children = node.childNodes().flatMap(::parseInline),
+                ),
+            )
+
+            "i" -> listOf(
+                InlineNode.Italic(
+                    children = node.childNodes().flatMap(::parseInline),
+                ),
+            )
+
+            else -> parseText(node.text())
+        }
+
+        else -> emptyList()
+    }
+
+    private fun parseText(text: String): List<InlineNode> {
         val result = mutableListOf<InlineNode>()
         val textBuffer = StringBuilder()
         var i = 0
@@ -91,7 +114,7 @@ object AstParser {
         "blockquote" -> {
             listOf(
                 ContentNode.Quote(
-                    content = ParseInline(element.wholeText()),
+                    content = parseInline(element),
                 ),
             )
         }
@@ -160,7 +183,7 @@ object AstParser {
 
     private fun parseParagraph(element: Element): ContentNode =
         ContentNode.Paragraph(
-            content = ParseInline(element.text()),
+            content = parseInline(element),
         )
 
     private fun parseImage(element: Element): ContentNode.Image? {

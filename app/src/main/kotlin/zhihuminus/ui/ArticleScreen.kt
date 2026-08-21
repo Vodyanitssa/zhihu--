@@ -193,7 +193,7 @@ fun ArticleScreen(
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
 
-    val contentNodes = AstParser.ParseContent(viewModel.content)
+    val contentNodes = AstParser.parseContent(viewModel.content)
     // 从文章 AST 中提取图片列表，用于 gallery 预览。
     // 顺序与 Renderer 中的 imageIndex 计数严格保持一致。
     val articleImages = remember(viewModel.content) {

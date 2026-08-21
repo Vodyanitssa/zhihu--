@@ -204,7 +204,7 @@ internal fun CachedAnswerPreview(cached: CachedAnswerContent) {
             }
             if (cached.content.isNotEmpty()) {
                 Spacer(Modifier.height(10.dp))
-                val contentNodes = AstParser.ParseContent(cached.content)
+                val contentNodes = AstParser.parseContent(cached.content)
                 ContentNodes(contentNodes)
             }
             Spacer(modifier = Modifier.height((16 + 36).dp))
