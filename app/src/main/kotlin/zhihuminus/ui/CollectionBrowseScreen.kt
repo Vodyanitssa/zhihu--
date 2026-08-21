@@ -63,7 +63,6 @@ import com.zhihuminus.data.Collection
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.viewmodel.CollectionContentEnvironment
 import com.zhihuminus.viewmodel.CollectionContentViewModel
 import com.zhihuminus.viewmodel.CollectionsViewModel
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
@@ -89,7 +88,6 @@ fun CollectionBrowseScreen(
 ) {
     val navigator = LocalNavigator.current
     val environment = rememberPaginationEnvironment(allowGuestAccess = false)
-    val contentEnvironment = environment as CollectionContentEnvironment
     val useTestCollections = testCollections != null || urlToken == null
     val collectionsViewModel: CollectionsViewModel = viewModel(key = urlToken) {
         CollectionsViewModel(urlToken.orEmpty())
@@ -157,12 +155,12 @@ fun CollectionBrowseScreen(
         if (isActive && !useTestCollections && contentViewModel != null) {
             if (randomMode) {
                 contentViewModel.refreshRandom(
-                    environment = contentEnvironment,
+                    environment = environment,
                     itemCount = selectedCollectionItemCount,
                     randomSeed = randomSeed,
                 )
             } else {
-                contentViewModel.refresh(contentEnvironment)
+                contentViewModel.refresh(environment)
             }
         }
     }
@@ -179,7 +177,7 @@ fun CollectionBrowseScreen(
                     if (randomMode) {
                         randomSeed = Random.nextInt()
                     } else {
-                        contentViewModel?.refresh(contentEnvironment)
+                        contentViewModel?.refresh(environment)
                     }
                 }
             }
@@ -323,7 +321,7 @@ fun CollectionBrowseScreen(
                             if (randomMode) {
                                 randomSeed = Random.nextInt()
                             } else {
-                                contentViewModel.refresh(contentEnvironment)
+                                contentViewModel.refresh(environment)
                             }
                         }
                     },
@@ -344,7 +342,7 @@ fun CollectionBrowseScreen(
                     } else {
                         CollectionContentBody(
                             viewModel = contentViewModel,
-                            environment = contentEnvironment,
+                            environment = environment,
                             collectionId = selectedCollectionId.orEmpty(),
                             modifier = Modifier.fillMaxSize(),
                             listState = listState,

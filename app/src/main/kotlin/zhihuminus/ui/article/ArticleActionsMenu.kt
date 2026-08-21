@@ -184,20 +184,10 @@ fun ArticleActionsMenu(
         Spacer(modifier = Modifier.height(12.dp))
         MenuActionButton(
             icon = Icons.Filled.GetApp,
-            text = "导出文章 (Markdown、图片、HTML、PDF)",
+            text = "导出文章 (图片、PDF)",
             onClick = {
                 onDismissRequest()
                 onExportRequest()
-            },
-        )
-
-        Spacer(modifier = Modifier.height(12.dp))
-        MenuActionButton(
-            icon = Icons.Filled.Share,
-            text = "分享 Markdown 正文",
-            onClick = {
-                onDismissRequest()
-                executeShareAction(ShareAction.DirectShare, article, viewModel.convertToMarkdown())
             },
         )
 

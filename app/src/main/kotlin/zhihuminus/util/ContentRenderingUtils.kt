@@ -27,74 +27,12 @@ import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.platform.androidUserMessageSink
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpHeaders
 import java.io.OutputStream
-
-fun buildArticleExportHtml(
-    context: Context,
-    exportData: ArticleExportData,
-    extraSectionsHtml: String = "",
-): String = buildArticleExportHtml(
-    loadAssetText = { fileName -> loadArticleExportAssetText(context, fileName) },
-    exportData = exportData,
-    extraSectionsHtml = extraSectionsHtml,
-)
-
-fun buildArticleExportHtml(
-    context: Context,
-    content: DataHolder.Content,
-    includeAppAttribution: Boolean,
-    extraSectionsHtml: String = "",
-): String = buildArticleExportHtml(
-    loadAssetText = { fileName -> loadArticleExportAssetText(context, fileName) },
-    content = content,
-    includeAppAttribution = includeAppAttribution,
-    extraSectionsHtml = extraSectionsHtml,
-)
-
-suspend fun buildOfflineArticleExportHtml(
-    context: Context,
-    exportData: ArticleExportData,
-    httpClient: HttpClient,
-    includeImages: Boolean = true,
-    extraSectionsHtml: String = "",
-): String = buildOfflineArticleExportHtml(
-    loadAssetText = { fileName -> loadArticleExportAssetText(context, fileName) },
-    exportData = exportData,
-    httpClient = httpClient,
-    includeImages = includeImages,
-    extraSectionsHtml = extraSectionsHtml,
-)
-
-suspend fun buildOfflineArticleExportHtml(
-    context: Context,
-    content: DataHolder.Content,
-    includeAppAttribution: Boolean,
-    httpClient: HttpClient,
-    includeImages: Boolean = true,
-    extraSectionsHtml: String = "",
-): String = buildOfflineArticleExportHtml(
-    loadAssetText = { fileName -> loadArticleExportAssetText(context, fileName) },
-    content = content,
-    includeAppAttribution = includeAppAttribution,
-    httpClient = httpClient,
-    includeImages = includeImages,
-    extraSectionsHtml = extraSectionsHtml,
-)
-
-private fun loadArticleExportAssetText(
-    context: Context,
-    fileName: String,
-): String = context.assets.open(fileName).use { inputStream ->
-    inputStream.bufferedReader().use { reader ->
-        reader.readText()
-    }
-}
 
 fun saveBitmapToGallery(
     context: Context,
@@ -234,4 +172,62 @@ suspend fun shareImage(
  */
 fun clearShareImageCache(context: Context) {
     java.io.File(context.externalCacheDir, "share_images").deleteRecursively()
+}
+
+private fun resolveArticleExportImageMimeType(
+    contentTypeHeader: String?,
+    imageUrl: String,
+    imageBytes: ByteArray,
+): String {
+    contentTypeHeader
+        ?.substringBefore(';')
+        ?.trim()
+        ?.takeIf { it.startsWith("image/") }
+        ?.let { return it }
+
+    guessImageMimeTypeFromName(imageUrl)?.let { return it }
+    guessImageMimeTypeFromBytes(imageBytes)?.let { return it }
+    return "image/jpeg"
+}
+
+private fun guessImageMimeTypeFromName(imageUrl: String): String? =
+    imageUrl
+        .substringBefore('?')
+        .substringBefore('#')
+        .substringAfterLast('.', missingDelimiterValue = "")
+        .lowercase()
+        .let { extension ->
+            when (extension) {
+                "jpg", "jpeg" -> "image/jpeg"
+                "png" -> "image/png"
+                "gif" -> "image/gif"
+                "webp" -> "image/webp"
+                "bmp" -> "image/bmp"
+                "svg", "svgz" -> "image/svg+xml"
+                "avif" -> "image/avif"
+                "heic" -> "image/heic"
+                "heif" -> "image/heif"
+                else -> null
+            }
+        }
+
+private fun guessImageMimeTypeFromBytes(imageBytes: ByteArray): String? {
+    fun matches(vararg values: Int): Boolean =
+        imageBytes.size >= values.size &&
+            values.indices.all { index -> imageBytes[index].toInt() and 0xff == values[index] }
+
+    return when {
+        matches(0xff, 0xd8, 0xff) -> "image/jpeg"
+        matches(0x89, 0x50, 0x4e, 0x47, 0x0d, 0x0a, 0x1a, 0x0a) -> "image/png"
+        matches(0x47, 0x49, 0x46, 0x38) -> "image/gif"
+        matches(0x42, 0x4d) -> "image/bmp"
+        imageBytes.size >= 12 &&
+            matches(0x52, 0x49, 0x46, 0x46) &&
+            imageBytes[8].toInt().toChar() == 'W' &&
+            imageBytes[9].toInt().toChar() == 'E' &&
+            imageBytes[10].toInt().toChar() == 'B' &&
+            imageBytes[11].toInt().toChar() == 'P' -> "image/webp"
+
+        else -> null
+    }
 }

@@ -21,13 +21,10 @@ import android.Manifest
 import android.app.Activity
 import android.app.AlertDialog
 import android.content.ClipData
-import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
-import android.os.Environment
-import android.provider.MediaStore
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -57,7 +54,6 @@ import com.zhihuminus.data.executeZhihuAuthenticatedRequest
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
 import com.zhihuminus.data.fetchZhihuContentDetail
 import com.zhihuminus.data.getOrFetchContentDetail
-import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.target
 import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.navigation.AnswerNavigator
@@ -72,12 +68,8 @@ import com.zhihuminus.ui.articleHost
 import com.zhihuminus.ui.homeFeedStartupCacheFileNames
 import com.zhihuminus.util.HttpStatusException
 import com.zhihuminus.util.Log
-import com.zhihuminus.util.ResolvedCollectionHtmlExportItem
 import com.zhihuminus.util.ZhihuCredentialRefresher
-import com.zhihuminus.util.buildArticleExportFileName
-import com.zhihuminus.util.buildOfflineArticleExportHtml
 import com.zhihuminus.util.clipboardManager
-import com.zhihuminus.util.exportCollectionItemsToZip
 import com.zhihuminus.util.saveBitmapToGallery
 import com.zhihuminus.util.signZhihuFetchRequest
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
@@ -105,10 +97,8 @@ import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.appendAll
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
-import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.launch
-import kotlinx.coroutines.withContext
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
@@ -122,7 +112,6 @@ import kotlinx.serialization.serializer
 import java.io.File
 import kotlin.reflect.KType
 import com.zhihuminus.navigation.Article as ArticleDestination
-import com.zhihuminus.util.buildArticleExportHtml as buildAndroidArticleExportHtml
 import io.ktor.http.ContentType as KtorContentType
 
 abstract class PaginationViewModel<T : Any>(
@@ -506,35 +495,16 @@ interface ClipboardEnvironment {
 interface ArticleExportEnvironment {
     fun hasImageExportPermission(): Boolean = false
 
-    fun requiresHtmlExportPermission(): Boolean = false
-
     fun requestImageExportPermission() = Unit
-
-    fun loadExportAssetText(fileName: String): String = ""
-
-    fun buildArticleExportHtml(
-        content: DataHolder.Content,
-        includeAppAttribution: Boolean,
-        extraSectionsHtml: String,
-    ): String = ""
-
-    suspend fun buildOfflineArticleExportHtml(
-        content: DataHolder.Content,
-        includeAppAttribution: Boolean,
-        httpClient: HttpClient,
-    ): String = ""
-
-    fun saveHtmlToDownloads(
-        displayName: String,
-        htmlContent: String,
-    ): String = ""
 
     fun saveImageToMediaStore(
         displayName: String,
         bitmap: Any,
     ) = Unit
 
-    fun articleImageExportRenderer(loadAssetText: (String) -> String): ArticleImageExportRenderer? = null
+    fun articleImageExportRenderer(): ArticleImageExportRenderer? = null
+
+    fun loadExportAssetText(fileName: String): String = ""
 }
 
 interface ArticleExportContentEnvironment :
@@ -583,8 +553,7 @@ private val ZHIHU_PP_ANDROID_HEADERS = createClientPlugin("ZhihuPPAndroidHeaders
 open class SharedAndroidPaginationEnvironment(
     override val context: Context,
     private val allowGuestAccess: Boolean,
-) : AndroidContextPaginationEnvironment,
-    CollectionContentEnvironment {
+) : AndroidContextPaginationEnvironment {
     private val settingsStore by lazy { androidSettingsStore(context) }
     private val userMessageSink by lazy { androidUserMessageSink(context) }
 
@@ -764,87 +733,6 @@ open class SharedAndroidPaginationEnvironment(
 
     override fun articleAnswerSwitchState() = context.articleHost()?.articleAnswerSwitchState
 
-    override suspend fun exportCollectionItemsToHtmlZip(
-        collectionTitle: String,
-        items: List<CollectionItem>,
-        includeImages: Boolean,
-        onProgress: suspend (CollectionHtmlExportProgress) -> Unit,
-    ): CollectionHtmlExportResult {
-        val outputDir = context.getExternalFilesDir(null)
-            ?: throw IllegalStateException("外部文件目录不可用")
-        val exportHttpClient = httpClient()
-        val result = withContext(Dispatchers.IO) {
-            exportCollectionItemsToZip(
-                collectionTitle = collectionTitle,
-                items = items,
-                cacheDir = context.cacheDir,
-                outputDir = outputDir,
-                displayTitle = { item ->
-                    item.content.title.ifBlank { item.content.description() }
-                },
-                resolveItem = { item ->
-                    resolveCollectionItemForHtmlExport(
-                        item = item,
-                        exportHttpClient = exportHttpClient,
-                        includeImages = includeImages,
-                    )
-                },
-                onProgress = { progress ->
-                    withContext(Dispatchers.Main) {
-                        onProgress(
-                            CollectionHtmlExportProgress(
-                                totalCount = progress.totalCount,
-                                processedCount = progress.processedCount,
-                                successCount = progress.successCount,
-                                skippedCount = progress.skippedCount,
-                                failedCount = progress.failedCount,
-                                currentTitle = progress.currentTitle,
-                            ),
-                        )
-                    }
-                },
-            )
-        }
-        return CollectionHtmlExportResult(
-            totalCount = result.totalCount,
-            successCount = result.successCount,
-            skippedCount = result.skippedCount,
-            failedCount = result.failedCount,
-            zipFilePath = result.zipFile?.absolutePath,
-        )
-    }
-
-    override suspend fun handleCollectionExportFailure(error: Exception) {
-        Log.e("CollectionContentViewModel", "Failed to export collection HTML zip", error)
-        context.mainExecutor.execute {
-            userMessageSink.showShortMessage("导出失败: ${error.message}")
-        }
-    }
-
-    private suspend fun resolveCollectionItemForHtmlExport(
-        item: CollectionItem,
-        exportHttpClient: HttpClient,
-        includeImages: Boolean,
-    ): ResolvedCollectionHtmlExportItem? {
-        val navDestination = item.content.navDestination as? ArticleDestination ?: return null
-        val content = getOrFetchContentDetail(navDestination)
-            ?: throw IllegalStateException("无法加载「${item.content.title}」详情")
-        if (content !is DataHolder.Answer && content !is DataHolder.Article) {
-            return null
-        }
-
-        return ResolvedCollectionHtmlExportItem(
-            htmlFileName = buildArticleExportFileName(content, "html"),
-            htmlContent = buildOfflineArticleExportHtml(
-                context = context,
-                content = content,
-                includeAppAttribution = true,
-                httpClient = exportHttpClient,
-                includeImages = includeImages,
-            ),
-        )
-    }
-
     private fun tryShowLoginExpiredDialog(error: HttpStatusException): Boolean {
         try {
             val body = json.parseToJsonElement(error.bodyText).jsonObject
@@ -901,86 +789,25 @@ open class SharedAndroidPaginationEnvironment(
         context.clipboardManager.setPrimaryClip(ClipData.newPlainText(label, text))
     }
 
-    override fun buildArticleExportHtml(
-        content: DataHolder.Content,
-        includeAppAttribution: Boolean,
-        extraSectionsHtml: String,
-    ): String = buildAndroidArticleExportHtml(
-        context = context,
-        content = content,
-        includeAppAttribution = includeAppAttribution,
-        extraSectionsHtml = extraSectionsHtml,
-    )
-
-    override suspend fun buildOfflineArticleExportHtml(
-        content: DataHolder.Content,
-        includeAppAttribution: Boolean,
-        httpClient: HttpClient,
-    ): String = buildOfflineArticleExportHtml(
-        context = context,
-        content = content,
-        includeAppAttribution = includeAppAttribution,
-        httpClient = httpClient,
-    )
-
     override fun saveImageToMediaStore(
         displayName: String,
         bitmap: Any,
     ) = saveBitmapToGallery(context, displayName, bitmap as android.graphics.Bitmap)
 
-    override fun saveHtmlToDownloads(
-        displayName: String,
-        htmlContent: String,
-    ): String {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            val resolver = context.contentResolver
-            val contentValues = ContentValues().apply {
-                put(MediaStore.MediaColumns.DISPLAY_NAME, displayName)
-                put(MediaStore.MediaColumns.MIME_TYPE, "text/html")
-                put(MediaStore.MediaColumns.RELATIVE_PATH, Environment.DIRECTORY_DOWNLOADS + "/Zhihu++")
-                put(MediaStore.MediaColumns.IS_PENDING, 1)
-            }
-            val uri = resolver.insert(MediaStore.Downloads.EXTERNAL_CONTENT_URI, contentValues)
-                ?: throw IllegalStateException("无法创建下载文件")
-
-            return try {
-                resolver.openOutputStream(uri)?.bufferedWriter(Charsets.UTF_8)?.use { writer ->
-                    writer.write(htmlContent)
-                } ?: throw IllegalStateException("无法打开下载文件")
-
-                contentValues.clear()
-                contentValues.put(MediaStore.MediaColumns.IS_PENDING, 0)
-                resolver.update(uri, contentValues, null, null)
-                "Zhihu++/$displayName"
-            } catch (e: Exception) {
-                resolver.delete(uri, null, null)
-                throw e
-            }
-        }
-
-        @Suppress("DEPRECATION")
-        val downloadsDir = File(
-            Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS),
-            "Zhihu++",
-        )
-        if (!downloadsDir.exists() && !downloadsDir.mkdirs()) {
-            throw IllegalStateException("无法创建下载目录")
-        }
-        val file = File(downloadsDir, displayName)
-        file.writeText(htmlContent)
-        return file.absolutePath
-    }
-
-    override fun articleImageExportRenderer(loadAssetText: (String) -> String): ArticleImageExportRenderer =
-        AndroidArticleExportRenderer(context, loadAssetText)
+    override fun articleImageExportRenderer(): ArticleImageExportRenderer =
+        AndroidArticleExportRenderer(context)
 
     override fun hasImageExportPermission(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
             PackageManager.PERMISSION_GRANTED
 
-    override fun requiresHtmlExportPermission(): Boolean =
-        Build.VERSION.SDK_INT < Build.VERSION_CODES.Q
+    override fun loadExportAssetText(fileName: String): String =
+        context.assets.open(fileName).use { inputStream ->
+            inputStream.bufferedReader().use { reader ->
+                reader.readText()
+            }
+        }
 
     override fun requestImageExportPermission() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
@@ -991,13 +818,6 @@ open class SharedAndroidPaginationEnvironment(
             )
         }
     }
-
-    override fun loadExportAssetText(fileName: String): String =
-        context.assets.open(fileName).use { inputStream ->
-            inputStream.bufferedReader().use { reader ->
-                reader.readText()
-            }
-        }
 }
 
 class SharedAndroidNotificationEnvironment(

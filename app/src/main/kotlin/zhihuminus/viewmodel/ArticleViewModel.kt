@@ -25,6 +25,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.renderer.HtmlRenderer
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.DataHolder
@@ -33,8 +35,6 @@ import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.decodeZhihuCommentData
 import com.zhihuminus.data.officialBadge
-import com.zhihuminus.markdown.htmlToMdAst
-import com.zhihuminus.markdown.toMarkdown
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.CollectionAnswerNavigator
@@ -46,8 +46,8 @@ import com.zhihuminus.util.Log
 import com.zhihuminus.util.applySegmentInfosToHtml
 import com.zhihuminus.util.buildArticleExportCommentsHtml
 import com.zhihuminus.util.buildArticleExportFileName
+import com.zhihuminus.util.escapeArticleExportHtml
 import com.zhihuminus.util.prepareArticleExportComment
-import com.zhihuminus.util.twoDigitString
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.request.put
@@ -60,8 +60,6 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
-import kotlinx.datetime.number
-import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -69,6 +67,9 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import java.time.Instant
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
 
 class ArticleViewModel(
     private val article: Article,
@@ -483,98 +484,9 @@ class ArticleViewModel(
         }
     }
 
-    // 导出为图片 - 使用WebView渲染
-    suspend fun exportToImage(
-        environment: ArticleExportContentEnvironment,
-        includeAppAttribution: Boolean,
-        onComplete: (Boolean) -> Unit,
-    ) {
-        exportToImageInternal(
-            environment = environment,
-            includeComments = false,
-            commentCount = 0,
-            includeAppAttribution = includeAppAttribution,
-            successMessage = "图片已保存到相册",
-            onComplete = onComplete,
-        )
-    }
-
-    // 导出为带评论的图片 - 使用WebView渲染
-    suspend fun exportToImageWithComments(
-        environment: ArticleExportContentEnvironment,
-        commentCount: Int,
-        includeAppAttribution: Boolean,
-        onComplete: (Boolean) -> Unit,
-    ) {
-        exportToImageInternal(
-            environment = environment,
-            includeComments = true,
-            commentCount = commentCount,
-            includeAppAttribution = includeAppAttribution,
-            successMessage = "带评论图片已保存到相册",
-            onComplete = onComplete,
-        )
-    }
-
-    suspend fun exportToHtml(
-        environment: ArticleExportContentEnvironment,
-        includeAppAttribution: Boolean,
-        onComplete: (Boolean) -> Unit,
-    ) {
-        runCatching { requireExportSourceContent() }.onFailure { error ->
-            withContext(Dispatchers.Main) {
-                userMessages.showShortMessage(error.message ?: "内容未加载完成")
-                onComplete(false)
-            }
-            return
-        }
-
-        if (environment.requiresHtmlExportPermission() && !environment.hasImageExportPermission()) {
-            withContext(Dispatchers.Main) {
-                environment.requestImageExportPermission()
-                permissionRequestCount++
-                userMessages.showShortMessage("需要存储权限才能导出 HTML，正在请求权限")
-                onComplete(false)
-            }
-            return
-        }
-
-        try {
-            val htmlContent = withContext(Dispatchers.Default) {
-                environment.buildOfflineArticleExportHtml(
-                    content = requireExportSourceContent(),
-                    includeAppAttribution = includeAppAttribution,
-                    httpClient = httpClient ?: environment.httpClient(),
-                )
-            }
-            val savedLocation = withContext(Dispatchers.Default) {
-                environment.saveHtmlToDownloads(
-                    displayName = buildArticleExportFileName(
-                        content = requireExportSourceContent(),
-                        extension = "html",
-                    ),
-                    htmlContent = htmlContent,
-                )
-            }
-            withContext(Dispatchers.Main) {
-                userMessages.showLongMessage("HTML 已保存到 $savedLocation")
-                onComplete(true)
-            }
-        } catch (e: Exception) {
-            Log.e("ArticleViewModel", "HTML export failed", e)
-            withContext(Dispatchers.Main) {
-                userMessages.showShortMessage("HTML 导出失败: ${e.message}")
-                onComplete(false)
-            }
-        }
-    }
-
-    private suspend fun exportToImageInternal(
+    suspend fun exportImage(
         environment: ArticleExportContentEnvironment,
         includeComments: Boolean,
-        commentCount: Int,
-        includeAppAttribution: Boolean,
-        successMessage: String,
         onComplete: (Boolean) -> Unit,
     ) {
         runCatching { requireExportSourceContent() }.onFailure { error ->
@@ -597,21 +509,12 @@ class ArticleViewModel(
 
         var preparedWebView: PreparedArticleExportContent? = null
         var bitmap: Any? = null
-        val renderer = environment.articleImageExportRenderer { fileName ->
-            try {
-                environment.loadExportAssetText(fileName)
-            } catch (e: Exception) {
-                Log.e("ArticleViewModel", "Failed to load export asset: $fileName", e)
-                ""
-            }
-        }!!
+        val renderer = environment.articleImageExportRenderer()!!
         try {
             preparedWebView = renderer.prepareExportWebView(
                 htmlContent = createHtmlContent(
                     environment = environment,
                     includeComments = includeComments,
-                    commentCount = commentCount,
-                    includeAppAttribution = includeAppAttribution,
                 ),
                 timeoutMs = if (includeComments) 18_000L else 15_000L,
             )
@@ -627,14 +530,13 @@ class ArticleViewModel(
                 )
             }
             withContext(Dispatchers.Main) {
-                userMessages.showLongMessage(successMessage)
+                userMessages.showLongMessage("图片已保存到相册")
                 onComplete(true)
             }
         } catch (e: Exception) {
             Log.e("ArticleViewModel", "Image export failed", e)
-            val errorPrefix = if (includeComments) "带评论图片导出失败" else "图片导出失败"
             withContext(Dispatchers.Main) {
-                userMessages.showShortMessage("$errorPrefix: ${e.message}")
+                userMessages.showShortMessage("图片导出失败: ${e.message}")
                 onComplete(false)
             }
         } finally {
@@ -643,27 +545,69 @@ class ArticleViewModel(
         }
     }
 
-    // 创建HTML内容
+    // 创建HTML内容：article → AST(ContentNode) → HtmlRenderer → HTML
     private suspend fun createHtmlContent(
         environment: ArticleExportContentEnvironment,
         includeComments: Boolean,
-        commentCount: Int,
-        includeAppAttribution: Boolean,
     ): String {
-        val commentsHtml = if (includeComments && commentCount > 0) {
+        val commentsHtml = if (includeComments) {
             buildArticleExportCommentsHtml(
-                comments = fetchExportComments(environment, commentCount),
-                requestedCount = commentCount,
+                comments = fetchExportComments(environment, DEFAULT_EXPORT_COMMENT_COUNT),
+                requestedCount = DEFAULT_EXPORT_COMMENT_COUNT,
             )
         } else {
             ""
         }
 
-        return environment.buildArticleExportHtml(
-            content = requireExportSourceContent(),
-            includeAppAttribution = includeAppAttribution,
-            extraSectionsHtml = commentsHtml,
-        )
+        val contentHtml = when (val exportSource = requireExportSourceContent()) {
+            is DataHolder.Answer -> exportSource.content
+            is DataHolder.Article -> exportSource.content
+            else -> throw IllegalArgumentException("Unsupported content type")
+        }
+        val nodes = AstParser.parseContent(contentHtml)
+        val bodyHtml = HtmlRenderer.render(nodes)
+
+        return """
+            |<!DOCTYPE html>
+            |<html>
+            |<head>
+            |<meta charset="UTF-8"/>
+            |<meta name="viewport" content="width=device-width,initial-scale=1"/>
+            |<style>
+            |body{max-width:680px;margin:0 auto;padding:24px 16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;line-height:1.8;font-size:16px}
+            |.article-header{margin-bottom:24px;border-bottom:1px solid #eee;padding-bottom:16px}
+            |.article-title{font-size:24px;font-weight:700;margin:0 0 12px;line-height:1.4}
+            |.article-meta{font-size:14px;color:#8590a6}
+            |.article-meta strong{color:#1a1a1a}
+            |img{max-width:100%;height:auto}
+|.emoji{display:inline-block;width:1.3em;height:1.3em;vertical-align:text-bottom}
+            |pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow-x:auto}
+            |code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:14px}
+            |blockquote{border-left:3px solid #ddd;margin:0;padding:8px 16px;color:#666}
+            |table{border-collapse:collapse;width:100%}
+            |th,td{border:1px solid #ddd;padding:8px;text-align:left}
+            |th{background:#f6f8fa}
+            |figure{margin:16px 0;text-align:center}
+            |figcaption{font-size:13px;color:#999;margin-top:4px}
+            |a{color:#175199;text-decoration:none}
+            |a:hover{text-decoration:underline}
+            |.comment{margin:12px 0;padding:12px;background:#fafafa;border-radius:8px}
+            |.comment-author{font-weight:600;font-size:14px;margin-bottom:4px}
+            |.comment-content{font-size:14px;line-height:1.6}
+            |.comment-time{font-size:12px;color:#999;margin-top:4px}
+                        |.comments-title{font-size:18px;font-weight:600;margin:24px 0 12px;padding-top:16px;border-top:1px solid #eee}
+            |</style>
+            |</head>
+            |<body>
+            |<div class="article-header">
+            |<h1 class="article-title">${escapeArticleExportHtml(title)}</h1>
+            |<div class="article-meta"><strong>${escapeArticleExportHtml(authorName)}</strong> · $voteUpCount 赞 · $commentCount 评论</div>
+            |</div>
+            |$bodyHtml
+            |$commentsHtml
+            |</body>
+            |</html>
+            """.trimMargin()
     }
 
     private suspend fun fetchExportComments(
@@ -693,51 +637,17 @@ class ArticleViewModel(
 
     private fun requireExportSourceContent(): DataHolder.Content = exportSourceContent
         ?: throw IllegalStateException("内容未加载完成")
-
-    fun convertToMarkdown(): String {
-        val sb = StringBuilder()
-
-        sb.append("# $title\n\n")
-
-        sb.append("**作者**: $authorName\n\n")
-        if (authorBio.isNotEmpty()) {
-            sb.append("**简介**: $authorBio\n\n")
-        }
-
-        sb.append("---\n\n")
-        sb.append(htmlToMdAst(content, noNativeBlock = true).toMarkdown())
-
-        return sb.toString()
-    }
-
-    // 导出到剪贴板
-    fun exportToClipboard(environment: ClipboardEnvironment) {
-        val markdown = convertToMarkdown()
-
-        // 将Markdown文本复制到剪贴板
-        environment.setPlainTextClipboard("Zhihu Article", markdown)
-
-        userMessages.showShortMessage("文章已复制到剪贴板")
-    }
 }
 
-fun formatArticleDateTime(seconds: Long): String {
-    val instant = kotlin.time.Instant.fromEpochSeconds(seconds)
-    val dateTime = instant.toLocalDateTime(kotlinx.datetime.TimeZone.currentSystemDefault())
-    return buildString {
-        append(dateTime.year.toString().padStart(4, '0'))
-        append('-')
-        append(dateTime.month.number.twoDigitString())
-        append('-')
-        append(dateTime.day.twoDigitString())
-        append(' ')
-        append(dateTime.hour.twoDigitString())
-        append(':')
-        append(dateTime.minute.twoDigitString())
-        append(':')
-        append(dateTime.second.twoDigitString())
-    }
-}
+private const val DEFAULT_EXPORT_COMMENT_COUNT = 3
+
+private val articleDateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
+
+fun formatArticleDateTime(seconds: Long): String =
+    Instant
+        .ofEpochSecond(seconds)
+        .atZone(ZoneId.systemDefault())
+        .format(articleDateFormatter)
 
 @Serializable
 private data class AnswerRelationshipEndorsement(

@@ -1,7 +1,10 @@
 package com.zhihuminus.core.renderer
 
 import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
+
+private const val EMOJI_ASSET_PREFIX = "file:///android_asset/emojis/images/"
 
 /**
  * A standalone renderer that converts a list of [ContentNode] into an HTML string.
@@ -82,7 +85,7 @@ object HtmlRenderer {
     }
 
     private fun renderImage(node: ContentNode.Image): String = buildString {
-        val src = escapeHtml(node.url)
+        val src = escapeHtml(normalizeImageUrl(node.url))
         if (node.caption != null) {
             append("<figure class=\"img\"><img src=\"$src\" alt=\"${escapeHtml(node.caption)}\" /><figcaption>${escapeHtml(node.caption)}</figcaption></figure>")
         } else {
@@ -166,8 +169,14 @@ object HtmlRenderer {
         is InlineNode.Italic ->
             "<em>${renderInline(node.children)}</em>"
 
-        is InlineNode.Emoji ->
-            "<img class=\"emoji\" data-name=\"${escapeHtml(node.name)}\">"
+        is InlineNode.Emoji -> {
+            val fileName = EmojiManager.mapping[node.name]
+            if (fileName != null) {
+                "<img class=\"emoji\" src=\"$EMOJI_ASSET_PREFIX${escapeHtml(fileName)}\" alt=\"${escapeHtml(node.name)}\" />"
+            } else {
+                "<img class=\"emoji\" data-name=\"${escapeHtml(node.name)}\">"
+            }
+        }
     }
 
     // ── HTML escaping ─────────────────────────────────────────────────
@@ -183,5 +192,10 @@ object HtmlRenderer {
                 else -> append(char)
             }
         }
+    }
+
+    private fun normalizeImageUrl(url: String): String = when {
+        url.startsWith("//") -> "https:$url"
+        else -> url
     }
 }

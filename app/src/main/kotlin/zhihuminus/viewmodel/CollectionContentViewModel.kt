@@ -17,7 +17,6 @@
 
 package com.zhihuminus.viewmodel
 
-import androidx.compose.runtime.Stable
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
@@ -28,47 +27,13 @@ import com.zhihuminus.data.Collection
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlin.random.Random
 import kotlin.reflect.typeOf
-
-data class CollectionHtmlExportProgress(
-    val totalCount: Int,
-    val processedCount: Int,
-    val successCount: Int,
-    val skippedCount: Int,
-    val failedCount: Int,
-    val currentTitle: String = "",
-)
-
-data class CollectionHtmlExportResult(
-    val totalCount: Int,
-    val successCount: Int,
-    val skippedCount: Int,
-    val failedCount: Int,
-    val zipFilePath: String?,
-)
-
-interface CollectionExportEnvironment {
-    suspend fun exportCollectionItemsToHtmlZip(
-        collectionTitle: String,
-        items: List<CollectionItem>,
-        includeImages: Boolean,
-        onProgress: suspend (CollectionHtmlExportProgress) -> Unit,
-    ): CollectionHtmlExportResult
-
-    suspend fun handleCollectionExportFailure(error: Exception)
-}
-
-interface CollectionContentEnvironment :
-    PaginationEnvironment,
-    CollectionExportEnvironment
 
 suspend fun ZhihuApiEnvironment.fetchCollection(collectionId: String): Collection {
     val json = fetchJson("https://www.zhihu.com/api/v4/collections/$collectionId", "") ?: error("收藏夹信息为空")
@@ -91,9 +56,6 @@ class CollectionContentViewModel(
     val title by derivedStateOf {
         collection?.title ?: "收藏夹"
     }
-    var exportDialogState by mutableStateOf<CollectionHtmlExportDialogState?>(null)
-        private set
-
     override val initialUrl: String
         get() = "https://www.zhihu.com/api/v4/collections/$collectionId/items"
 
@@ -185,126 +147,6 @@ class CollectionContentViewModel(
         }
         super.refresh(environment)
     }
-
-    fun exportAllToHtmlZip(
-        environment: CollectionContentEnvironment,
-        includeImages: Boolean,
-    ) {
-        if (exportDialogState?.isCompleted == false) return
-
-        viewModelScope.launch {
-            exportDialogState = CollectionHtmlExportDialogState(
-                phaseText = "正在加载收藏夹条目",
-                totalCount = 0,
-                processedCount = 0,
-                successCount = 0,
-                skippedCount = 0,
-                failedCount = 0,
-                isIndeterminate = true,
-            )
-
-            try {
-                val items = ensureAllCollectionItemsLoaded(environment)
-                if (items.isEmpty()) {
-                    exportDialogState = CollectionHtmlExportDialogState(
-                        phaseText = "没有可导出的内容",
-                        totalCount = 0,
-                        processedCount = 0,
-                        successCount = 0,
-                        skippedCount = 0,
-                        failedCount = 0,
-                        isCompleted = true,
-                        resultMessage = "收藏夹为空，或内容加载失败。",
-                    )
-                    return@launch
-                }
-
-                val exportTitle = title
-                val result = environment.exportCollectionItemsToHtmlZip(
-                    collectionTitle = exportTitle,
-                    items = items,
-                    includeImages = includeImages,
-                    onProgress = { progress ->
-                        exportDialogState = CollectionHtmlExportDialogState(
-                            phaseText = "正在导出 ${progress.processedCount} / ${progress.totalCount}",
-                            totalCount = progress.totalCount,
-                            processedCount = progress.processedCount,
-                            successCount = progress.successCount,
-                            skippedCount = progress.skippedCount,
-                            failedCount = progress.failedCount,
-                            currentTitle = progress.currentTitle,
-                        )
-                    },
-                )
-
-                val resultMessage = if (result.zipFilePath != null) {
-                    "已导出 ${result.successCount} 篇，跳过 ${result.skippedCount} 条，失败 ${result.failedCount} 条。"
-                } else {
-                    "没有可导出的回答或文章，已跳过 ${result.skippedCount} 条，失败 ${result.failedCount} 条。"
-                }
-                exportDialogState = CollectionHtmlExportDialogState(
-                    phaseText = "导出完成",
-                    totalCount = result.totalCount,
-                    processedCount = result.totalCount,
-                    successCount = result.successCount,
-                    skippedCount = result.skippedCount,
-                    failedCount = result.failedCount,
-                    currentTitle = "",
-                    isCompleted = true,
-                    resultMessage = resultMessage,
-                    zipFilePath = result.zipFilePath,
-                )
-            } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                exportDialogState = CollectionHtmlExportDialogState(
-                    phaseText = "导出失败",
-                    totalCount = exportDialogState?.totalCount ?: 0,
-                    processedCount = exportDialogState?.processedCount ?: 0,
-                    successCount = exportDialogState?.successCount ?: 0,
-                    skippedCount = exportDialogState?.skippedCount ?: 0,
-                    failedCount = exportDialogState?.failedCount ?: 0,
-                    currentTitle = exportDialogState?.currentTitle.orEmpty(),
-                    isCompleted = true,
-                    resultMessage = e.message ?: "未知错误",
-                )
-                environment.handleCollectionExportFailure(e)
-            }
-        }
-    }
-
-    fun dismissExportDialog() {
-        exportDialogState = null
-    }
-
-    private suspend fun ensureAllCollectionItemsLoaded(environment: CollectionContentEnvironment): List<CollectionItem> {
-        if (collection == null) {
-            collection = environment.fetchCollection(collectionId)
-        }
-
-        while (allData.isEmpty() || !isEnd) {
-            val beforeCount = allData.size
-            val beforePaging = lastPaging
-            isLoading = true
-            fetchFeeds(environment)
-
-            val pagingAdvanced = hasPagingProgress(beforePaging, lastPaging)
-            val itemCountAdvanced = allData.size > beforeCount
-            if (!pagingAdvanced && !itemCountAdvanced) {
-                break
-            }
-        }
-
-        return allData.toList()
-    }
-
-    private fun hasPagingProgress(
-        beforePaging: ZhihuPaging?,
-        afterPaging: ZhihuPaging?,
-    ): Boolean {
-        if (afterPaging == null) return false
-        if (beforePaging == null) return true
-        return beforePaging.next != afterPaging.next || beforePaging.page != afterPaging.page || beforePaging.isEnd != afterPaging.isEnd
-    }
 }
 
 internal fun collectionRandomPageOffsets(
@@ -348,23 +190,5 @@ class CollectionItem(
     val created: String,
     val content: Feed.Target,
 )
-
-@Stable
-data class CollectionHtmlExportDialogState(
-    val phaseText: String,
-    val totalCount: Int,
-    val processedCount: Int,
-    val successCount: Int,
-    val skippedCount: Int,
-    val failedCount: Int,
-    val currentTitle: String = "",
-    val isIndeterminate: Boolean = false,
-    val isCompleted: Boolean = false,
-    val resultMessage: String? = null,
-    val zipFilePath: String? = null,
-) {
-    val progress: Float
-        get() = if (totalCount <= 0) 0f else (processedCount.toFloat() / totalCount.toFloat()).coerceIn(0f, 1f)
-}
 
 // Re-export from ui package for backward compatibility with tests

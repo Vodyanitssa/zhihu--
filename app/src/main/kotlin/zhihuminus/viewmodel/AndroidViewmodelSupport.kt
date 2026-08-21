@@ -25,7 +25,6 @@ import android.os.Looper
 import android.view.View
 import android.webkit.WebResourceRequest
 import android.webkit.WebView
-import com.zhihuminus.util.Log
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.suspendCancellableCoroutine
 import kotlinx.coroutines.withContext
@@ -39,11 +38,10 @@ data class AndroidPreparedExportWebView(
     val contentHeightPx: Int,
 ) : PreparedArticleExportContent
 
-private const val ARTICLE_EXPORT_DPI = 200f
+private const val ARTICLE_EXPORT_DPI = 400f
 
 class AndroidArticleExportRenderer(
     private val context: Context,
-    private val loadAssetText: (String) -> String,
 ) : ArticleImageExportRenderer {
     override suspend fun prepareExportWebView(
         htmlContent: String,
@@ -135,11 +133,7 @@ class AndroidArticleExportRenderer(
                 override fun onPageFinished(view: WebView?, url: String?) {
                     super.onPageFinished(view, url)
                     if (!isFinished) {
-                        injectExportFootnoteScript(webView) {
-                            if (!isFinished) {
-                                scheduleReadinessCheck()
-                            }
-                        }
+                        scheduleReadinessCheck()
                     }
                 }
 
@@ -190,23 +184,6 @@ class AndroidArticleExportRenderer(
         setBackgroundColor(android.graphics.Color.WHITE)
         isVerticalScrollBarEnabled = false
         isHorizontalScrollBarEnabled = false
-    }
-
-    fun injectExportFootnoteScript(webView: WebView, onInjected: () -> Unit) {
-        val jsCode = loadAssetText("footnotes.js")
-        if (jsCode.isBlank()) {
-            onInjected()
-            return
-        }
-
-        runCatching {
-            webView.evaluateJavascript(jsCode) {
-                onInjected()
-            }
-        }.onFailure { error ->
-            Log.e("ArticleViewModel", "Failed to inject export footnotes", error)
-            onInjected()
-        }
     }
 
     fun measureAndLayoutExportWebView(webView: WebView, widthPx: Int, heightPx: Int) {
