@@ -90,8 +90,12 @@ import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.renderer.LocalImageViewManager
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.LocalNavigator
@@ -111,8 +115,6 @@ import com.zhihuminus.ui.components.CommentScreenComponent
 import com.zhihuminus.ui.components.ExportDialogComponent
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
 import com.zhihuminus.ui.components.VotersSheet
-import com.zhihuminus.ui.image.ImagePreview
-import com.zhihuminus.ui.image.ImagePreviewActions
 import com.zhihuminus.util.formatCompactCount
 import com.zhihuminus.util.smoothGradient
 import com.zhihuminus.viewmodel.ArticleViewModel
@@ -258,7 +260,6 @@ private fun ArticleContentBody(
     viewModel: ArticleViewModel,
     articleType: ArticleType,
     contentNodes: List<ContentNode>,
-    onImageClick: (ContentNode.Image, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(modifier = modifier) {
@@ -294,10 +295,7 @@ private fun ArticleContentBody(
         }
 
         // 正文内容
-        ContentNodes(
-            nodes = contentNodes,
-            onImageClick = onImageClick,
-        )
+        ContentNodes(nodes = contentNodes)
     }
 }
 
@@ -496,19 +494,21 @@ fun ArticleScreen(
     var showExportDialog by remember { mutableStateOf(false) }
     var showVoters by rememberSaveable(article.type, article.id) { mutableStateOf(false) }
 
-    // 图片预览状态。
-    var imagePreviewIndex by remember { mutableIntStateOf(-1) }
+    // 图片查看管理器。
+    val imageViewManager = remember { ImageViewManager() }
     val openExternalUrl = rememberExternalUrlOpener()
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
 
     val contentNodes = AstParser.parseContent(viewModel.content)
-    // 从文章 AST 中提取图片列表，用于 gallery 预览。
-    val articleImages = remember(viewModel.content) {
-        contentNodes
-            .filterIsInstance<ContentNode.Image>()
-            .filter { it.url.isNotBlank() }
-            .map { ImagePreview(url = it.url) }
+    // 从文章 AST 中提取图片列表，提交给 manager。
+    LaunchedEffect(viewModel.content) {
+        imageViewManager.submitImages(
+            contentNodes
+                .filterIsInstance<ContentNode.Image>()
+                .filter { it.url.isNotBlank() }
+                .map { it.url },
+        )
     }
 
     val sharedData = if (article.type == ArticleType.Answer) {
@@ -605,7 +605,10 @@ fun ArticleScreen(
                 }
             },
         ) { innerPadding ->
-            CompositionLocalProvider(LocalBringIntoViewSpec provides articleBringIntoViewSpec) {
+            CompositionLocalProvider(
+                LocalBringIntoViewSpec provides articleBringIntoViewSpec,
+                LocalImageViewManager provides imageViewManager,
+            ) {
                 Box {
                     Column(
                         modifier = Modifier
@@ -658,9 +661,6 @@ fun ArticleScreen(
                                 viewModel = viewModel,
                                 articleType = article.type,
                                 contentNodes = contentNodes,
-                                onImageClick = { _, index ->
-                                    imagePreviewIndex = index
-                                },
                                 modifier = Modifier
                                     .fillMaxWidth()
                                     .padding(bottom = 80.dp),
@@ -719,18 +719,14 @@ fun ArticleScreen(
         }
 
         // 图片预览 overlay。
-        if (imagePreviewIndex >= 0 && articleImages.isNotEmpty()) {
-            ImagePreview(
-                images = articleImages,
-                initialIndex = imagePreviewIndex,
-                actions = ImagePreviewActions(
-                    onSave = { saveImage(it) },
-                    onShare = { shareImage(it) },
-                    onOpenInBrowser = { openExternalUrl(it) },
-                ),
-                onDismiss = { imagePreviewIndex = -1 },
-            )
-        }
+        ImageView(
+            manager = imageViewManager,
+            actions = ImageViewActions(
+                onSave = { saveImage(it) },
+                onShare = { shareImage(it) },
+                onOpenInBrowser = { openExternalUrl(it) },
+            ),
+        )
     }
 
     // 全屏菜单
@@ -747,10 +743,6 @@ fun ArticleScreen(
 
     PlatformBackHandler(showActionsMenu) {
         showActionsMenu = false
-    }
-
-    PlatformBackHandler(imagePreviewIndex >= 0) {
-        imagePreviewIndex = -1
     }
 
     // 收藏夹对话框

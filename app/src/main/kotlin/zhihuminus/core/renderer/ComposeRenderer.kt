@@ -31,6 +31,7 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -52,9 +53,19 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.platform.rememberExternalUrlOpener
+
+/**
+ * 图片查看管理器的 CompositionLocal。
+ *
+ * Screen 层通过 [CompositionLocalProvider] 提供 [ImageViewManager] 实例，
+ * Renderer 层的 Image composable 在点击时直接调用 [ImageViewManager.show]，
+ * 无需通过回调层层传递。
+ */
+val LocalImageViewManager = staticCompositionLocalOf<ImageViewManager?> { null }
 
 /*
  * 渲染段落、表情包
@@ -127,21 +138,13 @@ private fun AnnotatedString.Builder.appendInlineNode(
 fun ContentNodes(
     nodes: List<ContentNode>,
     modifier: Modifier = Modifier,
-    onImageClick: (ContentNode.Image, Int) -> Unit = { _, _ -> },
 ) {
     Column(
         modifier = modifier,
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
-        var imageIndex = 0
         nodes.forEach { node ->
-            if (node is ContentNode.Image && node.url.isNotBlank()) {
-                val capturedIndex = imageIndex
-                ContentNode(node, { onImageClick(node, capturedIndex) })
-                imageIndex++
-            } else {
-                ContentNode(node, {})
-            }
+            ContentNode(node)
         }
     }
 }
@@ -149,7 +152,6 @@ fun ContentNodes(
 @Composable
 fun ContentNode(
     node: ContentNode,
-    onImageClick: (ContentNode.Image) -> Unit = {},
 ) {
     when (node) {
         is ContentNode.Paragraph -> {
@@ -188,7 +190,7 @@ fun ContentNode(
         }
 
         is ContentNode.Image -> {
-            Image(node, onImageClick)
+            Image(node)
         }
 
         is ContentNode.Video -> {
@@ -305,10 +307,8 @@ private fun Quote(node: ContentNode.Quote) {
 }
 
 @Composable
-private fun Image(
-    node: ContentNode.Image,
-    onImageClick: (ContentNode.Image) -> Unit = {},
-) {
+private fun Image(node: ContentNode.Image) {
+    val imageViewerManager = LocalImageViewManager.current
     Column(
         modifier = Modifier.fillMaxWidth(),
         horizontalAlignment = Alignment.CenterHorizontally,
@@ -320,7 +320,7 @@ private fun Image(
             modifier = Modifier
                 .fillMaxWidth()
                 .clip(MaterialTheme.shapes.medium)
-                .clickable { onImageClick(node) },
+                .clickable { imageViewerManager?.show(node.url) },
             contentScale = ContentScale.FillWidth,
         )
 
