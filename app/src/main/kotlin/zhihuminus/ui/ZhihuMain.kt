@@ -86,6 +86,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Article
@@ -106,12 +107,15 @@ import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.PostTypeNavType
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.WriteAnswer
 import com.zhihuminus.navigation.WritePin
+import com.zhihuminus.navigation.toPostDestination
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.NoOpPagerNestedScrollConnection
@@ -172,6 +176,7 @@ fun ZhihuMain(
     articleContent: @Composable (Article, NavBackStackEntry) -> Unit,
     articleEnterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
     articleExitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
+    postContent: @Composable (PostDestination, NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     val tapToScrollToTopEnabled = preferenceState.tapToScrollToTopEnabled
@@ -188,7 +193,8 @@ fun ZhihuMain(
     val showMainNavigation = navEntry?.destination?.hasRoute<MainTabs>() == true
     val isOnReadingDetail = navEntry?.destination?.hasRoute<Article>() == true ||
         navEntry?.destination?.hasRoute<Question>() == true ||
-        navEntry?.destination?.hasRoute<Pin>() == true
+        navEntry?.destination?.hasRoute<Pin>() == true ||
+        navEntry?.destination?.hasRoute<PostDestination>() == true
     val shouldCompactPlayerOnBackgroundInteraction by rememberUpdatedState(
         isReadingPlayerExpandedByUser && !isOnReadingDetail,
     )
@@ -439,7 +445,7 @@ fun ZhihuMain(
                         exitTransition = articleExitTransition,
                     ) { navEntry ->
                         val article: Article = navEntry.toRoute()
-                        articleContent(article, navEntry)
+                        postContent(article.toPostDestination(), navEntry)
                     }
                     composable<HotList> {
                         HotListScreen(innerPadding)
@@ -504,6 +510,12 @@ fun ZhihuMain(
                     composable<Pin> { navEntry ->
                         val pin: Pin = navEntry.toRoute()
                         PinScreen(pin)
+                    }
+                    composable<PostDestination>(
+                        typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),
+                    ) { navEntry ->
+                        val destination: PostDestination = navEntry.toRoute()
+                        postContent(destination, navEntry)
                     }
                     composable<Account.RecommendSettings.Blocklist> {
                         BlocklistSettingsScreen()

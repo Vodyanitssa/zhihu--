@@ -17,6 +17,7 @@
 
 package com.zhihuminus.navigation
 
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.util.Log
 import io.ktor.http.Url
 import kotlinx.serialization.SerialName
@@ -229,6 +230,37 @@ data class Article(
 
     override fun equals(other: Any?): Boolean = other is Article && other.id == id && other.type == type
 }
+
+@Serializable
+data class PostDestination(
+    var title: String = "loading...",
+    @SerialName("article_type_1")
+    val type: PostType,
+    val id: Long,
+    var authorName: String = "loading...",
+    var authorBio: String = "loading...",
+    var avatarSrc: String? = null,
+    var excerpt: String? = null,
+    val readingQueueSourceId: String? = null,
+) : NavDestination {
+    override fun hashCode(): Int = id.hashCode()
+
+    override fun equals(other: Any?): Boolean = other is PostDestination && other.id == id && other.type == type
+}
+
+fun Article.toPostDestination(): PostDestination = PostDestination(
+    title = title,
+    type = when (type) {
+        ArticleType.Article -> PostType.Article
+        ArticleType.Answer -> PostType.Answer
+    },
+    id = id,
+    authorName = authorName,
+    authorBio = authorBio,
+    avatarSrc = avatarSrc,
+    excerpt = excerpt,
+    readingQueueSourceId = readingQueueSourceId,
+)
 
 @Serializable
 data class CommentHolder(
