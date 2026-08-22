@@ -8,11 +8,14 @@ import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.VoteResponse
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
+import com.zhihuminus.viewmodel.deleteSigned
 import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.call.body
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -21,7 +24,8 @@ class ZhihuApiImpl(
 ) : ZhihuApi {
     override suspend fun getAnswer(answerId: Long): AnswerDto {
         val url = "https://www.zhihu.com/api/v4/answers/$answerId"
-        val include = "content,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting,author.badge_v2,segment_infos"
+        val include =
+            "content,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting,author.badge_v2,segment_infos"
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch answer $answerId")
         return ZhihuJson.decodeJson(json)
@@ -29,7 +33,8 @@ class ZhihuApiImpl(
 
     override suspend fun getArticle(articleId: Long): ArticleDto {
         val url = "https://www.zhihu.com/api/v4/articles/$articleId"
-        val include = "content,topics,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting,author.badge_v2,segment_infos"
+        val include =
+            "content,topics,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting,author.badge_v2,segment_infos"
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch article $articleId")
         return ZhihuJson.decodeJson(json)
@@ -95,4 +100,47 @@ class ZhihuApiImpl(
         }
         return response.body()
     }
+
+    override suspend fun fetchCommentsPage(url: String): JsonObject = environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
+        ?: throw IllegalStateException("Failed to fetch comments page")
+
+    override suspend fun getRootComments(
+        contentType: String,
+        contentId: Long,
+        orderBy: String,
+        offset: Int,
+        limit: Int,
+    ): JsonObject {
+        val url = "https://www.zhihu.com/api/v4/comment_v5/${contentType}s/$contentId/root_comment" +
+            "?order_by=$orderBy"
+        return environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
+            ?: throw IllegalStateException("Failed to fetch root comments")
+    }
+
+    override suspend fun getChildComments(commentId: String, offset: Int, limit: Int): JsonObject {
+        val url = "https://www.zhihu.com/api/v4/comment_v5/comment/$commentId/child_comment" +
+            "?offset=$offset&limit=$limit"
+        return environment.fetchJson(url, "")
+            ?: throw IllegalStateException("Failed to fetch child comments")
+    }
+
+    override suspend fun getComment(commentId: String): JsonObject {
+        val url = "https://www.zhihu.com/api/v4/comment_v5/comment/$commentId"
+        return environment.fetchJson(url, "")
+            ?: throw IllegalStateException("Failed to fetch comment $commentId")
+    }
+
+    override suspend fun submitComment(url: String, body: JsonObject): JsonObject {
+        val response = environment.postSigned(url) {
+            contentType(ContentType.Application.Json)
+            setBody(body)
+        }
+        return response.body()
+    }
+
+    override suspend fun likeComment(commentId: String): HttpResponse = environment.postSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+
+    override suspend fun unlikeComment(commentId: String): HttpResponse = environment.deleteSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+
+    override suspend fun deleteComment(commentId: String): HttpResponse = environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
 }

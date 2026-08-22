@@ -6,6 +6,8 @@ import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.VoteResponse
+import io.ktor.client.statement.HttpResponse
+import kotlinx.serialization.json.JsonObject
 
 interface ZhihuApi {
     suspend fun getAnswer(answerId: Long): AnswerDto
@@ -55,4 +57,65 @@ interface ZhihuApi {
      * @return 新创建的收藏夹
      */
     suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection
+
+    // 评论相关
+
+    /**
+     * 通用评论分页请求（用于 paging.next URL）
+     * @param url 完整的评论 API URL
+     */
+    suspend fun fetchCommentsPage(url: String): JsonObject
+
+    /**
+     * 获取根评论列表
+     * @param contentType 内容类型: "answers", "articles", "pins"
+     * @param contentId 内容 ID
+     * @param orderBy 排序: "score" 或 "ts"
+     * @param offset 偏移量
+     * @param limit 每页数量
+     */
+    suspend fun getRootComments(
+        contentType: String,
+        contentId: Long,
+        orderBy: String,
+        offset: Int,
+        limit: Int = 20,
+    ): JsonObject
+
+    /**
+     * 获取子评论列表
+     * @param commentId 父评论 ID
+     * @param offset 偏移量
+     * @param limit 每页数量
+     */
+    suspend fun getChildComments(commentId: String, offset: Int, limit: Int = 20): JsonObject
+
+    /**
+     * 获取单条评论详情
+     * @param commentId 评论 ID
+     */
+    suspend fun getComment(commentId: String): JsonObject
+
+    /**
+     * 发表评论
+     * @param url 评论提交 URL
+     * @param body 请求体
+     * @return 新评论的 JSON
+     */
+    suspend fun submitComment(url: String, body: JsonObject): JsonObject
+
+    /**
+     * 点赞评论
+     */
+    suspend fun likeComment(commentId: String): HttpResponse
+
+    /**
+     * 取消点赞
+     */
+    suspend fun unlikeComment(commentId: String): HttpResponse
+
+    /**
+     * 删除评论
+     */
+    suspend fun deleteComment(commentId: String): HttpResponse
 }

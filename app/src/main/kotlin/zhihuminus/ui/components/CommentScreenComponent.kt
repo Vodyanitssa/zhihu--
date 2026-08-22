@@ -21,12 +21,10 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.LazyListState
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.MutableState
@@ -200,39 +198,6 @@ fun CommentScreenComponent(
                 initialComment = pendingChildComment,
             )
         }
-    }
-
-    if (commentsVisible && isZhPlusAuthorContent && !authorCommentPolicyAcknowledged) {
-        AlertDialog(
-            modifier = Modifier,
-            onDismissRequest = {},
-            title = { Text("评论区使用须知") },
-            text = {
-                Column {
-                    Text(
-                        "请勿通过知乎提交任何 Bug 反馈或功能建议。所有反馈仅在 GitHub Issues 处理；" +
-                            "不要发送到任何交流群，也不要发送到知乎++作者的回答或想法评论区。",
-                    )
-                    Spacer(modifier = Modifier.height(12.dp))
-                    Text(
-                        text = "评论区只可发布与当前回答或想法相关的内容。无关内容将被无视，严重时会被直接拉黑。",
-                        color = MaterialTheme.colorScheme.error,
-                        fontWeight = FontWeight.Bold,
-                    )
-                }
-            },
-            confirmButton = {
-                TextButton(
-                    modifier = Modifier,
-                    onClick = {
-                        settings.putBoolean(ZH_PLUS_AUTHOR_COMMENT_POLICY_ACKNOWLEDGED_KEY, true)
-                        authorCommentPolicyAcknowledged = true
-                    },
-                ) {
-                    Text("我已知晓并确认")
-                }
-            },
-        )
     }
 }
 

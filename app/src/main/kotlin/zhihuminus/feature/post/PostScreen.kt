@@ -23,15 +23,15 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.comment.CommentRepository
+import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
 import com.zhihuminus.feature.post.components.PostBottomBar
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostEvent
 import com.zhihuminus.feature.post.components.PostHeader
-import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.ui.components.CollectionDialogComponent
-import com.zhihuminus.ui.components.CommentScreenComponent
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -39,6 +39,7 @@ fun PostScreen(
     uiState: PostUiState,
     bottomBarState: PostBottomBarState,
     collections: List<Collection>,
+    commentRepository: CommentRepository,
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
 ) {
@@ -167,28 +168,20 @@ fun PostScreen(
                     onDismissRequest = { showActionsMenu = false },
                     onShare = {
                         onEvent(PostEvent.Share)
-                        // 实际分享逻辑在 PostViewModel 中通过回调处理
                     },
                     onCopyLink = {
                         onEvent(PostEvent.CopyLink)
-                        // 实际复制逻辑在 PostViewModel 中通过回调处理
                     },
                     onExport = { onEvent(PostEvent.Export) },
                 )
 
                 // Comments
-                CommentScreenComponent(
+                CommentRoute(
                     showComments = showComments,
                     onDismiss = { showComments = false },
-                    content = PostDestination(
-                        title = state.post.title,
-                        type = state.post.type,
-                        id = state.post.id,
-                        authorName = state.post.author.name,
-                        authorBio = state.post.author.headline,
-                        avatarSrc = state.post.author.avatarUrl,
-                        excerpt = state.post.excerpt,
-                    ),
+                    contentType = state.post.type,
+                    contentId = state.post.id,
+                    repository = commentRepository,
                 )
             }
         }

@@ -5,6 +5,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImagePreviewOpener
@@ -15,6 +16,7 @@ import com.zhihuminus.platform.rememberShareText
 fun PostRoute(
     destination: PostDestination,
     repository: PostRepository,
+    commentRepository: CommentRepository,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -52,6 +54,7 @@ fun PostRoute(
         uiState = viewModel.uiState,
         bottomBarState = viewModel.bottomBarState,
         collections = viewModel.collections,
+        commentRepository = commentRepository,
         onEvent = viewModel::onEvent,
         onBack = onBack,
     )

@@ -35,6 +35,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuCommentRepository
 import com.zhihuminus.data.zhihu.ZhihuPostRepository
 import com.zhihuminus.feature.post.PostRoute
 import com.zhihuminus.platform.androidUserMessageSink
@@ -121,9 +122,14 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 val api = ZhihuApiImpl(environment)
                 ZhihuPostRepository(api)
             }
+            val commentRepository = remember {
+                val api = ZhihuApiImpl(environment)
+                ZhihuCommentRepository(api)
+            }
             PostRoute(
                 destination = destination,
                 repository = repository,
+                commentRepository = commentRepository,
                 onBack = { navController.popBackStack() },
             )
         },
