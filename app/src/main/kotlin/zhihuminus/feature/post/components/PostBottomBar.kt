@@ -88,13 +88,18 @@ fun PostBottomBar(
                     modifier = Modifier
                         .clip(RoundedCornerShape(50))
                         .background(upBgColor)
-                        .clickable { onEvent(PostEvent.VoteUp) }
-                        .padding(6.dp, 8.dp, 12.dp, 8.dp),
+                        .clickable {
+                            if (postType == PostType.Pin) {
+                                onEvent(PostEvent.LikePin)
+                            } else {
+                                onEvent(PostEvent.VoteUp)
+                            }
+                        }.padding(6.dp, 8.dp, 12.dp, 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Icon(
                         painter = painterResource(R.drawable.ic_vote_up_24dp),
-                        contentDescription = "赞同",
+                        contentDescription = if (postType == PostType.Pin) "赞" else "赞同",
                         tint = upContentColor,
                         modifier = Modifier.size(24.dp),
                     )
@@ -107,13 +112,13 @@ fun PostBottomBar(
                 }
             }
 
-            AnimatedVisibility(visible = state.voteUpState == VoteUpState.Neutral) {
+            AnimatedVisibility(visible = postType != PostType.Pin && state.voteUpState == VoteUpState.Neutral) {
                 Spacer(modifier = Modifier.width(4.dp))
             }
 
-            // 反对
+            // 反对（Pin 不支持）
             AnimatedVisibility(
-                visible = state.voteUpState == VoteUpState.Neutral || state.voteUpState == VoteUpState.Down,
+                visible = postType != PostType.Pin && (state.voteUpState == VoteUpState.Neutral || state.voteUpState == VoteUpState.Down),
             ) {
                 val downBgColor by animateColorAsState(
                     targetValue = if (state.voteUpState == VoteUpState.Down) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
@@ -160,6 +165,7 @@ fun PostBottomBar(
                 .padding(end = 4.dp),
             horizontalArrangement = Arrangement.End,
         ) {
+            // 收藏
             IconButton(
                 onClick = { onEvent(PostEvent.ShowCollectionDialog) },
                 colors = IconButtonDefaults.iconButtonColors(

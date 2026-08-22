@@ -21,6 +21,13 @@ sealed interface PostEvent {
 
     data object VoteDown : PostEvent
 
+    data object LikePin : PostEvent
+
+    data class VotePoll(
+        val pollId: String,
+        val optionId: String,
+    ) : PostEvent
+
     data object Comment : PostEvent
 
     data object CopyLink : PostEvent
@@ -38,4 +45,10 @@ sealed interface PostEvent {
     ) : PostEvent
 
     data object ShowMoreMenu : PostEvent
+
+    data object ShowVoters : PostEvent
+
+    data object LoadMoreVoters : PostEvent
+
+    data object FollowAuthor : PostEvent
 }

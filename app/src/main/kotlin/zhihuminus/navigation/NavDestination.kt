@@ -248,6 +248,15 @@ data class PostDestination(
     override fun equals(other: Any?): Boolean = other is PostDestination && other.id == id && other.type == type
 }
 
+fun Pin.toPostDestination(): PostDestination = PostDestination(
+    title = if (authorName.isNotBlank()) "${authorName}的想法" else "想法",
+    type = PostType.Pin,
+    id = id,
+    authorName = authorName,
+    authorBio = "",
+    readingQueueSourceId = readingQueueSourceId,
+)
+
 fun Article.toPostDestination(): PostDestination = PostDestination(
     title = title,
     type = when (type) {

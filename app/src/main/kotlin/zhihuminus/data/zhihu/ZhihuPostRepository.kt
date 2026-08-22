@@ -3,14 +3,20 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
+import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.ZhihuVotersResponse
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.feature.post.Post
+import com.zhihuminus.feature.post.PostLinkCard
+import com.zhihuminus.feature.post.PostPoll
+import com.zhihuminus.feature.post.PostPollOption
 import com.zhihuminus.feature.post.PostRepository
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.ui.booleanCompat
 
 class ZhihuPostRepository(
     private val api: ZhihuApi,
@@ -31,11 +37,15 @@ class ZhihuPostRepository(
         return response.voteupCount
     }
 
+    override suspend fun likePin(pinId: Long): Int = api.likePin(pinId)
+
+    override suspend fun submitPinPollVote(pollId: String, optionId: String) = api.submitPinPollVote(pollId, optionId)
+
     override suspend fun getCollections(postType: PostType, id: Long): List<Collection> {
         val type = when (postType) {
             PostType.Answer -> "answer"
             PostType.Article -> "article"
-            PostType.Pin -> throw UnsupportedOperationException("Pin does not support collection")
+            PostType.Pin -> "pin"
         }
         val response = api.getCollections(type, id)
         return response.data
@@ -45,7 +55,7 @@ class ZhihuPostRepository(
         val type = when (postType) {
             PostType.Answer -> "answer"
             PostType.Article -> "article"
-            PostType.Pin -> throw UnsupportedOperationException("Pin does not support collection")
+            PostType.Pin -> "pin"
         }
         api.addToCollection(type, id, collectionId)
     }
@@ -54,12 +64,27 @@ class ZhihuPostRepository(
         val type = when (postType) {
             PostType.Answer -> "answer"
             PostType.Article -> "article"
-            PostType.Pin -> throw UnsupportedOperationException("Pin does not support collection")
+            PostType.Pin -> "pin"
         }
         api.removeFromCollection(type, id, collectionId)
     }
 
-    override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection = api.createCollection(title, description, isPublic)
+    override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection =
+        api.createCollection(title, description, isPublic)
+
+    override suspend fun loadVoters(postType: PostType, id: Long, nextUrl: String?): ZhihuVotersResponse {
+        val url = nextUrl ?: when (postType) {
+            PostType.Answer -> "https://www.zhihu.com/api/v4/answers/$id/upvoters?limit=10&offset=0"
+            PostType.Article -> "https://www.zhihu.com/api/v4/articles/$id/upvoters?limit=10&offset=0"
+            PostType.Pin -> "https://www.zhihu.com/api/v4/pins/$id/upvoters?limit=10&offset=0"
+        }
+        val json = api.fetchVoters(url)
+        return ZhihuJson.decodeJson(json)
+    }
+
+    override suspend fun followMember(urlToken: String, follow: Boolean) {
+        if (follow) api.followMember(urlToken) else api.unfollowMember(urlToken)
+    }
 
     private fun mapAnswer(dto: AnswerDto): Post {
         val contentNodes = AstParser.parseContent(dto.content)
@@ -102,6 +127,36 @@ class ZhihuPostRepository(
     private fun mapPin(dto: PinDto): Post {
         val htmlContent = buildPinHtml(dto)
         val contentNodes = AstParser.parseContent(htmlContent)
+        val isLiked = dto.virtuals.booleanCompat("isLiked", "is_liked")
+        val poll = dto.bottomPoll?.voting?.let { p ->
+            PostPoll(
+                id = p.id,
+                title = p.title,
+                maxSelections = p.maxSelections,
+                votingCount = p.votingCount,
+                memberCount = p.memberCount,
+                isVoted = p.isVoted,
+                isReviewing = p.isReviewing,
+                endAt = p.endAt,
+                options = p.options.map { o ->
+                    PostPollOption(
+                        id = o.id,
+                        title = o.title,
+                        votingCount = o.votingCount,
+                        isSelected = o.isSelected,
+                    )
+                },
+            )
+        }
+        val linkCards = dto.content
+            .filter { it.type == "link_card" && !it.url.isNullOrBlank() }
+            .map { item ->
+                PostLinkCard(
+                    dataContentId = item.dataContentId.orEmpty(),
+                    dataContentType = item.dataContentType.orEmpty(),
+                    url = item.url!!,
+                )
+            }
         return Post(
             id = dto.id.toLong(),
             type = PostType.Pin,
@@ -110,10 +165,13 @@ class ZhihuPostRepository(
             content = contentNodes,
             voteCount = dto.likeCount,
             commentCount = dto.commentCount,
+            voteState = if (isLiked) VoteUpState.Up else VoteUpState.Neutral,
             createdAt = dto.created,
             updatedAt = dto.updated,
             excerpt = dto.excerptTitle,
             topics = dto.topics?.map { it.name }.orEmpty(),
+            poll = poll,
+            linkCards = linkCards,
         )
     }
 
@@ -123,6 +181,7 @@ class ZhihuPostRepository(
                 "text" -> {
                     item.content?.let { append(it) }
                 }
+
                 "image" -> {
                     item.url?.let { url ->
                         append("<img src=\"$url\"")
@@ -131,6 +190,7 @@ class ZhihuPostRepository(
                         append(" />")
                     }
                 }
+
                 "link_card" -> {
                     item.url?.let { url ->
                         val title = item.title ?: url
@@ -148,5 +208,6 @@ class ZhihuPostRepository(
         avatarUrl = avatarUrl,
         urlToken = urlToken,
         badgeText = badgeV2?.detailBadges?.firstOrNull()?.description,
+        isFollowing = isFollowing,
     )
 }

@@ -17,6 +17,39 @@ interface ZhihuApi {
     suspend fun getPin(pinId: Long): PinDto
 
     /**
+     * Pin 点赞/取消点赞
+     * @param pinId Pin ID
+     * @return 点赞后的赞数
+     */
+    suspend fun likePin(pinId: Long): Int
+
+    /**
+     * Pin 投票
+     * @param pollId 投票 ID
+     * @param optionId 选项 ID
+     */
+    suspend fun submitPinPollVote(pollId: String, optionId: String)
+
+    /**
+     * 加载赞同者列表
+     * @param url 赞同者 API URL
+     * @return 原始 JSON 响应（包含 data 和 paging）
+     */
+    suspend fun fetchVoters(url: String): JsonObject
+
+    /**
+     * 关注用户
+     * @param urlToken 用户 urlToken
+     */
+    suspend fun followMember(urlToken: String)
+
+    /**
+     * 取消关注用户
+     * @param urlToken 用户 urlToken
+     */
+    suspend fun unfollowMember(urlToken: String)
+
+    /**
      * 投票
      * @param type 内容类型: "answer" 或 "article"
      * @param id 内容 ID

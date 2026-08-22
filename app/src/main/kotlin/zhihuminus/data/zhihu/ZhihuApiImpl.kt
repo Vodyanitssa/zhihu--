@@ -16,8 +16,12 @@ import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
+import kotlinx.serialization.json.putJsonArray
 
 class ZhihuApiImpl(
     private val environment: ZhihuApiEnvironment,
@@ -48,6 +52,37 @@ class ZhihuApiImpl(
         return ZhihuJson.decodeJson(json)
     }
 
+    override suspend fun likePin(pinId: Long): Int {
+        val url = "https://www.zhihu.com/api/v4/pins/$pinId/voters/up"
+        val response = environment.postSigned(url)
+        val json: JsonObject = response.body()
+        return json["liked_count"]?.jsonPrimitive?.intOrNull ?: -1
+    }
+
+    override suspend fun submitPinPollVote(pollId: String, optionId: String) {
+        val url = "https://www.zhihu.com/api/v4/polls/$pollId"
+        val body = buildJsonObject {
+            putJsonArray("options") {
+                add(optionId)
+            }
+        }
+        environment.postSigned(url) {
+            contentType(ContentType.Application.Json)
+            setBody(body.toString())
+        }
+    }
+
+    override suspend fun fetchVoters(url: String): JsonObject = environment.fetchJson(url.replace("http://", "https://"), "")
+        ?: error("赞同者信息为空")
+
+    override suspend fun followMember(urlToken: String) {
+        environment.postSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+    }
+
+    override suspend fun unfollowMember(urlToken: String) {
+        environment.deleteSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+    }
+
     override suspend fun vote(type: String, id: Long, vote: String): VoteResponse {
         val url = when (type) {
             "answer" -> "https://www.zhihu.com/api/v4/answers/$id/voters"
@@ -71,18 +106,16 @@ class ZhihuApiImpl(
     }
 
     override suspend fun addToCollection(type: String, id: Long, collectionId: String) {
-        val url = "https://api.zhihu.com/collections/contents/$type/$id"
+        val url = "https://www.zhihu.com/api/v4/collections/$collectionId/contents?content_id=$id&content_type=$type"
         environment.postSigned(url) {
             contentType(ContentType.Application.FormUrlEncoded)
-            setBody("add_collections=$collectionId")
         }
     }
 
     override suspend fun removeFromCollection(type: String, id: Long, collectionId: String) {
-        val url = "https://api.zhihu.com/collections/contents/$type/$id"
-        environment.postSigned(url) {
+        val url = "https://www.zhihu.com/api/v4/collections/$collectionId/contents/$id?content_type=$type"
+        environment.deleteSigned(url) {
             contentType(ContentType.Application.FormUrlEncoded)
-            setBody("remove_collections=$collectionId")
         }
     }
 
@@ -101,8 +134,9 @@ class ZhihuApiImpl(
         return response.body()
     }
 
-    override suspend fun fetchCommentsPage(url: String): JsonObject = environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
-        ?: throw IllegalStateException("Failed to fetch comments page")
+    override suspend fun fetchCommentsPage(url: String): JsonObject =
+        environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
+            ?: throw IllegalStateException("Failed to fetch comments page")
 
     override suspend fun getRootComments(
         contentType: String,
@@ -138,9 +172,12 @@ class ZhihuApiImpl(
         return response.body()
     }
 
-    override suspend fun likeComment(commentId: String): HttpResponse = environment.postSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+    override suspend fun likeComment(commentId: String): HttpResponse =
+        environment.postSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
 
-    override suspend fun unlikeComment(commentId: String): HttpResponse = environment.deleteSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+    override suspend fun unlikeComment(commentId: String): HttpResponse =
+        environment.deleteSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
 
-    override suspend fun deleteComment(commentId: String): HttpResponse = environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
+    override suspend fun deleteComment(commentId: String): HttpResponse =
+        environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
 }

@@ -28,19 +28,14 @@ import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.lifecycle.DefaultLifecycleObserver
-import androidx.lifecycle.LifecycleOwner
 import androidx.lifecycle.ViewModelProvider
-import androidx.lifecycle.viewmodel.compose.viewModel
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuCommentRepository
 import com.zhihuminus.data.zhihu.ZhihuPostRepository
 import com.zhihuminus.feature.post.PostRoute
-import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.viewmodel.ArticleAnswerSwitchData
-import com.zhihuminus.viewmodel.ArticleViewModel
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
@@ -103,18 +98,6 @@ fun AndroidZhihuMain(navController: NavHostController) {
 
                 else -> ExitTransition.None
             }
-        },
-        articleContent = { article, navEntry ->
-            val viewModel: ArticleViewModel = viewModel(navEntry) {
-                ArticleViewModel(article, activity.httpClient, androidUserMessageSink(activity)) { onPause ->
-                    navEntry.lifecycle.addObserver(object : DefaultLifecycleObserver {
-                        override fun onPause(owner: LifecycleOwner) {
-                            onPause()
-                        }
-                    })
-                }
-            }
-            ArticleScreen(article, viewModel)
         },
         postContent = { destination, _ ->
             val environment = rememberPaginationEnvironment(allowGuestAccess = false)

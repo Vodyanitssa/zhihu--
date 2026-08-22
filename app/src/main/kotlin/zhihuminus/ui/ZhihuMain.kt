@@ -173,7 +173,6 @@ fun ZhihuMain(
     consumeMainTabNavigationTarget: (TopLevelDestination) -> Unit,
     preferenceState: ZhihuMainPreferenceState,
     isDarkTheme: Boolean,
-    articleContent: @Composable (Article, NavBackStackEntry) -> Unit,
     articleEnterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
     articleExitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
     postContent: @Composable (PostDestination, NavBackStackEntry) -> Unit = { _, _ -> },
@@ -509,7 +508,7 @@ fun ZhihuMain(
                     }
                     composable<Pin> { navEntry ->
                         val pin: Pin = navEntry.toRoute()
-                        PinScreen(pin)
+                        postContent(pin.toPostDestination(), navEntry)
                     }
                     composable<PostDestination>(
                         typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),

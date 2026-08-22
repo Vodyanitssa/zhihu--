@@ -12,15 +12,19 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.NavDestination
 
 @Composable
 fun PostContent(
     post: Post,
+    onEvent: (PostEvent) -> Unit = {},
+    onNavigate: (NavDestination) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(horizontal = 16.dp),
+            .padding(horizontal = 16.dp)
+            .padding(bottom = 72.dp),
     ) {
         // Title (for articles and answers)
         if (post.type != PostType.Pin && post.title.isNotBlank()) {
@@ -46,6 +50,34 @@ fun PostContent(
             nodes = post.content,
             modifier = Modifier.fillMaxWidth(),
         )
+
+        // Poll card (Pin only)
+        val poll = post.poll
+        if (post.type == PostType.Pin && poll != null) {
+            PostPollCard(
+                poll = poll,
+                onPollVote = { pollId, optionId ->
+                    onEvent(PostEvent.VotePoll(pollId, optionId))
+                },
+            )
+        }
+
+        // Link cards (Pin only)
+        if (post.type == PostType.Pin && post.linkCards.isNotEmpty()) {
+            for (linkCard in post.linkCards) {
+                PostLinkCard(
+                    linkCard = linkCard,
+                    onClick = {
+                        val destination = resolveLinkCardDestination(linkCard)
+                        if (destination != null) {
+                            onNavigate(destination)
+                        } else if (linkCard.url.isNotBlank()) {
+                            onEvent(PostEvent.OpenLink(linkCard.url))
+                        }
+                    },
+                )
+            }
+        }
 
         // Topics (for articles and pins)
         if (post.topics.isNotEmpty()) {

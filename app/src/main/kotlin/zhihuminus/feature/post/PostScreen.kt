@@ -23,6 +23,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zhihuminus.data.Collection
+import com.zhihuminus.data.DataHolder
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
@@ -31,7 +32,22 @@ import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostEvent
 import com.zhihuminus.feature.post.components.PostHeader
+import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.ui.components.CollectionDialogComponent
+import com.zhihuminus.ui.components.VotersSheet
+import com.zhihuminus.util.formatCompactCount
+
+sealed interface PostUiState {
+    data object Loading : PostUiState
+
+    data class Success(
+        val post: Post,
+    ) : PostUiState
+
+    data class Error(
+        val error: Throwable,
+    ) : PostUiState
+}
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -42,6 +58,16 @@ fun PostScreen(
     commentRepository: CommentRepository,
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
+    onNavigate: (NavDestination) -> Unit = {},
+    voters: List<DataHolder.Author> = emptyList(),
+    showVoters: Boolean = false,
+    votersLoading: Boolean = false,
+    votersError: String? = null,
+    canLoadMoreVoters: Boolean = false,
+    onShowVoters: () -> Unit = {},
+    onDismissVoters: () -> Unit = {},
+    onLoadMoreVoters: () -> Unit = {},
+    onRefreshCollections: () -> Unit = {},
 ) {
     var showCollectionDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
     var showActionsMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
@@ -55,7 +81,7 @@ fun PostScreen(
                         is PostUiState.Success -> when (state.post.type) {
                             PostType.Answer -> state.post.title.ifBlank { "回答" }
                             PostType.Article -> state.post.title
-                            PostType.Pin -> "想法"
+                            PostType.Pin -> "${state.post.author.name}的想法"
                         }
 
                         else -> "加载中"
@@ -140,9 +166,16 @@ fun PostScreen(
                         createdAt = state.post.createdAt,
                         updatedAt = state.post.updatedAt,
                         ipInfo = state.post.ipInfo,
+                        voteCount = state.post.voteCount,
+                        firstVoterName = voters.firstOrNull()?.name,
+                        isFollowing = state.post.author.isFollowing,
+                        onShowVoters = onShowVoters,
+                        onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                     )
                     PostContent(
                         post = state.post,
+                        onEvent = onEvent,
+                        onNavigate = onNavigate,
                     )
                 }
 
@@ -151,7 +184,7 @@ fun PostScreen(
                     showDialog = showCollectionDialog,
                     onDismiss = { showCollectionDialog = false },
                     collections = collections,
-                    onLoadCollections = { onEvent(PostEvent.Refresh) },
+                    onLoadCollections = onRefreshCollections,
                     onToggleFavorite = { collection ->
                         onEvent(PostEvent.ToggleCollection(collection))
                         showCollectionDialog = false
@@ -182,6 +215,23 @@ fun PostScreen(
                     contentType = state.post.type,
                     contentId = state.post.id,
                     repository = commentRepository,
+                )
+
+                // Voters Sheet
+                VotersSheet(
+                    show = showVoters,
+                    title = "${formatCompactCount(state.post.voteCount)} 人赞同",
+                    voters = voters,
+                    isLoading = votersLoading,
+                    errorMessage = votersError,
+                    canLoadMore = canLoadMoreVoters,
+                    onDismissRequest = onDismissVoters,
+                    onLoadMore = onLoadMoreVoters,
+                    onRetry = onLoadMoreVoters,
+                    onNavigate = { person ->
+                        onDismissVoters()
+                        onNavigate(person)
+                    },
                 )
             }
         }
