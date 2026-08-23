@@ -89,8 +89,8 @@ import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.renderer.ContentNodes
-import com.zhihuminus.core.renderer.LocalImageViewManager
+import com.zhihuminus.core.content.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.imageview.ImageView

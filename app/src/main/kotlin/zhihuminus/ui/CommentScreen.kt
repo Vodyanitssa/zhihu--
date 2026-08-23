@@ -131,8 +131,8 @@ import com.fleeksoft.ksoup.nodes.Node
 import com.fleeksoft.ksoup.nodes.TextNode
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.EmojiManager
-import com.zhihuminus.core.renderer.ContentNodes
-import com.zhihuminus.core.renderer.EmojiItem
+import com.zhihuminus.core.content.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.EmojiItem
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder

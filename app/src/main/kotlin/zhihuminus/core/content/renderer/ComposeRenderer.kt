@@ -1,4 +1,4 @@
-package com.zhihuminus.core.renderer
+package com.zhihuminus.core.content.renderer
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -33,13 +33,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -53,6 +54,7 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
@@ -60,6 +62,7 @@ import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.platform.rememberExternalUrlOpener
+import kotlinx.coroutines.launch
 
 /**
  * 图片查看管理器的 CompositionLocal。
@@ -313,7 +316,8 @@ private fun Link(node: ContentNode.Link) {
 
 @Composable
 private fun Code(node: ContentNode.Code) {
-    val clipboardManager = LocalClipboardManager.current
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -336,7 +340,9 @@ private fun Code(node: ContentNode.Code) {
             )
             IconButton(
                 onClick = {
-                    clipboardManager.setText(AnnotatedString(node.content))
+                    coroutineScope.launch {
+                        clipboard.copyText(node.content)
+                    }
                 },
                 modifier = Modifier.size(28.dp),
             ) {
@@ -569,13 +575,15 @@ private fun TableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            ).background(
+            )
+            .background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            ).padding(horizontal = 10.dp, vertical = 8.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )

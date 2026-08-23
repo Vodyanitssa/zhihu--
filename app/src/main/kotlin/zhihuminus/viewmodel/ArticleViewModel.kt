@@ -26,7 +26,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.renderer.HtmlRenderer
+import com.zhihuminus.core.content.renderer.HtmlRenderer
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.DataHolder

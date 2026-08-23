@@ -59,7 +59,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.ContentNodes
 import com.zhihuminus.ui.AnswerEndorsementChip
 import com.zhihuminus.ui.components.AuthorBadge
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent

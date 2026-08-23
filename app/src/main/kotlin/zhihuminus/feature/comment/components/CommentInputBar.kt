@@ -48,7 +48,7 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zhihuminus.core.content.EmojiManager
-import com.zhihuminus.core.renderer.EmojiItem
+import com.zhihuminus.core.content.renderer.EmojiItem
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import com.zhihuminus.ui.components.replaceSelection

@@ -9,7 +9,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.ContentNodes
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType

@@ -66,9 +66,9 @@ fun CommentScreen(
             val layoutInfo = listState.layoutInfo
             val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             lastVisible >= layoutInfo.totalItemsCount - 3 &&
-                    !uiState.isLoading &&
-                    !uiState.isLoadingMore &&
-                    !uiState.isEnd
+                !uiState.isLoading &&
+                !uiState.isLoadingMore &&
+                !uiState.isEnd
         }
     }
     LaunchedEffect(shouldLoadMore.value) {

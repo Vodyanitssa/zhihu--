@@ -1,4 +1,4 @@
-package com.zhihuminus.core.renderer
+package com.zhihuminus.core.content.renderer
 
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager

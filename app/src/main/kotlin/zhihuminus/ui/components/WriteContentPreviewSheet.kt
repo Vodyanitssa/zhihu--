@@ -35,7 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.ContentNodes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable

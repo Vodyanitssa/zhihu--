@@ -73,7 +73,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.ContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodePinContentDetail
 import com.zhihuminus.data.officialBadge

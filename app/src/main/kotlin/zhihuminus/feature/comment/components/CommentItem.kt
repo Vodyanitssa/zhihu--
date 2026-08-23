@@ -42,7 +42,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.ContentNodes
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent

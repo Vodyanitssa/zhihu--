@@ -19,7 +19,7 @@ package com.zhihuminus.util
 
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.renderer.HtmlRenderer
+import com.zhihuminus.core.content.renderer.HtmlRenderer
 import com.zhihuminus.data.DataHolder
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
