@@ -77,9 +77,15 @@ fun InlineNodes(
 ) {
     val openExternalUrl = rememberExternalUrlOpener()
     val inlineContent = EmojiManager.inlineContent
+    val linkStyle = TextLinkStyles(
+        style = SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            textDecoration = TextDecoration.Underline,
+        ),
+    )
     val text = buildAnnotatedString {
         nodes.forEach { node ->
-            appendInlineNode(node, openExternalUrl)
+            appendInlineNode(node, openExternalUrl, linkStyle)
         }
     }
     Text(
@@ -109,6 +115,7 @@ fun EmojiItem(
 private fun AnnotatedString.Builder.appendInlineNode(
     node: InlineNode,
     uriHandler: (String) -> Unit,
+    linkStyle: TextLinkStyles,
 ) {
     when (node) {
         is InlineNode.Text -> {
@@ -122,7 +129,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Bold -> {
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler)
+                    appendInlineNode(child, uriHandler, linkStyle)
                 }
             }
         }
@@ -130,7 +137,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Italic -> {
             withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler)
+                    appendInlineNode(child, uriHandler, linkStyle)
                 }
             }
         }
@@ -138,8 +145,8 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Link -> {
             val link =
                 LinkAnnotation.Url(
-                    node.url,
-                    TextLinkStyles(SpanStyle(color = Color.Blue)),
+                    url = node.url,
+                    styles = linkStyle,
                 ) {
                     val url = (it as LinkAnnotation.Url).url
                     uriHandler(url)
