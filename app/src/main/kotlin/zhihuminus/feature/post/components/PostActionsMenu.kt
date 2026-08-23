@@ -134,7 +134,7 @@ fun PostActionsMenu(
                 Spacer(modifier = Modifier.height(12.dp))
                 MenuActionButton(
                     icon = Icons.Filled.GetApp,
-                    text = "导出文章 (图片、PDF)",
+                    text = "导出文章",
                     onClick = {
                         onDismissRequest()
                         onExport()

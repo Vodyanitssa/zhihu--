@@ -17,6 +17,10 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zhihuminus.data.Collection
@@ -26,6 +30,7 @@ import com.zhihuminus.feature.post.components.PostActionsMenu
 import com.zhihuminus.feature.post.components.PostBottomBar
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
+import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
 import com.zhihuminus.ui.components.CollectionDialogComponent
 
@@ -49,6 +54,7 @@ data class PostUiState(
     val showCollectionDialog: Boolean = false,
     val showActionsMenu: Boolean = false,
     val showComments: Boolean = false,
+    val isExporting: Boolean = false,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -59,6 +65,8 @@ fun PostScreen(
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
 ) {
+    var showExportDialog by remember { mutableStateOf(false) }
+
     Scaffold(
         topBar = {
             TopAppBar(
@@ -171,7 +179,18 @@ fun PostScreen(
                     onCopyLink = {
                         onEvent(PostEvent.CopyLink)
                     },
-                    onExport = { onEvent(PostEvent.Export) },
+                    onExport = {
+                        onEvent(PostEvent.DismissActionsMenu)
+                        showExportDialog = true
+                    },
+                )
+
+                // Export Dialog
+                PostExportDialog(
+                    showDialog = showExportDialog,
+                    isExporting = uiState.isExporting,
+                    onDismiss = { showExportDialog = false },
+                    onExportImage = { onEvent(PostEvent.Export) },
                 )
 
                 // Comments

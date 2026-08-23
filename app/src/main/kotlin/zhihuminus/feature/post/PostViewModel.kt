@@ -1,10 +1,13 @@
 package com.zhihuminus.feature.post
 
+import android.app.Application
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
-import androidx.lifecycle.ViewModel
+import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.content.renderer.PictureRenderer
+import com.zhihuminus.core.platform.FileExporter
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.post.components.PostBottomBarState
@@ -16,10 +19,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
 
 class PostViewModel(
+    application: Application,
     private val postId: Long,
     private val postType: PostType,
     private val repository: PostRepository,
-) : ViewModel() {
+) : AndroidViewModel(application) {
     var uiState: PostUiState by mutableStateOf(PostUiState())
         private set
 
@@ -87,7 +91,7 @@ class PostViewModel(
             }
 
             is PostEvent.Export -> {
-                // TODO: Implement export
+                exportImage()
             }
 
             is PostEvent.OpenImage -> {
@@ -144,6 +148,37 @@ class PostViewModel(
         if (effect == null) return
         viewModelScope.launch {
             _effect.send(effect)
+        }
+    }
+
+    private fun exportImage() {
+        val post = (uiState.loadState as? PostLoadState.Success)?.post
+        if (post == null) {
+            sendEffect(PostEffect.ShowMessage("内容未加载完成"))
+            return
+        }
+        if (uiState.isExporting) return
+
+        uiState = uiState.copy(isExporting = true)
+        viewModelScope.launch {
+            var result: PictureRenderer.RenderResult? = null
+            try {
+                val context = getApplication<Application>()
+                result = withContext(Dispatchers.Default) {
+                    PictureRenderer.render(context, post)
+                }
+                withContext(Dispatchers.IO) {
+                    FileExporter(context).saveToGallery(result.displayName, result.bitmap)
+                }
+                uiState = uiState.copy(isExporting = false)
+                sendEffect(PostEffect.ShowMessage("图片已保存到相册"))
+            } catch (e: Exception) {
+                Log.e("PostViewModel", "Image export failed", e)
+                uiState = uiState.copy(isExporting = false)
+                sendEffect(PostEffect.ShowMessage("图片导出失败: ${e.message}"))
+            } finally {
+                result?.bitmap?.recycle()
+            }
         }
     }
 

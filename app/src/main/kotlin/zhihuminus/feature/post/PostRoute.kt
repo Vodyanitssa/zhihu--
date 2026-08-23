@@ -30,6 +30,7 @@ fun PostRoute(
 
     val viewModel: PostViewModel = viewModel {
         PostViewModel(
+            application = context.applicationContext as android.app.Application,
             postId = destination.id,
             postType = destination.type,
             repository = repository,

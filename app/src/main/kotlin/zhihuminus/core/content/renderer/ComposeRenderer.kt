@@ -54,10 +54,10 @@ import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
-import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
@@ -575,15 +575,13 @@ private fun TableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            )
-            .background(
+            ).background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            ).padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )
