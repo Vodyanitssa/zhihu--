@@ -6,7 +6,6 @@ import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.PinDto
-import com.zhihuminus.data.zhihu.dto.VoteResponse
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
 import com.zhihuminus.viewmodel.postSigned
@@ -59,7 +58,16 @@ class ZhihuApiImpl(
         val url = "https://www.zhihu.com/api/v4/pins/$pinId/voters/up"
         val response = environment.postSigned(url)
         val json: JsonObject = response.body()
-        return json["liked_count"]?.jsonPrimitive?.intOrNull ?: -1
+        return json["liked_count"]?.jsonPrimitive?.intOrNull
+            ?: -1
+    }
+
+    override suspend fun unlikePin(pinId: Long): Int {
+        val url = "https://www.zhihu.com/api/v4/pins/$pinId/voters/up"
+        val response = environment.deleteSigned(url)
+        val json: JsonObject = response.body()
+        return json["liked_count"]?.jsonPrimitive?.intOrNull
+            ?: -1
     }
 
     override suspend fun submitPinPollVote(pollId: String, optionId: String) {
@@ -86,19 +94,24 @@ class ZhihuApiImpl(
         environment.deleteSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
     }
 
-    override suspend fun vote(type: String, id: Long, vote: String): VoteResponse {
-        val url = when (type) {
-            "answer" -> "https://www.zhihu.com/api/v4/answers/$id/voters"
-            "article" -> "https://www.zhihu.com/api/v4/articles/$id/voters"
-            else -> throw IllegalArgumentException("Unsupported type: $type")
-        }
-
-        val response = environment.postSigned(url) {
+    override suspend fun voteAnswer(answerId: Long, vote: String): Int {
+        val response = environment.postSigned("https://www.zhihu.com/api/v4/answers/$answerId/voters") {
             contentType(ContentType.Application.Json)
             setBody(mapOf("type" to vote))
         }
+        val json: JsonObject = response.body()
+        return json["voteup_count"]?.jsonPrimitive?.intOrNull
+            ?: -1
+    }
 
-        return response.body()
+    override suspend fun voteArticle(articleId: Long, vote: String): Int {
+        val response = environment.postSigned("https://www.zhihu.com/api/v4/articles/$articleId/voters") {
+            contentType(ContentType.Application.Json)
+            setBody(mapOf("voting" to if (vote == "up") 1 else 0))
+        }
+        val json: JsonObject = response.body()
+        return json["voteup_count"]?.jsonPrimitive?.intOrNull
+            ?: -1
     }
 
     override suspend fun getCollections(type: String, id: Long): CollectionResponse {

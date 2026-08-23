@@ -89,11 +89,7 @@ fun PostBottomBar(
                         .clip(RoundedCornerShape(50))
                         .background(upBgColor)
                         .clickable {
-                            if (postType == PostType.Pin) {
-                                onEvent(PostEvent.LikePin)
-                            } else {
-                                onEvent(PostEvent.VoteUp)
-                            }
+                            onEvent(PostEvent.VoteUp)
                         }.padding(6.dp, 8.dp, 12.dp, 8.dp),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {

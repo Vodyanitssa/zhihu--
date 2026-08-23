@@ -5,7 +5,6 @@ import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.PinDto
-import com.zhihuminus.data.zhihu.dto.VoteResponse
 import io.ktor.client.statement.HttpResponse
 import kotlinx.serialization.json.JsonObject
 
@@ -17,11 +16,18 @@ interface ZhihuApi {
     suspend fun getPin(pinId: Long): PinDto
 
     /**
-     * Pin 点赞/取消点赞
+     * Pin 点赞
      * @param pinId Pin ID
      * @return 点赞后的赞数
      */
     suspend fun likePin(pinId: Long): Int
+
+    /**
+     * Pin 取消点赞
+     * @param pinId Pin ID
+     * @return 取消点赞后的赞数
+     */
+    suspend fun unlikePin(pinId: Long): Int
 
     /**
      * Pin 投票
@@ -50,13 +56,20 @@ interface ZhihuApi {
     suspend fun unfollowMember(urlToken: String)
 
     /**
-     * 投票
-     * @param type 内容类型: "answer" 或 "article"
-     * @param id 内容 ID
+     * 回答投票
+     * @param answerId 回答 ID
      * @param vote 投票类型: "up", "down", "neutral"
-     * @return 投票响应
+     * @return 投票后的赞同数
      */
-    suspend fun vote(type: String, id: Long, vote: String): VoteResponse
+    suspend fun voteAnswer(answerId: Long, vote: String): Int
+
+    /**
+     * 文章投票
+     * @param articleId 文章 ID
+     * @param vote 投票类型: "up", "down", "neutral"
+     * @return 投票后的赞同数
+     */
+    suspend fun voteArticle(articleId: Long, vote: String): Int
 
     /**
      * 获取收藏夹列表

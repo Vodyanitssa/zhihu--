@@ -24,8 +24,6 @@ sealed interface PostEvent {
 
     data object VoteDown : PostEvent
 
-    data object LikePin : PostEvent
-
     data class VotePoll(
         val pollId: String,
         val optionId: String,

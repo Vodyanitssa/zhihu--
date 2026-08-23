@@ -25,17 +25,15 @@ class ZhihuPostRepository(
         PostType.Pin -> mapPin(api.getPin(id))
     }
 
-    override suspend fun vote(postType: PostType, id: Long, vote: String): Int {
-        val type = when (postType) {
-            PostType.Answer -> "answer"
-            PostType.Article -> "article"
-            PostType.Pin -> throw UnsupportedOperationException("Pin does not support vote")
+    override suspend fun vote(postType: PostType, id: Long, vote: String): Int = when (postType) {
+        PostType.Answer -> api.voteAnswer(id, vote)
+        PostType.Article -> api.voteArticle(id, vote)
+        PostType.Pin -> when (vote) {
+            "up" -> api.likePin(id)
+            "neutral" -> api.unlikePin(id)
+            else -> throw UnsupportedOperationException("Pin does not support vote: $vote")
         }
-        val response = api.vote(type, id, vote)
-        return response.voteupCount
     }
-
-    override suspend fun likePin(pinId: Long): Int = api.likePin(pinId)
 
     override suspend fun submitPinPollVote(pollId: String, optionId: String) = api.submitPinPollVote(pollId, optionId)
 

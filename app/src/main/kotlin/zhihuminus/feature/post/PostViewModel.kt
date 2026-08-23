@@ -70,10 +70,6 @@ class PostViewModel(
                 handleVote(if (uiState.bottomBarState.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down)
             }
 
-            is PostEvent.LikePin -> {
-                handlePinLike()
-            }
-
             is PostEvent.VotePoll -> {
                 handlePollVote(event.pollId, event.optionId)
             }
@@ -223,9 +219,11 @@ class PostViewModel(
                 val result = withContext(Dispatchers.Default) {
                     repository.getCollections(postType, postId)
                 }
+                val collected = result.any { it.isFavorited }
                 uiState = uiState.copy(
                     collections = result,
-                    isCollected = result.any { it.isFavorited },
+                    isCollected = collected,
+                    bottomBarState = uiState.bottomBarState.copy(isCollected = collected),
                 )
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Failed to load collections", e)
@@ -307,36 +305,6 @@ class PostViewModel(
         }
     }
 
-    private fun handlePinLike() {
-        val bar = uiState.bottomBarState
-        val previousState = bar.voteUpState
-        val previousCount = bar.voteUpCount
-        val newLiked = previousState != VoteUpState.Up
-        uiState = uiState.copy(
-            bottomBarState = bar.copy(
-                voteUpState = if (newLiked) VoteUpState.Up else VoteUpState.Neutral,
-                voteUpCount = (previousCount + if (newLiked) 1 else -1).coerceAtLeast(0),
-            ),
-        )
-
-        viewModelScope.launch {
-            try {
-                val newCount = withContext(Dispatchers.Default) {
-                    repository.likePin(postId)
-                }
-                uiState = uiState.copy(bottomBarState = uiState.bottomBarState.copy(voteUpCount = newCount))
-            } catch (e: Exception) {
-                Log.e("PostViewModel", "Pin like failed", e)
-                uiState = uiState.copy(
-                    bottomBarState = bar.copy(
-                        voteUpState = previousState,
-                        voteUpCount = previousCount,
-                    ),
-                )
-            }
-        }
-    }
-
     private fun handlePollVote(pollId: String, optionId: String) {
         val loadState = uiState.loadState as? PostLoadState.Success ?: return
         val poll = loadState.post.poll ?: return
@@ -363,7 +331,7 @@ class PostViewModel(
                     repository.submitPinPollVote(pollId, optionId)
                 }
                 // Auto-like after voting
-                handlePinLike()
+                handleVote(VoteUpState.Up)
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Poll vote failed", e)
                 // Revert optimistic update

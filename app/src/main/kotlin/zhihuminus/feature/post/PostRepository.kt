@@ -6,20 +6,13 @@ interface PostRepository {
     suspend fun getPost(type: PostType, id: Long): Post
 
     /**
-     * 投票
+     * 投票（Answer/Article 支持 up/down/neutral，Pin 仅支持 up/neutral）
      * @param postType 内容类型
      * @param id 内容 ID
      * @param vote 投票类型: "up", "down", "neutral"
      * @return 投票后的赞同数
      */
     suspend fun vote(postType: PostType, id: Long, vote: String): Int
-
-    /**
-     * Pin 点赞/取消点赞
-     * @param pinId Pin ID
-     * @return 点赞后的赞数
-     */
-    suspend fun likePin(pinId: Long): Int
 
     /**
      * Pin 投票
