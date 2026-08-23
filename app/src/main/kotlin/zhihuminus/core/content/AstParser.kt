@@ -47,6 +47,22 @@ object AstParser {
                 ),
             )
 
+            "br" -> listOf(InlineNode.LineBreak)
+
+            "a" -> {
+                val url = node.attr("href").ifBlank { null }
+                if (url != null) {
+                    listOf(
+                        InlineNode.Link(
+                            name = node.text(),
+                            url = url,
+                        ),
+                    )
+                } else {
+                    parseText(node.text())
+                }
+            }
+
             else -> parseText(node.text())
         }
 
@@ -98,25 +114,19 @@ object AstParser {
 
         "p" -> {
             val children = element.children()
-            listOfNotNull(
-                if (children.size == 1) {
-                    when (children.first()!!.tagName()) {
-                        "img" -> children.first()?.let(::parseImage)
-                        "a" -> children.first()?.let(::parseLink)
-                        else -> parseParagraph(element)
-                    }
-                } else {
-                    parseParagraph(element)
-                },
-            )
+            if (children.size == 1 && children.first()!!.tagName() == "img") {
+                listOfNotNull(children.first()?.let(::parseImage))
+            } else {
+                listOf(
+                    ContentNode.Paragraph(
+                        content = element.childNodes().flatMap { node -> parseInline(node) },
+                    ),
+                )
+            }
         }
 
         "blockquote" -> {
-            listOf(
-                ContentNode.Quote(
-                    content = parseInline(element),
-                ),
-            )
+            listOf(ContentNode.Quote(content = element.childNodes().flatMap { node -> parseInline(node) }))
         }
 
         "pre" -> {
@@ -180,11 +190,6 @@ object AstParser {
 
         else -> emptyList()
     }
-
-    private fun parseParagraph(element: Element): ContentNode =
-        ContentNode.Paragraph(
-            content = parseInline(element),
-        )
 
     private fun parseImage(element: Element): ContentNode.Image? {
         val url = element

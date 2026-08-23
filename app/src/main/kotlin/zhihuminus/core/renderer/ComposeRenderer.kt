@@ -74,10 +74,11 @@ val LocalImageViewManager = staticCompositionLocalOf<ImageViewManager?> { null }
 fun InlineNodes(
     nodes: List<InlineNode>,
 ) {
+    val openExternalUrl = rememberExternalUrlOpener()
     val inlineContent = EmojiManager.inlineContent
     val text = buildAnnotatedString {
         nodes.forEach { node ->
-            appendInlineNode(node)
+            appendInlineNode(node, openExternalUrl)
         }
     }
     Text(
@@ -106,6 +107,7 @@ fun EmojiItem(
 
 private fun AnnotatedString.Builder.appendInlineNode(
     node: InlineNode,
+    uriHandler: (String) -> Unit,
 ) {
     when (node) {
         is InlineNode.Text -> {
@@ -119,7 +121,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Bold -> {
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child)
+                    appendInlineNode(child, uriHandler)
                 }
             }
         }
@@ -127,9 +129,29 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Italic -> {
             withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child)
+                    appendInlineNode(child, uriHandler)
                 }
             }
+        }
+
+        is InlineNode.Link -> {
+            val link =
+                LinkAnnotation.Url(
+                    node.url,
+                    TextLinkStyles(SpanStyle(color = Color.Blue)),
+                ) {
+                    val url = (it as LinkAnnotation.Url).url
+                    uriHandler(url)
+                }
+            withLink(
+                link,
+            ) {
+                append(node.name)
+            }
+        }
+
+        is InlineNode.LineBreak -> {
+            appendLine()
         }
     }
 }

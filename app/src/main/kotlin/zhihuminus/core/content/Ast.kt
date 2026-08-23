@@ -78,4 +78,11 @@ sealed interface InlineNode {
     data class Emoji(
         val name: String,
     ) : InlineNode
+
+    data class Link(
+        val name: String,
+        val url: String,
+    ) : InlineNode
+
+    data object LineBreak : InlineNode
 }

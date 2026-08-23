@@ -177,6 +177,13 @@ object HtmlRenderer {
                 "<img class=\"emoji\" data-name=\"${escapeHtml(node.name)}\">"
             }
         }
+
+        is InlineNode.Link ->
+            "<a href=\"${escapeHtml(node.url)}\">${escapeHtml(node.name)}</a>"
+
+        is InlineNode.LineBreak -> {
+            "<br>"
+        }
     }
 
     // ── HTML escaping ─────────────────────────────────────────────────
