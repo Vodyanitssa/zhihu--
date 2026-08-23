@@ -66,4 +66,11 @@ interface PostRepository {
      * @param follow true 为关注，false 为取消关注
      */
     suspend fun followMember(urlToken: String, follow: Boolean)
+
+    /**
+     * 记录阅读历史并标记已读
+     * @param postType 内容类型
+     * @param id 内容 ID
+     */
+    suspend fun recordHistory(postType: PostType, id: Long)
 }

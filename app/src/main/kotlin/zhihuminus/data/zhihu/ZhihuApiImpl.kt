@@ -11,6 +11,9 @@ import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
 import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.call.body
+import io.ktor.client.request.forms.MultiPartFormDataContent
+import io.ktor.client.request.forms.formData
+import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
@@ -180,4 +183,35 @@ class ZhihuApiImpl(
 
     override suspend fun deleteComment(commentId: String): HttpResponse =
         environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
+
+    override suspend fun addHistory(contentToken: String, contentType: String) {
+        val url = "https://www.zhihu.com/api/v4/read_history/add"
+        environment.postSigned(url) {
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put("content_token", contentToken)
+                    put("content_type", contentType)
+                },
+            )
+        }
+    }
+
+    override suspend fun markAsRead(contentToken: String, contentType: String) {
+        val url = "https://www.zhihu.com/lastread/touch"
+        val items = listOf(
+            listOf(contentType, contentToken, "touch"),
+            listOf(contentType, contentToken, "read"),
+        )
+        environment.postSigned(url) {
+            header("x-requested-with", "fetch")
+            setBody(
+                MultiPartFormDataContent(
+                    formData {
+                        append("items", ZhihuJson.json.encodeToString(items))
+                    },
+                ),
+            )
+        }
+    }
 }

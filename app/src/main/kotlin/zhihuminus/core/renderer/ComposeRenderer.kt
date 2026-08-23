@@ -33,15 +33,14 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalClipboardManager
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -570,15 +569,13 @@ private fun TableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            )
-            .background(
+            ).background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            )
-            .padding(horizontal = 10.dp, vertical = 8.dp),
+            ).padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )

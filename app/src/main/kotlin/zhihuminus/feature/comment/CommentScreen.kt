@@ -20,9 +20,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -68,9 +66,9 @@ fun CommentScreen(
             val layoutInfo = listState.layoutInfo
             val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
             lastVisible >= layoutInfo.totalItemsCount - 3 &&
-                !uiState.isLoading &&
-                !uiState.isLoadingMore &&
-                !uiState.isEnd
+                    !uiState.isLoading &&
+                    !uiState.isLoadingMore &&
+                    !uiState.isEnd
         }
     }
     LaunchedEffect(shouldLoadMore.value) {

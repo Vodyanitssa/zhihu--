@@ -74,6 +74,17 @@ class ZhihuPostRepository(
         if (follow) api.followMember(urlToken) else api.unfollowMember(urlToken)
     }
 
+    override suspend fun recordHistory(postType: PostType, id: Long) {
+        val apiType = when (postType) {
+            PostType.Answer -> "answer"
+            PostType.Article -> "article"
+            PostType.Pin -> "pin"
+        }
+        val contentToken = id.toString()
+        api.addHistory(contentToken, apiType)
+        api.markAsRead(contentToken, apiType)
+    }
+
     private fun mapAnswer(dto: AnswerDto): Post {
         val contentNodes = AstParser.parseContent(dto.content)
         return Post(

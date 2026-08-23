@@ -166,6 +166,15 @@ class PostViewModel(
                     ),
                 )
                 loadCollections()
+                viewModelScope.launch {
+                    try {
+                        withContext(Dispatchers.Default) {
+                            repository.recordHistory(postType, postId)
+                        }
+                    } catch (e: Exception) {
+                        Log.e("PostViewModel", "Failed to record history", e)
+                    }
+                }
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Failed to load post", e)
                 uiState = uiState.copy(loadState = PostLoadState.Error(e.message))

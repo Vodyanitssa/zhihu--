@@ -151,4 +151,18 @@ interface ZhihuApi {
      * 删除评论
      */
     suspend fun deleteComment(commentId: String): HttpResponse
+
+    /**
+     * 记录阅读历史（read_history/add）
+     * @param contentToken 内容 token（数字 ID 字符串）
+     * @param contentType 内容类型: "answer", "article", "pin"
+     */
+    suspend fun addHistory(contentToken: String, contentType: String)
+
+    /**
+     * 标记已读（lastread/touch）
+     * @param contentToken 内容 token（数字 ID 字符串）
+     * @param contentType 内容类型: "answer", "article", "pin"
+     */
+    suspend fun markAsRead(contentToken: String, contentType: String)
 }
