@@ -411,18 +411,21 @@ private fun Listing(node: ContentNode.Listing) {
     ) {
         node.items.forEachIndexed { index, item ->
             Row(
-                modifier = Modifier.fillMaxWidth(),
+                modifier = Modifier
+                    .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalAlignment = Alignment.CenterVertically,
             ) {
                 Text(
                     text = if (node.isSorted) "${index + 1}." else "•",
                     style = MaterialTheme.typography.bodyLarge,
+                    modifier = Modifier.alignByBaseline(),
                 )
 
                 Text(
                     text = item,
-                    modifier = Modifier.weight(1f),
+                    modifier = Modifier
+                        .weight(1f)
+                        .alignByBaseline(),
                 )
             }
         }
