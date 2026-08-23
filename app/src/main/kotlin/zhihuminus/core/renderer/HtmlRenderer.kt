@@ -178,6 +178,9 @@ object HtmlRenderer {
             }
         }
 
+        is InlineNode.Code ->
+            "<code style=\"font-family:monospace;background:rgba(0,0,0,0.08);padding:0 4px;border-radius:3px\">${escapeHtml(node.text)}</code>"
+
         is InlineNode.Link ->
             "<a href=\"${escapeHtml(node.url)}\">${escapeHtml(node.name)}</a>"
 

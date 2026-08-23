@@ -23,6 +23,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlayArrow
 import androidx.compose.material3.Card
@@ -32,13 +33,15 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalClipboardManager
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -83,9 +86,10 @@ fun InlineNodes(
             textDecoration = TextDecoration.Underline,
         ),
     )
+    val codeStyle = MaterialTheme.colorScheme.surfaceVariant
     val text = buildAnnotatedString {
         nodes.forEach { node ->
-            appendInlineNode(node, openExternalUrl, linkStyle)
+            appendInlineNode(node, openExternalUrl, linkStyle, codeStyle)
         }
     }
     Text(
@@ -116,6 +120,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
     node: InlineNode,
     uriHandler: (String) -> Unit,
     linkStyle: TextLinkStyles,
+    codeStyle: Color,
 ) {
     when (node) {
         is InlineNode.Text -> {
@@ -129,7 +134,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Bold -> {
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler, linkStyle)
+                    appendInlineNode(child, uriHandler, linkStyle, codeStyle)
                 }
             }
         }
@@ -137,8 +142,19 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Italic -> {
             withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler, linkStyle)
+                    appendInlineNode(child, uriHandler, linkStyle, codeStyle)
                 }
+            }
+        }
+
+        is InlineNode.Code -> {
+            withStyle(
+                SpanStyle(
+                    fontFamily = FontFamily.Monospace,
+                    background = codeStyle,
+                ),
+            ) {
+                append(" ${node.text} ")
             }
         }
 
@@ -298,28 +314,58 @@ private fun Link(node: ContentNode.Link) {
 
 @Composable
 private fun Code(node: ContentNode.Code) {
+    val clipboardManager = LocalClipboardManager.current
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .clip(MaterialTheme.shapes.medium)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(12.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
+            .background(MaterialTheme.colorScheme.surfaceVariant),
     ) {
-        if (node.language != "text") {
+        // 顶栏：语言标签 + 复制按钮
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .background(MaterialTheme.colorScheme.surfaceVariant)
+                .padding(start = 12.dp, end = 4.dp, top = 4.dp, bottom = 4.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
                 text = node.language,
-                style = MaterialTheme.typography.labelSmall,
+                style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
+            IconButton(
+                onClick = {
+                    clipboardManager.setText(AnnotatedString(node.content))
+                },
+                modifier = Modifier.size(28.dp),
+            ) {
+                Icon(
+                    imageVector = Icons.Default.ContentCopy,
+                    contentDescription = "复制代码",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
         }
 
+        HorizontalDivider(thickness = 1.dp)
+
+        // 代码内容
         SelectionContainer {
-            Text(
-                text = node.content,
-                style = MaterialTheme.typography.bodyMedium,
-                fontFamily = FontFamily.Monospace,
-            )
+            Row(
+                modifier = Modifier
+                    .horizontalScroll(rememberScrollState())
+                    .padding(12.dp),
+            ) {
+                Text(
+                    text = node.content,
+                    style = MaterialTheme.typography.bodyMedium,
+                    fontFamily = FontFamily.Monospace,
+                    softWrap = false,
+                )
+            }
         }
     }
 }
@@ -524,13 +570,15 @@ private fun TableCell(
             .border(
                 width = 0.5.dp,
                 color = MaterialTheme.colorScheme.outlineVariant,
-            ).background(
+            )
+            .background(
                 if (isHeader) {
                     MaterialTheme.colorScheme.surfaceVariant
                 } else {
                     Color.Transparent
                 },
-            ).padding(horizontal = 10.dp, vertical = 8.dp),
+            )
+            .padding(horizontal = 10.dp, vertical = 8.dp),
         style = MaterialTheme.typography.bodyMedium,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )

@@ -49,6 +49,12 @@ object AstParser {
 
             "br" -> listOf(InlineNode.LineBreak)
 
+            "code" -> listOf(
+                InlineNode.Code(
+                    text = node.text(),
+                ),
+            )
+
             "a" -> {
                 val url = node.attr("href").ifBlank { null }
                 if (url != null) {
@@ -119,7 +125,13 @@ object AstParser {
             } else {
                 listOf(
                     ContentNode.Paragraph(
-                        content = element.childNodes().flatMap { node -> parseInline(node) },
+                        content = element.childNodes().flatMap { node ->
+                            if (element.className() == "ztext-empty-paragraph") {
+                                emptyList()
+                            } else {
+                                parseInline(node)
+                            }
+                        },
                     ),
                 )
             }
@@ -149,7 +161,7 @@ object AstParser {
                     }
 
                 element.children().forEach {
-                    if (it.tagName() == "p") {
+                    if (it.tagName() == "p" || it.tagName() == "pre") {
                         addAll(parseBlock(it))
                     }
                 }

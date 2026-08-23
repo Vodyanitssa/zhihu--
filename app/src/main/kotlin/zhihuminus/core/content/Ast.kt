@@ -84,5 +84,9 @@ sealed interface InlineNode {
         val url: String,
     ) : InlineNode
 
+    data class Code(
+        val text: String,
+    ) : InlineNode
+
     data object LineBreak : InlineNode
 }
