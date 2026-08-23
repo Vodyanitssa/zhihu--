@@ -11,14 +11,13 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.feature.post.Post
+import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.navigation.NavDestination
 
 @Composable
 fun PostContent(
     post: Post,
     onEvent: (PostEvent) -> Unit = {},
-    onNavigate: (NavDestination) -> Unit = {},
 ) {
     Column(
         modifier = Modifier
@@ -70,7 +69,7 @@ fun PostContent(
                     onClick = {
                         val destination = resolveLinkCardDestination(linkCard)
                         if (destination != null) {
-                            onNavigate(destination)
+                            onEvent(PostEvent.Navigate(destination))
                         } else if (linkCard.url.isNotBlank()) {
                             onEvent(PostEvent.OpenLink(linkCard.url))
                         }

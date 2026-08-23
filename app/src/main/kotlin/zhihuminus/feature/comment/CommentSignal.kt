@@ -1,7 +1,4 @@
-package com.zhihuminus.feature.comment.components
-
-import com.zhihuminus.feature.comment.Comment
-import com.zhihuminus.feature.comment.CommentSortOrder
+package com.zhihuminus.feature.comment
 
 sealed interface CommentEvent {
     data object LoadMore : CommentEvent
@@ -42,4 +39,26 @@ sealed interface CommentEvent {
     data class OpenLink(
         val url: String,
     ) : CommentEvent
+
+    data class Reply(
+        val comment: Comment,
+    ) : CommentEvent
+
+    data object DismissReply : CommentEvent
+}
+
+sealed interface CommentEffect {
+    data class ShowMessage(
+        val message: String,
+    ) : CommentEffect
+
+    data class OpenImage(
+        val url: String,
+    ) : CommentEffect
+
+    data class OpenExternalUrl(
+        val url: String,
+    ) : CommentEffect
+
+    data object ScrollToTop : CommentEffect
 }

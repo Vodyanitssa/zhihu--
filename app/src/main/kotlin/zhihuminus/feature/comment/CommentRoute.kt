@@ -1,37 +1,22 @@
 package com.zhihuminus.feature.comment
 
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
-import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheetProperties
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zhihuminus.feature.comment.components.CommentEvent
-import com.zhihuminus.feature.comment.components.CommentItem
+import com.zhihuminus.feature.comment.components.ChildCommentSheet
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImagePreviewOpener
@@ -126,147 +111,43 @@ fun CommentRoute(
     }
 
     // 子评论 sheet
-    val activeParent = viewModel.activeParentComment
-    if (activeParent != null) {
-        MyModalBottomSheet(
-            onDismissRequest = {
-                viewModel.onEvent(CommentEvent.DismissChildComments)
-            },
-            sheetState = childSheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
-            properties = ModalBottomSheetProperties(
-                shouldDismissOnBackPress = true,
-                shouldDismissOnClickOutside = true,
-            ),
-            dragHandle = {
-                Column {
-                    Spacer(modifier = Modifier.height(16.dp))
-                    Text(
-                        "回复",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
-                        fontSize = 18.sp,
-                        lineHeight = 26.sp,
-                    )
-                    Spacer(modifier = Modifier.height(8.dp))
-                }
-            },
-            usePlatformWindow = true,
-        ) {
-            ChildCommentSheet(
-                parentComment = activeParent,
-                childComments = viewModel.childComments,
-                isLoading = viewModel.isChildLoading,
-                isEnd = viewModel.isChildEnd,
-                onLoadMore = { viewModel.loadMoreChildComments() },
-                onLike = { commentId, liked ->
-                    if (liked) {
-                        viewModel.onEvent(CommentEvent.UnlikeComment(commentId))
-                    } else {
-                        viewModel.onEvent(CommentEvent.LikeComment(commentId))
+    val activeParentId = viewModel.uiState.activeParentId
+    if (activeParentId != null) {
+        val parentItem = viewModel.uiState.items.find { it.comment.id == activeParentId }
+        if (parentItem != null) {
+            val children = parentItem.children
+            MyModalBottomSheet(
+                onDismissRequest = {
+                    viewModel.onEvent(CommentEvent.DismissChildComments)
+                },
+                sheetState = childSheetState,
+                containerColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                properties = ModalBottomSheetProperties(
+                    shouldDismissOnBackPress = true,
+                    shouldDismissOnClickOutside = true,
+                ),
+                dragHandle = {
+                    Column {
+                        Spacer(modifier = Modifier.height(16.dp))
+                        Text(
+                            "回复",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            fontSize = 18.sp,
+                            lineHeight = 26.sp,
+                        )
+                        Spacer(modifier = Modifier.height(8.dp))
                     }
                 },
-                onDelete = { viewModel.onEvent(CommentEvent.DeleteComment(it)) },
-            )
-        }
-    }
-}
-
-/**
- * 子评论列表（第二个 bottom sheet 的内容）
- */
-@Composable
-private fun ChildCommentSheet(
-    parentComment: Comment,
-    childComments: List<Comment>,
-    isLoading: Boolean,
-    isEnd: Boolean,
-    onLoadMore: () -> Unit,
-    onLike: (String, Boolean) -> Unit,
-    onDelete: (String) -> Unit,
-) {
-    val listState = rememberLazyListState()
-
-    // 滚动加载更多
-    val shouldLoadMore = remember {
-        derivedStateOf {
-            val layoutInfo = listState.layoutInfo
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= layoutInfo.totalItemsCount - 3 && !isLoading && !isEnd
-        }
-    }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) onLoadMore()
-    }
-
-    Surface(
-        modifier = Modifier.fillMaxSize(),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
-        ) {
-            // 父评论
-            item(key = "parent_${parentComment.id}") {
-                CommentItem(
-                    comment = parentComment,
-                    showSubComments = false,
+                usePlatformWindow = true,
+            ) {
+                ChildCommentSheet(
+                    parentComment = parentItem.comment,
+                    childComments = children?.map { it.comment } ?: emptyList(),
+                    isLoading = children == null,
+                    isEnd = viewModel.isChildEnd,
+                    onLoadMore = { viewModel.loadMoreChildComments() },
+                    onEvent = viewModel::onEvent,
                 )
-            }
-
-            // 回复数栏
-            item(key = "reply_header") {
-                Column {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "回复 ${parentComment.childCommentCount}",
-                        fontSize = 14.sp,
-                        fontWeight = FontWeight.Medium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(start = 16.dp, bottom = 8.dp),
-                    )
-                }
-            }
-
-            // 子评论列表
-            if (childComments.isEmpty() && !isLoading) {
-                item(key = "empty") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("暂无回复", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                    }
-                }
-            } else {
-                items(
-                    items = childComments,
-                    key = { it.id },
-                ) { comment ->
-                    CommentItem(
-                        comment = comment,
-                        showSubComments = false,
-                        onLike = { onLike(comment.id, comment.liked) },
-                        onDelete = { onDelete(comment.id) },
-                    )
-                }
-            }
-
-            if (isLoading) {
-                item(key = "loading") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    }
-                }
             }
         }
     }

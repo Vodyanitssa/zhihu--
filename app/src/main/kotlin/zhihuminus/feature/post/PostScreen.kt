@@ -17,68 +17,54 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zhihuminus.data.Collection
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
 import com.zhihuminus.feature.post.components.PostBottomBar
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
-import com.zhihuminus.feature.post.components.PostEvent
 import com.zhihuminus.feature.post.components.PostHeader
-import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.ui.components.CollectionDialogComponent
-import com.zhihuminus.ui.components.VotersSheet
-import com.zhihuminus.util.formatCompactCount
 
-sealed interface PostUiState {
-    data object Loading : PostUiState
+sealed interface PostLoadState {
+    data object Loading : PostLoadState
 
     data class Success(
         val post: Post,
-    ) : PostUiState
+    ) : PostLoadState
 
     data class Error(
-        val error: Throwable,
-    ) : PostUiState
+        val message: String?,
+    ) : PostLoadState
 }
+
+data class PostUiState(
+    val loadState: PostLoadState = PostLoadState.Loading,
+    val bottomBarState: PostBottomBarState = PostBottomBarState(),
+    val collections: List<Collection> = emptyList(),
+    val isCollected: Boolean = false,
+    val showCollectionDialog: Boolean = false,
+    val showActionsMenu: Boolean = false,
+    val showComments: Boolean = false,
+)
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PostScreen(
     uiState: PostUiState,
-    bottomBarState: PostBottomBarState,
-    collections: List<Collection>,
     commentRepository: CommentRepository,
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
-    onNavigate: (NavDestination) -> Unit = {},
-    voters: List<DataHolder.Author> = emptyList(),
-    showVoters: Boolean = false,
-    votersLoading: Boolean = false,
-    votersError: String? = null,
-    canLoadMoreVoters: Boolean = false,
-    onShowVoters: () -> Unit = {},
-    onDismissVoters: () -> Unit = {},
-    onLoadMoreVoters: () -> Unit = {},
-    onRefreshCollections: () -> Unit = {},
 ) {
-    var showCollectionDialog by androidx.compose.runtime.remember { mutableStateOf(false) }
-    var showActionsMenu by androidx.compose.runtime.remember { mutableStateOf(false) }
-    var showComments by androidx.compose.runtime.remember { mutableStateOf(false) }
-
     Scaffold(
         topBar = {
             TopAppBar(
                 title = {
-                    val title = when (val state = uiState) {
-                        is PostUiState.Success -> when (state.post.type) {
+                    val title = when (val state = uiState.loadState) {
+                        is PostLoadState.Success -> when (state.post.type) {
                             PostType.Answer -> state.post.title.ifBlank { "回答" }
                             PostType.Article -> state.post.title
                             PostType.Pin -> "${state.post.author.name}的想法"
@@ -96,33 +82,17 @@ fun PostScreen(
             )
         },
         bottomBar = {
-            if (uiState is PostUiState.Success) {
+            if (uiState.loadState is PostLoadState.Success) {
                 PostBottomBar(
-                    postType = uiState.post.type,
-                    state = bottomBarState,
-                    onEvent = { event ->
-                        when (event) {
-                            is PostEvent.ShowCollectionDialog -> {
-                                showCollectionDialog = true
-                            }
-
-                            is PostEvent.ShowMoreMenu -> {
-                                showActionsMenu = true
-                            }
-
-                            is PostEvent.Comment -> {
-                                showComments = true
-                            }
-
-                            else -> onEvent(event)
-                        }
-                    },
+                    postType = uiState.loadState.post.type,
+                    state = uiState.bottomBarState,
+                    onEvent = onEvent,
                 )
             }
         },
     ) { paddingValues ->
-        when (val state = uiState) {
-            is PostUiState.Loading -> {
+        when (val state = uiState.loadState) {
+            is PostLoadState.Loading -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -133,7 +103,7 @@ fun PostScreen(
                 }
             }
 
-            is PostUiState.Error -> {
+            is PostLoadState.Error -> {
                 Box(
                     modifier = Modifier
                         .fillMaxSize()
@@ -146,7 +116,7 @@ fun PostScreen(
                             style = MaterialTheme.typography.titleMedium,
                         )
                         Text(
-                            text = state.error.message ?: "未知错误",
+                            text = state.message ?: "未知错误",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -154,7 +124,7 @@ fun PostScreen(
                 }
             }
 
-            is PostUiState.Success -> {
+            is PostLoadState.Success -> {
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -167,27 +137,23 @@ fun PostScreen(
                         updatedAt = state.post.updatedAt,
                         ipInfo = state.post.ipInfo,
                         voteCount = state.post.voteCount,
-                        firstVoterName = voters.firstOrNull()?.name,
                         isFollowing = state.post.author.isFollowing,
-                        onShowVoters = onShowVoters,
                         onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                     )
                     PostContent(
                         post = state.post,
                         onEvent = onEvent,
-                        onNavigate = onNavigate,
                     )
                 }
 
                 // Collection Dialog
                 CollectionDialogComponent(
-                    showDialog = showCollectionDialog,
-                    onDismiss = { showCollectionDialog = false },
-                    collections = collections,
-                    onLoadCollections = onRefreshCollections,
+                    showDialog = uiState.showCollectionDialog,
+                    onDismiss = { onEvent(PostEvent.DismissCollectionDialog) },
+                    collections = uiState.collections,
+                    onLoadCollections = { onEvent(PostEvent.RefreshCollections) },
                     onToggleFavorite = { collection ->
                         onEvent(PostEvent.ToggleCollection(collection))
-                        showCollectionDialog = false
                     },
                     onCreateCollection = { title, description, isPublic ->
                         onEvent(PostEvent.CreateCollection(title, description, isPublic))
@@ -197,8 +163,8 @@ fun PostScreen(
                 // Actions Menu
                 PostActionsMenu(
                     post = state.post,
-                    showMenu = showActionsMenu,
-                    onDismissRequest = { showActionsMenu = false },
+                    showMenu = uiState.showActionsMenu,
+                    onDismissRequest = { onEvent(PostEvent.DismissActionsMenu) },
                     onShare = {
                         onEvent(PostEvent.Share)
                     },
@@ -210,28 +176,11 @@ fun PostScreen(
 
                 // Comments
                 CommentRoute(
-                    showComments = showComments,
-                    onDismiss = { showComments = false },
+                    showComments = uiState.showComments,
+                    onDismiss = { onEvent(PostEvent.DismissComments) },
                     contentType = state.post.type,
                     contentId = state.post.id,
                     repository = commentRepository,
-                )
-
-                // Voters Sheet
-                VotersSheet(
-                    show = showVoters,
-                    title = "${formatCompactCount(state.post.voteCount)} 人赞同",
-                    voters = voters,
-                    isLoading = votersLoading,
-                    errorMessage = votersError,
-                    canLoadMore = canLoadMoreVoters,
-                    onDismissRequest = onDismissVoters,
-                    onLoadMore = onLoadMoreVoters,
-                    onRetry = onLoadMoreVoters,
-                    onNavigate = { person ->
-                        onDismissVoters()
-                        onNavigate(person)
-                    },
                 )
             }
         }

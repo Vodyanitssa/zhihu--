@@ -4,11 +4,9 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
@@ -22,8 +20,6 @@ import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material.icons.filled.ThumbUp
 import androidx.compose.material.icons.outlined.ThumbUp
-import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -49,45 +45,36 @@ import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.renderer.ContentNodes
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.comment.Comment
+import com.zhihuminus.feature.comment.CommentEvent
 
 /**
- * 通用评论条目组件。
+ * 通用评论条目组件，只负责渲染单条评论。
  *
  * @param comment 评论数据
- * @param showSubComments 是否显示子评论预览（仅根评论列表使用）
- * @param onLike 点赞/取消点赞回调
- * @param onReply 回复回调
- * @param onDelete 删除回调
- * @param onChildCommentsClick 查看子评论回调
- * @param onChildLike 子评论点赞回调（用于子评论预览）
- * @param onChildDelete 子评论删除回调（用于子评论预览）
+ * @param onEvent 统一事件回调
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun CommentItem(
     comment: Comment,
     modifier: Modifier = Modifier,
-    showSubComments: Boolean = true,
-    onLike: (() -> Unit)? = null,
-    onReply: (() -> Unit)? = null,
-    onDelete: (() -> Unit)? = null,
-    onChildCommentsClick: (() -> Unit)? = null,
-    onChildLike: ((Comment) -> Unit)? = null,
-    onChildDelete: ((Comment) -> Unit)? = null,
+    onEvent: (CommentEvent) -> Unit = {},
 ) {
     var showMoreMenu by remember(comment.id) { mutableStateOf(false) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // 作者信息 + 内容
         Row(modifier = Modifier.fillMaxWidth()) {
-            AsyncImage(
-                model = comment.author.avatarUrl,
-                contentDescription = "头像",
-                modifier = Modifier
-                    .size(36.dp)
-                    .clip(CircleShape),
-                contentScale = ContentScale.Crop,
-            )
+            Box(modifier = Modifier.padding(top = 4.dp)) {
+                AsyncImage(
+                    model = comment.author.avatarUrl,
+                    contentDescription = "头像",
+                    modifier = Modifier
+                        .size(36.dp)
+                        .clip(CircleShape),
+                    contentScale = ContentScale.Crop,
+                )
+            }
             Spacer(modifier = Modifier.width(8.dp))
             Column(modifier = Modifier.weight(1f)) {
                 Row(verticalAlignment = Alignment.CenterVertically) {
@@ -95,6 +82,7 @@ fun CommentItem(
                         text = comment.author.name,
                         fontWeight = FontWeight.Bold,
                         fontSize = 16.sp,
+                        modifier = Modifier.alignByBaseline(),
                     )
 
                     comment.authorTag?.let { tag ->
@@ -108,6 +96,7 @@ fun CommentItem(
                             "回复",
                             fontSize = 14.sp,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            modifier = Modifier.alignByBaseline(),
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
@@ -116,7 +105,9 @@ fun CommentItem(
                             fontSize = 16.sp,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.widthIn(max = 120.dp),
+                            modifier = Modifier
+                                .widthIn(max = 120.dp)
+                                .alignByBaseline(),
                         )
                     }
                 }
@@ -135,6 +126,7 @@ fun CommentItem(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(start = 44.dp),
+            verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween,
         ) {
             // 时间
@@ -145,6 +137,7 @@ fun CommentItem(
                 text = formattedTime,
                 fontSize = 12.sp,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                modifier = Modifier.alignByBaseline(),
             )
 
             // IP 属地
@@ -154,13 +147,14 @@ fun CommentItem(
                     text = tag,
                     fontSize = 12.sp,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.alignByBaseline(),
                 )
             }
 
             Spacer(modifier = Modifier.weight(1f))
 
             // 删除
-            if (comment.canDelete && onDelete != null) {
+            if (comment.canDelete) {
                 Box {
                     IconButton(
                         onClick = { showMoreMenu = true },
@@ -188,113 +182,59 @@ fun CommentItem(
                             },
                             onClick = {
                                 showMoreMenu = false
-                                onDelete()
+                                onEvent(CommentEvent.DeleteComment(comment.id))
                             },
                         )
                     }
                 }
             }
 
-            // 回复/子评论
-            if (onReply != null || onChildCommentsClick != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable {
-                        if (comment.childCommentCount > 0) {
-                            onChildCommentsClick?.invoke()
-                        } else {
-                            onReply?.invoke()
-                        }
-                    },
-                ) {
-                    Icon(
-                        Icons.AutoMirrored.Outlined.Comment,
-                        contentDescription = "回复",
-                        modifier = Modifier.size(16.dp),
-                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    if (comment.childCommentCount > 0) {
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            text = comment.childCommentCount.toString(),
-                            fontSize = 12.sp,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
+            // 回复
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable { onEvent(CommentEvent.Reply(comment)) },
+            ) {
+                Icon(
+                    Icons.AutoMirrored.Outlined.Comment,
+                    contentDescription = "回复",
+                    modifier = Modifier.size(16.dp),
+                    tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
             }
 
             Spacer(modifier = Modifier.width(8.dp))
 
             // 点赞
-            if (onLike != null) {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    modifier = Modifier.clickable { onLike() },
-                ) {
-                    Icon(
-                        if (comment.liked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
-                        contentDescription = "点赞",
-                        modifier = Modifier.size(16.dp),
-                        tint = if (comment.liked) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                    Spacer(modifier = Modifier.width(4.dp))
-                    Text(
-                        text = comment.likeCount.toString(),
-                        fontSize = 12.sp,
-                        color = if (comment.liked) {
-                            MaterialTheme.colorScheme.primary
-                        } else {
-                            MaterialTheme.colorScheme.onSurfaceVariant
-                        },
-                    )
-                }
-            }
-        }
-
-        // 子评论预览（仅根评论列表使用）
-        if (showSubComments && comment.childCommentCount > 0 && comment.childComments.isNotEmpty()) {
-            Column(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(start = 40.dp, top = 8.dp),
-            ) {
-                comment.childComments.take(2).forEach { child ->
-                    CommentItem(
-                        comment = child,
-                        showSubComments = false,
-                        onLike = onChildLike?.let { cb -> { cb(child) } },
-                        onDelete = onChildDelete?.let { cb -> { cb(child) } },
-                    )
-                }
-                if (comment.childCommentCount > 2 && onChildCommentsClick != null) {
-                    Button(
-                        onClick = onChildCommentsClick,
-                        modifier = Modifier.height(28.dp),
-                        shape = RoundedCornerShape(50),
-                        colors = ButtonDefaults.buttonColors(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            contentColor = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.Comment,
-                            contentDescription = "查看子评论",
-                            modifier = Modifier.size(16.dp),
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.width(4.dp))
-                        Text(
-                            "查看 ${comment.childCommentCount} 条子评论",
-                            fontSize = 12.sp,
-                        )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier.clickable {
+                    if (comment.liked) {
+                        onEvent(CommentEvent.UnlikeComment(comment.id))
+                    } else {
+                        onEvent(CommentEvent.LikeComment(comment.id))
                     }
-                }
+                },
+            ) {
+                Icon(
+                    if (comment.liked) Icons.Filled.ThumbUp else Icons.Outlined.ThumbUp,
+                    contentDescription = "点赞",
+                    modifier = Modifier.size(16.dp),
+                    tint = if (comment.liked) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
+                Spacer(modifier = Modifier.width(4.dp))
+                Text(
+                    text = comment.likeCount.toString(),
+                    fontSize = 12.sp,
+                    color = if (comment.liked) {
+                        MaterialTheme.colorScheme.primary
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                )
             }
         }
     }
@@ -309,7 +249,7 @@ private fun AuthorTag(authorTag: String) {
     ) {
         Text(
             text = authorTag,
-            fontSize = 12.sp,
+            style = MaterialTheme.typography.labelSmall,
             lineHeight = 12.sp,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

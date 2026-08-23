@@ -3,8 +3,6 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
-import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.data.ZhihuVotersResponse
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
@@ -71,16 +69,6 @@ class ZhihuPostRepository(
 
     override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection =
         api.createCollection(title, description, isPublic)
-
-    override suspend fun loadVoters(postType: PostType, id: Long, nextUrl: String?): ZhihuVotersResponse {
-        val url = nextUrl ?: when (postType) {
-            PostType.Answer -> "https://www.zhihu.com/api/v4/answers/$id/upvoters?limit=10&offset=0"
-            PostType.Article -> "https://www.zhihu.com/api/v4/articles/$id/upvoters?limit=10&offset=0"
-            PostType.Pin -> "https://www.zhihu.com/api/v4/pins/$id/upvoters?limit=10&offset=0"
-        }
-        val json = api.fetchVoters(url)
-        return ZhihuJson.decodeJson(json)
-    }
 
     override suspend fun followMember(urlToken: String, follow: Boolean) {
         if (follow) api.followMember(urlToken) else api.unfollowMember(urlToken)

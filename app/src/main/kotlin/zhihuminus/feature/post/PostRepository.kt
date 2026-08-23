@@ -1,7 +1,6 @@
 package com.zhihuminus.feature.post
 
 import com.zhihuminus.data.Collection
-import com.zhihuminus.data.ZhihuVotersResponse
 
 interface PostRepository {
     suspend fun getPost(type: PostType, id: Long): Post
@@ -60,15 +59,6 @@ interface PostRepository {
      * @param isPublic 是否公开
      */
     suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection
-
-    /**
-     * 加载赞同者列表
-     * @param postType 内容类型
-     * @param id 内容 ID
-     * @param nextUrl 下一页 URL（null 则加载第一页）
-     * @return 赞同者响应
-     */
-    suspend fun loadVoters(postType: PostType, id: Long, nextUrl: String?): ZhihuVotersResponse
 
     /**
      * 关注/取消关注用户

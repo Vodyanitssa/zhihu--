@@ -6,7 +6,6 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.feature.comment.CommentRepository
-import com.zhihuminus.feature.post.components.PostEvent
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.platform.rememberExternalUrlOpener
@@ -27,6 +26,8 @@ fun PostRoute(
     val openExternalUrl = rememberExternalUrlOpener()
     val openImagePreview = rememberImagePreviewOpener()
 
+    val navigator = LocalNavigator.current
+
     val viewModel: PostViewModel = viewModel {
         PostViewModel(
             postId = destination.id,
@@ -43,33 +44,22 @@ fun PostRoute(
                     copyToClipboard("链接", effect.link)
                     Toast.makeText(context, "链接已复制", Toast.LENGTH_SHORT).show()
                 }
+
                 is PostEffect.ShowMessage -> {
                     Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
                 }
+
                 is PostEffect.OpenExternalUrl -> openExternalUrl(effect.url)
                 is PostEffect.OpenImage -> openImagePreview(effect.url)
+                is PostEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }
     }
 
-    val navigator = LocalNavigator.current
-
     PostScreen(
         uiState = viewModel.uiState,
-        bottomBarState = viewModel.bottomBarState,
-        collections = viewModel.collections,
         commentRepository = commentRepository,
         onEvent = viewModel::onEvent,
         onBack = onBack,
-        onNavigate = navigator.onNavigate,
-        voters = viewModel.voters,
-        showVoters = viewModel.showVoters,
-        votersLoading = viewModel.votersLoading,
-        votersError = viewModel.votersError,
-        canLoadMoreVoters = viewModel.votersNextUrl != null,
-        onShowVoters = { viewModel.onEvent(PostEvent.ShowVoters) },
-        onDismissVoters = { viewModel.dismissVoters() },
-        onLoadMoreVoters = { viewModel.onEvent(PostEvent.LoadMoreVoters) },
-        onRefreshCollections = viewModel::loadCollections,
     )
 }

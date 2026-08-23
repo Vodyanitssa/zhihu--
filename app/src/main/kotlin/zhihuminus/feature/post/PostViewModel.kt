@@ -1,19 +1,14 @@
 package com.zhihuminus.feature.post
 
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.Collection
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.post.components.PostBottomBarState
-import com.zhihuminus.feature.post.components.PostEvent
 import com.zhihuminus.util.Log
-import com.zhihuminus.viewmodel.nextUrlOrNull
-import com.zhihuminus.viewmodel.replaceOrAppendUniqueVoters
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -25,30 +20,7 @@ class PostViewModel(
     private val postType: PostType,
     private val repository: PostRepository,
 ) : ViewModel() {
-    var uiState: PostUiState by mutableStateOf(PostUiState.Loading)
-        private set
-
-    var bottomBarState: PostBottomBarState by mutableStateOf(PostBottomBarState())
-        private set
-
-    val collections = mutableStateListOf<Collection>()
-    var isCollected: Boolean by mutableStateOf(false)
-        private set
-
-    // Voters state
-    val voters = mutableStateListOf<DataHolder.Author>()
-    var showVoters: Boolean by mutableStateOf(false)
-        private set
-
-    fun dismissVoters() {
-        showVoters = false
-    }
-
-    var votersLoading: Boolean by mutableStateOf(false)
-        private set
-    var votersError: String? by mutableStateOf(null)
-        private set
-    var votersNextUrl: String? by mutableStateOf(null)
+    var uiState: PostUiState by mutableStateOf(PostUiState())
         private set
 
     private val _effect = Channel<PostEffect>(capacity = Channel.BUFFERED)
@@ -56,7 +28,7 @@ class PostViewModel(
 
     private val shareText: String
         get() {
-            val state = uiState as? PostUiState.Success ?: return ""
+            val state = uiState.loadState as? PostLoadState.Success ?: return ""
             val post = state.post
             return buildString {
                 append(post.title)
@@ -70,7 +42,7 @@ class PostViewModel(
 
     private val contentLink: String
         get() {
-            val state = uiState as? PostUiState.Success ?: return ""
+            val state = uiState.loadState as? PostLoadState.Success ?: return ""
             val post = state.post
             return when (post.type) {
                 PostType.Answer -> "https://www.zhihu.com/question/${post.questionId}/answer/${post.id}"
@@ -87,11 +59,11 @@ class PostViewModel(
         when (event) {
             is PostEvent.Refresh -> loadPost()
             is PostEvent.VoteUp -> {
-                handleVote(if (bottomBarState.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up)
+                handleVote(if (uiState.bottomBarState.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up)
             }
 
             is PostEvent.VoteDown -> {
-                handleVote(if (bottomBarState.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down)
+                handleVote(if (uiState.bottomBarState.voteUpState == VoteUpState.Down) VoteUpState.Neutral else VoteUpState.Down)
             }
 
             is PostEvent.LikePin -> {
@@ -103,7 +75,7 @@ class PostViewModel(
             }
 
             is PostEvent.Comment -> {
-                // TODO: Implement comment
+                uiState = uiState.copy(showComments = true)
             }
 
             is PostEvent.Share -> {
@@ -135,22 +107,31 @@ class PostViewModel(
             }
 
             is PostEvent.ShowCollectionDialog -> {
-                // Handled by PostScreen
+                uiState = uiState.copy(showCollectionDialog = true)
+            }
+
+            is PostEvent.DismissCollectionDialog -> {
+                uiState = uiState.copy(showCollectionDialog = false)
             }
 
             is PostEvent.ShowMoreMenu -> {
-                bottomBarState = bottomBarState.copy(showMoreMenu = true)
+                uiState = uiState.copy(showActionsMenu = true)
             }
 
-            is PostEvent.ShowVoters -> {
-                showVoters = true
-                if (voters.isEmpty()) {
-                    loadMoreVoters(reset = true)
-                }
+            is PostEvent.DismissActionsMenu -> {
+                uiState = uiState.copy(showActionsMenu = false)
             }
 
-            is PostEvent.LoadMoreVoters -> {
-                loadMoreVoters()
+            is PostEvent.DismissComments -> {
+                uiState = uiState.copy(showComments = false)
+            }
+
+            is PostEvent.Navigate -> {
+                sendEffect(PostEffect.Navigate(event.destination))
+            }
+
+            is PostEvent.RefreshCollections -> {
+                loadCollections()
             }
 
             is PostEvent.FollowAuthor -> {
@@ -168,24 +149,26 @@ class PostViewModel(
 
     private fun loadPost() {
         // Only show loading if not already displaying content (avoids dialog flicker on refresh)
-        if (uiState !is PostUiState.Success) {
-            uiState = PostUiState.Loading
+        if (uiState.loadState !is PostLoadState.Success) {
+            uiState = uiState.copy(loadState = PostLoadState.Loading)
         }
         viewModelScope.launch {
             try {
                 val post = withContext(Dispatchers.Default) {
                     repository.getPost(postType, postId)
                 }
-                uiState = PostUiState.Success(post)
-                bottomBarState = PostBottomBarState(
-                    voteUpState = post.voteState,
-                    voteUpCount = post.voteCount,
-                    commentCount = post.commentCount,
+                uiState = uiState.copy(
+                    loadState = PostLoadState.Success(post),
+                    bottomBarState = PostBottomBarState(
+                        voteUpState = post.voteState,
+                        voteUpCount = post.voteCount,
+                        commentCount = post.commentCount,
+                    ),
                 )
                 loadCollections()
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Failed to load post", e)
-                uiState = PostUiState.Error(e)
+                uiState = uiState.copy(loadState = PostLoadState.Error(e.message))
             }
         }
     }
@@ -196,9 +179,10 @@ class PostViewModel(
                 val result = withContext(Dispatchers.Default) {
                     repository.getCollections(postType, postId)
                 }
-                collections.clear()
-                collections.addAll(result)
-                isCollected = collections.any { it.isFavorited }
+                uiState = uiState.copy(
+                    collections = result,
+                    isCollected = result.any { it.isFavorited },
+                )
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Failed to load collections", e)
             }
@@ -242,8 +226,9 @@ class PostViewModel(
             VoteUpState.Neutral -> "neutral"
         }
 
-        val previousState = bottomBarState.voteUpState
-        val previousCount = bottomBarState.voteUpCount
+        val bar = uiState.bottomBarState
+        val previousState = bar.voteUpState
+        val previousCount = bar.voteUpCount
         val countDelta = when {
             previousState == VoteUpState.Up && newState == VoteUpState.Neutral -> -1
             previousState == VoteUpState.Down && newState == VoteUpState.Neutral -> +1
@@ -253,9 +238,11 @@ class PostViewModel(
             previousState == VoteUpState.Down && newState == VoteUpState.Up -> +2
             else -> 0
         }
-        bottomBarState = bottomBarState.copy(
-            voteUpState = newState,
-            voteUpCount = (previousCount + countDelta).coerceAtLeast(0),
+        uiState = uiState.copy(
+            bottomBarState = bar.copy(
+                voteUpState = newState,
+                voteUpCount = (previousCount + countDelta).coerceAtLeast(0),
+            ),
         )
 
         viewModelScope.launch {
@@ -263,24 +250,29 @@ class PostViewModel(
                 val newCount = withContext(Dispatchers.Default) {
                     repository.vote(postType, postId, voteKey)
                 }
-                bottomBarState = bottomBarState.copy(voteUpCount = newCount)
+                uiState = uiState.copy(bottomBarState = uiState.bottomBarState.copy(voteUpCount = newCount))
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Vote failed", e)
-                bottomBarState = bottomBarState.copy(
-                    voteUpState = previousState,
-                    voteUpCount = previousCount,
+                uiState = uiState.copy(
+                    bottomBarState = bar.copy(
+                        voteUpState = previousState,
+                        voteUpCount = previousCount,
+                    ),
                 )
             }
         }
     }
 
     private fun handlePinLike() {
-        val previousState = bottomBarState.voteUpState
-        val previousCount = bottomBarState.voteUpCount
+        val bar = uiState.bottomBarState
+        val previousState = bar.voteUpState
+        val previousCount = bar.voteUpCount
         val newLiked = previousState != VoteUpState.Up
-        bottomBarState = bottomBarState.copy(
-            voteUpState = if (newLiked) VoteUpState.Up else VoteUpState.Neutral,
-            voteUpCount = (previousCount + if (newLiked) 1 else -1).coerceAtLeast(0),
+        uiState = uiState.copy(
+            bottomBarState = bar.copy(
+                voteUpState = if (newLiked) VoteUpState.Up else VoteUpState.Neutral,
+                voteUpCount = (previousCount + if (newLiked) 1 else -1).coerceAtLeast(0),
+            ),
         )
 
         viewModelScope.launch {
@@ -288,20 +280,22 @@ class PostViewModel(
                 val newCount = withContext(Dispatchers.Default) {
                     repository.likePin(postId)
                 }
-                bottomBarState = bottomBarState.copy(voteUpCount = newCount)
+                uiState = uiState.copy(bottomBarState = uiState.bottomBarState.copy(voteUpCount = newCount))
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Pin like failed", e)
-                bottomBarState = bottomBarState.copy(
-                    voteUpState = previousState,
-                    voteUpCount = previousCount,
+                uiState = uiState.copy(
+                    bottomBarState = bar.copy(
+                        voteUpState = previousState,
+                        voteUpCount = previousCount,
+                    ),
                 )
             }
         }
     }
 
     private fun handlePollVote(pollId: String, optionId: String) {
-        val state = uiState as? PostUiState.Success ?: return
-        val poll = state.post.poll ?: return
+        val loadState = uiState.loadState as? PostLoadState.Success ?: return
+        val poll = loadState.post.poll ?: return
         if (poll.isVoted || !poll.acceptsVote()) return
 
         // Optimistic update: mark poll as voted
@@ -317,7 +311,7 @@ class PostViewModel(
                 }
             },
         )
-        uiState = state.copy(post = state.post.copy(poll = updatedPoll))
+        uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(poll = updatedPoll)))
 
         viewModelScope.launch {
             try {
@@ -329,40 +323,18 @@ class PostViewModel(
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Poll vote failed", e)
                 // Revert optimistic update
-                uiState = state.copy(post = state.post.copy(poll = poll))
-            }
-        }
-    }
-
-    private fun loadMoreVoters(reset: Boolean = false) {
-        if (votersLoading) return
-        viewModelScope.launch {
-            votersLoading = true
-            votersError = null
-            try {
-                val page = withContext(Dispatchers.Default) {
-                    repository.loadVoters(postType, postId, if (reset) null else votersNextUrl)
-                }
-                voters.replaceOrAppendUniqueVoters(page.data, reset)
-                val state = uiState as? PostUiState.Success
-                val total = page.paging.totals.takeIf { it > 0 } ?: (state?.post?.voteCount ?: 0)
-                votersNextUrl = page.nextUrlOrNull()
-            } catch (e: Exception) {
-                Log.e("PostViewModel", "Failed to load voters", e)
-                votersError = e.message ?: "加载赞同者失败"
-            } finally {
-                votersLoading = false
+                uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(poll = poll)))
             }
         }
     }
 
     private fun handleFollowAuthor() {
-        val state = uiState as? PostUiState.Success ?: return
-        val author = state.post.author
+        val loadState = uiState.loadState as? PostLoadState.Success ?: return
+        val author = loadState.post.author
         val newFollowing = !author.isFollowing
 
         // Optimistic update
-        uiState = state.copy(post = state.post.copy(author = author.copy(isFollowing = newFollowing)))
+        uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(author = author.copy(isFollowing = newFollowing))))
 
         viewModelScope.launch {
             try {
@@ -372,7 +344,7 @@ class PostViewModel(
             } catch (e: Exception) {
                 Log.e("PostViewModel", "Follow failed", e)
                 // Rollback
-                uiState = state.copy(post = state.post.copy(author = author))
+                uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(author = author)))
             }
         }
     }

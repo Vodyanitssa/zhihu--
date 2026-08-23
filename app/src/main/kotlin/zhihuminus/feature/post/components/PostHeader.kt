@@ -37,9 +37,7 @@ fun PostHeader(
     updatedAt: Long,
     ipInfo: String?,
     voteCount: Int = 0,
-    firstVoterName: String? = null,
     isFollowing: Boolean = false,
-    onShowVoters: () -> Unit = {},
     onFollowClick: () -> Unit = {},
 ) {
     Row(
@@ -126,16 +124,10 @@ fun PostHeader(
         // Social proof
         if (voteCount > 0) {
             Spacer(modifier = Modifier.height(4.dp))
-            val socialProofText = if (firstVoterName != null) {
-                "$firstVoterName 等 ${formatCompactCount(voteCount)} 人赞同"
-            } else {
-                "${formatCompactCount(voteCount)} 人赞同"
-            }
             Text(
-                text = socialProofText,
+                text = "${formatCompactCount(voteCount)} 人赞同",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.clickable(onClick = onShowVoters),
             )
         }
     }

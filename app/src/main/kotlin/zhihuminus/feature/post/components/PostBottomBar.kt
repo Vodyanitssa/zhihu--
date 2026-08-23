@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.dp
 import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
 import com.zhihuminus.data.VoteUpState
+import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.ui.article.voteUpNeutralContentDuo3
 
@@ -48,7 +49,6 @@ data class PostBottomBarState(
     val voteUpCount: Int = 0,
     val isCollected: Boolean = false,
     val commentCount: Int = 0,
-    val showMoreMenu: Boolean = false,
 )
 
 @OptIn(ExperimentalMaterial3Api::class)

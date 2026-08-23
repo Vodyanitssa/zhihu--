@@ -1,11 +1,14 @@
-package com.zhihuminus.feature.post.components
+package com.zhihuminus.feature.post
 
 import com.zhihuminus.data.Collection
+import com.zhihuminus.navigation.NavDestination
 
 sealed interface PostEvent {
     data object Refresh : PostEvent
 
     data object ShowCollectionDialog : PostEvent
+
+    data object DismissCollectionDialog : PostEvent
 
     data object Share : PostEvent
 
@@ -46,9 +49,41 @@ sealed interface PostEvent {
 
     data object ShowMoreMenu : PostEvent
 
-    data object ShowVoters : PostEvent
+    data object DismissActionsMenu : PostEvent
 
-    data object LoadMoreVoters : PostEvent
+    data object DismissComments : PostEvent
+
+    data class Navigate(
+        val destination: NavDestination,
+    ) : PostEvent
+
+    data object RefreshCollections : PostEvent
 
     data object FollowAuthor : PostEvent
+}
+
+sealed interface PostEffect {
+    data class ShareText(
+        val text: String,
+    ) : PostEffect
+
+    data class CopyLink(
+        val link: String,
+    ) : PostEffect
+
+    data class ShowMessage(
+        val message: String,
+    ) : PostEffect
+
+    data class OpenExternalUrl(
+        val url: String,
+    ) : PostEffect
+
+    data class OpenImage(
+        val url: String,
+    ) : PostEffect
+
+    data class Navigate(
+        val destination: NavDestination,
+    ) : PostEffect
 }
