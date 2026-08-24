@@ -52,8 +52,3 @@ suspend fun ContentFilterDao.cleanupOldData(): ContentFilterStats {
     }
     return loadFilterStats()
 }
-
-suspend fun ContentFilterDao.clearAllData(): ContentFilterStats {
-    clearAllRecords()
-    return loadFilterStats()
-}

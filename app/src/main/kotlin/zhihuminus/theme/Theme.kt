@@ -80,6 +80,7 @@ fun ZhihuTheme(
     }
 
     val colorScheme = baseColorScheme.copy(
+        primary = Color(0XFF1772F6),
         background = customBackgroundColor,
         surface = customBackgroundColor,
     )

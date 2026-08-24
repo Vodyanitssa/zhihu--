@@ -28,11 +28,11 @@ import androidx.compose.ui.Modifier
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.comment.CommentRepository
+import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
-import com.zhihuminus.feature.comment.CommentRepository
-import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
 import com.zhihuminus.feature.post.components.PostBottomBar
 import com.zhihuminus.feature.post.components.PostBottomBarState
@@ -82,161 +82,161 @@ fun PostScreen(
     val shareImage = rememberImageSharer()
 
     Box(Modifier.fillMaxSize()) {
-    CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = {
-                    val title = when (val state = uiState.loadState) {
-                        is PostLoadState.Success -> when (state.post.type) {
-                            PostType.Answer -> state.post.title.ifBlank { "回答" }
-                            PostType.Article -> state.post.title
-                            PostType.Pin -> "${state.post.author.name}的想法"
+        CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
+            Scaffold(
+                topBar = {
+                    TopAppBar(
+                        title = {
+                            val title = when (val state = uiState.loadState) {
+                                is PostLoadState.Success -> when (state.post.type) {
+                                    PostType.Answer -> state.post.title.ifBlank { "回答" }
+                                    PostType.Article -> state.post.title
+                                    PostType.Pin -> "${state.post.author.name}的想法"
+                                }
+
+                                else -> "加载中"
+                            }
+                            Text(title, maxLines = 1)
+                        },
+                        navigationIcon = {
+                            IconButton(onClick = onBack) {
+                                Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
+                            }
+                        },
+                    )
+                },
+                bottomBar = {
+                    if (uiState.loadState is PostLoadState.Success) {
+                        PostBottomBar(
+                            postType = uiState.loadState.post.type,
+                            state = uiState.bottomBarState,
+                            onEvent = onEvent,
+                        )
+                    }
+                },
+            ) { paddingValues ->
+                when (val state = uiState.loadState) {
+                    is PostLoadState.Loading -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator()
+                        }
+                    }
+
+                    is PostLoadState.Error -> {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(
+                                    text = "加载失败",
+                                    style = MaterialTheme.typography.titleMedium,
+                                )
+                                Text(
+                                    text = state.message ?: "未知错误",
+                                    style = MaterialTheme.typography.bodyMedium,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                )
+                            }
+                        }
+                    }
+
+                    is PostLoadState.Success -> {
+                        LaunchedEffect(state.post.content) {
+                            imageViewManager.submitImages(
+                                state.post.content
+                                    .filterIsInstance<ContentNode.Image>()
+                                    .filter { it.url.isNotBlank() }
+                                    .map { it.url },
+                            )
+                        }
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(paddingValues)
+                                .verticalScroll(rememberScrollState()),
+                        ) {
+                            PostHeader(
+                                author = state.post.author,
+                                createdAt = state.post.createdAt,
+                                updatedAt = state.post.updatedAt,
+                                ipInfo = state.post.ipInfo,
+                                voteCount = state.post.voteCount,
+                                isFollowing = state.post.author.isFollowing,
+                                onFollowClick = { onEvent(PostEvent.FollowAuthor) },
+                            )
+                            PostContent(
+                                post = state.post,
+                                onEvent = onEvent,
+                            )
                         }
 
-                        else -> "加载中"
+                        // Collection Dialog
+                        CollectionDialogComponent(
+                            showDialog = uiState.showCollectionDialog,
+                            onDismiss = { onEvent(PostEvent.DismissCollectionDialog) },
+                            collections = uiState.collections,
+                            onLoadCollections = { onEvent(PostEvent.RefreshCollections) },
+                            onToggleFavorite = { collection ->
+                                onEvent(PostEvent.ToggleCollection(collection))
+                            },
+                            onCreateCollection = { title, description, isPublic ->
+                                onEvent(PostEvent.CreateCollection(title, description, isPublic))
+                            },
+                        )
+
+                        // Actions Menu
+                        PostActionsMenu(
+                            post = state.post,
+                            showMenu = uiState.showActionsMenu,
+                            onDismissRequest = { onEvent(PostEvent.DismissActionsMenu) },
+                            onShare = {
+                                onEvent(PostEvent.Share)
+                            },
+                            onCopyLink = {
+                                onEvent(PostEvent.CopyLink)
+                            },
+                            onExport = {
+                                onEvent(PostEvent.DismissActionsMenu)
+                                showExportDialog = true
+                            },
+                        )
+
+                        // Export Dialog
+                        PostExportDialog(
+                            showDialog = showExportDialog,
+                            isExporting = uiState.isExporting,
+                            onDismiss = { showExportDialog = false },
+                            onExportImage = { onEvent(PostEvent.Export) },
+                        )
+
+                        // Comments
+                        CommentRoute(
+                            showComments = uiState.showComments,
+                            onDismiss = { onEvent(PostEvent.DismissComments) },
+                            contentType = state.post.type,
+                            contentId = state.post.id,
+                            repository = commentRepository,
+                        )
                     }
-                    Text(title, maxLines = 1)
-                },
-                navigationIcon = {
-                    IconButton(onClick = onBack) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
-                    }
-                },
+                }
+            }
+
+            ImageView(
+                manager = imageViewManager,
+                actions = ImageViewActions(
+                    onSave = { saveImage(it) },
+                    onShare = { shareImage(it) },
+                    onOpenInBrowser = { openExternalUrl(it) },
+                ),
             )
-        },
-        bottomBar = {
-            if (uiState.loadState is PostLoadState.Success) {
-                PostBottomBar(
-                    postType = uiState.loadState.post.type,
-                    state = uiState.bottomBarState,
-                    onEvent = onEvent,
-                )
-            }
-        },
-    ) { paddingValues ->
-        when (val state = uiState.loadState) {
-            is PostLoadState.Loading -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    CircularProgressIndicator()
-                }
-            }
-
-            is PostLoadState.Error -> {
-                Box(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        Text(
-                            text = "加载失败",
-                            style = MaterialTheme.typography.titleMedium,
-                        )
-                        Text(
-                            text = state.message ?: "未知错误",
-                            style = MaterialTheme.typography.bodyMedium,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                }
-            }
-
-            is PostLoadState.Success -> {
-                LaunchedEffect(state.post.content) {
-                    imageViewManager.submitImages(
-                        state.post.content
-                            .filterIsInstance<ContentNode.Image>()
-                            .filter { it.url.isNotBlank() }
-                            .map { it.url },
-                    )
-                }
-                Column(
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(paddingValues)
-                        .verticalScroll(rememberScrollState()),
-                ) {
-                    PostHeader(
-                        author = state.post.author,
-                        createdAt = state.post.createdAt,
-                        updatedAt = state.post.updatedAt,
-                        ipInfo = state.post.ipInfo,
-                        voteCount = state.post.voteCount,
-                        isFollowing = state.post.author.isFollowing,
-                        onFollowClick = { onEvent(PostEvent.FollowAuthor) },
-                    )
-                    PostContent(
-                        post = state.post,
-                        onEvent = onEvent,
-                    )
-                }
-
-                // Collection Dialog
-                CollectionDialogComponent(
-                    showDialog = uiState.showCollectionDialog,
-                    onDismiss = { onEvent(PostEvent.DismissCollectionDialog) },
-                    collections = uiState.collections,
-                    onLoadCollections = { onEvent(PostEvent.RefreshCollections) },
-                    onToggleFavorite = { collection ->
-                        onEvent(PostEvent.ToggleCollection(collection))
-                    },
-                    onCreateCollection = { title, description, isPublic ->
-                        onEvent(PostEvent.CreateCollection(title, description, isPublic))
-                    },
-                )
-
-                // Actions Menu
-                PostActionsMenu(
-                    post = state.post,
-                    showMenu = uiState.showActionsMenu,
-                    onDismissRequest = { onEvent(PostEvent.DismissActionsMenu) },
-                    onShare = {
-                        onEvent(PostEvent.Share)
-                    },
-                    onCopyLink = {
-                        onEvent(PostEvent.CopyLink)
-                    },
-                    onExport = {
-                        onEvent(PostEvent.DismissActionsMenu)
-                        showExportDialog = true
-                    },
-                )
-
-                // Export Dialog
-                PostExportDialog(
-                    showDialog = showExportDialog,
-                    isExporting = uiState.isExporting,
-                    onDismiss = { showExportDialog = false },
-                    onExportImage = { onEvent(PostEvent.Export) },
-                )
-
-                // Comments
-                CommentRoute(
-                    showComments = uiState.showComments,
-                    onDismiss = { onEvent(PostEvent.DismissComments) },
-                    contentType = state.post.type,
-                    contentId = state.post.id,
-                    repository = commentRepository,
-                )
-            }
-        }
-    }
-
-    ImageView(
-        manager = imageViewManager,
-        actions = ImageViewActions(
-            onSave = { saveImage(it) },
-            onShare = { shareImage(it) },
-            onOpenInBrowser = { openExternalUrl(it) },
-        ),
-    )
-    } // CompositionLocalProvider
+        } // CompositionLocalProvider
     } // Box
 }

@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -19,8 +20,6 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.feature.comment.components.ChildCommentSheet
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImagePreviewOpener
-import com.zhihuminus.ui.components.MyModalBottomSheet
 
 /**
  * 评论路由组件，负责创建 ViewModel、处理副作用、展示 ModalBottomSheet。
@@ -53,7 +52,6 @@ fun CommentRoute(
         )
     }
 
-    val openImagePreview = rememberImagePreviewOpener()
     val openExternalUrl = rememberExternalUrlOpener()
 
     // 处理副作用
@@ -64,7 +62,6 @@ fun CommentRoute(
                     // TODO: 显示 Toast 或 Snackbar
                 }
 
-                is CommentEffect.OpenImage -> openImagePreview(effect.url)
                 is CommentEffect.OpenExternalUrl -> openExternalUrl(effect.url)
                 is CommentEffect.ScrollToTop -> {
                     // 由 CommentScreen 内部处理
@@ -78,7 +75,7 @@ fun CommentRoute(
     val rootListState = rememberLazyListState()
 
     // 根评论 sheet
-    MyModalBottomSheet(
+    ModalBottomSheet(
         onDismissRequest = {
             viewModel.onEvent(CommentEvent.DismissChildComments)
             onDismiss()
@@ -101,7 +98,6 @@ fun CommentRoute(
                 Spacer(modifier = Modifier.height(8.dp))
             }
         },
-        usePlatformWindow = true,
     ) {
         CommentScreen(
             uiState = viewModel.uiState,
@@ -116,7 +112,7 @@ fun CommentRoute(
         val parentItem = viewModel.uiState.items.find { it.comment.id == activeParentId }
         if (parentItem != null) {
             val children = parentItem.children
-            MyModalBottomSheet(
+            ModalBottomSheet(
                 onDismissRequest = {
                     viewModel.onEvent(CommentEvent.DismissChildComments)
                 },
@@ -138,7 +134,6 @@ fun CommentRoute(
                         Spacer(modifier = Modifier.height(8.dp))
                     }
                 },
-                usePlatformWindow = true,
             ) {
                 ChildCommentSheet(
                     parentComment = parentItem.comment,

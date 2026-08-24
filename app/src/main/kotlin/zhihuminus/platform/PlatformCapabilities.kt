@@ -111,22 +111,6 @@ fun rememberZhihuWebUrlOpener(): (String) -> Unit {
 }
 
 @Composable
-fun rememberVideoPlayerOpener(): (url: String, id: Long) -> Unit {
-    val context = LocalContext.current
-    return remember(context) {
-        { url, id ->
-            context.startActivity(
-                Intent().apply {
-                    setClassName(context, VIDEO_PLAYER_ACTIVITY_CLASS)
-                    putExtra("video_url", url)
-                    putExtra("video_id", id)
-                },
-            )
-        }
-    }
-}
-
-@Composable
 fun rememberImagePreviewOpener(): (String) -> Unit {
     val openGallery = rememberImageGalleryOpener()
     return remember(openGallery) { { url -> openGallery(listOf(url), 0) } }

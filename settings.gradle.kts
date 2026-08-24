@@ -42,10 +42,3 @@ enableFeaturePreview("TYPESAFE_PROJECT_ACCESSORS")
 rootProject.name = "Zhihu"
 include(":app")
 include(":shared-local-db")
-include(":markdown-parser")
-include(":markdown-renderer")
-include(":markdown-runtime")
-
-project(":markdown-parser").projectDir = file("third_party/markdown/markdown-parser")
-project(":markdown-renderer").projectDir = file("third_party/markdown/markdown-renderer")
-project(":markdown-runtime").projectDir = file("third_party/markdown/markdown-runtime")

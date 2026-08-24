@@ -18,6 +18,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.remember
@@ -25,9 +26,16 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.feature.comment.components.CommentInputBar
 import com.zhihuminus.feature.comment.components.CommentItemWithPreview
 import com.zhihuminus.feature.comment.components.SortBar
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
+import com.zhihuminus.platform.rememberExternalUrlOpener
+import com.zhihuminus.platform.rememberImageSaver
+import com.zhihuminus.platform.rememberImageSharer
 
 data class CommentItemUiState(
     val comment: Comment,
@@ -53,6 +61,21 @@ fun CommentScreen(
     listState: LazyListState = rememberLazyListState(),
     inputFocusRequester: FocusRequester = remember { FocusRequester() },
 ) {
+    val imageViewManager = remember {
+        object : ImageViewManager() {
+            override fun show(url: String) {
+                if (url.isNotBlank()) {
+                    submitImages(listOf(url))
+                    super.show(url)
+                }
+            }
+        }
+    }
+    val isImageShowing = remember { imageViewManager.isShowing }
+    val openExternalUrl = rememberExternalUrlOpener()
+    val saveImage = rememberImageSaver()
+    val shareImage = rememberImageSharer()
+
     // 当 replyToComment 从 null 变为非 null 时，自动聚焦输入框
     LaunchedEffect(uiState.replyToComment) {
         if (uiState.replyToComment != null) {
@@ -77,103 +100,118 @@ fun CommentScreen(
         }
     }
 
-    Surface(
-        modifier = modifier.fillMaxSize(),
-        shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLow,
-    ) {
-        Column(
-            modifier = Modifier
-                .fillMaxSize()
-                .navigationBarsPadding(),
-        ) {
-            // 评论列表区域
-            Box(modifier = Modifier.weight(1f)) {
-                when {
-                    uiState.isLoading -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            CircularProgressIndicator()
-                        }
-                    }
-
-                    uiState.errorMessage != null -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error)
-                        }
-                    }
-
-                    uiState.items.isEmpty() && !uiState.isLoadingMore -> {
-                        Box(
-                            modifier = Modifier.fillMaxSize(),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text("暂无评论", color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-
-                    else -> {
-                        LazyColumn(
-                            state = listState,
-                            modifier = Modifier.fillMaxSize(),
-                            contentPadding = PaddingValues(
-                                bottom = 16.dp,
-                                start = 16.dp,
-                                end = 16.dp,
-                                top = 8.dp,
-                            ),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            // 排序切换栏
-                            item(key = "sorting") {
-                                SortBar(
-                                    sortOrder = uiState.sortOrder,
-                                    onSortChange = { onEvent(CommentEvent.ChangeSortOrder(it)) },
-                                )
-                            }
-
-                            // 评论列表（递归渲染）
-                            uiState.items.forEach { item ->
-                                item(key = item.comment.id) {
-                                    CommentItemWithPreview(
-                                        item = item,
-                                        onEvent = onEvent,
-                                    )
+    Box(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
+            Surface(
+                modifier = modifier.fillMaxSize(),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                color = MaterialTheme.colorScheme.surfaceContainerLow,
+            ) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding(),
+                ) {
+                    // 评论列表区域
+                    Box(modifier = Modifier.weight(1f)) {
+                        when {
+                            uiState.isLoading -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator()
                                 }
                             }
 
-                            // 加载更多指示器
-                            if (uiState.isLoadingMore) {
-                                item(key = "loading") {
-                                    Box(
-                                        modifier = Modifier
-                                            .fillMaxWidth()
-                                            .padding(8.dp),
-                                        contentAlignment = Alignment.Center,
-                                    ) {
-                                        CircularProgressIndicator(
-                                            modifier = Modifier.size(24.dp),
-                                            strokeWidth = 2.dp,
+                            uiState.errorMessage != null -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+
+                            uiState.items.isEmpty() && !uiState.isLoadingMore -> {
+                                Box(
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Text("暂无评论", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                                }
+                            }
+
+                            else -> {
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier.fillMaxSize(),
+                                    contentPadding = PaddingValues(
+                                        bottom = 16.dp,
+                                        start = 16.dp,
+                                        end = 16.dp,
+                                        top = 8.dp,
+                                    ),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                ) {
+                                    // 排序切换栏
+                                    item(key = "sorting") {
+                                        SortBar(
+                                            sortOrder = uiState.sortOrder,
+                                            onSortChange = { onEvent(CommentEvent.ChangeSortOrder(it)) },
                                         )
+                                    }
+
+                                    // 评论列表（递归渲染）
+                                    uiState.items.forEach { item ->
+                                        item(key = item.comment.id) {
+                                            CommentItemWithPreview(
+                                                item = item,
+                                                onEvent = onEvent,
+                                            )
+                                        }
+                                    }
+
+                                    // 加载更多指示器
+                                    if (uiState.isLoadingMore) {
+                                        item(key = "loading") {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(8.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CircularProgressIndicator(
+                                                    modifier = Modifier.size(24.dp),
+                                                    strokeWidth = 2.dp,
+                                                )
+                                            }
+                                        }
                                     }
                                 }
                             }
                         }
                     }
+
+                    // 评论输入栏
+                    CommentInputBar(
+                        onEvent = onEvent,
+                        replyToComment = uiState.replyToComment,
+                        inputFocusRequester = inputFocusRequester,
+                    )
                 }
             }
-
-            // 评论输入栏
-            CommentInputBar(
-                onEvent = onEvent,
-                replyToComment = uiState.replyToComment,
-                inputFocusRequester = inputFocusRequester,
-            )
-        }
+        } // CompositionLocalProvider
     }
+
+    // 图片预览 overlay
+    ImageView(
+        manager = imageViewManager,
+        actions = ImageViewActions(
+            onSave = { saveImage(it) },
+            onShare = { shareImage(it) },
+            onOpenInBrowser = { openExternalUrl(it) },
+        ),
+        onDismiss = { imageViewManager.dismiss() },
+    )
 }

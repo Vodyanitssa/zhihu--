@@ -37,6 +37,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.ArticleType
@@ -47,7 +48,6 @@ import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.viewmodel.CollectionContentViewModel
 import com.zhihuminus.viewmodel.PaginationEnvironment
-import com.zhihuminus.viewmodel.formatArticleDateTime
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -131,7 +131,7 @@ internal fun CollectionContentBody(
                         viewModel.collection?.itemCount?.let { "$it 条收藏" },
                         viewModel.collection?.likeCount?.let { "$it 个赞同" },
                         viewModel.collection?.commentCount?.let { "$it 条评论" },
-                        viewModel.collection?.updatedTime?.let { "${formatArticleDateTime(it)} 更新" },
+                        viewModel.collection?.updatedTime?.let { "${formatDateTime(it)} 更新" },
                     ).fastJoinToString(" · "),
                     modifier = Modifier
                         .fillMaxWidth()

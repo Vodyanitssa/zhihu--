@@ -42,7 +42,6 @@ import com.zhihuminus.R
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.ui.article.voteUpNeutralContentDuo3
 
 data class PostBottomBarState(
     val voteUpState: VoteUpState = VoteUpState.Neutral,
@@ -79,7 +78,7 @@ fun PostBottomBar(
                 visible = state.voteUpState == VoteUpState.Neutral || state.voteUpState == VoteUpState.Up,
             ) {
                 val upBgColor by animateColorAsState(
-                    targetValue = if (state.voteUpState == VoteUpState.Up) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
+                    targetValue = if (state.voteUpState == VoteUpState.Up) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
                 )
                 val upContentColor by animateColorAsState(
                     targetValue = if (state.voteUpState == VoteUpState.Up) Color.White else MaterialTheme.colorScheme.onSurface,
@@ -117,7 +116,7 @@ fun PostBottomBar(
                 visible = postType != PostType.Pin && (state.voteUpState == VoteUpState.Neutral || state.voteUpState == VoteUpState.Down),
             ) {
                 val downBgColor by animateColorAsState(
-                    targetValue = if (state.voteUpState == VoteUpState.Down) voteUpNeutralContentDuo3() else MaterialTheme.colorScheme.surfaceContainer,
+                    targetValue = if (state.voteUpState == VoteUpState.Down) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
                 )
                 val downContentColor by animateColorAsState(
                     targetValue = if (state.voteUpState == VoteUpState.Down) Color.White else MaterialTheme.colorScheme.onSurface,

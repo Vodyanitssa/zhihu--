@@ -57,7 +57,6 @@ class CommentViewModel(
             is CommentEvent.DeleteComment -> deleteComment(event.commentId)
             is CommentEvent.OpenChildComments -> openChildComments(event.comment)
             is CommentEvent.DismissChildComments -> dismissChildComments()
-            is CommentEvent.OpenImage -> sendEffect(CommentEffect.OpenImage(event.url))
             is CommentEvent.OpenLink -> sendEffect(CommentEffect.OpenExternalUrl(event.url))
             is CommentEvent.Reply -> uiState = uiState.copy(replyToComment = event.comment)
             is CommentEvent.DismissReply -> uiState = uiState.copy(replyToComment = null)

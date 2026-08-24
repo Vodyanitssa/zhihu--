@@ -37,7 +37,6 @@ import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
 import io.ktor.client.engine.HttpClientEngineConfig
 import kotlinx.coroutines.flow.MutableStateFlow
-import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.SerializationException
 import kotlinx.serialization.json.JsonElement
@@ -262,21 +261,6 @@ object AccountData {
         } catch (e: SerializationException) {
             Log.e("AccountData", "Failed to parse JSON: $convertedJson", e)
             throw SerializationException("Failed to parse JSON: ${e.message}\n\n$convertedJson", e)
-        }
-    }
-
-    class ZhPlusJsonSerializationException(
-        val originalJson: JsonElement,
-        message: String,
-        cause: Throwable?,
-    ) : SerializationException(message, cause)
-
-    internal fun <T> decodeJson(serializer: KSerializer<T>, json: JsonElement): T {
-        val convertedJson = ZhihuJson.snakeCaseToCamelCase(json)
-        try {
-            return this.json.decodeFromJsonElement(serializer, convertedJson)
-        } catch (e: SerializationException) {
-            throw ZhPlusJsonSerializationException(convertedJson, "Failed to parse JSON: ${e.message}", e)
         }
     }
 }

@@ -70,6 +70,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -99,13 +100,21 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodeQuestionContentDetail
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.WriteAnswer
+import com.zhihuminus.platform.rememberExternalUrlOpener
+import com.zhihuminus.platform.rememberImageSaver
+import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.platform.rememberZhihuWebUrlOpener
@@ -160,6 +169,10 @@ fun QuestionScreen(
     val settings = rememberSettingsStore()
     val executeShareAction = rememberShareActionExecutor()
     val openZhihuWebUrl = rememberZhihuWebUrlOpener()
+    val imageViewManager = remember { ImageViewManager() }
+    val openExternalUrl = rememberExternalUrlOpener()
+    val saveImage = rememberImageSaver()
+    val shareImage = rememberImageSharer()
     val navigator = LocalNavigator.current
     val viewModel: QuestionFeedViewModel = viewModel(key = "question_${question.questionId}") {
         QuestionFeedViewModel(question.questionId)
@@ -217,110 +230,133 @@ fun QuestionScreen(
         }
     }
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = {
-            QuestionTopBar(
-                title = title,
-                showTitle = showTopBarTitle,
-                onNavigateBack = navigator.onNavigateBack,
-                onOpenLog = {
-                    try {
-                        openZhihuWebUrl("https://www.zhihu.com/question/${question.questionId}/log")
-                    } catch (e: Exception) {
-                        userMessages.showShortMessage("打开日志失败: ${e.message}")
-                    }
-                },
-                onShare = {
-                    if (shareText != null) {
-                        handleShareAction(question, settings, executeShareAction) { showShareDialog = true }
-                    }
-                },
-                canShare = shareText != null,
-            )
-        },
-    ) { innerPadding ->
-        FeedPullToRefresh(
-            viewModel,
-            padding = PaddingValues(top = innerPadding.calculateTopPadding()),
-        ) {
-            PaginatedList(
-                items = viewModel.displayItems,
-                onLoadMore = { viewModel.loadMore(paginationEnvironment) },
-                isEnd = { viewModel.isEnd },
-                key = { it.stableKey },
-                listState = listState,
-                modifier = Modifier
-                    .padding(innerPadding),
-                footer = ProgressIndicatorFooter,
-                topContent = {
-                    item {
-                        Column(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 16.dp, vertical = 8.dp),
-                            verticalArrangement = Arrangement.spacedBy(16.dp),
-                        ) {
-                            QuestionHeaderSection(
-                                title = title,
-                                visitCount = visitCount,
-                                commentCount = commentCount,
-                                followerCount = followerCount,
-                                onShowComments = { showComments = true },
-                            )
-                            if (isQuestionLoaded) {
-                                QuestionAnimatedBodyHeader(
-                                    questionId = question.questionId,
-                                    questionContent = questionContent,
-                                    questionContentPlainText = questionContentPlainText,
-                                    topics = topics,
-                                    onTopicClick = { topic -> navigator.onNavigate(Topic(topic.id, topic.name)) },
-                                    isExpanded = isQuestionDetailExpanded,
-                                    onToggleExpanded = { isQuestionDetailExpanded = !isQuestionDetailExpanded },
-                                    isFollowing = isFollowing,
-                                    onFollowClick = {
-                                        scope.launch {
-                                            val nextFollowing = !isFollowing
-                                            viewModel.followQuestion(paginationEnvironment, nextFollowing)
-                                            isFollowing = nextFollowing
-                                            followerCount =
-                                                (followerCount + if (isFollowing) 1 else -1).coerceAtLeast(0)
-                                            userMessages.showShortMessage(if (isFollowing) "已关注问题" else "已取消关注问题")
-                                        }
-                                    },
-                                    onWriteAnswerClick = {
-                                        navigator.onNavigate(
-                                            WriteAnswer(
-                                                questionId = question.questionId,
-                                                questionTitle = title,
-                                                questionDetail = questionContent,
-                                            ),
-                                        )
-                                    },
-                                    answerCount = answerCount,
-                                    currentSort = viewModel.sortOrder,
-                                    onSortChange = { sortOrder ->
-                                        viewModel.updateSortOrder(sortOrder)
-                                        viewModel.refresh(paginationEnvironment)
-                                    },
-                                )
+    val questionContentNodes = remember(questionContent) { AstParser.parseContent(questionContent) }
+    LaunchedEffect(questionContent) {
+        imageViewManager.submitImages(
+            questionContentNodes
+                .filterIsInstance<ContentNode.Image>()
+                .filter { it.url.isNotBlank() }
+                .map { it.url },
+        )
+    }
+
+    Box(Modifier.fillMaxSize()) {
+        CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
+            Scaffold(
+                modifier = Modifier.fillMaxSize(),
+                topBar = {
+                    QuestionTopBar(
+                        title = title,
+                        showTitle = showTopBarTitle,
+                        onNavigateBack = navigator.onNavigateBack,
+                        onOpenLog = {
+                            try {
+                                openZhihuWebUrl("https://www.zhihu.com/question/${question.questionId}/log")
+                            } catch (e: Exception) {
+                                userMessages.showShortMessage("打开日志失败: ${e.message}")
                             }
+                        },
+                        onShare = {
+                            if (shareText != null) {
+                                handleShareAction(question, settings, executeShareAction) { showShareDialog = true }
+                            }
+                        },
+                        canShare = shareText != null,
+                    )
+                },
+            ) { innerPadding ->
+                FeedPullToRefresh(
+                    viewModel,
+                    padding = PaddingValues(top = innerPadding.calculateTopPadding()),
+                ) {
+                    PaginatedList(
+                        items = viewModel.displayItems,
+                        onLoadMore = { viewModel.loadMore(paginationEnvironment) },
+                        isEnd = { viewModel.isEnd },
+                        key = { it.stableKey },
+                        listState = listState,
+                        modifier = Modifier
+                            .padding(innerPadding),
+                        footer = ProgressIndicatorFooter,
+                        topContent = {
+                            item {
+                                Column(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                ) {
+                                    QuestionHeaderSection(
+                                        title = title,
+                                        visitCount = visitCount,
+                                        commentCount = commentCount,
+                                        followerCount = followerCount,
+                                        onShowComments = { showComments = true },
+                                    )
+                                    if (isQuestionLoaded) {
+                                        QuestionAnimatedBodyHeader(
+                                            questionId = question.questionId,
+                                            questionContent = questionContent,
+                                            questionContentPlainText = questionContentPlainText,
+                                            topics = topics,
+                                            onTopicClick = { topic -> navigator.onNavigate(Topic(topic.id, topic.name)) },
+                                            isExpanded = isQuestionDetailExpanded,
+                                            onToggleExpanded = { isQuestionDetailExpanded = !isQuestionDetailExpanded },
+                                            isFollowing = isFollowing,
+                                            onFollowClick = {
+                                                scope.launch {
+                                                    val nextFollowing = !isFollowing
+                                                    viewModel.followQuestion(paginationEnvironment, nextFollowing)
+                                                    isFollowing = nextFollowing
+                                                    followerCount =
+                                                        (followerCount + if (isFollowing) 1 else -1).coerceAtLeast(0)
+                                                    userMessages.showShortMessage(if (isFollowing) "已关注问题" else "已取消关注问题")
+                                                }
+                                            },
+                                            onWriteAnswerClick = {
+                                                navigator.onNavigate(
+                                                    WriteAnswer(
+                                                        questionId = question.questionId,
+                                                        questionTitle = title,
+                                                        questionDetail = questionContent,
+                                                    ),
+                                                )
+                                            },
+                                            answerCount = answerCount,
+                                            currentSort = viewModel.sortOrder,
+                                            onSortChange = { sortOrder ->
+                                                viewModel.updateSortOrder(sortOrder)
+                                                viewModel.refresh(paginationEnvironment)
+                                            },
+                                        )
+                                    }
+                                }
+                            }
+                        },
+                    ) { item ->
+                        FeedCard(
+                            item = item,
+                            readingQueueSourceId = answerReadingQueueSourceId,
+                            modifier = Modifier,
+                        ) { _, destination ->
+                            answerSwitchState?.pendingNavigator =
+                                viewModel.createAnswerNavigatorFor(item, paginationEnvironment)
+                            destination?.let(navigator.onNavigate)
                         }
                     }
-                },
-            ) { item ->
-                FeedCard(
-                    item = item,
-                    readingQueueSourceId = answerReadingQueueSourceId,
-                    modifier = Modifier,
-                ) { _, destination ->
-                    answerSwitchState?.pendingNavigator =
-                        viewModel.createAnswerNavigatorFor(item, paginationEnvironment)
-                    destination?.let(navigator.onNavigate)
                 }
             }
-        }
-    }
+
+            ImageView(
+                manager = imageViewManager,
+                actions = ImageViewActions(
+                    onSave = { saveImage(it) },
+                    onShare = { shareImage(it) },
+                    onOpenInBrowser = { openExternalUrl(it) },
+                ),
+            )
+        } // CompositionLocalProvider
+    } // Box
     CommentScreenComponent(
         showComments = showComments,
         onDismiss = { showComments = false },

@@ -24,9 +24,7 @@ import android.content.pm.PackageManager
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableFloatStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -35,162 +33,23 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
-import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
-import com.zhihuminus.platform.SettingsStore
-import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
-import com.zhihuminus.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
-import com.zhihuminus.ui.components.normalizedAnswerSwitchSensitivity
 import com.zhihuminus.util.EmojiManager
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
-import com.zhihuminus.viewmodel.ZhihuApiEnvironment
-import com.zhihuminus.viewmodel.getOrFetchContentDetail
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
-
-data class PinLikeResult(
-    val isLiked: Boolean,
-    val likeCount: Int,
-)
-
-internal suspend fun fetchPinLinkCardPreview(
-    linkCard: DataHolder.Pin.ContentLinkCard,
-    env: ZhihuApiEnvironment,
-): PinLinkCardPreview? {
-    val destination = resolveLinkCardDestination(linkCard) ?: return null
-    return when (destination) {
-        is Article -> {
-            when (val detail = env.getOrFetchContentDetail(destination)) {
-                is DataHolder.Article -> PinLinkCardPreview(
-                    title = compactTitle(detail.title),
-                    preview = compactPreview(detail.excerpt.ifBlank { detail.content }),
-                )
-
-                is DataHolder.Answer -> PinLinkCardPreview(
-                    title = compactTitle(detail.question.title),
-                    preview = compactPreview(detail.excerpt.ifBlank { detail.content }),
-                )
-
-                else -> null
-            }
-        }
-
-        is Question -> {
-            (env.getOrFetchContentDetail(destination) as? DataHolder.Question)?.let { detail ->
-                PinLinkCardPreview(
-                    title = compactTitle(detail.title),
-                    preview = compactPreview(detail.detail),
-                )
-            }
-        }
-
-        is Pin -> {
-            (env.getOrFetchContentDetail(destination) as? DataHolder.Pin)?.let { detail ->
-                PinLinkCardPreview(
-                    title = "${detail.author.name} 的想法",
-                    preview = compactPreview(detail.contentHtml),
-                )
-            }
-        }
-
-        else -> null
-    }
-}
 
 internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
     if (this == null) return false
     return keys.firstNotNullOfOrNull { key ->
         get(key)?.jsonPrimitive?.booleanOrNull
     } ?: false
-}
-
-/**
- * 文章页 Compose UI 使用的运行时设置视图。
- *
- * 这些值保存在可变 state 中，是因为大多数阅读设置都应该在用户已经打开文章时即时生效：标题/底栏自动隐藏、回答切换、
- * WebView 渲染和双击正文动作都不应要求重建页面。持久化仍由 [SettingsStore] 负责；这个类只镜像会影响当前 UI 的值，
- * 并暴露文章页内弹窗会用到的显式保存入口。
- */
-class ArticleScreenSettingsState(
-    isTitleAutoHide: Boolean,
-    autoHideArticleBottomBar: Boolean,
-    answerSwitchMode: String,
-    answerSwitchSensitivity: Float,
-    pinAnswerDate: Boolean,
-    buttonSkipAnswer: Boolean,
-    autoHideSkipAnswerButton: Boolean,
-) {
-    var isTitleAutoHide by mutableStateOf(isTitleAutoHide)
-    var autoHideArticleBottomBar by mutableStateOf(autoHideArticleBottomBar)
-    var answerSwitchMode by mutableStateOf(answerSwitchMode)
-    var answerSwitchSensitivity by mutableFloatStateOf(answerSwitchSensitivity)
-    var pinAnswerDate by mutableStateOf(pinAnswerDate)
-    var buttonSkipAnswer by mutableStateOf(buttonSkipAnswer)
-    var autoHideSkipAnswerButton by mutableStateOf(autoHideSkipAnswerButton)
-}
-
-/**
- * 订阅会改变文章页可见阅读行为的设置项。
- *
- * 设置页和文章页内弹窗可能修改同一批 key。这里通过监听这些 key 并原地更新 [ArticleScreenSettingsState]，
- * 让文章 UI 在保留滚动位置、已加载内容和 ViewModel 状态的同时应用新设置。
- */
-@Composable
-fun rememberArticleScreenSettingsState(): ArticleScreenSettingsState {
-    val settings = rememberSettingsStore()
-    val state = remember(settings) {
-        ArticleScreenSettingsState(
-            isTitleAutoHide = settings.getBoolean("titleAutoHide", false),
-            autoHideArticleBottomBar = settings.getBoolean("autoHideArticleBottomBar", false),
-            answerSwitchMode = settings.getString("answerSwitchMode", "vertical"),
-            answerSwitchSensitivity = normalizedAnswerSwitchSensitivity(
-                settings.getFloat(
-                    ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY,
-                    DEFAULT_ANSWER_SWITCH_SENSITIVITY,
-                ),
-            ),
-            pinAnswerDate = settings.getBoolean("pinAnswerDate", false),
-            buttonSkipAnswer = settings.getBoolean("buttonSkipAnswer", true),
-            autoHideSkipAnswerButton = settings.getBoolean("autoHideSkipAnswerButton", true),
-        )
-    }
-
-    DisposableEffect(settings, state) {
-        val unregister = settings.observeKeyChanges { key ->
-            when (key) {
-                "titleAutoHide" -> state.isTitleAutoHide = settings.getBoolean(key, false)
-                "autoHideArticleBottomBar" -> {
-                    state.autoHideArticleBottomBar = settings.getBoolean(key, false)
-                }
-
-                "buttonSkipAnswer" -> state.buttonSkipAnswer = settings.getBoolean(key, true)
-                "autoHideSkipAnswerButton" -> state.autoHideSkipAnswerButton = settings.getBoolean(key, true)
-                "answerSwitchMode" -> {
-                    state.answerSwitchMode = settings.getString(key, "vertical")
-                }
-
-                ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY -> {
-                    state.answerSwitchSensitivity = normalizedAnswerSwitchSensitivity(
-                        settings.getFloat(key, DEFAULT_ANSWER_SWITCH_SENSITIVITY),
-                    )
-                }
-
-                "pinAnswerDate" -> state.pinAnswerDate = settings.getBoolean(key, false)
-            }
-        }
-        onDispose(unregister)
-    }
-
-    return state
 }
 
 /** 过滤部分设备文本选择菜单中的非预期系统项。 */
@@ -209,12 +68,6 @@ fun articleActionText(
         ArticleType.Article -> {
             "https://zhuanlan.zhihu.com/p/${article.id}\n【$title - $authorName 的文章】"
         }
-    }
-
-fun articleWebUrl(article: Article): String =
-    when (article.type) {
-        ArticleType.Answer -> "https://www.zhihu.com/answer/${article.id}"
-        ArticleType.Article -> "https://zhuanlan.zhihu.com/p/${article.id}"
     }
 
 /**
@@ -309,23 +162,6 @@ data class AccountSettingsAccountState(
     val identityManagementSupported: Boolean = false,
 )
 
-fun noopSettingsStore(): SettingsStore = SettingsStore(
-    getBoolean = { _, defaultValue -> defaultValue },
-    putBoolean = { _, _ -> },
-    getString = { _, defaultValue -> defaultValue },
-    putString = { _, _ -> },
-    getStringOrNull = { _ -> null },
-    putStringSet = { _, _ -> },
-    getStringSet = { _, defaultValue -> defaultValue },
-    getInt = { _, defaultValue -> defaultValue },
-    putInt = { _, _ -> },
-    getLong = { _, defaultValue -> defaultValue },
-    putLong = { _, _ -> },
-    getFloat = { _, defaultValue -> defaultValue },
-    putFloat = { _, _ -> },
-    remove = { _ -> },
-)
-
 internal const val PEOPLE_PROFILE_INCLUDE_PATH =
     "allow_message,is_followed,is_following,is_org,is_blocking,badge_v2,answer_count,follower_count,following_count,articles_count,question_count,pins_count"
 
@@ -398,8 +234,6 @@ private fun Context.zhihuVersionInfo(): String {
 
 @Composable
 fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
-
-fun Modifier.articleMarkdownSelectionWorkaround(): Modifier = this
 
 fun commentEmojiInlineKey(placeholder: String): String? {
     val emojiPath = EmojiManager.getEmojiPath(placeholder) ?: return null

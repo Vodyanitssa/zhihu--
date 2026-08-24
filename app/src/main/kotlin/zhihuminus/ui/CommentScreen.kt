@@ -28,7 +28,6 @@ import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.gestures.Orientation
 import androidx.compose.foundation.gestures.draggable
 import androidx.compose.foundation.gestures.rememberDraggableState
@@ -88,6 +87,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
@@ -113,27 +113,25 @@ import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.AnnotatedString
-import androidx.compose.ui.text.LinkAnnotation
-import androidx.compose.ui.text.SpanStyle
-import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
-import androidx.compose.ui.text.withLink
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.nodes.Element
-import com.fleeksoft.ksoup.nodes.Node
-import com.fleeksoft.ksoup.nodes.TextNode
 import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.renderer.EmojiItem
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.data.DataHolder
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.LocalNavigator
@@ -142,10 +140,8 @@ import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Pin
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.SegmentCommentHolder
-import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImagePreviewOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberSettingsStore
@@ -324,92 +320,6 @@ fun SwipeToReplyContainer(
 }
 
 /**
- * 可点击的图片组件，支持点击查看和长按显示菜单
- */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun ClickableImageWithMenu(
-    imageUrl: String,
-    modifier: Modifier = Modifier,
-    contentDescription: String = "图片",
-    onAction: ((CommentImageMenuAction, String) -> Unit)? = null,
-) {
-    var showContextMenu by remember { mutableStateOf(false) }
-    val openImagePreview = rememberImagePreviewOpener()
-    val openExternalUrl = rememberExternalUrlOpener()
-    val saveImage = rememberImageSaver()
-    val shareImage = rememberImageSharer()
-
-    PlatformBackHandler(enabled = showContextMenu) {
-        showContextMenu = false
-    }
-
-    fun handleAction(action: CommentImageMenuAction) {
-        if (onAction != null) {
-            onAction(action, imageUrl)
-            return
-        }
-        when (action) {
-            CommentImageMenuAction.Open -> openImagePreview(imageUrl)
-            CommentImageMenuAction.OpenInBrowser -> openExternalUrl(imageUrl)
-            CommentImageMenuAction.Save -> saveImage(imageUrl)
-            CommentImageMenuAction.Share -> shareImage(imageUrl)
-        }
-    }
-
-    Box(
-        modifier = modifier.combinedClickable(
-            onClick = { handleAction(CommentImageMenuAction.Open) },
-            onLongClick = { showContextMenu = true },
-        ),
-    ) {
-        AsyncImage(
-            model = imageUrl,
-            contentDescription = contentDescription,
-            modifier = Modifier.fillMaxSize(),
-        )
-
-        DropdownMenu(
-            expanded = showContextMenu,
-            onDismissRequest = { showContextMenu = false },
-        ) {
-            DropdownMenuItem(
-                modifier = Modifier,
-                text = { Text("查看图片") },
-                onClick = {
-                    handleAction(CommentImageMenuAction.Open)
-                    showContextMenu = false
-                },
-            )
-            DropdownMenuItem(
-                modifier = Modifier,
-                text = { Text("在浏览器中打开") },
-                onClick = {
-                    handleAction(CommentImageMenuAction.OpenInBrowser)
-                    showContextMenu = false
-                },
-            )
-            DropdownMenuItem(
-                modifier = Modifier,
-                text = { Text("保存图片") },
-                onClick = {
-                    handleAction(CommentImageMenuAction.Save)
-                    showContextMenu = false
-                },
-            )
-            DropdownMenuItem(
-                modifier = Modifier,
-                text = { Text("分享图片") },
-                onClick = {
-                    showContextMenu = false
-                    handleAction(CommentImageMenuAction.Share)
-                },
-            )
-        }
-    }
-}
-
-/**
  * 评论列表与回复页面。
  *
  * 页面根据 [content] 指向的文章、问题、想法或片段选择对应评论 ViewModel，展示父评论和子评论层级，并提供发送回复、图片预览、
@@ -430,6 +340,10 @@ fun CommentScreen(
 ) {
     val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = false)
     val readingSettings = rememberSettingsStore()
+    val imageViewManager = remember { ImageViewManager() }
+    val openExternalUrl = rememberExternalUrlOpener()
+    val saveImage = rememberImageSaver()
+    val shareImage = rememberImageSharer()
     val resolvedContent = content()
     var isSending by remember { mutableStateOf(false) }
     var replyToComment by remember { mutableStateOf<CommentModel?>(null) }
@@ -633,521 +547,523 @@ fun CommentScreen(
         }
     }
 
-    Box(
-        modifier = Modifier.fillMaxSize(),
-    ) {
-        // 评论内容区域
-        Surface(
-            modifier = Modifier
-                .fillMaxSize()
-                .align(Alignment.BottomCenter),
-            shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
-            color = commentBackgroundColor,
+    CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
+        Box(
+            modifier = Modifier.fillMaxSize(),
         ) {
-            Column(
+            // 评论内容区域
+            Surface(
                 modifier = Modifier
                     .fillMaxSize()
-                    .navigationBarsPadding(),
+                    .align(Alignment.BottomCenter),
+                shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
+                color = commentBackgroundColor,
             ) {
-                Box(modifier = Modifier.weight(1f)) {
-                    when {
-                        viewModel.isLoading && viewModel.allData.isEmpty() -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                CircularProgressIndicator()
-                            }
-                        }
-
-                        viewModel.errorMessage != null && viewModel.allData.isEmpty() -> {
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text(viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error)
-                            }
-                        }
-
-                        activeCommentItem == null && viewModel.allData.isEmpty() -> {
-                            // activeCommentItem != null 的空态在下面的 LazyColumn 中处理。
-                            Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
-                                Text("暂无评论")
-                            }
-                        }
-
-                        else -> {
-                            @Composable
-                            fun Comment(
-                                commentItem: CommentModel,
-                                modifier: Modifier = Modifier,
-                                allowDelete: Boolean = true,
-                                onChildCommentClick: (CommentModel) -> Unit,
-                            ) {
-                                var isLiked by remember { mutableStateOf(commentItem.item.liked) }
-                                var likeCount by remember { mutableIntStateOf(commentItem.item.likeCount) }
-                                var isLikeLoading by remember { mutableStateOf(false) }
-
-                                Column(modifier = modifier) {
-                                    CommentItem(
-                                        comment = commentItem,
-                                        isLiked = isLiked,
-                                        likeCount = likeCount,
-                                        isLikeLoading = isLikeLoading,
-                                        toggleLike = {
-                                            viewModel.toggleLikeComment(
-                                                commentData = commentItem.item,
-                                                environment = paginationEnvironment,
-                                            ) {
-                                                val newLikeState = !isLiked
-                                                isLiked = newLikeState
-                                                likeCount += if (newLikeState) 1 else -1
-                                                commentItem.item.liked = newLikeState
-                                                commentItem.item.likeCount = likeCount
-                                            }
-                                        },
-                                        onChildCommentClick = onChildCommentClick,
-                                        onDelete = if (allowDelete && commentItem.item.canDelete) {
-                                            {
-                                                commentPendingDeletion = commentItem
-                                                deleteCommentError = null
-                                            }
-                                        } else {
-                                            null
-                                        },
-                                    )
-
-                                    // 在根评论区时 子评论
-                                    if (activeCommentItem == null && commentItem.item.childCommentCount > 0) {
-                                        Column(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(start = 40.dp, top = 8.dp),
-                                        ) {
-                                            if (commentItem.item.childComments.isNotEmpty()) {
-                                                commentItem.item.childComments.forEach { childComment ->
-                                                    var liked by remember { mutableStateOf(childComment.liked) }
-                                                    var likeCount by remember { mutableIntStateOf(childComment.likeCount) }
-                                                    val childCommentItem = CommentModel(
-                                                        item = childComment,
-                                                        clickTarget = null, // 子评论不需要点击跳转
-                                                    )
-                                                    CommentItem(
-                                                        comment = childCommentItem,
-                                                        modifier = Modifier,
-                                                        isLiked = liked,
-                                                        likeCount = likeCount,
-                                                        toggleLike = {
-                                                            viewModel.toggleLikeComment(
-                                                                commentData = childCommentItem.item,
-                                                                environment = paginationEnvironment,
-                                                            ) {
-                                                                val newLikeState = !liked
-                                                                liked = newLikeState
-                                                                likeCount += if (newLikeState) 1 else -1
-                                                                childCommentItem.item.liked = newLikeState
-                                                                childCommentItem.item.likeCount = likeCount
-                                                            }
-                                                        },
-                                                        onChildCommentClick = onChildCommentClick,
-                                                        onDelete = if (childComment.canDelete) {
-                                                            {
-                                                                commentPendingDeletion = childCommentItem
-                                                                deleteCommentError = null
-                                                            }
-                                                        } else {
-                                                            null
-                                                        },
-                                                    )
-                                                }
-                                            }
-                                            Button(
-                                                onClick = { onChildCommentClick(commentItem) },
-                                                modifier = Modifier
-                                                    .height(28.dp),
-                                                shape = RoundedCornerShape(50),
-                                                colors = ButtonDefaults.buttonColors(
-                                                    containerColor = actionChipColor,
-                                                    contentColor = MaterialTheme.colorScheme.onSurface,
-                                                ),
-                                                contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
-                                            ) {
-                                                Icon(
-                                                    Icons.AutoMirrored.Outlined.Comment,
-                                                    contentDescription = "查看子评论",
-                                                    modifier = Modifier.size(16.dp),
-                                                    tint = actionChipIconColor,
-                                                )
-                                                Text(
-                                                    "查看 ${commentItem.item.childCommentCount} 条子评论",
-                                                    fontSize = 12.sp,
-                                                    modifier = Modifier.padding(vertical = 1.dp, horizontal = 4.dp),
-                                                )
-                                            }
-                                        }
-                                    }
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .navigationBarsPadding(),
+                ) {
+                    Box(modifier = Modifier.weight(1f)) {
+                        when {
+                            viewModel.isLoading && viewModel.allData.isEmpty() -> {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    CircularProgressIndicator()
                                 }
                             }
-                            LazyColumn(
-                                state = listState,
-                                modifier = Modifier
-                                    .fillMaxSize(),
-                                contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
-                                verticalArrangement = Arrangement.spacedBy(16.dp),
-                            ) {
-                                if (activeCommentItem != null) {
-                                    item(
-                                        key = "active_${activeCommentItem.item.id}",
-                                    ) {
-                                        Column(
-                                            modifier = Modifier.animateItem(
-                                                fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                                fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                                placementSpec = spring(
-                                                    stiffness = Spring.StiffnessMediumLow,
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
-                                                ),
-                                            ),
-                                        ) {
-                                            Comment(activeCommentItem, allowDelete = false) { }
-                                            HorizontalDivider()
-                                            if (viewModel.allData.isEmpty()) {
-                                                Box(
-                                                    modifier = Modifier.fillMaxSize(),
-                                                    contentAlignment = Alignment.Center,
+
+                            viewModel.errorMessage != null && viewModel.allData.isEmpty() -> {
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text(viewModel.errorMessage!!, color = MaterialTheme.colorScheme.error)
+                                }
+                            }
+
+                            activeCommentItem == null && viewModel.allData.isEmpty() -> {
+                                // activeCommentItem != null 的空态在下面的 LazyColumn 中处理。
+                                Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                                    Text("暂无评论")
+                                }
+                            }
+
+                            else -> {
+                                @Composable
+                                fun Comment(
+                                    commentItem: CommentModel,
+                                    modifier: Modifier = Modifier,
+                                    allowDelete: Boolean = true,
+                                    onChildCommentClick: (CommentModel) -> Unit,
+                                ) {
+                                    var isLiked by remember { mutableStateOf(commentItem.item.liked) }
+                                    var likeCount by remember { mutableIntStateOf(commentItem.item.likeCount) }
+                                    var isLikeLoading by remember { mutableStateOf(false) }
+
+                                    Column(modifier = modifier) {
+                                        CommentItem(
+                                            comment = commentItem,
+                                            isLiked = isLiked,
+                                            likeCount = likeCount,
+                                            isLikeLoading = isLikeLoading,
+                                            toggleLike = {
+                                                viewModel.toggleLikeComment(
+                                                    commentData = commentItem.item,
+                                                    environment = paginationEnvironment,
                                                 ) {
-                                                    Text(
-                                                        // activeCommentItem 非空时这里展示的是子评论回复列表。
-                                                        "暂无回复",
-                                                    )
+                                                    val newLikeState = !isLiked
+                                                    isLiked = newLikeState
+                                                    likeCount += if (newLikeState) 1 else -1
+                                                    commentItem.item.liked = newLikeState
+                                                    commentItem.item.likeCount = likeCount
                                                 }
-                                            }
-                                        }
-                                    }
-                                } else {
-                                    item("sorting") {
-                                        Row(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .layout { measurable, constraints ->
-                                                    val contentHeight = 32.dp.roundToPx()
-                                                    val placeable = measurable.measure(
-                                                        constraints.copy(
-                                                            minHeight = contentHeight,
-                                                            maxHeight = contentHeight,
-                                                        ),
-                                                    )
-                                                    layout(placeable.width, 24.dp.roundToPx()) {
-                                                        placeable.placeRelative(0, 0)
+                                            },
+                                            onChildCommentClick = onChildCommentClick,
+                                            onDelete = if (allowDelete && commentItem.item.canDelete) {
+                                                {
+                                                    commentPendingDeletion = commentItem
+                                                    deleteCommentError = null
+                                                }
+                                            } else {
+                                                null
+                                            },
+                                        )
+
+                                        // 在根评论区时 子评论
+                                        if (activeCommentItem == null && commentItem.item.childCommentCount > 0) {
+                                            Column(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(start = 40.dp, top = 8.dp),
+                                            ) {
+                                                if (commentItem.item.childComments.isNotEmpty()) {
+                                                    commentItem.item.childComments.forEach { childComment ->
+                                                        var liked by remember { mutableStateOf(childComment.liked) }
+                                                        var likeCount by remember { mutableIntStateOf(childComment.likeCount) }
+                                                        val childCommentItem = CommentModel(
+                                                            item = childComment,
+                                                            clickTarget = null, // 子评论不需要点击跳转
+                                                        )
+                                                        CommentItem(
+                                                            comment = childCommentItem,
+                                                            modifier = Modifier,
+                                                            isLiked = liked,
+                                                            likeCount = likeCount,
+                                                            toggleLike = {
+                                                                viewModel.toggleLikeComment(
+                                                                    commentData = childCommentItem.item,
+                                                                    environment = paginationEnvironment,
+                                                                ) {
+                                                                    val newLikeState = !liked
+                                                                    liked = newLikeState
+                                                                    likeCount += if (newLikeState) 1 else -1
+                                                                    childCommentItem.item.liked = newLikeState
+                                                                    childCommentItem.item.likeCount = likeCount
+                                                                }
+                                                            },
+                                                            onChildCommentClick = onChildCommentClick,
+                                                            onDelete = if (childComment.canDelete) {
+                                                                {
+                                                                    commentPendingDeletion = childCommentItem
+                                                                    deleteCommentError = null
+                                                                }
+                                                            } else {
+                                                                null
+                                                            },
+                                                        )
                                                     }
-                                                },
-                                            verticalAlignment = Alignment.CenterVertically,
-                                            horizontalArrangement = Arrangement.End,
-                                        ) {
-                                            SuggestionChip(
-                                                label = {
+                                                }
+                                                Button(
+                                                    onClick = { onChildCommentClick(commentItem) },
+                                                    modifier = Modifier
+                                                        .height(28.dp),
+                                                    shape = RoundedCornerShape(50),
+                                                    colors = ButtonDefaults.buttonColors(
+                                                        containerColor = actionChipColor,
+                                                        contentColor = MaterialTheme.colorScheme.onSurface,
+                                                    ),
+                                                    contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                                                ) {
+                                                    Icon(
+                                                        Icons.AutoMirrored.Outlined.Comment,
+                                                        contentDescription = "查看子评论",
+                                                        modifier = Modifier.size(16.dp),
+                                                        tint = actionChipIconColor,
+                                                    )
                                                     Text(
-                                                        "最热",
-                                                        color = if (viewModel.sortOrder == CommentSortOrder.SCORE) {
-                                                            MaterialTheme.colorScheme.primary
-                                                        } else {
-                                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                                        },
-                                                        fontWeight = if (viewModel.sortOrder == CommentSortOrder.SCORE) {
-                                                            FontWeight.SemiBold
-                                                        } else {
-                                                            FontWeight.Normal
-                                                        },
+                                                        "查看 ${commentItem.item.childCommentCount} 条子评论",
+                                                        fontSize = 12.sp,
+                                                        modifier = Modifier.padding(vertical = 1.dp, horizontal = 4.dp),
                                                     )
-                                                },
-                                                onClick = {
-                                                    viewModel.changeSortOrder(
-                                                        CommentSortOrder.SCORE,
-                                                        paginationEnvironment,
-                                                    )
-                                                },
-                                            )
-                                            Spacer(Modifier.width(12.dp))
-                                            SuggestionChip(
-                                                label = {
-                                                    Text(
-                                                        "最新",
-                                                        color = if (viewModel.sortOrder == CommentSortOrder.TIME) {
-                                                            MaterialTheme.colorScheme.primary
-                                                        } else {
-                                                            MaterialTheme.colorScheme.onSurfaceVariant
-                                                        },
-                                                        fontWeight = if (viewModel.sortOrder == CommentSortOrder.TIME) {
-                                                            FontWeight.SemiBold
-                                                        } else {
-                                                            FontWeight.Normal
-                                                        },
-                                                    )
-                                                },
-                                                onClick = {
-                                                    viewModel.changeSortOrder(
-                                                        CommentSortOrder.TIME,
-                                                        paginationEnvironment,
-                                                    )
-                                                },
-                                            )
+                                                }
+                                            }
                                         }
                                     }
                                 }
-
-                                items(
-                                    items = viewModel.allData,
-                                    key = { it.id },
-                                ) { dto ->
-                                    val commentItem = viewModel.createCommentItem(dto, article = rootContent)
-                                    SwipeToReplyContainer(
-                                        onReply = {
-                                            if (activeCommentItem == null) {
-                                                if (commentItem.clickTarget != null) {
-                                                    onChildCommentClick(commentItem)
-                                                }
-                                            } else {
-                                                // 滑动回复时设置回复目标。
-                                                replyToComment = commentItem
-                                            }
-                                        },
-                                    ) {
-                                        Comment(
-                                            commentItem,
-                                            modifier = Modifier.animateItem(
-                                                fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                                fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                                placementSpec = spring(
-                                                    stiffness = Spring.StiffnessMediumLow,
-                                                    dampingRatio = Spring.DampingRatioMediumBouncy,
+                                LazyColumn(
+                                    state = listState,
+                                    modifier = Modifier
+                                        .fillMaxSize(),
+                                    contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
+                                    verticalArrangement = Arrangement.spacedBy(16.dp),
+                                ) {
+                                    if (activeCommentItem != null) {
+                                        item(
+                                            key = "active_${activeCommentItem.item.id}",
+                                        ) {
+                                            Column(
+                                                modifier = Modifier.animateItem(
+                                                    fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                                    fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                                    placementSpec = spring(
+                                                        stiffness = Spring.StiffnessMediumLow,
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    ),
                                                 ),
-                                            ),
-                                        ) { _ ->
-                                            if (activeCommentItem == null) {
-                                                if (commentItem.clickTarget != null) {
-                                                    onChildCommentClick(commentItem)
+                                            ) {
+                                                Comment(activeCommentItem, allowDelete = false) { }
+                                                HorizontalDivider()
+                                                if (viewModel.allData.isEmpty()) {
+                                                    Box(
+                                                        modifier = Modifier.fillMaxSize(),
+                                                        contentAlignment = Alignment.Center,
+                                                    ) {
+                                                        Text(
+                                                            // activeCommentItem 非空时这里展示的是子评论回复列表。
+                                                            "暂无回复",
+                                                        )
+                                                    }
                                                 }
-                                            } else {
-                                                // 滑动回复时设置回复目标。
-                                                replyToComment = commentItem
+                                            }
+                                        }
+                                    } else {
+                                        item("sorting") {
+                                            Row(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .layout { measurable, constraints ->
+                                                        val contentHeight = 32.dp.roundToPx()
+                                                        val placeable = measurable.measure(
+                                                            constraints.copy(
+                                                                minHeight = contentHeight,
+                                                                maxHeight = contentHeight,
+                                                            ),
+                                                        )
+                                                        layout(placeable.width, 24.dp.roundToPx()) {
+                                                            placeable.placeRelative(0, 0)
+                                                        }
+                                                    },
+                                                verticalAlignment = Alignment.CenterVertically,
+                                                horizontalArrangement = Arrangement.End,
+                                            ) {
+                                                SuggestionChip(
+                                                    label = {
+                                                        Text(
+                                                            "最热",
+                                                            color = if (viewModel.sortOrder == CommentSortOrder.SCORE) {
+                                                                MaterialTheme.colorScheme.primary
+                                                            } else {
+                                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                                            },
+                                                            fontWeight = if (viewModel.sortOrder == CommentSortOrder.SCORE) {
+                                                                FontWeight.SemiBold
+                                                            } else {
+                                                                FontWeight.Normal
+                                                            },
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.changeSortOrder(
+                                                            CommentSortOrder.SCORE,
+                                                            paginationEnvironment,
+                                                        )
+                                                    },
+                                                )
+                                                Spacer(Modifier.width(12.dp))
+                                                SuggestionChip(
+                                                    label = {
+                                                        Text(
+                                                            "最新",
+                                                            color = if (viewModel.sortOrder == CommentSortOrder.TIME) {
+                                                                MaterialTheme.colorScheme.primary
+                                                            } else {
+                                                                MaterialTheme.colorScheme.onSurfaceVariant
+                                                            },
+                                                            fontWeight = if (viewModel.sortOrder == CommentSortOrder.TIME) {
+                                                                FontWeight.SemiBold
+                                                            } else {
+                                                                FontWeight.Normal
+                                                            },
+                                                        )
+                                                    },
+                                                    onClick = {
+                                                        viewModel.changeSortOrder(
+                                                            CommentSortOrder.TIME,
+                                                            paginationEnvironment,
+                                                        )
+                                                    },
+                                                )
                                             }
                                         }
                                     }
-                                }
 
-                                if (viewModel.isLoading && viewModel.allData.isNotEmpty()) {
-                                    item(key = "loading_indicator") {
-                                        Box(
-                                            modifier = Modifier
-                                                .fillMaxWidth()
-                                                .padding(8.dp),
-                                            contentAlignment = Alignment.Center,
+                                    items(
+                                        items = viewModel.allData,
+                                        key = { it.id },
+                                    ) { dto ->
+                                        val commentItem = viewModel.createCommentItem(dto, article = rootContent)
+                                        SwipeToReplyContainer(
+                                            onReply = {
+                                                if (activeCommentItem == null) {
+                                                    if (commentItem.clickTarget != null) {
+                                                        onChildCommentClick(commentItem)
+                                                    }
+                                                } else {
+                                                    // 滑动回复时设置回复目标。
+                                                    replyToComment = commentItem
+                                                }
+                                            },
                                         ) {
-                                            CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                            Comment(
+                                                commentItem,
+                                                modifier = Modifier.animateItem(
+                                                    fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                                    fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
+                                                    placementSpec = spring(
+                                                        stiffness = Spring.StiffnessMediumLow,
+                                                        dampingRatio = Spring.DampingRatioMediumBouncy,
+                                                    ),
+                                                ),
+                                            ) { _ ->
+                                                if (activeCommentItem == null) {
+                                                    if (commentItem.clickTarget != null) {
+                                                        onChildCommentClick(commentItem)
+                                                    }
+                                                } else {
+                                                    // 滑动回复时设置回复目标。
+                                                    replyToComment = commentItem
+                                                }
+                                            }
+                                        }
+                                    }
+
+                                    if (viewModel.isLoading && viewModel.allData.isNotEmpty()) {
+                                        item(key = "loading_indicator") {
+                                            Box(
+                                                modifier = Modifier
+                                                    .fillMaxWidth()
+                                                    .padding(8.dp),
+                                                contentAlignment = Alignment.Center,
+                                            ) {
+                                                CircularProgressIndicator(modifier = Modifier.size(24.dp))
+                                            }
                                         }
                                     }
                                 }
                             }
                         }
                     }
-                }
 
-                // 评论输入框
-                Surface(
-                    tonalElevation = 2.dp,
-                    modifier = Modifier.fillMaxWidth(),
-                    color = commentInputBarColor,
-                ) {
-                    Column {
-                        // 回复目标提示栏。
-                        AnimatedVisibility(
-                            visible = replyToComment != null,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut(),
-                        ) {
-                            Surface(
-                                color = MaterialTheme.colorScheme.secondaryContainer,
-                                modifier = Modifier
-                                    .fillMaxWidth(),
+                    // 评论输入框
+                    Surface(
+                        tonalElevation = 2.dp,
+                        modifier = Modifier.fillMaxWidth(),
+                        color = commentInputBarColor,
+                    ) {
+                        Column {
+                            // 回复目标提示栏。
+                            AnimatedVisibility(
+                                visible = replyToComment != null,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut(),
                             ) {
-                                Row(
+                                Surface(
+                                    color = MaterialTheme.colorScheme.secondaryContainer,
                                     modifier = Modifier
-                                        .fillMaxWidth()
-                                        .padding(horizontal = 12.dp, vertical = 8.dp),
-                                    verticalAlignment = Alignment.CenterVertically,
+                                        .fillMaxWidth(),
                                 ) {
-                                    Icon(
-                                        Icons.AutoMirrored.Filled.Reply,
-                                        contentDescription = null,
-                                        modifier = Modifier.size(16.dp),
-                                        tint = MaterialTheme.colorScheme.onSecondaryContainer,
-                                    )
-                                    Spacer(modifier = Modifier.width(8.dp))
-                                    Text(
-                                        text = "回复 ${replyToComment?.item?.author?.name ?: ""}",
-                                        style = MaterialTheme.typography.bodySmall,
-                                        color = MaterialTheme.colorScheme.onSecondaryContainer,
-                                        modifier = Modifier.weight(1f),
-                                    )
-                                    IconButton(
-                                        onClick = { replyToComment = null },
+                                    Row(
                                         modifier = Modifier
-                                            .size(24.dp),
+                                            .fillMaxWidth()
+                                            .padding(horizontal = 12.dp, vertical = 8.dp),
+                                        verticalAlignment = Alignment.CenterVertically,
                                     ) {
                                         Icon(
-                                            Icons.Default.Close,
-                                            contentDescription = "取消回复",
+                                            Icons.AutoMirrored.Filled.Reply,
+                                            contentDescription = null,
                                             modifier = Modifier.size(16.dp),
                                             tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                        )
+                                        Spacer(modifier = Modifier.width(8.dp))
+                                        Text(
+                                            text = "回复 ${replyToComment?.item?.author?.name ?: ""}",
+                                            style = MaterialTheme.typography.bodySmall,
+                                            color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            modifier = Modifier.weight(1f),
+                                        )
+                                        IconButton(
+                                            onClick = { replyToComment = null },
+                                            modifier = Modifier
+                                                .size(24.dp),
+                                        ) {
+                                            Icon(
+                                                Icons.Default.Close,
+                                                contentDescription = "取消回复",
+                                                modifier = Modifier.size(16.dp),
+                                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                            )
+                                        }
+                                    }
+                                }
+                            }
+
+                            Row(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .heightIn(min = 40.dp, max = 140.dp)
+                                    .padding(8.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                IconButton(
+                                    onClick = {
+                                        if (showEmojiPicker) {
+                                            showEmojiPicker = false
+                                            commentInputFocusRequester.requestFocus()
+                                            keyboardController?.show()
+                                        } else {
+                                            focusManager.clearFocus(force = true)
+                                            keyboardController?.hide()
+                                            showEmojiPicker = true
+                                        }
+                                    },
+                                    modifier = Modifier
+                                        .size(40.dp),
+                                ) {
+                                    Icon(
+                                        imageVector = if (showEmojiPicker) {
+                                            Icons.Outlined.Keyboard
+                                        } else {
+                                            Icons.Outlined.EmojiEmotions
+                                        },
+                                        contentDescription = if (showEmojiPicker) {
+                                            "切换到键盘"
+                                        } else {
+                                            "选择表情"
+                                        },
+                                        tint = if (showEmojiPicker) {
+                                            MaterialTheme.colorScheme.primary
+                                        } else {
+                                            MaterialTheme.colorScheme.onSurfaceVariant
+                                        },
+                                    )
+                                }
+                                Spacer(modifier = Modifier.width(4.dp))
+
+                                BasicTextField(
+                                    value = commentFieldValue,
+                                    onValueChange = {
+                                        commentFieldValue = it
+                                        onCommentInputChange(it.text)
+                                    },
+                                    modifier = Modifier
+                                        .weight(1f)
+                                        .focusRequester(commentInputFocusRequester)
+                                        .onFocusChanged {
+                                            if (it.isFocused) showEmojiPicker = false
+                                        },
+                                    decorationBox = { inner ->
+                                        Box {
+                                            if (commentFieldValue.text.isEmpty()) {
+                                                Text(
+                                                    if (replyToComment != null) {
+                                                        "回复 ${replyToComment?.item?.author?.name}..."
+                                                    } else {
+                                                        "写下你的评论..."
+                                                    },
+                                                    fontSize = 16.sp,
+                                                )
+                                            }
+                                            inner()
+                                        }
+                                    },
+                                    textStyle = TextStyle.Default.copy(
+                                        fontSize = 16.sp,
+                                        lineHeight = 18.sp,
+                                        color = MaterialTheme.colorScheme.onSurface,
+                                    ),
+                                )
+
+                                IconButton(
+                                    onClick = { submitComment() },
+                                    modifier = Modifier
+                                        .size(24.dp),
+                                    enabled = !isSending && commentFieldValue.text.isNotBlank(),
+                                ) {
+                                    if (isSending) {
+                                        CircularProgressIndicator(
+                                            modifier = Modifier.size(16.dp),
+                                            strokeWidth = 2.dp,
+                                            color = MaterialTheme.colorScheme.primary,
+                                        )
+                                    } else {
+                                        Icon(
+                                            Icons.AutoMirrored.Outlined.Send,
+                                            contentDescription = "发送评论",
+                                            tint = if (commentFieldValue.text.isNotBlank()) {
+                                                MaterialTheme.colorScheme.primary
+                                            } else {
+                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
+                                            },
                                         )
                                     }
                                 }
                             }
-                        }
 
-                        Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .heightIn(min = 40.dp, max = 140.dp)
-                                .padding(8.dp),
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            IconButton(
-                                onClick = {
-                                    if (showEmojiPicker) {
-                                        showEmojiPicker = false
-                                        commentInputFocusRequester.requestFocus()
-                                        keyboardController?.show()
-                                    } else {
-                                        focusManager.clearFocus(force = true)
-                                        keyboardController?.hide()
-                                        showEmojiPicker = true
-                                    }
-                                },
-                                modifier = Modifier
-                                    .size(40.dp),
+                            AnimatedVisibility(
+                                visible = showEmojiPicker,
+                                enter = expandVertically() + fadeIn(),
+                                exit = shrinkVertically() + fadeOut(),
                             ) {
-                                Icon(
-                                    imageVector = if (showEmojiPicker) {
-                                        Icons.Outlined.Keyboard
-                                    } else {
-                                        Icons.Outlined.EmojiEmotions
-                                    },
-                                    contentDescription = if (showEmojiPicker) {
-                                        "切换到键盘"
-                                    } else {
-                                        "选择表情"
-                                    },
-                                    tint = if (showEmojiPicker) {
-                                        MaterialTheme.colorScheme.primary
-                                    } else {
-                                        MaterialTheme.colorScheme.onSurfaceVariant
-                                    },
-                                )
-                            }
-                            Spacer(modifier = Modifier.width(4.dp))
-
-                            BasicTextField(
-                                value = commentFieldValue,
-                                onValueChange = {
-                                    commentFieldValue = it
-                                    onCommentInputChange(it.text)
-                                },
-                                modifier = Modifier
-                                    .weight(1f)
-                                    .focusRequester(commentInputFocusRequester)
-                                    .onFocusChanged {
-                                        if (it.isFocused) showEmojiPicker = false
-                                    },
-                                decorationBox = { inner ->
-                                    Box {
-                                        if (commentFieldValue.text.isEmpty()) {
-                                            Text(
-                                                if (replyToComment != null) {
-                                                    "回复 ${replyToComment?.item?.author?.name}..."
-                                                } else {
-                                                    "写下你的评论..."
-                                                },
-                                                fontSize = 16.sp,
-                                            )
-                                        }
-                                        inner()
+                                if (EmojiManager.mapping.isEmpty()) {
+                                    Box(
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(240.dp),
+                                        contentAlignment = Alignment.Center,
+                                    ) {
+                                        Text(
+                                            text = "暂无可用表情",
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
                                     }
-                                },
-                                textStyle = TextStyle.Default.copy(
-                                    fontSize = 16.sp,
-                                    lineHeight = 18.sp,
-                                    color = MaterialTheme.colorScheme.onSurface,
-                                ),
-                            )
-
-                            IconButton(
-                                onClick = { submitComment() },
-                                modifier = Modifier
-                                    .size(24.dp),
-                                enabled = !isSending && commentFieldValue.text.isNotBlank(),
-                            ) {
-                                if (isSending) {
-                                    CircularProgressIndicator(
-                                        modifier = Modifier.size(16.dp),
-                                        strokeWidth = 2.dp,
-                                        color = MaterialTheme.colorScheme.primary,
-                                    )
                                 } else {
-                                    Icon(
-                                        Icons.AutoMirrored.Outlined.Send,
-                                        contentDescription = "发送评论",
-                                        tint = if (commentFieldValue.text.isNotBlank()) {
-                                            MaterialTheme.colorScheme.primary
-                                        } else {
-                                            MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                        },
-                                    )
-                                }
-                            }
-                        }
-
-                        AnimatedVisibility(
-                            visible = showEmojiPicker,
-                            enter = expandVertically() + fadeIn(),
-                            exit = shrinkVertically() + fadeOut(),
-                        ) {
-                            if (EmojiManager.mapping.isEmpty()) {
-                                Box(
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(240.dp),
-                                    contentAlignment = Alignment.Center,
-                                ) {
-                                    Text(
-                                        text = "暂无可用表情",
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                            } else {
-                                LazyVerticalGrid(
-                                    columns = GridCells.Adaptive(minSize = 48.dp),
-                                    modifier = Modifier
-                                        .fillMaxWidth()
-                                        .height(240.dp),
-                                    contentPadding = PaddingValues(8.dp),
-                                ) {
-                                    items(
-                                        items = EmojiManager.mapping.entries.toList(),
-                                        key = { it.key },
-                                    ) { entry ->
-                                        val placeholder = entry.key
-                                        IconButton(
-                                            onClick = {
-                                                val updatedValue = commentFieldValue.replaceSelection(
-                                                    insert = placeholder,
-                                                    cursorOffsetInInsert = placeholder.length,
+                                    LazyVerticalGrid(
+                                        columns = GridCells.Adaptive(minSize = 48.dp),
+                                        modifier = Modifier
+                                            .fillMaxWidth()
+                                            .height(240.dp),
+                                        contentPadding = PaddingValues(8.dp),
+                                    ) {
+                                        items(
+                                            items = EmojiManager.mapping.entries.toList(),
+                                            key = { it.key },
+                                        ) { entry ->
+                                            val placeholder = entry.key
+                                            IconButton(
+                                                onClick = {
+                                                    val updatedValue = commentFieldValue.replaceSelection(
+                                                        insert = placeholder,
+                                                        cursorOffsetInInsert = placeholder.length,
+                                                    )
+                                                    commentFieldValue = updatedValue
+                                                    onCommentInputChange(updatedValue.text)
+                                                },
+                                                modifier = Modifier
+                                                    .size(48.dp),
+                                            ) {
+                                                EmojiItem(
+                                                    name = entry.key,
+                                                    resource = entry.value,
+                                                    modifier = Modifier.size(36.dp),
                                                 )
-                                                commentFieldValue = updatedValue
-                                                onCommentInputChange(updatedValue.text)
-                                            },
-                                            modifier = Modifier
-                                                .size(48.dp),
-                                        ) {
-                                            EmojiItem(
-                                                name = entry.key,
-                                                resource = entry.value,
-                                                modifier = Modifier.size(36.dp),
-                                            )
+                                            }
                                         }
                                     }
                                 }
@@ -1157,7 +1073,16 @@ fun CommentScreen(
                 }
             }
         }
-    }
+
+        ImageView(
+            manager = imageViewManager,
+            actions = ImageViewActions(
+                onSave = { saveImage(it) },
+                onShare = { shareImage(it) },
+                onOpenInBrowser = { openExternalUrl(it) },
+            ),
+        )
+    } // CompositionLocalProvider
 }
 
 private fun commentViewModelKey(content: NavDestination): String = when (content) {
@@ -1269,6 +1194,15 @@ private fun CommentItem(
                         modifier = Modifier.commentSelectionWorkaround(),
                     ) {
                         val contentNodes = AstParser.parseContent(commentData.content)
+                        val imageViewerManager = LocalImageViewManager.current
+                        LaunchedEffect(commentData.content) {
+                            imageViewerManager?.submitImages(
+                                contentNodes
+                                    .filterIsInstance<ContentNode.Image>()
+                                    .filter { it.url.isNotBlank() }
+                                    .map { it.url },
+                            )
+                        }
                         RenderContentNodes(contentNodes)
                     }
                 }
@@ -1477,44 +1411,6 @@ private fun AnnotatedString.Builder.processTextWithEmoji(
     }
     if (isEmoji && emojiBuffer.isNotEmpty()) {
         append(emojiBuffer.toString())
-    }
-}
-
-fun AnnotatedString.Builder.dfsSimple(
-    node: Node,
-    onNavigate: (NavDestination) -> Unit,
-    openExternalUrl: (String) -> Unit,
-    componentUsed: MutableSet<String>? = null,
-) {
-    when (node) {
-        is Element -> {
-            when (node.tagName()) {
-                "br" -> append("\n")
-                "a" -> {
-                    val href = node.attr("href")
-                    val linkText = node.text()
-                    if (linkText.isNotEmpty()) {
-                        withLink(
-                            LinkAnnotation.Clickable(
-                                href,
-                                TextLinkStyles(style = SpanStyle(color = Color(0xff66CCFF))),
-                            ) {
-                                resolveContent(href)?.let(onNavigate) ?: openExternalUrl(href)
-                            },
-                        ) {
-                            append(linkText)
-                        }
-                    }
-                }
-
-                else -> node.childNodes().forEach {
-                    dfsSimple(it, onNavigate, openExternalUrl, componentUsed)
-                }
-            }
-        }
-
-        is TextNode -> processTextWithEmoji(node.text(), componentUsed)
-        else -> append(node.outerHtml())
     }
 }
 

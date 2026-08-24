@@ -32,10 +32,6 @@ sealed interface CommentEvent {
 
     data object DismissChildComments : CommentEvent
 
-    data class OpenImage(
-        val url: String,
-    ) : CommentEvent
-
     data class OpenLink(
         val url: String,
     ) : CommentEvent
@@ -50,10 +46,6 @@ sealed interface CommentEvent {
 sealed interface CommentEffect {
     data class ShowMessage(
         val message: String,
-    ) : CommentEffect
-
-    data class OpenImage(
-        val url: String,
     ) : CommentEffect
 
     data class OpenExternalUrl(

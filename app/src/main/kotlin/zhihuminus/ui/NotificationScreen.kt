@@ -64,7 +64,6 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -74,8 +73,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
-import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.data.MobileNotificationColumnHead
 import com.zhihuminus.data.MobileNotificationTimelineItem
 import com.zhihuminus.navigation.LocalNavigator
@@ -85,7 +84,6 @@ import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.notification.rememberNotificationSettingsStore
-import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -97,6 +95,7 @@ import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import org.jsoup.Jsoup
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -453,43 +452,34 @@ fun NotificationItemView(
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    val emojisUsed = remember { mutableSetOf<String>() }
-                    val displayText = if (notification.content?.subTitle == "喜欢了你的评论") {
-                        buildAnnotatedString {
-                            append(Ksoup.parse(notification.content.subText).text())
-                        }
-                    } else if (notification.content?.subTitle?.contains("评论了") == true) {
-                        val document = Ksoup.parseBodyFragment(notification.content.abstractText)
-                        val openExternalUrl = rememberExternalUrlOpener()
-                        val string = remember(notification.content.abstractText) {
-                            emojisUsed.clear()
-                            buildAnnotatedString {
-                                dfsSimple(
-                                    node = document.body(),
-                                    onNavigate = navigator.onNavigate,
-                                    openExternalUrl = openExternalUrl,
-                                    componentUsed = emojisUsed,
-                                )
-                            }
-                        }
+                    val isCommentReply = notification.content?.subTitle?.contains("评论了") == true
+                    val isLikedComment = notification.content?.subTitle == "喜欢了你的评论"
 
-                        string
+                    if (isCommentReply) {
+                        val inlineNodes = remember(notification.content.abstractText) {
+                            val document = Jsoup.parseBodyFragment(notification.content.abstractText)
+                            document.body().childNodes().flatMap { AstParser.parseInline(it) }
+                        }
+                        if (inlineNodes.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            InlineNodes(inlineNodes)
+                        }
                     } else {
-                        buildAnnotatedString {
-                            append(Ksoup.parse(notification.content?.text.orEmpty()).text())
+                        val displayText = if (isLikedComment) {
+                            Jsoup.parse(notification.content?.subText.orEmpty()).text()
+                        } else {
+                            Jsoup.parse(notification.content?.text.orEmpty()).text()
                         }
-                    }
-
-                    if (displayText.isNotEmpty()) {
-                        Spacer(modifier = Modifier.height(4.dp))
-                        Text(
-                            text = displayText,
-                            inlineContent = EmojiManager.inlineContent,
-                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 3,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        if (displayText.isNotEmpty()) {
+                            Spacer(modifier = Modifier.height(4.dp))
+                            Text(
+                                text = displayText,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 3,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
 

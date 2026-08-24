@@ -74,7 +74,6 @@ import com.zhihuminus.editor.UnknownImageFormatException
 import com.zhihuminus.editor.UploadedZhihuImage
 import com.zhihuminus.editor.ZhihuImageUploadSource
 import com.zhihuminus.editor.calculatePinHtmlTextLength
-import com.zhihuminus.editor.compilePinMarkdownToZhihuHtml
 import com.zhihuminus.editor.rememberImagePickerLauncher
 import com.zhihuminus.editor.rememberZhihuPinPublisher
 import com.zhihuminus.editor.uploadZhihuImage
@@ -241,7 +240,8 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
         }
         topicSearchJob = coroutineScope.launch {
             delay(180.milliseconds)
-            val contentHtml = compilePinMarkdownToZhihuHtml(newValue.text, selectedTopics)
+            // TODO: removed old need new
+            val contentHtml = ""
             topicSuggestionError = null
             try {
                 val suggestions = publisher.recommendTopics(query.query, title.text, contentHtml)
@@ -285,7 +285,8 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
         isSubmitting = true
         coroutineScope.launch {
             runCatching {
-                val html = compilePinMarkdownToZhihuHtml(markdownSnapshot, topicsSnapshot)
+                // TODO: removed old need new
+                val html = ""
                 val textLength = calculatePinHtmlTextLength(html)
                 if (publish) {
                     publisher.publishPin(

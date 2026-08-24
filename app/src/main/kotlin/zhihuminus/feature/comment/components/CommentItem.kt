@@ -61,6 +61,7 @@ fun CommentItem(
     onEvent: (CommentEvent) -> Unit = {},
 ) {
     var showMoreMenu by remember(comment.id) { mutableStateOf(false) }
+    val contentNodes = remember(comment.content) { AstParser.parseContent(comment.content) }
 
     Column(modifier = modifier.fillMaxWidth()) {
         // 作者信息 + 内容
@@ -113,9 +114,6 @@ fun CommentItem(
                 }
 
                 SelectionContainer {
-                    val contentNodes = remember(comment.content) {
-                        AstParser.parseContent(comment.content)
-                    }
                     RenderContentNodes(contentNodes)
                 }
             }

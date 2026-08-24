@@ -17,7 +17,7 @@ import androidx.compose.runtime.setValue
  * 3. Renderer 层的 Image composable 在点击时调用 [show]
  * 4. Screen 层根据 [isShowing] 状态渲染 [ImageView] 全屏预览
  */
-class ImageViewManager {
+open class ImageViewManager {
     private val _images = mutableStateListOf<String>()
     val images: List<String> get() = _images
 
@@ -42,7 +42,7 @@ class ImageViewManager {
      * Renderer 层的 Image composable 在点击时调用。
      * 如果 URL 不在已提交的列表中，则忽略。
      */
-    fun show(url: String) {
+    open fun show(url: String) {
         val index = _images.indexOf(url)
         if (index >= 0) {
             _currentIndex = index

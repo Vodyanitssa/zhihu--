@@ -59,11 +59,9 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.editor.UnknownImageFormatException
 import com.zhihuminus.editor.ZhihuImageUploadSource
-import com.zhihuminus.editor.compileMdToZhihuHtml
 import com.zhihuminus.editor.rememberImagePickerLauncher
 import com.zhihuminus.editor.rememberZhihuAnswerPublisher
 import com.zhihuminus.editor.uploadZhihuImage
-import com.zhihuminus.markdown.zhihuHtmlToMarkdown
 import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.LocalNavigator
@@ -146,7 +144,8 @@ fun WriteAnswerScreen(
         isSubmitting = true
         coroutineScope.launch {
             runCatching {
-                val html = compileMdToZhihuHtml(markdown = content.text)
+                // TODO: removed old need new
+                val html = ""
                 val answerId = ensureAnswerId()
                 publisher.patchDraft(
                     questionId = destination.questionId,
@@ -238,7 +237,8 @@ fun WriteAnswerScreen(
         }.onSuccess { editing ->
             if (editing != null && content.text.isBlank()) {
                 tocEnabled = editing.tocEnabled
-                content = TextFieldValue(zhihuHtmlToMarkdown(editing.html))
+                // TODO: remove old need new
+                content = TextFieldValue("")
             }
         }.onFailure { e ->
             errorDialogMessage = buildWriteOperationErrorMessage("加载已有回答失败", e)

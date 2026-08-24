@@ -19,13 +19,10 @@ package com.zhihuminus.markdown
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.text.font.FontFamily
 import coil3.compose.LocalPlatformContext
 import coil3.network.NetworkHeaders
 import coil3.network.httpHeaders
 import coil3.request.ImageRequest
-import com.hrm.latex.renderer.font.MathFont
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.toCookieHeaderString
 
@@ -60,30 +57,10 @@ data class MarkdownImageRequestHeaders(
 )
 
 @Composable
-fun rememberMarkdownMathFont(): MathFont? {
-    val context = LocalContext.current
-    val httpClient = AccountData.httpClient(context)
-    return rememberLatexFonts(context, httpClient).downloaded?.mathFont
-}
-
-@Composable
 fun rememberMarkdownImageRequestHeaders(): MarkdownImageRequestHeaders {
     val userAgent = AccountData.data.userAgent
     return MarkdownImageRequestHeaders(
         cookieHeader = AccountData.data.cookies.toCookieHeaderString(),
         userAgent = userAgent,
     )
-}
-
-@Composable
-fun rememberMarkdownCodeFontFamily(): FontFamily {
-    val context = LocalContext.current
-    val httpClient = AccountData.httpClient(context)
-    val fontResult = rememberLatexFonts(context, httpClient)
-    val downloaded = fontResult.downloaded
-    return if (downloaded != null) {
-        downloaded.katexFamilies.monospace
-    } else {
-        FontFamily.Monospace
-    }
 }
