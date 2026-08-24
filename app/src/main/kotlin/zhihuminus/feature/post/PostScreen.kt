@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
@@ -43,6 +44,7 @@ import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.ui.components.CollectionDialogComponent
+import com.zhihuminus.ui.components.VerticalReadingProgressBar
 
 sealed interface PostLoadState {
     data object Loading : PostLoadState
@@ -80,6 +82,7 @@ fun PostScreen(
     val openExternalUrl = rememberExternalUrlOpener()
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
+    val scrollState = rememberScrollState()
 
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
@@ -161,7 +164,7 @@ fun PostScreen(
                             modifier = Modifier
                                 .fillMaxSize()
                                 .padding(paddingValues)
-                                .verticalScroll(rememberScrollState()),
+                                .verticalScroll(scrollState),
                         ) {
                             PostHeader(
                                 title = state.post.title,
@@ -237,6 +240,14 @@ fun PostScreen(
                     onShare = { shareImage(it) },
                     onOpenInBrowser = { openExternalUrl(it) },
                 ),
+            )
+
+            VerticalReadingProgressBar(
+                scrollState = scrollState,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .systemBarsPadding(),
+                thumbColor = MaterialTheme.colorScheme.primary,
             )
         } // CompositionLocalProvider
     } // Box
