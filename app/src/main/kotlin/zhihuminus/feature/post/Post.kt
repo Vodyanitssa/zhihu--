@@ -72,6 +72,7 @@ data class PostPoll(
             endAt <= kotlin.time.Clock.System
                 .now()
                 .epochSeconds -> "投票已结束"
+
             else -> null
         }
         return buildString {

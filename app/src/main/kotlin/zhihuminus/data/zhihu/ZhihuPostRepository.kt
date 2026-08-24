@@ -1,7 +1,7 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.data.zhihu.dto.AnswerDto
@@ -123,8 +123,17 @@ class ZhihuPostRepository(
     }
 
     private fun mapPin(dto: PinDto): Post {
-        val htmlContent = buildPinHtml(dto)
-        val contentNodes = AstParser.parseContent(htmlContent)
+        val html = dto.contentHtml
+        val firstP = html.indexOf("<p>")
+        val titleText = if (firstP > 0) {
+            html
+                .substring("<div>".length, firstP)
+                .trimEnd(' ', '|')
+                .takeIf { it.isNotBlank() }
+        } else {
+            null
+        }
+        val parsed = parseContent(if (titleText != null) html.removeRange(0, firstP) else html)
         val isLiked = dto.virtuals.booleanCompat("isLiked", "is_liked")
         val poll = dto.bottomPoll?.voting?.let { p ->
             PostPoll(
@@ -155,18 +164,12 @@ class ZhihuPostRepository(
                     url = item.url!!,
                 )
             }
-        val title = contentNodes
-            .filterIsInstance<ContentNode.Heading>()
-            .firstOrNull()
-            ?.content
-            ?.ifBlank { null }
-            ?: dto.excerptTitle
         return Post(
             id = dto.id.toLong(),
             type = PostType.Pin,
-            title = title,
+            title = titleText ?: "无题",
             author = dto.author.toAuthor(),
-            content = contentNodes,
+            content = parsed,
             voteCount = dto.likeCount,
             commentCount = dto.commentCount,
             voteState = if (isLiked) VoteUpState.Up else VoteUpState.Neutral,
@@ -177,32 +180,6 @@ class ZhihuPostRepository(
             poll = poll,
             linkCards = linkCards,
         )
-    }
-
-    private fun buildPinHtml(dto: PinDto): String = buildString {
-        for (item in dto.content) {
-            when (item.type) {
-                "text" -> {
-                    item.content?.let { append(it) }
-                }
-
-                "image" -> {
-                    item.url?.let { url ->
-                        append("<img src=\"$url\"")
-                        item.width?.let { append(" width=\"$it\"") }
-                        item.height?.let { append(" height=\"$it\"") }
-                        append(" />")
-                    }
-                }
-
-                "link_card" -> {
-                    item.url?.let { url ->
-                        val title = item.title ?: url
-                        append("<a href=\"$url\">$title</a>")
-                    }
-                }
-            }
-        }
     }
 
     private fun AuthorDto.toAuthor(): Author = Author(

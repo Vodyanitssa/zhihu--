@@ -22,6 +22,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.util.formatCompactCount
 import java.time.Instant
@@ -32,6 +33,7 @@ private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
 @Composable
 fun PostHeader(
+    title: String?,
     author: Author,
     createdAt: Long,
     updatedAt: Long,
@@ -40,6 +42,15 @@ fun PostHeader(
     isFollowing: Boolean = false,
     onFollowClick: () -> Unit = {},
 ) {
+    if (title != null) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp),
+        ) {
+            Text(text = title, style = MaterialTheme.typography.titleLarge)
+        }
+    }
     Row(
         modifier = Modifier
             .fillMaxWidth()
@@ -106,7 +117,12 @@ fun PostHeader(
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp),
     ) {
-        val timeText = formatTimeText(createdAt, updatedAt)
+        val createdTime = formatDateTime(createdAt)
+        var timeText = "发布于 $createdTime"
+        if (updatedAt > 0 && updatedAt != createdAt) {
+            val updatedTime = formatDateTime(updatedAt)
+            timeText += " · 编辑于 $updatedTime"
+        }
         val infoText = buildString {
             if (timeText.isNotBlank()) append(timeText)
             if (!ipInfo.isNullOrBlank()) {

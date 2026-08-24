@@ -164,6 +164,7 @@ fun PostScreen(
                                 .verticalScroll(rememberScrollState()),
                         ) {
                             PostHeader(
+                                title = state.post.title,
                                 author = state.post.author,
                                 createdAt = state.post.createdAt,
                                 updatedAt = state.post.updatedAt,

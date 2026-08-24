@@ -56,6 +56,9 @@ object AstParser {
             )
 
             "a" -> {
+                if (node.className() == "hash_tag") {
+                    return emptyList()
+                }
                 val url = node.attr("href").ifBlank { null }
                 if (url != null) {
                     listOf(
@@ -147,19 +150,6 @@ object AstParser {
 
         "div" -> {
             buildList {
-                element
-                    .ownText()
-                    .trim()
-                    .takeIf { it.isNotEmpty() }
-                    ?.let {
-                        add(
-                            ContentNode.Heading(
-                                level = 1,
-                                content = it,
-                            ),
-                        )
-                    }
-
                 element.children().forEach {
                     if (it.tagName() == "p" || it.tagName() == "pre") {
                         addAll(parseBlock(it))
