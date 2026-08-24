@@ -99,7 +99,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodeQuestionContentDetail
 import com.zhihuminus.navigation.LocalNavigator
@@ -703,7 +703,7 @@ private fun QuestionDetailWithTopics(
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (questionContent.isNotEmpty()) {
             val contentNodes = AstParser.parseContent(questionContent)
-            ContentNodes(contentNodes)
+            RenderContentNodes(contentNodes)
         }
         if (topics.isNotEmpty()) {
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {

@@ -89,8 +89,8 @@ import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.content.renderer.ContentNodes
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
+import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.imageview.ImageView
@@ -295,7 +295,7 @@ private fun ArticleContentBody(
         }
 
         // 正文内容
-        ContentNodes(nodes = contentNodes)
+        RenderContentNodes(nodes = contentNodes)
     }
 }
 

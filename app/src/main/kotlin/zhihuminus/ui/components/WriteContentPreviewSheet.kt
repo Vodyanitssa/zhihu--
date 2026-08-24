@@ -35,7 +35,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.AstParser
-import com.zhihuminus.core.content.renderer.ContentNodes
+import com.zhihuminus.core.content.renderer.RenderContentNodes
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -77,7 +77,7 @@ fun WriteContentPreviewSheet(
             when {
                 markdown != null -> {
                     val contentNodes = AstParser.parseContent(markdown)
-                    ContentNodes(contentNodes)
+                    RenderContentNodes(contentNodes)
                 }
 
                 else -> {

@@ -49,6 +49,7 @@ import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
@@ -183,7 +184,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
 }
 
 @Composable
-fun ContentNodes(
+fun RenderContentNodes(
     nodes: List<ContentNode>,
     modifier: Modifier = Modifier,
 ) {
@@ -192,13 +193,13 @@ fun ContentNodes(
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         nodes.forEach { node ->
-            ContentNode(node)
+            RenderContentNode(node)
         }
     }
 }
 
 @Composable
-fun ContentNode(
+fun RenderContentNode(
     node: ContentNode,
 ) {
     when (node) {
@@ -402,7 +403,9 @@ private fun Quote(node: ContentNode.Quote) {
 private fun Image(node: ContentNode.Image) {
     val imageViewerManager = LocalImageViewManager.current
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(vertical = 8.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
@@ -411,18 +414,18 @@ private fun Image(node: ContentNode.Image) {
             contentDescription = node.caption,
             modifier = Modifier
                 .fillMaxWidth()
-                .clip(MaterialTheme.shapes.medium)
                 .clickable { imageViewerManager?.show(node.url) },
             contentScale = ContentScale.FillWidth,
         )
-
-        node.caption?.let {
-            Text(
-                text = it,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
+    }
+    node.caption?.let {
+        Text(
+            text = it,
+            modifier = Modifier.fillMaxWidth(),
+            textAlign = TextAlign.Center,
+            style = MaterialTheme.typography.bodySmall,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }
 

@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.data.zhihu.dto.AnswerDto
@@ -154,10 +155,16 @@ class ZhihuPostRepository(
                     url = item.url!!,
                 )
             }
+        val title = contentNodes
+            .filterIsInstance<ContentNode.Heading>()
+            .firstOrNull()
+            ?.content
+            ?.ifBlank { null }
+            ?: dto.excerptTitle
         return Post(
             id = dto.id.toLong(),
             type = PostType.Pin,
-            title = dto.excerptTitle,
+            title = title,
             author = dto.author.toAuthor(),
             content = contentNodes,
             voteCount = dto.likeCount,
