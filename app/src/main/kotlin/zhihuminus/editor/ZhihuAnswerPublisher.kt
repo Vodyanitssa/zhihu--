@@ -23,8 +23,8 @@ import androidx.compose.ui.platform.LocalContext
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.asApiEnvironment
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.util.raiseForStatus
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.fetchContentDetail
@@ -124,7 +124,7 @@ internal class ZhihuApiAnswerPublisher(
     }
 
     override suspend fun fetchAnswerForEditing(answerId: Long): ExistingAnswerForEditing? {
-        val destination = Article(type = ArticleType.Answer, id = answerId)
+        val destination = PostDestination(type = PostType.Answer, id = answerId)
         val answer = environment.fetchContentDetail(destination) as? DataHolder.Answer ?: return null
         val html = answer.editableContent ?: answer.content
         val tocEnabled = answer.settings?.tableOfContents?.enabled ?: false

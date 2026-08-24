@@ -18,24 +18,14 @@
 package com.zhihuminus.ui
 
 import androidx.activity.compose.LocalActivity
-import androidx.compose.animation.ExitTransition
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInHorizontally
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutHorizontally
-import androidx.compose.animation.slideOutVertically
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import androidx.lifecycle.ViewModelProvider
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuCommentRepository
 import com.zhihuminus.data.zhihu.ZhihuPostRepository
 import com.zhihuminus.feature.post.PostRoute
-import com.zhihuminus.viewmodel.ArticleAnswerSwitchData
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
@@ -55,50 +45,6 @@ fun AndroidZhihuMain(navController: NavHostController) {
         consumeMainTabNavigationTarget = activity::consumeMainTabNavigationTarget,
         preferenceState = rememberAndroidZhihuMainPreferenceState(),
         isDarkTheme = com.zhihuminus.theme.ThemeManager.isDarkTheme,
-        articleEnterTransition = {
-            val sharedData = try {
-                ViewModelProvider(activity)[ArticleAnswerSwitchData::class.java]
-            } catch (_: Exception) {
-                null
-            }
-            when (sharedData?.answerTransitionDirection) {
-                ArticleAnswerTransitionDirection.VERTICAL_NEXT ->
-                    slideInVertically(tween(300)) { it } + fadeIn(tween(300))
-
-                ArticleAnswerTransitionDirection.VERTICAL_PREVIOUS ->
-                    slideInVertically(tween(300)) { -it } + fadeIn(tween(300))
-
-                ArticleAnswerTransitionDirection.HORIZONTAL_NEXT ->
-                    slideInHorizontally(tween(300)) { it } + fadeIn(tween(300))
-
-                ArticleAnswerTransitionDirection.HORIZONTAL_PREVIOUS ->
-                    slideInHorizontally(tween(300)) { -it } + fadeIn(tween(300))
-
-                else -> slideInHorizontally(tween(300)) { it }
-            }
-        },
-        articleExitTransition = {
-            val sharedData = try {
-                ViewModelProvider(activity)[ArticleAnswerSwitchData::class.java]
-            } catch (_: Exception) {
-                null
-            }
-            when (sharedData?.answerTransitionDirection) {
-                ArticleAnswerTransitionDirection.VERTICAL_NEXT ->
-                    slideOutVertically(tween(300)) { -it } + fadeOut(tween(300))
-
-                ArticleAnswerTransitionDirection.VERTICAL_PREVIOUS ->
-                    slideOutVertically(tween(300)) { it } + fadeOut(tween(300))
-
-                ArticleAnswerTransitionDirection.HORIZONTAL_NEXT ->
-                    slideOutHorizontally(tween(300)) { -it } + fadeOut(tween(300))
-
-                ArticleAnswerTransitionDirection.HORIZONTAL_PREVIOUS ->
-                    slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300))
-
-                else -> ExitTransition.None
-            }
-        },
         postContent = { destination, _ ->
             val environment = rememberPaginationEnvironment(allowGuestAccess = false)
             val repository = remember {

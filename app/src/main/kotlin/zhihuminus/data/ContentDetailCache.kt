@@ -17,10 +17,9 @@
 
 package com.zhihuminus.data
 
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.util.Log
 import kotlinx.coroutines.sync.Mutex
@@ -96,10 +95,11 @@ object ContentDetailCache {
      * 从 NavDestination 提取内容类型和 ID
      */
     private fun extractContentInfo(navDestination: NavDestination): Pair<String, String>? = when (navDestination) {
-        is Article -> {
+        is PostDestination -> {
             val type = when (navDestination.type) {
-                ArticleType.Answer -> "answer"
-                ArticleType.Article -> "article"
+                PostType.Answer -> "answer"
+                PostType.Article -> "article"
+                PostType.Pin -> "pin"
             }
             Pair(type, navDestination.id.toString())
         }
@@ -108,33 +108,29 @@ object ContentDetailCache {
             Pair("question", navDestination.questionId.toString())
         }
 
-        is Pin -> {
-            Pair("pin", navDestination.id.toString())
-        }
-
         else -> null
     }
 }
 
 fun zhihuContentDetailUrl(destination: NavDestination): String? = when (destination) {
-    is Article -> when (destination.type) {
-        ArticleType.Article -> "https://www.zhihu.com/api/v4/articles/${destination.id}"
-        ArticleType.Answer -> "https://www.zhihu.com/api/v4/answers/${destination.id}"
+    is PostDestination -> when (destination.type) {
+        PostType.Article -> "https://www.zhihu.com/api/v4/articles/${destination.id}"
+        PostType.Answer -> "https://www.zhihu.com/api/v4/answers/${destination.id}"
+        PostType.Pin -> "https://www.zhihu.com/api/v4/pins/${destination.id}"
     }
 
     is Question -> "https://www.zhihu.com/api/v4/questions/${destination.questionId}"
-    is Pin -> "https://www.zhihu.com/api/v4/pins/${destination.id}"
     else -> null
 }
 
 fun zhihuContentDetailInclude(destination: NavDestination): String = when (destination) {
-    is Article -> when (destination.type) {
-        ArticleType.Article -> "content,topics,paid_info,can_comment,excerpt,thanks_count,voteup_count,comment_count,visited_count,relationship,ip_info,relationship.vote,author.badge_v2"
-        ArticleType.Answer -> ".settings,content,editable_content,paid_info,can_comment,excerpt,thanks_count,voteup_count,comment_count,visited_count,attachment,reaction,ip_info,pagination_info,endorsements,question.topics,question.author,reaction.relation.voting,author.badge_v2,settings.table_of_contents.enabled"
+    is PostDestination -> when (destination.type) {
+        PostType.Article -> "content,topics,paid_info,can_comment,excerpt,thanks_count,voteup_count,comment_count,visited_count,relationship,ip_info,relationship.vote,author.badge_v2"
+        PostType.Answer -> ".settings,content,editable_content,paid_info,can_comment,excerpt,thanks_count,voteup_count,comment_count,visited_count,attachment,reaction,ip_info,pagination_info,endorsements,question.topics,question.author,reaction.relation.voting,author.badge_v2,settings.table_of_contents.enabled"
+        PostType.Pin -> "topics"
     }
 
     is Question -> "read_count,visit_count,answer_count,voteup_count,comment_count,follower_count,detail,excerpt,author,relationship.is_following,topics"
-    is Pin -> "topics"
     else -> ""
 }
 
@@ -147,9 +143,8 @@ suspend fun fetchZhihuContentDetail(
     val json = fetchJson(url, include) ?: return null
 
     return when (destination) {
-        is Article -> decodeArticleContentDetail(destination, json)
+        is PostDestination -> decodeArticleContentDetail(destination, json)
         is Question -> decodeQuestionContentDetail(json)
-        is Pin -> decodePinContentDetail(json)
         else -> null
     }
 }
@@ -169,13 +164,14 @@ suspend fun ContentDetailCache.getOrFetchContentDetail(
     }
 
 fun decodeArticleContentDetail(
-    article: Article,
+    article: PostDestination,
     json: JsonObject,
 ): DataHolder.Content {
     val normalizedJson = normalizeLongIdContentDetailJson(json)
     return when (article.type) {
-        ArticleType.Answer -> ZhihuJson.decodeJson<DataHolder.Answer>(normalizedJson)
-        ArticleType.Article -> ZhihuJson.decodeJson<DataHolder.Article>(normalizedJson)
+        PostType.Answer -> ZhihuJson.decodeJson<DataHolder.Answer>(normalizedJson)
+        PostType.Article -> ZhihuJson.decodeJson<DataHolder.Article>(normalizedJson)
+        else -> throw IllegalArgumentException("Unknown post type: ${article.type}")
     }
 }
 

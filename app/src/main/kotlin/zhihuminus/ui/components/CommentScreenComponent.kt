@@ -42,10 +42,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.SegmentCommentHolder
 import com.zhihuminus.platform.rememberSettingsStore
@@ -150,7 +149,7 @@ fun CommentScreenComponent(
                 shouldDismissOnClickOutside = true,
             ),
             dragHandle = { DragHandleTitle("评论") },
-            usePlatformWindow = content !is Article,
+            usePlatformWindow = content !is PostDestination,
         ) {
             CommentScreen(
                 content = { content },
@@ -186,7 +185,7 @@ fun CommentScreenComponent(
                 shouldDismissOnClickOutside = true,
             ),
             dragHandle = { DragHandleTitle("回复") },
-            usePlatformWindow = childTarget.article !is Article,
+            usePlatformWindow = childTarget.article !is PostDestination,
         ) {
             CommentScreen(
                 content = { childTarget },
@@ -233,9 +232,8 @@ private val activeChildCommentSaver = Saver<MutableState<CommentItem?>, List<Str
 )
 
 private fun commentContentStateKey(content: NavDestination): String = when (content) {
-    is Article -> "article:${content.type}:${content.id}"
+    is PostDestination -> "article:${content.type}:${content.id}"
     is Question -> "question:${content.questionId}"
-    is Pin -> "pin:${content.id}"
     is CommentHolder -> "comment:${commentContentStateKey(content.article)}:${content.commentId}"
     is SegmentCommentHolder -> "segment:${content.contentType}:${content.contentId}:${content.segmentId}"
     else -> content.toString()

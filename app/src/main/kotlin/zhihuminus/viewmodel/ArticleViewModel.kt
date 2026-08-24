@@ -27,7 +27,7 @@ import androidx.lifecycle.ViewModel
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.OfficialBadge
-import com.zhihuminus.navigation.Article
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.util.Log
 import io.ktor.client.HttpClient
 
@@ -51,7 +51,7 @@ class ArticleViewModel(
      * 缓存的回答完整内容，用于水平滑动预览。
      */
     data class CachedAnswerContent(
-        val article: Article,
+        val post: PostDestination,
         val title: String,
         val authorName: String,
         val authorBio: String,

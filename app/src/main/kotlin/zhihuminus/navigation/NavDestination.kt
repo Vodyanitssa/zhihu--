@@ -203,35 +203,6 @@ data class CollectionContent(
 ) : NavDestination
 
 @Serializable
-enum class ArticleType {
-    @SerialName("article")
-    Article,
-
-    @SerialName("answer")
-    Answer,
-    ;
-
-    override fun toString(): String = name.lowercase()
-}
-
-@Serializable
-data class Article(
-    var title: String = "loading...",
-    @SerialName("article_type_1")
-    val type: ArticleType,
-    val id: Long,
-    var authorName: String = "loading...",
-    var authorBio: String = "loading...",
-    var avatarSrc: String? = null,
-    var excerpt: String? = null,
-    val readingQueueSourceId: String? = null,
-) : NavDestination {
-    override fun hashCode(): Int = id.hashCode()
-
-    override fun equals(other: Any?): Boolean = other is Article && other.id == id && other.type == type
-}
-
-@Serializable
 data class PostDestination(
     var title: String = "loading...",
     @SerialName("article_type_1")
@@ -247,29 +218,6 @@ data class PostDestination(
 
     override fun equals(other: Any?): Boolean = other is PostDestination && other.id == id && other.type == type
 }
-
-fun Pin.toPostDestination(): PostDestination = PostDestination(
-    title = if (authorName.isNotBlank()) "${authorName}的想法" else "想法",
-    type = PostType.Pin,
-    id = id,
-    authorName = authorName,
-    authorBio = "",
-    readingQueueSourceId = readingQueueSourceId,
-)
-
-fun Article.toPostDestination(): PostDestination = PostDestination(
-    title = title,
-    type = when (type) {
-        ArticleType.Article -> PostType.Article
-        ArticleType.Answer -> PostType.Answer
-    },
-    id = id,
-    authorName = authorName,
-    authorBio = authorBio,
-    avatarSrc = avatarSrc,
-    excerpt = excerpt,
-    readingQueueSourceId = readingQueueSourceId,
-)
 
 @Serializable
 data class CommentHolder(
@@ -372,17 +320,6 @@ data class Video(
 ) : NavDestination
 
 @Serializable
-data class Pin(
-    val id: Long,
-    val authorName: String = "",
-    val readingQueueSourceId: String? = null,
-) : NavDestination {
-    override fun hashCode(): Int = id.hashCode()
-
-    override fun equals(other: Any?): Boolean = other is Pin && other.id == id
-}
-
-@Serializable
 data class Topic(
     val id: String,
     val name: String = "",
@@ -390,8 +327,7 @@ data class Topic(
 ) : NavDestination
 
 fun NavDestination.withReadingQueueSource(sourceId: String?): NavDestination = when (this) {
-    is Article -> copy(readingQueueSourceId = sourceId)
-    is Pin -> copy(readingQueueSourceId = sourceId)
+    is PostDestination -> copy(readingQueueSourceId = sourceId)
     is Question -> copy(readingQueueSourceId = sourceId)
     else -> this
 }
@@ -425,12 +361,12 @@ fun resolveContent(url: Url): NavDestination? {
                 segments[2] == "answer"
             ) {
                 val answerId = segments[3].toLong()
-                return Article(type = ArticleType.Answer, id = answerId)
+                return PostDestination(type = PostType.Answer, id = answerId)
             } else if (segments.size == 2 &&
                 segments[0] == "answer"
             ) {
                 val answerId = segments[1].toLong()
-                return Article(type = ArticleType.Answer, id = answerId)
+                return PostDestination(type = PostType.Answer, id = answerId)
             } else if (segments.size == 2 &&
                 segments[0] == "question"
             ) {
@@ -441,7 +377,7 @@ fun resolveContent(url: Url): NavDestination? {
                 segments[1] == "articles"
             ) {
                 val articleId = segments[2].toLong()
-                return Article(type = ArticleType.Article, id = articleId)
+                return PostDestination(type = PostType.Article, id = articleId)
             } else if (segments.size == 2 && segments[0] == "people") {
                 val urlToken = segments[1]
                 if (urlToken.length == 32 && urlToken.all { it in '0'..'9' || it in 'a'..'f' }) {
@@ -456,15 +392,15 @@ fun resolveContent(url: Url): NavDestination? {
                 return Video(id = videoId) // TODO: 视频详情页待完善。
             } else if (segments.size == 2 && segments[0] == "pin") {
                 val pinId = segments[1].toLongOrNull() ?: return null
-                return Pin(id = pinId)
+                return PostDestination(type = PostType.Pin, id = pinId)
             } else if (segments.size >= 2 && segments[0] == "topic") {
                 return Topic(id = segments[1], section = segments.getOrNull(2).orEmpty())
             } else if (segments.size == 3 && segments[0] == "appview") {
                 val contentId = segments[2].toLongOrNull() ?: return null
                 return when (segments[1]) {
-                    "pin" -> Pin(id = contentId)
-                    "answer" -> Article(type = ArticleType.Answer, id = contentId)
-                    "p" -> Article(type = ArticleType.Article, id = contentId)
+                    "pin" -> PostDestination(type = PostType.Pin, id = contentId)
+                    "answer" -> PostDestination(type = PostType.Answer, id = contentId)
+                    "p" -> PostDestination(type = PostType.Article, id = contentId)
                     else -> null
                 }
             } else if (segments.size == 1 &&
@@ -487,7 +423,7 @@ fun resolveContent(url: Url): NavDestination? {
                 segments[0] == "p"
             ) {
                 val articleId = segments[1].toLong()
-                return Article(type = ArticleType.Article, id = articleId)
+                return PostDestination(type = PostType.Article, id = articleId)
             }
             Log.w("NavDestination", "Cannot resolve content from url: $url")
         } else if (url.host == "link.zhihu.com") {
@@ -506,17 +442,17 @@ fun resolveContent(url: Url): NavDestination? {
                 ?.takeIf { id -> id.isNotEmpty() && id.all { it in '0'..'9' } }
                 ?: return null
             val content = when (segments[1]) {
-                "answer" -> Article(
-                    type = ArticleType.Answer,
+                "answer" -> PostDestination(
+                    type = PostType.Answer,
                     id = contentId,
                 )
 
-                "article" -> Article(
-                    type = ArticleType.Article,
+                "article" -> PostDestination(
+                    type = PostType.Article,
                     id = contentId,
                 )
 
-                "pin" -> Pin(id = contentId)
+                "pin" -> PostDestination(type = PostType.Pin, id = contentId)
 
                 "question" -> Question(questionId = contentId)
 
@@ -525,7 +461,7 @@ fun resolveContent(url: Url): NavDestination? {
             return CommentHolder(commentId = commentId, article = content)
         } else if (url.host == "answers") {
             val answerId = segments[0].toLong()
-            return Article(type = ArticleType.Answer, id = answerId)
+            return PostDestination(type = PostType.Answer, id = answerId)
         } else if (url.host == "questions") {
             val questionId = segments[0].toLong()
             return Question(questionId)
@@ -533,13 +469,13 @@ fun resolveContent(url: Url): NavDestination? {
             return MainTabs
         } else if (url.host == "articles") {
             val articleId = segments[0].toLong()
-            return Article(type = ArticleType.Article, id = articleId)
+            return PostDestination(type = PostType.Article, id = articleId)
         } else if (url.host == "search") {
             val query = url.parameters["q"] ?: ""
             return Search(query)
         } else if (url.host == "pin") {
             val pinId = segments[0].toLong()
-            return Pin(id = pinId)
+            return PostDestination(type = PostType.Pin, id = pinId)
         } else if (url.host == "topic" || url.host == "topics") {
             val topicId = segments.firstOrNull() ?: return null
             return Topic(id = topicId, section = segments.getOrNull(1).orEmpty())

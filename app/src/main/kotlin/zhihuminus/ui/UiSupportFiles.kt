@@ -33,11 +33,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.AnswerNavigator
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.util.EmojiManager
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
@@ -55,19 +55,21 @@ internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
 /** 过滤部分设备文本选择菜单中的非预期系统项。 */
 
 fun articleActionText(
-    article: Article,
+    article: PostDestination,
     questionId: Long,
     title: String,
     authorName: String,
 ): String =
     when (article.type) {
-        ArticleType.Answer -> {
+        PostType.Answer -> {
             "https://www.zhihu.com/question/$questionId/answer/${article.id}\n【$title - $authorName 的回答】"
         }
 
-        ArticleType.Article -> {
+        PostType.Article -> {
             "https://zhuanlan.zhihu.com/p/${article.id}\n【$title - $authorName 的文章】"
         }
+
+        else -> ""
     }
 
 /**

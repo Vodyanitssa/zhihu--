@@ -28,6 +28,7 @@ import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.officialBadge
 import com.zhihuminus.data.target
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.util.Log
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
@@ -92,10 +93,10 @@ fun zhihuQuestionFeedsUrl(
  * 中 5 处重复的 CachedAnswerContent 构造逻辑。
  */
 private fun DataHolder.Answer.toCachedAnswerContent(
-    article: Article,
+    post: PostDestination,
     sourceName: String,
 ): CachedAnswerContent = CachedAnswerContent(
-    article = article,
+    post = post,
     title = question.title,
     authorName = author.name,
     authorBio = author.headline,
@@ -147,12 +148,12 @@ abstract class AnswerNavigator(
         }
 
     /** 构建用于预览卡片的占位 CachedAnswerContent（题目标题/作者已知，但完整内容尚未加载）。 */
-    protected fun articlePreview(article: Article): CachedAnswerContent = CachedAnswerContent(
-        article = article,
-        title = article.title,
-        authorName = article.authorName,
-        authorBio = article.authorBio,
-        authorAvatarUrl = article.avatarSrc ?: "",
+    protected fun articlePreview(post: PostDestination): CachedAnswerContent = CachedAnswerContent(
+        post = post,
+        title = post.title,
+        authorName = post.authorName,
+        authorBio = post.authorBio,
+        authorAvatarUrl = post.avatarSrc ?: "",
         content = "",
         voteUpCount = 0,
         commentCount = 0,
@@ -161,10 +162,10 @@ abstract class AnswerNavigator(
 
     /** 将当前回答推入历史，截断前向分支。 */
     fun pushAnswer(cached: CachedAnswerContent) {
-        val articleId = cached.article.id
+        val articleId = cached.post.id
         // 历史内导航后再次 loadArticle：只更新内容，不改变索引
         if (currentAnswerIndex in answerHistory.indices &&
-            answerHistory[currentAnswerIndex].article == cached.article
+            answerHistory[currentAnswerIndex].post == cached.post
         ) {
             answerHistory[currentAnswerIndex] = cached
             return
@@ -174,7 +175,7 @@ abstract class AnswerNavigator(
             val removeRange = (currentAnswerIndex + 1) until answerHistory.size
             removeRange.reversed().forEach { i -> answerHistory.removeAt(i) }
         }
-        if (answerHistory.lastOrNull()?.article?.id != articleId) {
+        if (answerHistory.lastOrNull()?.post?.id != articleId) {
             answerHistory.add(cached)
         }
         currentAnswerIndex = answerHistory.size - 1
@@ -205,10 +206,10 @@ abstract class AnswerNavigator(
     var previousAnswerContent: CachedAnswerContent? by mutableStateOf(null)
 
     /**
-     * 用户触发"下一个回答"时调用。返回导航目标 [Article]，
+     * 用户触发"下一个回答"时调用。返回导航目标 [PostDestination]，
      * 若已无更多回答则返回 null。
      */
-    abstract suspend fun loadNext(): Article?
+    abstract suspend fun loadNext(): PostDestination?
 
     /**
      * 在后台预取下一个回答的内容，填充 [nextAnswerContent]。
@@ -230,11 +231,11 @@ abstract class AnswerNavigator(
      */
     open suspend fun loadPrevious(): CachedAnswerContent? = null
 
-    protected fun forwardHistoryArticles(): List<Article> = if (currentAnswerIndex in answerHistory.indices) {
+    protected fun forwardHistoryArticles(): List<PostDestination> = if (currentAnswerIndex in answerHistory.indices) {
         answerHistory
             .drop(currentAnswerIndex + 1)
-            .map(CachedAnswerContent::article)
-            .distinctBy(Article::id)
+            .map(CachedAnswerContent::post)
+            .distinctBy(PostDestination::id)
     } else {
         emptyList()
     }
@@ -248,13 +249,13 @@ abstract class AnswerNavigator(
     open suspend fun remainingAnswersSnapshot(
         currentArticleId: Long,
         limit: Int,
-    ): List<Article> = if (limit <= 0) {
+    ): List<PostDestination> = if (limit <= 0) {
         emptyList()
     } else {
         buildList {
             addAll(forwardHistoryArticles())
-            nextAnswerContent?.article?.let(::add)
-        }.distinctBy(Article::id).take(limit)
+            nextAnswerContent?.post?.let(::add)
+        }.distinctBy(PostDestination::id).take(limit)
     }
 
     /**
@@ -274,8 +275,8 @@ abstract class AnswerNavigator(
  */
 class QuestionAnswerNavigator(
     val questionId: Long,
-    initialNextAnswers: List<Article> = emptyList(),
-    initialPreviousAnswers: List<Article> = emptyList(),
+    initialNextAnswers: List<PostDestination> = emptyList(),
+    initialPreviousAnswers: List<PostDestination> = emptyList(),
     initialNextUrl: String = "",
     private val order: String? = null,
     private val getAlreadyOpenedAnswerIds: suspend (List<Long>) -> Set<Long> = { answerIds ->
@@ -289,15 +290,15 @@ class QuestionAnswerNavigator(
     },
     environment: ZhihuApiEnvironment,
 ) : AnswerNavigator("此问题", environment) {
-    private val pendingInitialNextAnswers = ArrayDeque<Article>().also { deque ->
+    private val pendingInitialNextAnswers = ArrayDeque<PostDestination>().also { deque ->
         initialNextAnswers
-            .filter { it.type == ArticleType.Answer }
+            .filter { it.type == PostType.Answer }
             .forEach { deque.addLast(it) }
     }
     private val hasInitialNextAnswers = pendingInitialNextAnswers.isNotEmpty()
-    private val destinations = ArrayDeque<Article>()
-    private val previousQueue = mutableStateListOf<Article>().also { list ->
-        list.addAll(initialPreviousAnswers.filter { it.type == ArticleType.Answer })
+    private val destinations = ArrayDeque<PostDestination>()
+    private val previousQueue = mutableStateListOf<PostDestination>().also { list ->
+        list.addAll(initialPreviousAnswers.filter { it.type == PostType.Answer })
     }
     private var nextUrl: String = initialNextUrl
     private val enqueuedNextIds = mutableSetOf<Long>()
@@ -312,18 +313,18 @@ class QuestionAnswerNavigator(
     override suspend fun remainingAnswersSnapshot(
         currentArticleId: Long,
         limit: Int,
-    ): List<Article> = destinationsMutex.withLock {
+    ): List<PostDestination> = destinationsMutex.withLock {
         if (limit <= 0) return@withLock emptyList()
         ensureDestinationsLocked(currentArticleId, (limit - forwardHistoryArticles().size).coerceAtLeast(0))
         (super.remainingAnswersSnapshot(currentArticleId, limit) + destinations)
-            .distinctBy(Article::id)
+            .distinctBy(PostDestination::id)
             .take(limit)
     }
 
     override val previousAnswerPreview: CachedAnswerContent?
         get() = previousQueue.firstOrNull()?.let { articlePreview(it) }
 
-    private suspend fun fetchCached(article: Article): CachedAnswerContent? {
+    private suspend fun fetchCached(article: PostDestination): CachedAnswerContent? {
         val detail = environment.getOrFetchContentDetail(article) as? DataHolder.Answer
             ?: return null
         return detail.toCachedAnswerContent(article, sourceName)
@@ -334,7 +335,7 @@ class QuestionAnswerNavigator(
         minimumCount: Int,
     ) {
         if (destinations.size >= minimumCount || nextSourceExhausted) return
-        val historyIds = answerHistory.map { it.article.id }.toSet()
+        val historyIds = answerHistory.map { it.post.id }.toSet()
         val fetchedUrls = mutableSetOf<String>()
         while (destinations.size < minimumCount && !nextSourceExhausted) {
             val processingInitialNextAnswers = hasInitialNextAnswers && !initialNextAnswersProcessed
@@ -364,11 +365,11 @@ class QuestionAnswerNavigator(
                     }
                 } ?: AnswerNavigatorPage(emptyList(), "")
                 fetchedNextUrl = page.nextUrl
-                page.items.mapNotNull { feed -> feed.target?.navDestination as? Article }
+                page.items.mapNotNull { feed -> feed.target?.navDestination as? PostDestination }
             }
             val idsToLookup = candidates
                 .asSequence()
-                .filter { it.type == ArticleType.Answer }
+                .filter { it.type == PostType.Answer }
                 .map { it.id }
                 .filter { id ->
                     id != currentArticleId &&
@@ -430,12 +431,12 @@ class QuestionAnswerNavigator(
         insertPrevious(cached)
     }
 
-    override suspend fun loadNext(): Article? = destinationsMutex.withLock {
+    override suspend fun loadNext(): PostDestination? = destinationsMutex.withLock {
         val prefetched = nextAnswerContent
         if (prefetched != null) {
             nextAnswerContent = null
             destinations.removeFirstOrNull()
-            return@withLock prefetched.article
+            return@withLock prefetched.post
         }
         ensureDestinationsLocked(-1L, 1)
         destinations.removeFirstOrNull()
@@ -455,7 +456,7 @@ class QuestionAnswerNavigator(
         if (nextAnswerContent != null) return@withLock
         ensureDestinationsLocked(currentArticleId, 1)
         val nextDest = destinations.firstOrNull() ?: return@withLock
-        if (nextDest.type != ArticleType.Answer) return@withLock
+        if (nextDest.type != PostType.Answer) return@withLock
         try {
             nextAnswerContent = fetchCached(nextDest)
         } catch (e: Exception) {
@@ -482,36 +483,36 @@ class CollectionAnswerNavigator(
     environment: ZhihuApiEnvironment,
 ) : AnswerNavigator("「$collectionTitle」", environment) {
     private val enqueuedNextIds = mutableSetOf<Long>()
-    private val queue = ArrayDeque<Article>().also { deque ->
+    private val queue = ArrayDeque<PostDestination>().also { deque ->
         initialNextItems.forEach { item ->
-            val article = item.content.navDestination as? Article
-            if (article?.type == ArticleType.Answer && enqueuedNextIds.add(article.id)) deque.add(article)
+            val article = item.content.navDestination as? PostDestination
+            if (article?.type == PostType.Answer && enqueuedNextIds.add(article.id)) deque.add(article)
         }
     }
 
     // 逆序存储：firstOrNull() 是离当前最近的上一个回答
-    private val previousQueue = mutableStateListOf<Article>().also { list ->
+    private val previousQueue = mutableStateListOf<PostDestination>().also { list ->
         initialPreviousItems.forEach { item ->
-            val article = item.content.navDestination as? Article
-            if (article?.type == ArticleType.Answer) list.add(article)
+            val article = item.content.navDestination as? PostDestination
+            if (article?.type == PostType.Answer) list.add(article)
         }
     }
 
     private var nextPageUrl: String = initialNextUrl
-    private var prefetchedArticle: Article? = null
+    private var prefetchedArticle: PostDestination? = null
     private val queueMutex = Mutex()
 
     override suspend fun remainingAnswersSnapshot(
         currentArticleId: Long,
         limit: Int,
-    ): List<Article> = queueMutex.withLock {
+    ): List<PostDestination> = queueMutex.withLock {
         if (limit <= 0) return@withLock emptyList()
         ensureQueueLocked((limit - forwardHistoryArticles().size).coerceAtLeast(0))
         buildList {
             addAll(super.remainingAnswersSnapshot(currentArticleId, limit))
             prefetchedArticle?.let(::add)
             addAll(queue)
-        }.distinctBy(Article::id).take(limit)
+        }.distinctBy(PostDestination::id).take(limit)
     }
 
     override val previousAnswerPreview: CachedAnswerContent?
@@ -535,8 +536,8 @@ class CollectionAnswerNavigator(
             } ?: AnswerNavigatorPage(emptyList(), "")
             nextPageUrl = page.nextUrl
             page.items.forEach { item ->
-                val article = item.content.navDestination as? Article
-                if (article?.type == ArticleType.Answer && enqueuedNextIds.add(article.id)) queue.add(article)
+                val article = item.content.navDestination as? PostDestination
+                if (article?.type == PostType.Answer && enqueuedNextIds.add(article.id)) queue.add(article)
             }
             if (nextPageUrl == url) nextPageUrl = ""
         }
@@ -596,12 +597,12 @@ class CollectionAnswerNavigator(
         }
     }
 
-    override suspend fun loadNext(): Article? = queueMutex.withLock {
+    override suspend fun loadNext(): PostDestination? = queueMutex.withLock {
         val cached = nextAnswerContent
         if (cached != null) {
             nextAnswerContent = null
             prefetchedArticle = null
-            return@withLock cached.article
+            return@withLock cached.post
         }
         val prefetched = prefetchedArticle
         if (prefetched != null) {
@@ -648,13 +649,13 @@ class PaginationInfoNavigator(
     override suspend fun remainingAnswersSnapshot(
         currentArticleId: Long,
         limit: Int,
-    ): List<Article> = nextQueueMutex.withLock {
+    ): List<PostDestination> = nextQueueMutex.withLock {
         if (limit <= 0) return@withLock emptyList()
         ensureNextQueueLocked((limit - forwardHistoryArticles().size).coerceAtLeast(0))
         buildList {
             addAll(super.remainingAnswersSnapshot(currentArticleId, limit))
-            nextQueue.forEach { id -> add(Article(id = id, type = ArticleType.Answer)) }
-        }.distinctBy(Article::id).take(limit)
+            nextQueue.forEach { id -> add(PostDestination(id = id, type = PostType.Answer)) }
+        }.distinctBy(PostDestination::id).take(limit)
     }
 
     // 仅有 id，无标题和作者信息；完整数据需 loadPrevious() 后从 answerHistory 取
@@ -662,7 +663,7 @@ class PaginationInfoNavigator(
         get() {
             val id = prevQueue.firstOrNull() ?: return null
             return CachedAnswerContent(
-                article = Article(id = id, type = ArticleType.Answer),
+                post = PostDestination(id = id, type = PostType.Answer),
                 title = "加载中...",
                 authorName = "",
                 authorBio = "",
@@ -682,7 +683,7 @@ class PaginationInfoNavigator(
                 lastKnownNextId = null
                 return
             }
-            val dest = Article(id = id, type = ArticleType.Answer)
+            val dest = PostDestination(id = id, type = PostType.Answer)
             val detail = environment.getOrFetchContentDetail(dest) as? DataHolder.Answer
             val pagination = detail?.paginationInfo
             if (pagination == null) {
@@ -694,7 +695,7 @@ class PaginationInfoNavigator(
             }
             lastKnownNextId = pagination.nextAnswerIds.lastOrNull()
             // 续链时同步填充 prevQueue
-            val historyIds = answerHistory.map { it.article.id }.toSet()
+            val historyIds = answerHistory.map { it.post.id }.toSet()
             pagination.prevAnswerIds.asReversed().forEach { newId ->
                 if (enqueuedPrevIds.add(newId) && newId !in historyIds) {
                     previousAnswerContent = null
@@ -705,7 +706,7 @@ class PaginationInfoNavigator(
     }
 
     private suspend fun fetchCached(answerId: Long): CachedAnswerContent? {
-        val dest = Article(id = answerId, type = ArticleType.Answer)
+        val dest = PostDestination(id = answerId, type = PostType.Answer)
         val detail = environment.getOrFetchContentDetail(dest) as? DataHolder.Answer ?: return null
         return detail.toCachedAnswerContent(dest, sourceName)
     }
@@ -732,23 +733,23 @@ class PaginationInfoNavigator(
         insertPrevious(cached)
     }
 
-    override suspend fun loadNext(): Article? = nextQueueMutex.withLock {
+    override suspend fun loadNext(): PostDestination? = nextQueueMutex.withLock {
         val prefetched = nextAnswerContent
         if (prefetched != null) {
             nextAnswerContent = null
             // prefetchNext 使用 firstOrNull() 不弹出队列，此处消费时统一弹出
             val dequeued = nextQueue.removeFirstOrNull()
-            if (dequeued != null && dequeued != prefetched.article.id) {
+            if (dequeued != null && dequeued != prefetched.post.id) {
                 Log.w(
                     "PaginationInfoNavigator",
-                    "Queue head $dequeued != prefetched ${prefetched.article.id}, possible state mismatch",
+                    "Queue head $dequeued != prefetched ${prefetched.post.id}, possible state mismatch",
                 )
             }
-            return@withLock prefetched.article
+            return@withLock prefetched.post
         }
         ensureNextQueueLocked(1)
         val id = nextQueue.removeFirstOrNull() ?: return@withLock null
-        Article(id = id, type = ArticleType.Answer)
+        PostDestination(id = id, type = PostType.Answer)
     }
 
     // currentArticleId 未使用：队列来自 API，无需过滤当前回答

@@ -22,9 +22,8 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.target
 import com.zhihuminus.filter.ContentOpenEventSupport
-import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.platform.SettingsStore
 import kotlinx.serialization.json.Json
 
@@ -103,8 +102,7 @@ class FeedFilterPipeline(
 
     private suspend fun resolveRawContent(item: FeedDisplayItem): DataHolder.Content =
         when (val dest = item.navDestination) {
-            is Article -> contentDetailProvider.get(dest) ?: DataHolder.DummyContent
-            is Pin -> contentDetailProvider.get(dest) ?: DataHolder.DummyContent
+            is PostDestination -> contentDetailProvider.get(dest) ?: DataHolder.DummyContent
             else -> DataHolder.DummyContent
         }
 }

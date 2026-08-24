@@ -77,9 +77,10 @@ import com.zhihuminus.editor.calculatePinHtmlTextLength
 import com.zhihuminus.editor.rememberImagePickerLauncher
 import com.zhihuminus.editor.rememberZhihuPinPublisher
 import com.zhihuminus.editor.uploadZhihuImage
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.markdown.rememberMarkdownImageModel
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.WritePin
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberSettingsStore
@@ -313,7 +314,7 @@ fun WritePinScreen(destination: WritePin = WritePin()) {
             }.onSuccess { pinId ->
                 if (publish) {
                     userMessages.showShortMessage("发布成功")
-                    navigator.onNavigate(Pin(pinId ?: return@onSuccess))
+                    navigator.onNavigate(PostDestination(type = PostType.Pin, id = pinId ?: return@onSuccess))
                 } else {
                     userMessages.showShortMessage("已保存草稿")
                 }

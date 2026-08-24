@@ -132,12 +132,11 @@ import com.zhihuminus.data.DataHolder
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
-import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.SegmentCommentHolder
 import com.zhihuminus.platform.PlatformBackHandler
@@ -1086,8 +1085,7 @@ fun CommentScreen(
 }
 
 private fun commentViewModelKey(content: NavDestination): String = when (content) {
-    is Article -> "article:${content.type}:${content.id}"
-    is Pin -> "pin:${content.id}"
+    is PostDestination -> "article:${content.type}:${content.id}"
     is Question -> "question:${content.questionId}"
     is SegmentCommentHolder -> "segment:${content.contentType}:${content.contentId}:${content.segmentId}"
     is CommentHolder -> "comment:${content.commentId}:${commentViewModelKey(content.article)}"

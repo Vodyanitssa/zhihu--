@@ -20,10 +20,9 @@ package com.zhihuminus.data
 import com.zhihuminus.account.DEFAULT_ZHIHU_USER_AGENT
 import com.zhihuminus.account.ZhihuAccountProfileSnapshot
 import com.zhihuminus.account.ZhihuAccountSession
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -135,9 +134,9 @@ fun NavDestination.toFeedDisplayItemNavDestinationJson(): String =
 
 val Feed.Target.navDestination: NavDestination?
     get() = when (this) {
-        is Feed.AnswerTarget -> Article(
+        is Feed.AnswerTarget -> PostDestination(
             title = question.title,
-            type = ArticleType.Answer,
+            type = PostType.Answer,
             id = id,
             authorName = author?.name ?: "loading...",
             authorBio = author?.headline ?: "",
@@ -145,9 +144,9 @@ val Feed.Target.navDestination: NavDestination?
             excerpt = excerpt,
         )
 
-        is Feed.ArticleTarget -> Article(
+        is Feed.ArticleTarget -> PostDestination(
             title = title,
-            type = ArticleType.Article,
+            type = PostType.Article,
             id = id,
             authorName = author.name,
             authorBio = author.headline,
@@ -155,7 +154,7 @@ val Feed.Target.navDestination: NavDestination?
             excerpt = excerpt,
         )
 
-        is Feed.PinTarget -> Pin(id = id, authorName = author.name)
+        is Feed.PinTarget -> PostDestination(type = PostType.Pin, id = id, authorName = author.name)
 
         is Feed.QuestionTarget -> Question(
             questionId = id,

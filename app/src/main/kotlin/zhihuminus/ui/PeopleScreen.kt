@@ -77,12 +77,11 @@ import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.officialBadge
 import com.zhihuminus.data.officialBadgeDetails
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImagePreviewOpener
@@ -443,8 +442,8 @@ class PersonViewModel(
 }
 
 private fun DataHolder.Answer.toPeopleAnswerDisplayItem(): FeedDisplayItem {
-    val destination = Article(
-        type = ArticleType.Answer,
+    val destination = PostDestination(
+        type = PostType.Answer,
         id = id,
         title = question.title,
         authorName = author.name,
@@ -463,8 +462,8 @@ private fun DataHolder.Answer.toPeopleAnswerDisplayItem(): FeedDisplayItem {
 }
 
 private fun DataHolder.Article.toPeopleArticleDisplayItem(): FeedDisplayItem {
-    val destination = Article(
-        type = ArticleType.Article,
+    val destination = PostDestination(
+        type = PostType.Article,
         id = id,
         title = title,
         authorName = author.name,
@@ -489,7 +488,7 @@ private fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem? {
         summary = null,
         details = "想法 · $likeCount 赞 · $commentCount 评论",
         feed = null,
-        navDestinationJson = Pin(id = pinId, authorName = author.name).toFeedDisplayItemNavDestinationJson(),
+        navDestinationJson = PostDestination(type = PostType.Pin, id = pinId, authorName = author.name).toFeedDisplayItemNavDestinationJson(),
         raw = this,
     )
 }
@@ -1093,7 +1092,8 @@ private fun PinListItem(
             .fillMaxWidth()
             .clickable {
                 navigator.onNavigate(
-                    Pin(
+                    PostDestination(
+                        type = PostType.Pin,
                         id = pin.id.toLong(),
                         authorName = pin.author.name,
                         readingQueueSourceId = readingQueueSourceId,

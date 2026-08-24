@@ -62,9 +62,9 @@ import com.zhihuminus.editor.ZhihuImageUploadSource
 import com.zhihuminus.editor.rememberImagePickerLauncher
 import com.zhihuminus.editor.rememberZhihuAnswerPublisher
 import com.zhihuminus.editor.uploadZhihuImage
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.LocalNavigator
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.WriteAnswer
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberSettingsStore
@@ -166,7 +166,7 @@ fun WriteAnswerScreen(
             }.onSuccess { answerId ->
                 if (publish) {
                     userMessages.showShortMessage("发布成功")
-                    navigator.onNavigate(Article(type = ArticleType.Answer, id = answerId ?: return@onSuccess))
+                    navigator.onNavigate(PostDestination(type = PostType.Answer, id = answerId ?: return@onSuccess))
                 } else {
                     userMessages.showShortMessage("已保存草稿")
                 }

@@ -19,9 +19,8 @@ package com.zhihuminus.viewmodel.feed
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
-import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.viewmodel.PaginationEnvironment
 
@@ -41,11 +40,11 @@ class HistoryViewModel : BaseFeedViewModel() {
 
         environment.localHistory().forEach { dest ->
             val displayItem = when (dest) {
-                is Article -> {
+                is PostDestination -> {
                     FeedDisplayItem(
-                        title = dest.title,
+                        title = if (dest.type == com.zhihuminus.feature.post.PostType.Pin) "想法" else dest.title,
                         summary = dest.excerpt ?: "",
-                        details = "",
+                        details = if (dest.type == com.zhihuminus.feature.post.PostType.Pin) "想法" else "",
                         authorName = dest.authorName,
                         feed = null,
                         avatarSrc = dest.avatarSrc,
@@ -67,17 +66,6 @@ class HistoryViewModel : BaseFeedViewModel() {
                     FeedDisplayItem(
                         title = dest.name,
                         details = "用户",
-                        feed = null,
-                        navDestinationJson = dest.toFeedDisplayItemNavDestinationJson(),
-                        summary = "",
-                    )
-                }
-
-                is Pin -> {
-                    FeedDisplayItem(
-                        title = "想法",
-                        details = "想法",
-                        authorName = dest.authorName,
                         feed = null,
                         navDestinationJson = dest.toFeedDisplayItemNavDestinationJson(),
                         summary = "",

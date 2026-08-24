@@ -47,11 +47,10 @@ import coil3.request.crossfade
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.filter.TrackedContentIdentity
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.History
@@ -59,7 +58,7 @@ import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Video
@@ -319,7 +318,7 @@ class MainActivity :
         history.add(route)
         if (route is Video) {
             val current = runCatching {
-                navController.currentBackStackEntry?.toRoute<Article>()
+                navController.currentBackStackEntry?.toRoute<PostDestination>()
             }.getOrNull() ?: runCatching {
                 navController.currentBackStackEntry?.toRoute<Question>()
             }.getOrNull()
@@ -328,10 +327,11 @@ class MainActivity :
                 return
             }
             val (contentId, contentType) = when (current) {
-                is Article -> {
+                is PostDestination -> {
                     current.id.toString() to when (current.type) {
-                        ArticleType.Answer -> "answer"
-                        ArticleType.Article -> "article"
+                        PostType.Answer -> "answer"
+                        PostType.Article -> "article"
+                        else -> "unknown"
                     }
                 }
 
@@ -436,11 +436,11 @@ class MainActivity :
     private fun currentContentOpenSource(): NavDestination? {
         val currentEntry = navController.currentBackStackEntry
         return runCatching {
-            currentEntry?.toRoute<Article>()
+            currentEntry?.toRoute<PostDestination>()
         }.getOrNull() ?: runCatching {
             currentEntry?.toRoute<Question>()
         }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<Pin>()
+            currentEntry?.toRoute<PostDestination>()
         }.getOrNull() ?: runCatching {
             currentEntry?.toRoute<CollectionContent>()
         }.getOrNull() ?: runCatching {

@@ -24,8 +24,8 @@ import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.target
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.QuestionAnswerNavigator
 import com.zhihuminus.navigation.zhihuQuestionFeedsUrl
 import com.zhihuminus.viewmodel.FeedDisplayEnvironment
@@ -68,19 +68,19 @@ open class QuestionFeedViewModel(
         item: FeedDisplayItem,
         environment: ZhihuApiEnvironment,
     ): QuestionAnswerNavigator? {
-        val destination = item.navDestination as? Article ?: return null
-        if (destination.type != ArticleType.Answer) return null
+        val destination = item.navDestination as? PostDestination ?: return null
+        if (destination.type != PostType.Answer) return null
         val index = displayItems.indexOfFirst { it.stableKey == item.stableKey }
         if (index < 0) return null
         return QuestionAnswerNavigator(
             questionId = questionId,
             initialNextAnswers = displayItems
                 .drop(index + 1)
-                .mapNotNull { it.navDestination as? Article },
+                .mapNotNull { it.navDestination as? PostDestination },
             initialPreviousAnswers = displayItems
                 .take(index)
                 .asReversed()
-                .mapNotNull { it.navDestination as? Article },
+                .mapNotNull { it.navDestination as? PostDestination },
             initialNextUrl = lastPaging?.next.orEmpty(),
             order = sortOrder,
             environment = environment,

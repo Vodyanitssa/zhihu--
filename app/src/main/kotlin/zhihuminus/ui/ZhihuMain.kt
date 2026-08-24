@@ -17,7 +17,6 @@
 
 package com.zhihuminus.ui
 
-import androidx.compose.animation.AnimatedContentTransitionScope
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -89,9 +88,6 @@ import androidx.navigation.toRoute
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.Account
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
-import com.zhihuminus.navigation.ArticleTypeNavType
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.Daily
@@ -106,7 +102,6 @@ import com.zhihuminus.navigation.Navigator
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.Pin
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.PostTypeNavType
 import com.zhihuminus.navigation.Question
@@ -115,7 +110,6 @@ import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.WriteAnswer
 import com.zhihuminus.navigation.WritePin
-import com.zhihuminus.navigation.toPostDestination
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.NoOpPagerNestedScrollConnection
@@ -173,8 +167,6 @@ fun ZhihuMain(
     consumeMainTabNavigationTarget: (TopLevelDestination) -> Unit,
     preferenceState: ZhihuMainPreferenceState,
     isDarkTheme: Boolean,
-    articleEnterTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> EnterTransition?)? = null,
-    articleExitTransition: (AnimatedContentTransitionScope<NavBackStackEntry>.() -> ExitTransition?)? = null,
     postContent: @Composable (PostDestination, NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
@@ -190,9 +182,9 @@ fun ZhihuMain(
 
     val navEntry by navController.currentBackStackEntryAsState()
     val showMainNavigation = navEntry?.destination?.hasRoute<MainTabs>() == true
-    val isOnReadingDetail = navEntry?.destination?.hasRoute<Article>() == true ||
+    val isOnReadingDetail = navEntry?.destination?.hasRoute<PostDestination>() == true ||
         navEntry?.destination?.hasRoute<Question>() == true ||
-        navEntry?.destination?.hasRoute<Pin>() == true ||
+        // Pin is now PostDestination with PostType.Pin, covered by hasRoute<PostDestination>() above
         navEntry?.destination?.hasRoute<PostDestination>() == true
     val shouldCompactPlayerOnBackgroundInteraction by rememberUpdatedState(
         isReadingPlayerExpandedByUser && !isOnReadingDetail,
@@ -438,14 +430,6 @@ fun ZhihuMain(
                     composable<WritePin> { navEntry ->
                         WritePinScreen(navEntry.toRoute())
                     }
-                    composable<Article>(
-                        typeMap = mapOf(typeOf<ArticleType>() to ArticleTypeNavType),
-                        enterTransition = articleEnterTransition,
-                        exitTransition = articleExitTransition,
-                    ) { navEntry ->
-                        val article: Article = navEntry.toRoute()
-                        postContent(article.toPostDestination(), navEntry)
-                    }
                     composable<HotList> {
                         HotListScreen(innerPadding)
                     }
@@ -505,10 +489,6 @@ fun ZhihuMain(
                     composable<Person> { navEntry ->
                         val person: Person = navEntry.toRoute()
                         PeopleScreen(person)
-                    }
-                    composable<Pin> { navEntry ->
-                        val pin: Pin = navEntry.toRoute()
-                        postContent(pin.toPostDestination(), navEntry)
                     }
                     composable<PostDestination>(
                         typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),

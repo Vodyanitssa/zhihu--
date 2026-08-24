@@ -380,8 +380,10 @@ fun decodeTopicPinFeeds(json: kotlinx.serialization.json.JsonObject): List<FeedD
                 details = "想法 · ${target.counter.applaud} 赞 · ${target.counter.comment} 评论",
                 feed = null,
                 navDestinationJson = com.zhihuminus.navigation
-                    .Pin(pinId)
-                    .toFeedDisplayItemNavDestinationJson(),
+                    .PostDestination(
+                        type = com.zhihuminus.feature.post.PostType.Pin,
+                        id = pinId,
+                    ).toFeedDisplayItemNavDestinationJson(),
                 avatarSrc = target.author.avatarUrl,
                 authorName = target.author.name,
             )

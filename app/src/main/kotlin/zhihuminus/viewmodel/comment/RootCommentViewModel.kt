@@ -23,11 +23,10 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.SegmentCommentHolder
 import com.zhihuminus.util.Log
@@ -62,15 +61,12 @@ class RootCommentViewModel(
     companion object {
         val NavDestination.submitCommentUrl: String
             get() = when (this) {
-                is Article -> {
+                is PostDestination -> {
                     when (type) {
-                        ArticleType.Answer -> "https://www.zhihu.com/api/v4/comment_v5/answers/$id/comment"
-                        ArticleType.Article -> "https://www.zhihu.com/api/v4/comment_v5/articles/$id/comment"
+                        PostType.Answer -> "https://www.zhihu.com/api/v4/comment_v5/answers/$id/comment"
+                        PostType.Article -> "https://www.zhihu.com/api/v4/comment_v5/articles/$id/comment"
+                        PostType.Pin -> "https://www.zhihu.com/api/v4/comment_v5/pins/$id/comment"
                     }
-                }
-
-                is Pin -> {
-                    "https://www.zhihu.com/api/v4/comment_v5/pins/$id/comment"
                 }
 
                 is Question -> {
@@ -86,15 +82,12 @@ class RootCommentViewModel(
 
         val NavDestination.rootCommentUrl: String
             get() = when (this) {
-                is Article -> {
+                is PostDestination -> {
                     when (type) {
-                        ArticleType.Answer -> "https://www.zhihu.com/api/v4/comment_v5/answers/$id/root_comment"
-                        ArticleType.Article -> "https://www.zhihu.com/api/v4/comment_v5/articles/$id/root_comment"
+                        PostType.Answer -> "https://www.zhihu.com/api/v4/comment_v5/answers/$id/root_comment"
+                        PostType.Article -> "https://www.zhihu.com/api/v4/comment_v5/articles/$id/root_comment"
+                        PostType.Pin -> "https://www.zhihu.com/api/v4/comment_v5/pins/$id/root_comment"
                     }
-                }
-
-                is Pin -> {
-                    "https://www.zhihu.com/api/v4/comment_v5/pins/$id/root_comment"
                 }
 
                 is Question -> {

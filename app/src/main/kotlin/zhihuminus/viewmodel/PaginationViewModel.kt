@@ -57,8 +57,8 @@ import com.zhihuminus.data.getOrFetchContentDetail
 import com.zhihuminus.data.target
 import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.navigation.AnswerNavigator
-import com.zhihuminus.navigation.Article
 import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
@@ -111,7 +111,7 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 import java.io.File
 import kotlin.reflect.KType
-import com.zhihuminus.navigation.Article as ArticleDestination
+import com.zhihuminus.navigation.PostDestination as ArticleDestination
 import io.ktor.http.ContentType as KtorContentType
 
 abstract class PaginationViewModel<T : Any>(
@@ -458,7 +458,7 @@ interface ContentOpenEnvironment {
     ) = Unit
 
     suspend fun recordOpenEvent(
-        destination: Article,
+        destination: PostDestination,
         questionId: Long?,
     ) = Unit
 }

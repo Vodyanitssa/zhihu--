@@ -23,7 +23,7 @@ import com.zhihuminus.data.OnlineHistoryDeletePair
 import com.zhihuminus.data.OnlineHistoryItem
 import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
-import com.zhihuminus.navigation.Article
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.deleteOnlineHistoryItem
@@ -65,7 +65,7 @@ class OnlineHistoryViewModel : BaseFeedViewModel() {
                 feed = null,
                 navDestinationJson = navDest?.toFeedDisplayItemNavDestinationJson(),
                 avatarSrc = when (matchedItem) {
-                    is Article -> matchedItem.avatarSrc
+                    is PostDestination -> matchedItem.avatarSrc
                     else -> null
                 },
                 authorName = item.data.content?.authorName,

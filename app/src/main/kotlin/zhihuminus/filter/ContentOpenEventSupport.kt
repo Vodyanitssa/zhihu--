@@ -17,13 +17,12 @@
 
 package com.zhihuminus.filter
 
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.viewmodel.filter.ContentFilterDatabase
 import com.zhihuminus.viewmodel.filter.ContentOpenEvent
@@ -35,8 +34,8 @@ data class TrackedContentIdentity(
 )
 
 data class QuestionAnswerCandidatePartition(
-    val previousCandidates: List<Article>,
-    val nextCandidates: List<Article>,
+    val previousCandidates: List<PostDestination>,
+    val nextCandidates: List<PostDestination>,
 )
 
 object ContentOpenFrom {
@@ -51,16 +50,16 @@ object ContentOpenFrom {
 
 object ContentOpenEventSupport {
     fun toTrackedContentIdentity(destination: NavDestination): TrackedContentIdentity? = when (destination) {
-        is Article -> {
+        is PostDestination -> {
             val type = when (destination.type) {
-                ArticleType.Answer -> ContentType.ANSWER
-                ArticleType.Article -> ContentType.ARTICLE
+                PostType.Answer -> ContentType.ANSWER
+                PostType.Article -> ContentType.ARTICLE
+                PostType.Pin -> ContentType.PIN
             }
             TrackedContentIdentity(type = type, id = destination.id.toString())
         }
 
         is Question -> TrackedContentIdentity(type = ContentType.QUESTION, id = destination.questionId.toString())
-        is Pin -> TrackedContentIdentity(type = ContentType.PIN, id = destination.id.toString())
         else -> null
     }
 
@@ -68,10 +67,10 @@ object ContentOpenEventSupport {
         source: NavDestination?,
         target: NavDestination,
     ): String = when {
-        source is Article &&
-            source.type == ArticleType.Answer &&
-            target is Article &&
-            target.type == ArticleType.Answer -> ContentOpenFrom.ANSWER_SWITCH
+        source is PostDestination &&
+            source.type == PostType.Answer &&
+            target is PostDestination &&
+            target.type == PostType.Answer -> ContentOpenFrom.ANSWER_SWITCH
 
         source is Question -> ContentOpenFrom.QUESTION_FEED
         source is CollectionContent -> ContentOpenFrom.COLLECTION
@@ -113,18 +112,18 @@ object ContentOpenEventSupport {
     }
 
     fun partitionQuestionAnswerCandidates(
-        candidates: List<Article>,
+        candidates: List<PostDestination>,
         openedAnswerIds: Set<Long>,
         currentArticleId: Long,
         historyIds: Set<Long> = emptySet(),
         previousIds: Set<Long> = emptySet(),
         nextIds: Set<Long> = emptySet(),
     ): QuestionAnswerCandidatePartition {
-        val previousCandidates = mutableListOf<Article>()
-        val nextCandidates = mutableListOf<Article>()
+        val previousCandidates = mutableListOf<PostDestination>()
+        val nextCandidates = mutableListOf<PostDestination>()
 
         candidates.forEach { article ->
-            if (article.type != ArticleType.Answer || article.id == currentArticleId || article.id in historyIds) {
+            if (article.type != PostType.Answer || article.id == currentArticleId || article.id in historyIds) {
                 return@forEach
             }
             if (article.id in previousIds || article.id in nextIds) {

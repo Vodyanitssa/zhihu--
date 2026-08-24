@@ -39,10 +39,10 @@ import androidx.compose.ui.util.fastJoinToString
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CollectionAnswerNavigator
 import com.zhihuminus.navigation.LocalNavigator
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -148,7 +148,7 @@ internal fun CollectionContentBody(
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
         ) { _, destination ->
-            if (destination is Article && destination.type == ArticleType.Answer && sharedData != null) {
+            if (destination is PostDestination && destination.type == PostType.Answer && sharedData != null) {
                 val index = displayItems.indexOf(item)
                 val nextItems = if (index >= 0) visibleCollectionItems.drop(index + 1) else emptyList()
                 val previousItems = if (index > 0) visibleCollectionItems.take(index).reversed() else emptyList()

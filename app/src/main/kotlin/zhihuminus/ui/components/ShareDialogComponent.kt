@@ -67,12 +67,11 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
-import com.zhihuminus.navigation.Article
-import com.zhihuminus.navigation.ArticleType
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Pin
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.SettingsStore
@@ -290,24 +289,26 @@ fun handleShareAction(
 }
 
 fun getShareText(content: NavDestination, title: String = "", authorName: String = ""): String? = when (content) {
-    is Article -> {
+    is PostDestination -> {
         when (content.type) {
-            ArticleType.Answer -> {
+            PostType.Answer -> {
                 "https://www.zhihu.com/answer/${content.id}\n【$title - $authorName 的回答】"
             }
 
-            ArticleType.Article -> {
+            PostType.Article -> {
                 "https://zhuanlan.zhihu.com/p/${content.id}\n【$title - $authorName 的文章】"
             }
+
+            PostType.Pin -> {
+                "https://www.zhihu.com/pin/${content.id}"
+            }
+
+            else -> null
         }
     }
 
     is Question -> {
         "https://www.zhihu.com/question/${content.questionId}\n【${content.title}】"
-    }
-
-    is Pin -> {
-        "https://www.zhihu.com/pin/${content.id}"
     }
 
     is Topic -> {
@@ -318,9 +319,10 @@ fun getShareText(content: NavDestination, title: String = "", authorName: String
 }
 
 fun getShareTitle(content: NavDestination): String = when (content) {
-    is Article -> content.title + when (content.type) {
-        ArticleType.Answer -> " - ${content.authorName} 的回答"
-        ArticleType.Article -> " - ${content.authorName} 的文章"
+    is PostDestination -> content.title + when (content.type) {
+        PostType.Answer -> " - ${content.authorName} 的回答"
+        PostType.Article -> " - ${content.authorName} 的文章"
+        else -> ""
     }
 
     is Question -> content.title
