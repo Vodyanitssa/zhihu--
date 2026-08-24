@@ -9,7 +9,6 @@ import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImagePreviewOpener
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberShareText
 
@@ -24,7 +23,6 @@ fun PostRoute(
     val shareText = rememberShareText()
     val copyToClipboard = rememberPlainTextClipboard()
     val openExternalUrl = rememberExternalUrlOpener()
-    val openImagePreview = rememberImagePreviewOpener()
 
     val navigator = LocalNavigator.current
 
@@ -51,7 +49,6 @@ fun PostRoute(
                 }
 
                 is PostEffect.OpenExternalUrl -> openExternalUrl(effect.url)
-                is PostEffect.OpenImage -> openImagePreview(effect.url)
                 is PostEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }

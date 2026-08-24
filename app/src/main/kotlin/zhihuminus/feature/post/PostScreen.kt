@@ -17,13 +17,20 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
@@ -32,6 +39,9 @@ import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
+import com.zhihuminus.platform.rememberExternalUrlOpener
+import com.zhihuminus.platform.rememberImageSaver
+import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.ui.components.CollectionDialogComponent
 
 sealed interface PostLoadState {
@@ -66,7 +76,13 @@ fun PostScreen(
     onBack: () -> Unit,
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
+    val imageViewManager = remember { ImageViewManager() }
+    val openExternalUrl = rememberExternalUrlOpener()
+    val saveImage = rememberImageSaver()
+    val shareImage = rememberImageSharer()
 
+    Box(Modifier.fillMaxSize()) {
+    CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
     Scaffold(
         topBar = {
             TopAppBar(
@@ -133,6 +149,14 @@ fun PostScreen(
             }
 
             is PostLoadState.Success -> {
+                LaunchedEffect(state.post.content) {
+                    imageViewManager.submitImages(
+                        state.post.content
+                            .filterIsInstance<ContentNode.Image>()
+                            .filter { it.url.isNotBlank() }
+                            .map { it.url },
+                    )
+                }
                 Column(
                     modifier = Modifier
                         .fillMaxSize()
@@ -204,4 +228,15 @@ fun PostScreen(
             }
         }
     }
+
+    ImageView(
+        manager = imageViewManager,
+        actions = ImageViewActions(
+            onSave = { saveImage(it) },
+            onShare = { shareImage(it) },
+            onOpenInBrowser = { openExternalUrl(it) },
+        ),
+    )
+    } // CompositionLocalProvider
+    } // Box
 }

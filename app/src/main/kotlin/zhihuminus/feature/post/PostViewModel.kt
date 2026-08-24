@@ -90,10 +90,6 @@ class PostViewModel(
                 exportImage()
             }
 
-            is PostEvent.OpenImage -> {
-                sendEffect(PostEffect.OpenImage(event.url))
-            }
-
             is PostEvent.OpenLink -> {
                 sendEffect(PostEffect.OpenExternalUrl(event.url))
             }

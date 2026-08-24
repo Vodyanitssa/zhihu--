@@ -12,10 +12,6 @@ sealed interface PostEvent {
 
     data object Share : PostEvent
 
-    data class OpenImage(
-        val url: String,
-    ) : PostEvent
-
     data class OpenLink(
         val url: String,
     ) : PostEvent
@@ -74,10 +70,6 @@ sealed interface PostEffect {
     ) : PostEffect
 
     data class OpenExternalUrl(
-        val url: String,
-    ) : PostEffect
-
-    data class OpenImage(
         val url: String,
     ) : PostEffect
 
