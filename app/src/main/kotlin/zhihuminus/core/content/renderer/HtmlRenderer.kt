@@ -58,6 +58,9 @@ object HtmlRenderer {
                 append("</pre>")
             }
 
+        is ContentNode.Formula ->
+            "<img class=\"formula\" src=\"${escapeHtml(normalizeImageUrl(node.url))}\" alt=\"公式\" />"
+
         is ContentNode.Quote ->
             "<blockquote>${renderInline(node.content)}</blockquote>"
 
@@ -180,6 +183,9 @@ object HtmlRenderer {
 
         is InlineNode.Code ->
             "<code style=\"font-family:monospace;background:rgba(0,0,0,0.08);padding:0 4px;border-radius:3px\">${escapeHtml(node.text)}</code>"
+
+        is InlineNode.Formula ->
+            "<img class=\"formula\" src=\"${escapeHtml(normalizeImageUrl(node.url))}\" alt=\"公式\" />"
 
         is InlineNode.Link ->
             "<a href=\"${escapeHtml(node.url)}\">${escapeHtml(node.name)}</a>"

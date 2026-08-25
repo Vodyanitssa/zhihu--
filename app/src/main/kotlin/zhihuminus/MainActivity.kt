@@ -44,6 +44,7 @@ import coil3.disk.DiskCache
 import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
+import coil3.svg.SvgDecoder
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
@@ -233,7 +234,7 @@ class MainActivity :
             .Builder(this)
             .crossfade(true)
             .components {
-                // add(SvgDecoder.Factory())
+                add(SvgDecoder.Factory())
             }.memoryCache {
                 MemoryCache
                     .Builder()

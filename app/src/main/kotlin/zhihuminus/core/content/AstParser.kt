@@ -55,6 +55,20 @@ object AstParser {
                 ),
             )
 
+            // 知乎用 eeimg="1" 的 img 渲染行内 LaTeX 公式，其余行内 img 忽略（无文本内容）
+            "img" -> {
+                val isFormula = node.attr("eeimg") == "1" || node.attr("eeimg") == "2"
+                if (isFormula) {
+                    listOf(
+                        InlineNode.Formula(
+                            url = node.attr("src"),
+                        ),
+                    )
+                } else {
+                    emptyList()
+                }
+            }
+
             "a" -> {
                 if (node.className() == "hash_tag") {
                     return emptyList()
@@ -122,9 +136,13 @@ object AstParser {
         }
 
         "p" -> {
-            val children = element.children()
-            if (children.size == 1 && children.first()!!.tagName() == "img") {
-                listOfNotNull(children.first()?.let(::parseImage))
+            val childNodes = element.childNodes()
+            val isFormula = childNodes.size == 2 &&
+                childNodes[0] is Element &&
+                (childNodes[0] as Element).tagName() == "img" &&
+                (childNodes[0] as Element).attr("eeimg") != ""
+            if (isFormula) {
+                listOfNotNull((childNodes[0] as Element).let(::parseImage))
             } else {
                 listOf(
                     ContentNode.Paragraph(
@@ -170,9 +188,23 @@ object AstParser {
             )
         }
 
-        "figure" -> listOfNotNull(parseFigure(element))
+        "figure" -> {
+            val image = element.selectFirst("img") ?: return emptyList()
+            listOfNotNull(parseImage(image))
+        }
 
-        "img" -> listOfNotNull(parseImage(element))
+        "img" -> {
+            val isFormula = element.attr("eeimg") == "1" || element.attr("eeimg") == "2"
+            if (isFormula) {
+                listOfNotNull(
+                    ContentNode.Formula(
+                        url = element.attr("src").takeIf { it.isNotBlank() } ?: "",
+                    ),
+                )
+            } else {
+                listOfNotNull(parseImage(element))
+            }
+        }
 
         "a" -> {
             listOfNotNull(
@@ -194,28 +226,12 @@ object AstParser {
     }
 
     private fun parseImage(element: Element): ContentNode.Image? {
-        val url = element
-            .attr("data-original")
-            .ifBlank { element.attr("src") }
-            .ifBlank { element.attr("href") }
-            .takeIf { it.isNotBlank() }
-            ?: return null
         // 知乎使用 a 渲染评论图片，因此最终可能需要用 href
-        return ContentNode.Image(
-            url = url,
-            caption = null,
-            // 由于知乎用 img 渲染 latex，直接渲染 img 则不显示 caption
-        )
-    }
-
-    private fun parseFigure(element: Element): ContentNode.Image? {
-        val image = element.selectFirst("img")
-            ?: return null
-
         return ContentNode.Image(
             url = element
                 .attr("data-original")
-                .ifBlank { image.attr("src") }
+                .ifBlank { element.attr("src") }
+                .ifBlank { element.attr("href") }
                 .takeIf { it.isNotBlank() }
                 ?: return null,
             caption = element

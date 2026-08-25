@@ -26,6 +26,11 @@ sealed interface ContentNode {
         val language: String,
     ) : ContentNode
 
+    // 知乎以 eeimg="1" 的 img 渲染 LaTeX 公式，独立成段时为块级公式
+    data class Formula(
+        val url: String,
+    ) : ContentNode
+
     data class Quote(
         val content: List<InlineNode>,
     ) : ContentNode
@@ -86,6 +91,11 @@ sealed interface InlineNode {
 
     data class Code(
         val text: String,
+    ) : InlineNode
+
+    // 行内公式（eeimg="1" 的 img 元素）
+    data class Formula(
+        val url: String,
     ) : InlineNode
 
     data object LineBreak : InlineNode

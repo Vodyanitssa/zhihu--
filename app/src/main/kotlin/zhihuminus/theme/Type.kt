@@ -19,9 +19,15 @@ package com.zhihuminus.theme
 
 import androidx.compose.material3.Typography
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.text.font.Font
 import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.sp
+import com.zhihuminus.R
+
+// 内置等宽字体，保证行内代码与代码块在不同设备上显示一致。
+// Noto Sans Mono 仅覆盖拉丁等字符，中文字符会回退到系统字体渲染。
+val CodeFontFamily = FontFamily(Font(R.font.noto_sans_mono_regular))
 
 // Set of Material typography styles to start with
 val Typography = Typography(

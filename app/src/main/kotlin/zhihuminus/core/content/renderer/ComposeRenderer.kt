@@ -6,6 +6,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.IntrinsicSize
 import androidx.compose.foundation.layout.Row
@@ -42,13 +43,13 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
-import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -57,15 +58,19 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
+import androidx.compose.ui.unit.takeOrElse
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.content.FormulaManager
 import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
+import com.zhihuminus.theme.CodeFontFamily
 import kotlinx.coroutines.launch
 
 /**
@@ -90,7 +95,6 @@ fun InlineNodes(
     overflow: TextOverflow = TextOverflow.Clip,
 ) {
     val openInApp = rememberInAppLinkOpener()
-    val inlineContent = EmojiManager.inlineContent
     val linkStyle = TextLinkStyles(
         style = SpanStyle(
             color = MaterialTheme.colorScheme.primary,
@@ -98,20 +102,27 @@ fun InlineNodes(
         ),
     )
     val codeStyle = MaterialTheme.colorScheme.surfaceVariant
+    // 行内公式与表情的 InlineTextContent；公式的尺寸解析与占位符构建在 FormulaManager。
+    // BoxWithConstraints 提供可用宽度：超宽公式强制占满可用宽度、高度等比缩放
+    val emSize = with(LocalDensity.current) { style.fontSize.takeOrElse { 16.sp }.toDp() }
     val text = buildAnnotatedString {
         nodes.forEach { node ->
             appendInlineNode(node, openInApp, linkStyle, codeStyle)
         }
     }
-    Text(
-        text = text,
-        modifier = modifier,
-        style = style,
-        color = color,
-        maxLines = maxLines,
-        overflow = overflow,
-        inlineContent = inlineContent,
-    )
+    BoxWithConstraints {
+        val inlineContent = EmojiManager.inlineContent +
+            FormulaManager.formulaInlineContent(nodes, emSize, maxWidth)
+        Text(
+            text = text,
+            modifier = modifier,
+            style = style,
+            color = color,
+            maxLines = maxLines,
+            overflow = overflow,
+            inlineContent = inlineContent,
+        )
+    }
 }
 
 @Composable
@@ -166,12 +177,17 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Code -> {
             withStyle(
                 SpanStyle(
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = CodeFontFamily,
                     background = codeStyle,
                 ),
             ) {
                 append(" ${node.text} ")
             }
+        }
+
+        is InlineNode.Formula -> {
+            // alternateText 仅在 inlineContent 缺失时展示
+            appendInlineContent(node.url, "[公式]")
         }
 
         is InlineNode.Link -> {
@@ -245,6 +261,10 @@ fun RenderContentNode(
 
         is ContentNode.Code -> {
             Code(node)
+        }
+
+        is ContentNode.Formula -> {
+            Image(ContentNode.Image(url = node.url, caption = null))
         }
 
         is ContentNode.Quote -> {
@@ -380,7 +400,7 @@ private fun Code(node: ContentNode.Code) {
                 Text(
                     text = node.content,
                     style = MaterialTheme.typography.bodyMedium,
-                    fontFamily = FontFamily.Monospace,
+                    fontFamily = CodeFontFamily,
                     softWrap = false,
                 )
             }
