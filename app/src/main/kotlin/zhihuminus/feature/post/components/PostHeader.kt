@@ -24,6 +24,9 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.post.Author
+import com.zhihuminus.navigation.LocalNavigator
+import com.zhihuminus.navigation.Person
+import com.zhihuminus.navigation.Question
 import com.zhihuminus.util.formatCompactCount
 import java.time.Instant
 import java.time.ZoneId
@@ -40,15 +43,27 @@ fun PostHeader(
     ipInfo: String?,
     voteCount: Int = 0,
     isFollowing: Boolean = false,
+    questionId: Long? = null,
     onFollowClick: () -> Unit = {},
 ) {
+    val navigator = LocalNavigator.current
     if (title != null) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(horizontal = 16.dp),
         ) {
-            Text(text = title, style = MaterialTheme.typography.titleLarge)
+            Text(
+                text = title,
+                style = MaterialTheme.typography.titleLarge,
+                modifier = if (questionId != null) {
+                    Modifier.clickable {
+                        navigator.onNavigate(Question(questionId = questionId, title = title))
+                    }
+                } else {
+                    Modifier
+                },
+            )
         }
     }
     Row(
@@ -62,7 +77,18 @@ fun PostHeader(
             contentDescription = author.name,
             modifier = Modifier
                 .size(40.dp)
-                .clip(CircleShape),
+                .clip(CircleShape)
+                .then(
+                    if (author.id.isNotBlank() || author.urlToken.isNotBlank()) {
+                        Modifier.clickable {
+                            navigator.onNavigate(
+                                Person(id = author.id, urlToken = author.urlToken, name = author.name),
+                            )
+                        }
+                    } else {
+                        Modifier
+                    },
+                ),
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {

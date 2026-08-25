@@ -171,6 +171,7 @@ fun PostScreen(
                             ipInfo = state.post.ipInfo,
                             voteCount = state.post.voteCount,
                             isFollowing = state.post.author.isFollowing,
+                            questionId = state.post.questionId,
                             onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                         )
                         PostContent(

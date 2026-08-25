@@ -47,6 +47,8 @@ import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
+import com.zhihuminus.navigation.LocalNavigator
+import com.zhihuminus.navigation.Person
 
 /**
  * 通用评论条目组件，只负责渲染单条评论。
@@ -65,6 +67,8 @@ fun CommentItem(
 ) {
     var showMoreMenu by remember(comment.id) { mutableStateOf(false) }
     val contentNodes = remember(comment.content) { AstParser.parseContent(comment.content) }
+    val navigator = LocalNavigator.current
+    val author = comment.author
 
     Column(
         modifier = modifier
@@ -89,7 +93,18 @@ fun CommentItem(
                     contentDescription = "头像",
                     modifier = Modifier
                         .size(36.dp)
-                        .clip(CircleShape),
+                        .clip(CircleShape)
+                        .then(
+                            if (author.id.isNotBlank() || author.urlToken.isNotBlank()) {
+                                Modifier.clickable {
+                                    navigator.onNavigate(
+                                        Person(id = author.id, urlToken = author.urlToken, name = author.name),
+                                    )
+                                }
+                            } else {
+                                Modifier
+                            },
+                        ),
                     contentScale = ContentScale.Crop,
                 )
             }
