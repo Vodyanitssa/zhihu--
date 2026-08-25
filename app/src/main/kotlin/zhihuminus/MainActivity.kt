@@ -63,6 +63,8 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
+import com.zhihuminus.navigation.router.AppRouter
+import com.zhihuminus.navigation.router.RouteResolution
 import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.theme.AndroidThemeSettings
@@ -259,9 +261,9 @@ class MainActivity :
                 if (clip != null && clip.itemCount > 0) {
                     val text = clip.getItemAt(0).text
                     if (text != null) {
-                        val regex = Regex("""https?://[-a-zA-Z0-9@:%_+.~#?&/=]*""")
+                        val regex = Regex("""(?:https?|zhminus)://[-a-zA-Z0-9@:%_+.~#?&/=]*""")
                         val destination = regex.findAll(text).firstNotNullOfOrNull {
-                            resolveContent(it.value)
+                            resolveScreen(it.value)
                         }
                         if (destination != null && destination != sharedData.clipboardDestination) {
                             sharedData.clipboardDestination = destination
@@ -286,23 +288,47 @@ class MainActivity :
         if (data.authority == "zhihu-plus.internal") return true
 
         Log.i(TAG, "Intent data: $data")
-        val destination = resolveContent(data.toString())
-        if (destination != null) {
-            if (destination != sharedData.clipboardDestination) {
-                sharedData.clipboardDestination = destination
-                navigate(destination, popup = true)
+        when (val resolution = AppRouter.resolve(data.toString())) {
+            is RouteResolution.Screen -> openScreenDestination(resolution.destination)
+            is RouteResolution.Tab -> navigateToMainTabs(resolution.destination)
+            null -> {
+                val destination = resolveContent(data.toString())
+                if (destination != null) {
+                    openScreenDestination(destination)
+                } else {
+                    AlertDialog
+                        .Builder(this)
+                        .apply {
+                            setTitle("Unsupported URL")
+                            setMessage("Unknown URL: $data")
+                            setPositiveButton("OK") { _, _ -> }
+                        }.create()
+                        .show()
+                }
             }
-        } else {
-            AlertDialog
-                .Builder(this)
-                .apply {
-                    setTitle("Unsupported URL")
-                    setMessage("Unknown URL: $data")
-                    setPositiveButton("OK") { _, _ -> }
-                }.create()
-                .show()
         }
         return true
+    }
+
+    /** 解析任意 URL（应用协议或知乎 Web 链接）为屏幕目的地；tab 切换 URL 返回 null。 */
+    private fun resolveScreen(url: String): NavDestination? =
+        when (val resolution = AppRouter.resolve(url)) {
+            is RouteResolution.Screen -> resolution.destination
+            else -> null
+        } ?: resolveContent(url)
+
+    private fun openScreenDestination(destination: NavDestination) {
+        if (destination != sharedData.clipboardDestination) {
+            sharedData.clipboardDestination = destination
+            navigate(destination, popup = true)
+        }
+    }
+
+    fun navigate(resolution: RouteResolution, popup: Boolean = false) {
+        when (resolution) {
+            is RouteResolution.Screen -> navigate(resolution.destination, popup)
+            is RouteResolution.Tab -> navigateToMainTabs(resolution.destination)
+        }
     }
 
     fun navigate(route: NavDestination, popup: Boolean = false) {
@@ -411,6 +437,11 @@ class MainActivity :
             null
         }
             ?: ContentOpenEventSupport.inferOpenFrom(currentContentOpenSource(), target)
+    }
+
+    private fun navigateToMainTabs(target: TopLevelDestination) {
+        mainTabNavigationTarget = target
+        navigateToMainTabs()
     }
 
     private fun navigateToMainTabs() {

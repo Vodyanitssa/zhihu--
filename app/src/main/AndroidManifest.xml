@@ -82,6 +82,15 @@
 
                 <data android:scheme="zhihu" />
             </intent-filter>
+            <!-- 应用自有 URL 导航协议，见 com.zhihuminus.navigation.router.AppRouter -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+
+                <data android:scheme="zhminus" />
+            </intent-filter>
         </activity>
         <activity
                 android:name="com.zhihuminus.LoginActivity"

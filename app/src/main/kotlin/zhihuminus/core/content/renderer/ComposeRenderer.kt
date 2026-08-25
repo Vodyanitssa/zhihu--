@@ -65,7 +65,7 @@ import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
-import com.zhihuminus.platform.rememberExternalUrlOpener
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
 import kotlinx.coroutines.launch
 
 /**
@@ -89,7 +89,7 @@ fun InlineNodes(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
 ) {
-    val openExternalUrl = rememberExternalUrlOpener()
+    val openInApp = rememberInAppLinkOpener()
     val inlineContent = EmojiManager.inlineContent
     val linkStyle = TextLinkStyles(
         style = SpanStyle(
@@ -100,7 +100,7 @@ fun InlineNodes(
     val codeStyle = MaterialTheme.colorScheme.surfaceVariant
     val text = buildAnnotatedString {
         nodes.forEach { node ->
-            appendInlineNode(node, openExternalUrl, linkStyle, codeStyle)
+            appendInlineNode(node, openInApp, linkStyle, codeStyle)
         }
     }
     Text(
@@ -134,7 +134,7 @@ fun EmojiItem(
 
 private fun AnnotatedString.Builder.appendInlineNode(
     node: InlineNode,
-    uriHandler: (String) -> Unit,
+    openLink: (String) -> Unit,
     linkStyle: TextLinkStyles,
     codeStyle: Color,
 ) {
@@ -150,7 +150,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Bold -> {
             withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler, linkStyle, codeStyle)
+                    appendInlineNode(child, openLink, linkStyle, codeStyle)
                 }
             }
         }
@@ -158,7 +158,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
         is InlineNode.Italic -> {
             withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
                 node.children.forEach { child ->
-                    appendInlineNode(child, uriHandler, linkStyle, codeStyle)
+                    appendInlineNode(child, openLink, linkStyle, codeStyle)
                 }
             }
         }
@@ -181,7 +181,7 @@ private fun AnnotatedString.Builder.appendInlineNode(
                     styles = linkStyle,
                 ) {
                     val url = (it as LinkAnnotation.Url).url
-                    uriHandler(url)
+                    openLink(url)
                 }
             withLink(
                 link,
@@ -271,12 +271,12 @@ fun RenderContentNode(
 
 @Composable
 private fun Link(node: ContentNode.Link) {
+    val openLink = rememberInAppLinkOpener()
     if (node.isCard) {
-        val openExternalUrl = rememberExternalUrlOpener()
         Card(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { openExternalUrl(node.url) },
+                .clickable { openLink(node.url) },
             shape = MaterialTheme.shapes.medium,
         ) {
             Column(
@@ -302,7 +302,6 @@ private fun Link(node: ContentNode.Link) {
             }
         }
     } else {
-        val openExternalUrl = rememberExternalUrlOpener()
         val annotatedString = buildAnnotatedString {
             withLink(
                 LinkAnnotation.Url(
@@ -314,7 +313,7 @@ private fun Link(node: ContentNode.Link) {
                         ),
                     ),
                     linkInteractionListener = {
-                        openExternalUrl(node.url)
+                        openLink(node.url)
                     },
                 ),
             ) {

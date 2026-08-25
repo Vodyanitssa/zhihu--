@@ -191,4 +191,6 @@ dependencies {
     implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.mikepenz:aboutlibraries-compose-m3:$aboutLibraries")
     debugImplementation("androidx.compose.ui:ui-tooling")
+
+    testImplementation(kotlin("test-junit"))
 }
