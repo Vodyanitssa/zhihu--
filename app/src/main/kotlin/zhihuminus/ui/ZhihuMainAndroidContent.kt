@@ -46,6 +46,10 @@ fun AndroidZhihuMain(navController: NavHostController) {
         preferenceState = rememberAndroidZhihuMainPreferenceState(),
         isDarkTheme = com.zhihuminus.theme.ThemeManager.isDarkTheme,
         postContent = { destination, _ ->
+            // 深链锚点：MainActivity 暂存的评论 ID（若有），透传到评论组件做定位
+            val pendingCommentId = remember(destination) {
+                activity.consumePendingCommentId(destination)
+            }
             val environment = rememberPaginationEnvironment(allowGuestAccess = false)
             val repository = remember {
                 val api = ZhihuApiImpl(environment)
@@ -59,6 +63,7 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 destination = destination,
                 repository = repository,
                 commentRepository = commentRepository,
+                initialCommentId = pendingCommentId,
                 onBack = { navController.popBackStack() },
             )
         },

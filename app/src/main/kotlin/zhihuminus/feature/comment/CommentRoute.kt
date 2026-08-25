@@ -142,6 +142,9 @@ fun CommentRoute(
                     isEnd = viewModel.isChildEnd,
                     onLoadMore = { viewModel.loadMoreChildComments() },
                     onEvent = viewModel::onEvent,
+                    // 仅当当前 sheet 就是锚点所属的根评论时才传高亮，避免误伤用户手动打开的其他 sheet
+                    highlightCommentId = viewModel.uiState.anchorTargetId
+                        ?.takeIf { activeParentId == viewModel.uiState.anchorRootId },
                 )
             }
         }

@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.comment.components
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -52,6 +53,7 @@ import com.zhihuminus.feature.comment.CommentEvent
  *
  * @param comment 评论数据
  * @param onEvent 统一事件回调
+ * @param highlight 是否高亮显示（深链锚点定位）
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -59,11 +61,26 @@ fun CommentItem(
     comment: Comment,
     modifier: Modifier = Modifier,
     onEvent: (CommentEvent) -> Unit = {},
+    highlight: Boolean = false,
 ) {
     var showMoreMenu by remember(comment.id) { mutableStateOf(false) }
     val contentNodes = remember(comment.content) { AstParser.parseContent(comment.content) }
 
-    Column(modifier = modifier.fillMaxWidth()) {
+    Column(
+        modifier = modifier
+            .fillMaxWidth()
+            .then(
+                if (highlight) {
+                    Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(
+                            MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.35f),
+                        )
+                } else {
+                    Modifier
+                },
+            ),
+    ) {
         // 作者信息 + 内容
         Row(modifier = Modifier.fillMaxWidth()) {
             Box(modifier = Modifier.padding(top = 4.dp)) {

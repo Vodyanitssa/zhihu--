@@ -18,6 +18,7 @@ fun PostRoute(
     repository: PostRepository,
     commentRepository: CommentRepository,
     onBack: () -> Unit,
+    initialCommentId: String? = null,
 ) {
     val context = LocalContext.current
     val shareText = rememberShareText()
@@ -57,6 +58,7 @@ fun PostRoute(
     PostScreen(
         uiState = viewModel.uiState,
         commentRepository = commentRepository,
+        initialCommentId = initialCommentId,
         onEvent = viewModel::onEvent,
         onBack = onBack,
     )

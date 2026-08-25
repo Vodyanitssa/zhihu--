@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.feature.post.PostType
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
@@ -40,7 +41,6 @@ class CommentViewModel(
     val effect = _effect.receiveAsFlow()
 
     private var nextUrl: String? = null
-    private var initialCommentResolved = false
 
     init {
         loadInitial()
@@ -60,6 +60,7 @@ class CommentViewModel(
             is CommentEvent.OpenLink -> sendEffect(CommentEffect.OpenExternalUrl(event.url))
             is CommentEvent.Reply -> uiState = uiState.copy(replyToComment = event.comment)
             is CommentEvent.DismissReply -> uiState = uiState.copy(replyToComment = null)
+            is CommentEvent.ConsumeAnchor -> uiState = uiState.copy(anchorRootId = null, anchorTargetId = null)
         }
     }
 
@@ -67,17 +68,39 @@ class CommentViewModel(
         uiState = uiState.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             try {
-                if (!initialCommentResolved && initialCommentId != null) {
-                    initialCommentResolved = true
-                    resolveInitialComment(initialCommentId)
+                // 锚点解析与首页数据并行拉取，避免串行阻塞首屏
+                val anchorDeferred = async {
+                    withContext(Dispatchers.Default) { resolveAnchor() }
                 }
-                val page = withContext(Dispatchers.Default) {
-                    repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
+                val pageDeferred = async {
+                    withContext(Dispatchers.Default) {
+                        repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
+                    }
                 }
+                val anchor = anchorDeferred.await()
+                val page = pageDeferred.await()
                 items.clear()
                 items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
+
+                var autoOpenRoot: Comment? = null
+                if (anchor != null) {
+                    val rootInList = items.any { it.comment.id == anchor.rootId }
+                    // 根评论列表接口会忽略锚点参数，目标根评论可能不在第一页，需注入置顶
+                    if (!rootInList && anchor.root != null) {
+                        items.add(0, anchor.root.toUiState())
+                    }
+                    uiState = uiState.copy(
+                        anchorRootId = anchor.rootId,
+                        anchorTargetId = anchor.target.id.takeIf { it != anchor.rootId },
+                    )
+                    if (anchor.target.id != anchor.rootId && (rootInList || anchor.root != null)) {
+                        autoOpenRoot =
+                            anchor.root ?: items.first { it.comment.id == anchor.rootId }.comment
+                    }
+                }
                 emitState()
+                autoOpenRoot?.let { openChildComments(it) }
             } catch (e: Exception) {
                 uiState = uiState.copy(
                     isLoading = false,
@@ -374,15 +397,37 @@ class CommentViewModel(
         )
     }
 
-    private suspend fun resolveInitialComment(commentId: String) {
-        try {
-            withContext(Dispatchers.Default) {
-                repository.getComment(commentId)
+    /**
+     * 深链锚点解析：定位锚点评论及其所属根评论。
+     * 任何失败（评论不存在、网络错误等）都返回 null，静默降级为普通加载。
+     */
+    private suspend fun resolveAnchor(): ResolvedAnchor? {
+        val initialId = initialCommentId ?: return null
+        return try {
+            val target = repository.getComment(initialId)
+            val rootId = target.replyRootCommentId
+                ?.takeIf { it.isNotBlank() && it != target.id }
+            if (rootId == null) {
+                ResolvedAnchor(target = target, rootId = target.id, root = target)
+            } else {
+                val root = try {
+                    repository.getComment(rootId)
+                } catch (_: Exception) {
+                    null
+                }
+                ResolvedAnchor(target = target, rootId = rootId, root = root)
             }
-            // TODO: 更精确的锚点解析（找到根评论并置于顶部）
         } catch (_: Exception) {
+            null
         }
     }
+
+    private data class ResolvedAnchor(
+        val target: Comment,
+        val rootId: String,
+        /** 解析出的根评论；拉取失败时为 null，此时仅当它出现在列表中才能定位 */
+        val root: Comment?,
+    )
 
     private fun sendEffect(effect: CommentEffect) {
         viewModelScope.launch {

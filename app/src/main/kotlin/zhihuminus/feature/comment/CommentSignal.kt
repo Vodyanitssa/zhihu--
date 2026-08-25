@@ -41,6 +41,9 @@ sealed interface CommentEvent {
     ) : CommentEvent
 
     data object DismissReply : CommentEvent
+
+    /** 深链锚点已被 UI 消费（滚动/高亮完成），清除锚点状态 */
+    data object ConsumeAnchor : CommentEvent
 }
 
 sealed interface CommentEffect {

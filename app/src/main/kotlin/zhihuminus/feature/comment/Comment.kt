@@ -17,6 +17,8 @@ data class Comment(
     val replyToAuthor: CommentAuthor?,
     val commentTags: List<String>,
     val authorTag: String?,
+    /** 该评论所回复的根评论 ID；自身即根评论时为 null */
+    val replyRootCommentId: String? = null,
 )
 
 /**

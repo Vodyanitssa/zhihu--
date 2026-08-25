@@ -21,7 +21,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
@@ -52,6 +55,8 @@ data class CommentUiState(
     val errorMessage: String? = null,
     val activeParentId: String? = null, // 当前打开子sheet的父评论ID
     val replyToComment: Comment? = null, // 当前回复的目标评论
+    val anchorRootId: String? = null, // 深链锚点：目标根评论 ID，用于滚动定位
+    val anchorTargetId: String? = null, // 深链锚点：高亮目标评论 ID（锚点为子评论时非空）
 )
 
 @Composable
@@ -98,6 +103,18 @@ fun CommentScreen(
     LaunchedEffect(shouldLoadMore.value) {
         if (shouldLoadMore.value) {
             onEvent(CommentEvent.LoadMore)
+        }
+    }
+
+    // 深链锚点：根评论列表就绪后滚动定位（排序栏占 index 0，故 +1）
+    var anchorScrolled by remember { mutableStateOf(false) }
+    LaunchedEffect(uiState.anchorRootId, uiState.items) {
+        val rootId = uiState.anchorRootId ?: return@LaunchedEffect
+        if (anchorScrolled) return@LaunchedEffect
+        val index = uiState.items.indexOfFirst { it.comment.id == rootId }
+        if (index >= 0) {
+            anchorScrolled = true
+            listState.scrollToItem(index + 1)
         }
     }
 

@@ -142,6 +142,7 @@ class ZhihuCommentRepository(
             ?.get("text")
             ?.jsonPrimitive
             ?.content,
+        replyRootCommentId = replyRootCommentId,
     )
 
     private fun AuthorDto.toDomain(): CommentAuthor = CommentAuthor(

@@ -76,6 +76,7 @@ fun PostScreen(
     commentRepository: CommentRepository,
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
+    initialCommentId: String? = null,
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
     val imageViewManager = remember { ImageViewManager() }
@@ -83,6 +84,13 @@ fun PostScreen(
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
     val scrollState = rememberScrollState()
+
+    // 深链锚点仅驱动初始打开一次；此后 showComments 是唯一事实来源，dismiss 后才能真正关闭
+    LaunchedEffect(initialCommentId) {
+        if (initialCommentId != null) {
+            onEvent(PostEvent.Comment)
+        }
+    }
 
     Box(Modifier.fillMaxSize()) {
         CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
@@ -228,6 +236,7 @@ fun PostScreen(
                             contentType = state.post.type,
                             contentId = state.post.id,
                             repository = commentRepository,
+                            initialCommentId = initialCommentId,
                         )
                     }
                 }
