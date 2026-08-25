@@ -164,11 +164,12 @@ class ZhihuPostRepository(
                     url = item.url!!,
                 )
             }
+        val author = dto.author.toAuthor()
         return Post(
             id = dto.id.toLong(),
             type = PostType.Pin,
-            title = titleText ?: "无题",
-            author = dto.author.toAuthor(),
+            title = titleText ?: "${author.name}的想法",
+            author = author,
             content = parsed,
             voteCount = dto.likeCount,
             commentCount = dto.commentCount,
