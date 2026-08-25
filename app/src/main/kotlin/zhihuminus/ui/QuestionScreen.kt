@@ -17,15 +17,9 @@
 
 package com.zhihuminus.ui
 
-import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -41,6 +35,7 @@ import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -72,7 +67,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.derivedStateOf
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
@@ -93,7 +87,6 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -123,6 +116,7 @@ import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.ShareDialog
 import com.zhihuminus.ui.components.getShareText
 import com.zhihuminus.ui.components.handleShareAction
@@ -198,12 +192,6 @@ fun QuestionScreen(
     val questionContentPlainText =
         remember(questionContent) { Ksoup.parse(questionContent).text().trim() }
     val shareText = getShareText(question, title)
-    val topBarTitleThresholdPx = with(LocalDensity.current) { 160.dp.roundToPx() }
-    val showTopBarTitle by remember {
-        derivedStateOf {
-            listState.firstVisibleItemIndex > 0 || listState.firstVisibleItemScrollOffset >= topBarTitleThresholdPx
-        }
-    }
 
     // 加载问题详情和答案
     LaunchedEffect(question.questionId, viewModel) {
@@ -247,7 +235,7 @@ fun QuestionScreen(
                 topBar = {
                     QuestionTopBar(
                         title = title,
-                        showTitle = showTopBarTitle,
+                        listState = listState,
                         onNavigateBack = navigator.onNavigateBack,
                         onOpenLog = {
                             try {
@@ -378,7 +366,7 @@ fun QuestionScreen(
 @Composable
 private fun QuestionTopBar(
     title: String,
-    showTitle: Boolean,
+    listState: LazyListState,
     onNavigateBack: () -> Unit,
     onOpenLog: () -> Unit,
     onShare: () -> Unit,
@@ -386,20 +374,7 @@ private fun QuestionTopBar(
 ) {
     TopAppBar(
         title = {
-            AnimatedContent(
-                targetState = showTitle,
-                transitionSpec = {
-                    (fadeIn() + slideInVertically(initialOffsetY = { it / 2 })) togetherWith
-                        (fadeOut() + slideOutVertically(targetOffsetY = { -it / 2 }))
-                },
-                label = "question_top_bar_title",
-            ) { shouldShowTitle ->
-                Text(
-                    text = if (shouldShowTitle) title else "问题",
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                )
-            }
+            ScrollAwareTopBarTitle(state = listState, title = title, placeholder = "问题")
         },
         navigationIcon = {
             IconButton(onClick = onNavigateBack) {

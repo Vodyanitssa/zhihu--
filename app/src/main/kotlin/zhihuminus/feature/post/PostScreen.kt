@@ -37,6 +37,7 @@ import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
 import com.zhihuminus.ui.components.CollectionDialogComponent
+import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
 
 sealed interface PostLoadState {
@@ -86,16 +87,16 @@ fun PostScreen(
             topBar = {
                 TopAppBar(
                     title = {
-                        val title = when (val state = uiState.loadState) {
-                            is PostLoadState.Success -> when (state.post.type) {
-                                PostType.Answer -> state.post.title.ifBlank { "回答" }
-                                PostType.Article -> state.post.title
-                                PostType.Pin -> "${state.post.author.name}的想法"
+                        val (title, placeholder) = when (val loadState = uiState.loadState) {
+                            is PostLoadState.Success -> when (loadState.post.type) {
+                                PostType.Answer -> loadState.post.title.ifBlank { "回答" } to "回答"
+                                PostType.Article -> loadState.post.title to "文章"
+                                PostType.Pin -> "${loadState.post.author.name}的想法" to "想法"
                             }
 
-                            else -> "加载中"
+                            else -> "加载中" to "加载中"
                         }
-                        Text(title, maxLines = 1)
+                        ScrollAwareTopBarTitle(state = scrollState, title = title, placeholder = placeholder)
                     },
                     navigationIcon = {
                         IconButton(onClick = onBack) {
