@@ -28,11 +28,6 @@ import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.util.formatCompactCount
-import java.time.Instant
-import java.time.ZoneId
-import java.time.format.DateTimeFormatter
-
-private val dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
 
 @Composable
 fun PostHeader(
@@ -173,20 +168,4 @@ fun PostHeader(
             )
         }
     }
-}
-
-private fun formatTimeText(createdAt: Long, updatedAt: Long): String {
-    if (createdAt <= 0) return ""
-    val createdStr = Instant
-        .ofEpochSecond(createdAt)
-        .atZone(ZoneId.systemDefault())
-        .format(dateFormatter)
-    if (updatedAt <= 0 || updatedAt == createdAt) {
-        return "发布于 $createdStr"
-    }
-    val updatedStr = Instant
-        .ofEpochSecond(updatedAt)
-        .atZone(ZoneId.systemDefault())
-        .format(dateFormatter)
-    return "发布于 $createdStr · 编辑于 $updatedStr"
 }
