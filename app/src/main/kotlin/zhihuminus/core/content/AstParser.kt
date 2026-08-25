@@ -35,7 +35,7 @@ object AstParser {
         is TextNode -> parseText(node.text())
 
         is Element -> when (node.tagName()) {
-            "b" -> listOf(
+            "strong", "b" -> listOf(
                 InlineNode.Bold(
                     children = node.childNodes().flatMap(::parseInline),
                 ),
