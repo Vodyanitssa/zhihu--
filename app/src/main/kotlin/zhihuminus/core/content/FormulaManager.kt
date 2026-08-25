@@ -2,12 +2,14 @@ package com.zhihuminus.core.content
 
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.isSpecified
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.Placeholder
@@ -151,6 +153,7 @@ object FormulaManager {
                     model = imageRequest,
                     contentDescription = "行内公式",
                     modifier = Modifier.size(widthDp, heightDp),
+                    colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
                     onSuccess = { state ->
                         val size = state.painter.intrinsicSize
                         if (size.isSpecified && size.height > 0f) {

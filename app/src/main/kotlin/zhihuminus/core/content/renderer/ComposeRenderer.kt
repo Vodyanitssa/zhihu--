@@ -41,6 +41,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
@@ -264,7 +265,10 @@ fun RenderContentNode(
         }
 
         is ContentNode.Formula -> {
-            Image(ContentNode.Image(url = node.url, caption = null))
+            Image(
+                ContentNode.Image(url = node.url, caption = null),
+                colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
+            )
         }
 
         is ContentNode.Quote -> {
@@ -432,7 +436,10 @@ private fun Quote(node: ContentNode.Quote) {
 }
 
 @Composable
-private fun Image(node: ContentNode.Image) {
+private fun Image(
+    node: ContentNode.Image,
+    colorFilter: ColorFilter? = null,
+) {
     val imageViewerManager = LocalImageViewManager.current
     Column(
         modifier = Modifier
@@ -448,6 +455,7 @@ private fun Image(node: ContentNode.Image) {
                 .fillMaxWidth()
                 .clickable { imageViewerManager?.show(node.url) },
             contentScale = ContentScale.FillWidth,
+            colorFilter = colorFilter,
         )
     }
     node.caption?.let {

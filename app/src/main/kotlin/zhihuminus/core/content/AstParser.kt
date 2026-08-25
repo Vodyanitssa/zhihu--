@@ -142,7 +142,7 @@ object AstParser {
                 (childNodes[0] as Element).tagName() == "img" &&
                 (childNodes[0] as Element).attr("eeimg") != ""
             if (isFormula) {
-                listOfNotNull((childNodes[0] as Element).let(::parseImage))
+                listOfNotNull(ContentNode.Formula(url = childNodes[0].attr("src")))
             } else {
                 listOf(
                     ContentNode.Paragraph(
