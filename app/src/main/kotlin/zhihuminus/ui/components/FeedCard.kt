@@ -63,6 +63,8 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
@@ -81,6 +83,7 @@ import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
 import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
 import com.zhihuminus.util.parseEmphasizedHtmlTextWithTheme
+import org.jsoup.Jsoup
 
 /**
  * 信息流卡片的 Material 3 实现。
@@ -280,10 +283,17 @@ private fun FeedCardContent(
         }
     }
 
+    val summaryNodes = remember(item.summary) {
+        item.summary
+            ?.takeIf(String::isNotBlank)
+            ?.let { html -> Jsoup.parseBodyFragment(html).body().childNodes() }
+            ?.flatMap { AstParser.parseInline(it) }
+            .orEmpty()
+    }
     Column {
         Row {
-            Text(
-                text = parseEmphasizedHtmlTextWithTheme(item.summary ?: ""),
+            InlineNodes(
+                nodes = summaryNodes,
                 style = MaterialTheme.typography.bodyMedium.copy(
                     fontSize = 14.sp * fontSizePercent / 100,
                     lineHeight = 14.sp * fontSizePercent / 100 * lineHeightPercent / 100,
