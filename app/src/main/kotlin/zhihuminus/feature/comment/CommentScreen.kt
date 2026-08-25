@@ -40,6 +40,7 @@ import com.zhihuminus.platform.rememberImageSharer
 data class CommentItemUiState(
     val comment: Comment,
     val children: List<CommentItemUiState>? = null, // null=未加载子评论, []=已加载无子评论
+    val childrenComplete: Boolean = false, // true=通过子评论接口加载的完整列表; false=仅预览数据或加载中占位
 )
 
 data class CommentUiState(

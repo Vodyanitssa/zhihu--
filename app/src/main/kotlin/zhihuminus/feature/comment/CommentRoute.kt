@@ -138,7 +138,7 @@ fun CommentRoute(
                 ChildCommentSheet(
                     parentComment = parentItem.comment,
                     childComments = children?.map { it.comment } ?: emptyList(),
-                    isLoading = children == null,
+                    isLoading = !parentItem.childrenComplete,
                     isEnd = viewModel.isChildEnd,
                     onLoadMore = { viewModel.loadMoreChildComments() },
                     onEvent = viewModel::onEvent,

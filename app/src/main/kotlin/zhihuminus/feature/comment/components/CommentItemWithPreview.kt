@@ -38,16 +38,17 @@ fun CommentItemWithPreview(
             onEvent = onEvent,
         )
 
-        // 子评论预览（来自 API 预带的 childComments）
-        if (item.comment.childCommentCount > 0 && item.comment.childComments.isNotEmpty()) {
+        // 子评论预览（与子评论 sheet 共用 UI 树 children，同一数据源）
+        val previews = item.children.orEmpty()
+        if (previews.isNotEmpty() || item.comment.childCommentCount > 2) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 40.dp, top = 8.dp),
             ) {
-                item.comment.childComments.take(2).forEach { child ->
+                previews.take(2).forEach { child ->
                     CommentItem(
-                        comment = child,
+                        comment = child.comment,
                         onEvent = onEvent,
                     )
                 }

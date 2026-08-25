@@ -75,7 +75,7 @@ class CommentViewModel(
                     repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
                 }
                 items.clear()
-                items.addAll(page.comments.map { CommentItemUiState(comment = it) })
+                items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
                 emitState()
             } catch (e: Exception) {
@@ -99,7 +99,7 @@ class CommentViewModel(
                 val existingIds = items.map { it.comment.id }.toSet()
                 val newItems = page.comments
                     .filter { it.id !in existingIds }
-                    .map { CommentItemUiState(comment = it) }
+                    .map { it.toUiState() }
                 items.addAll(newItems)
                 nextUrl = page.nextUrl
                 uiState = uiState.copy(isLoadingMore = false, isEnd = page.isEnd)
@@ -121,7 +121,7 @@ class CommentViewModel(
                     repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
                 }
                 items.clear()
-                items.addAll(page.comments.map { CommentItemUiState(comment = it) })
+                items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
                 emitState()
             } catch (e: Exception) {
@@ -144,7 +144,7 @@ class CommentViewModel(
                     repository.getRootComments(contentType, contentId, order, 0)
                 }
                 items.clear()
-                items.addAll(page.comments.map { CommentItemUiState(comment = it) })
+                items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
                 emitState()
             } catch (e: Exception) {
@@ -163,7 +163,7 @@ class CommentViewModel(
                 val newComment = withContext(Dispatchers.Default) {
                     repository.submitComment(contentType, contentId, text, replyToCommentId)
                 }
-                items.add(0, CommentItemUiState(comment = newComment))
+                items.add(0, newComment.toUiState())
                 emitState()
                 sendEffect(CommentEffect.ScrollToTop)
             } catch (e: Exception) {
@@ -228,12 +228,13 @@ class CommentViewModel(
         // 设置 activeParentId，打开子 sheet
         uiState = uiState.copy(activeParentId = comment.id)
 
-        // 如果已经有 children 数据（之前加载过），不重复加载
         val existing = items.find { it.comment.id == comment.id }
-        if (existing?.children != null) return
+        if (existing?.childrenComplete == true) return
 
-        // 标记为加载中（children 设为 emptyList 作为占位，实际加载中）
-        updateItemChildren(comment.id, emptyList())
+        // 完整列表未加载过：无数据时先占位显示 loading；已有预览数据则保留展示、增量刷新
+        if (existing?.children == null) {
+            updateItemChildren(comment.id, emptyList(), complete = false)
+        }
         childNextUrls[comment.id] = null
 
         viewModelScope.launch {
@@ -241,8 +242,8 @@ class CommentViewModel(
                 val page = withContext(Dispatchers.Default) {
                     repository.getChildComments(comment.id, 0)
                 }
-                val childItems = page.comments.map { CommentItemUiState(comment = it) }
-                updateItemChildren(comment.id, childItems)
+                val childItems = page.comments.map { it.toUiState() }
+                updateItemChildren(comment.id, childItems, complete = true)
                 childNextUrls[comment.id] = page.nextUrl
             } catch (e: Exception) {
                 sendEffect(CommentEffect.ShowMessage("加载子评论失败: ${e.message}"))
@@ -267,8 +268,8 @@ class CommentViewModel(
                 val existingIds = children.map { it.comment.id }.toSet()
                 val newItems = page.comments
                     .filter { it.id !in existingIds }
-                    .map { CommentItemUiState(comment = it) }
-                updateItemChildren(parentId, children + newItems)
+                    .map { it.toUiState() }
+                updateItemChildren(parentId, children + newItems, complete = true)
                 childNextUrls[parentId] = page.nextUrl
             } catch (e: Exception) {
                 sendEffect(CommentEffect.ShowMessage("加载更多子评论失败: ${e.message}"))
@@ -339,16 +340,30 @@ class CommentViewModel(
 
     /**
      * 更新指定父评论的 children 列表。
+     * @param complete 本次写入的是否为子评论接口返回的完整列表
      */
-    private fun updateItemChildren(parentId: String, children: List<CommentItemUiState>) {
+    private fun updateItemChildren(
+        parentId: String,
+        children: List<CommentItemUiState>,
+        complete: Boolean,
+    ) {
         for (i in items.indices) {
             if (items[i].comment.id == parentId) {
-                items[i] = items[i].copy(children = children)
+                items[i] = items[i].copy(children = children, childrenComplete = complete)
                 emitState()
                 return
             }
         }
     }
+
+    /**
+     * 领域模型转 UI 状态：将接口内嵌的 childComments 提升为 children，
+     * 并清空原字段，保证子评论只有 UI 树这一个数据源。
+     */
+    private fun Comment.toUiState(): CommentItemUiState = CommentItemUiState(
+        comment = copy(childComments = emptyList()),
+        children = childComments.map { it.toUiState() }.ifEmpty { null },
+    )
 
     // endregion
 
