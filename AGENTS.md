@@ -27,7 +27,7 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
 - Entry point is `MainActivity.kt`; UI is Compose throughout. In-app routing for `zhminus://` deep links is `navigation/router/AppRouter.kt` (+ `AppRouteTable.kt`), round-trip tested by `AppRouterRoundTripTest`.
 - Content rendering is a self-built AST pipeline (`core/content/Ast.kt`, `AstParser.kt`) rendered by `core/content/renderer/` (Compose/Html/Picture) — no WebView for articles. Real Zhihu HTML/HAR fixtures for parser work live in `samples/` and `tools/zhihu-formula-corpus/` (both gitignored, local-only).
 - LaTeX formula work: baseline AST oracle in `tools/katex-ast-oracle` (Node; `npm ci && npm run generate`). Per its README, after regenerating you must run the `ZhihuFormulaCorpusTest` suite, not just commit the oracle.
-- `misc/` holds reverse-engineering reference material (zse96 signing JS, cert-injection scripts) — not build tooling.
+- `misc/` holds dev-only reference material, not build tooling: the obfuscated Zhihu `__zse_ck` v4 signing JS + a Tampermonkey cookie hook (for reverse-engineering request signing; the app implements zse96 v2/v3 itself in `ZhihuFetchSignature.kt`), `install-avd-system-cert.py` for installing a MITM CA on an AVD, and an archived `chrome-zhihu-ad-filter` extension whose ad rules are stale vs. the app's current filter logic. Nothing in it is referenced by the build.
 
 ## Conventions
 
