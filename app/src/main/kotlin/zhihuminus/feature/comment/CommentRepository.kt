@@ -1,13 +1,21 @@
 package com.zhihuminus.feature.comment
 
-import com.zhihuminus.feature.post.PostType
-
 /**
  * 评论排序方式
  */
 enum class CommentSortOrder {
     SCORE, // 按热度
     TIME, // 按时间
+}
+
+/**
+ * 可评论的内容类型（评论模块自有定义，不依赖发帖模块的 [com.zhihuminus.feature.post.PostType]）
+ */
+enum class CommentContentType {
+    Answer,
+    Article,
+    Pin,
+    Question,
 }
 
 /**
@@ -18,7 +26,7 @@ interface CommentRepository {
      * 获取根评论列表
      */
     suspend fun getRootComments(
-        type: PostType,
+        type: CommentContentType,
         id: Long,
         orderBy: CommentSortOrder,
         offset: Int,
@@ -43,7 +51,7 @@ interface CommentRepository {
      * 发表评论
      */
     suspend fun submitComment(
-        type: PostType,
+        type: CommentContentType,
         id: Long,
         content: String,
         replyToCommentId: String?,

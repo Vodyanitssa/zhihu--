@@ -13,7 +13,11 @@ import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -26,7 +30,6 @@ import com.zhihuminus.feature.comment.components.ChildCommentSheet
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
-import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
@@ -46,7 +49,7 @@ import com.zhihuminus.platform.rememberImageSharer
 fun CommentRoute(
     showComments: Boolean,
     onDismiss: () -> Unit,
-    contentType: PostType,
+    contentType: CommentContentType,
     contentId: Long,
     repository: CommentRepository,
     initialCommentId: String? = null,
@@ -97,6 +100,9 @@ fun CommentRoute(
     val childSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
     val rootListState = rememberLazyListState()
 
+    // 评论草稿：sheet 关闭后保留，重开时恢复（按内容维度隔离）
+    var commentDraft by rememberSaveable(contentType, contentId) { mutableStateOf("") }
+
     CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
         // 根评论 sheet
         ModalBottomSheet(
@@ -127,6 +133,8 @@ fun CommentRoute(
                 uiState = viewModel.uiState,
                 onEvent = viewModel::onEvent,
                 listState = rootListState,
+                commentInput = commentDraft,
+                onCommentInputChange = { commentDraft = it },
             )
         }
 

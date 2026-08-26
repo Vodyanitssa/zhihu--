@@ -91,13 +91,16 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import org.jsoup.Jsoup
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.decodeQuestionContentDetail
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuCommentRepository
+import com.zhihuminus.feature.comment.CommentContentType
+import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
@@ -111,7 +114,6 @@ import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.platform.rememberZhihuWebUrlOpener
-import com.zhihuminus.ui.components.CommentScreenComponent
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh
 import com.zhihuminus.ui.components.PaginatedList
@@ -126,6 +128,7 @@ import com.zhihuminus.viewmodel.addReadHistory
 import com.zhihuminus.viewmodel.feed.QuestionFeedViewModel
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
+import org.jsoup.Jsoup
 import kotlin.math.roundToInt
 
 private const val QUESTION_DETAIL_COLLAPSE_THRESHOLD = 100
@@ -173,6 +176,7 @@ fun QuestionScreen(
     }
     val answerReadingQueueSourceId = "question:${question.questionId}:answers:${viewModel.sortOrder}"
     val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val commentRepository = remember { ZhihuCommentRepository(ZhihuApiImpl(paginationEnvironment)) }
     val answerSwitchState = paginationEnvironment.articleAnswerSwitchState()
     val listState = rememberLazyListState()
     var questionContent by remember(question.questionId) { mutableStateOf("") }
@@ -183,6 +187,11 @@ fun QuestionScreen(
     var title by remember(question.questionId, question.title) { mutableStateOf(question.title) }
     var isQuestionLoaded by remember(question.questionId) { mutableStateOf(false) }
     var showComments by rememberSaveable(question.questionId) { mutableStateOf(false) }
+    // 深链锚点：MainActivity 暂存的评论 ID（若有），透传给评论组件做定位
+    val articleHost = rememberArticleHost()
+    var pendingCommentId by remember(question.questionId) {
+        mutableStateOf(articleHost?.consumePendingCommentId(question))
+    }
     var isFollowing by remember(question.questionId) { mutableStateOf(false) }
     var topics by remember(question.questionId) { mutableStateOf<List<DataHolder.Topic>>(emptyList()) }
     var showShareDialog by remember { mutableStateOf(false) }
@@ -345,10 +354,16 @@ fun QuestionScreen(
             )
         } // CompositionLocalProvider
     } // Box
-    CommentScreenComponent(
-        showComments = showComments,
-        onDismiss = { showComments = false },
-        content = question,
+    CommentRoute(
+        showComments = showComments || pendingCommentId != null,
+        onDismiss = {
+            pendingCommentId = null
+            showComments = false
+        },
+        contentType = CommentContentType.Question,
+        contentId = question.questionId,
+        repository = commentRepository,
+        initialCommentId = pendingCommentId,
     )
 
     // 分享对话框

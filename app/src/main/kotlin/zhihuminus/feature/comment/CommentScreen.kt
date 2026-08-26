@@ -58,6 +58,8 @@ fun CommentScreen(
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
     inputFocusRequester: FocusRequester = remember { FocusRequester() },
+    commentInput: String = "",
+    onCommentInputChange: ((String) -> Unit)? = null,
 ) {
     // 当 replyToComment 从 null 变为非 null 时，自动聚焦输入框
     LaunchedEffect(uiState.replyToComment) {
@@ -192,6 +194,8 @@ fun CommentScreen(
                     onEvent = onEvent,
                     replyToComment = uiState.replyToComment,
                     inputFocusRequester = inputFocusRequester,
+                    initialDraft = commentInput,
+                    onDraftChange = onCommentInputChange,
                 )
             }
         }

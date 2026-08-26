@@ -59,17 +59,26 @@ import com.zhihuminus.ui.components.replaceSelection
  * @param onEvent 发送事件
  * @param replyToComment 当前回复的目标评论（由外部控制）
  * @param inputFocusRequester 输入框焦点请求器
+ * @param initialDraft 初始草稿文本（用于 sheet 重开后恢复输入内容）
+ * @param onDraftChange 草稿变化回调（由外部持久化；为 null 时不持久化）
  */
 @Composable
 fun CommentInputBar(
     onEvent: (CommentEvent) -> Unit,
     replyToComment: Comment?,
     inputFocusRequester: FocusRequester = remember { FocusRequester() },
+    initialDraft: String = "",
+    onDraftChange: ((String) -> Unit)? = null,
 ) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    var commentFieldValue by remember { mutableStateOf(TextFieldValue("")) }
+    var commentFieldValue by remember { mutableStateOf(TextFieldValue(initialDraft)) }
     var showEmojiPicker by remember { mutableStateOf(false) }
+
+    fun updateDraft(value: TextFieldValue) {
+        commentFieldValue = value
+        onDraftChange?.invoke(value.text)
+    }
 
     Column {
         // 回复目标提示
@@ -163,7 +172,7 @@ fun CommentInputBar(
 
                     BasicTextField(
                         value = commentFieldValue,
-                        onValueChange = { commentFieldValue = it },
+                        onValueChange = ::updateDraft,
                         modifier = Modifier
                             .weight(1f)
                             .focusRequester(inputFocusRequester)
@@ -204,6 +213,7 @@ fun CommentInputBar(
                                     ),
                                 )
                                 commentFieldValue = TextFieldValue("")
+                                onDraftChange?.invoke("")
                                 onEvent(CommentEvent.DismissReply)
                                 showEmojiPicker = false
                             }
@@ -255,9 +265,11 @@ fun CommentInputBar(
                                 val placeholder = entry.key
                                 IconButton(
                                     onClick = {
-                                        commentFieldValue = commentFieldValue.replaceSelection(
-                                            insert = placeholder,
-                                            cursorOffsetInInsert = placeholder.length,
+                                        updateDraft(
+                                            commentFieldValue.replaceSelection(
+                                                insert = placeholder,
+                                                cursorOffsetInInsert = placeholder.length,
+                                            ),
                                         )
                                     },
                                     modifier = Modifier.size(48.dp),

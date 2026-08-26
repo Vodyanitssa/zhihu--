@@ -5,10 +5,10 @@ import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.CommentDto
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentAuthor
+import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentPage
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentSortOrder
-import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.util.Log
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.JsonArray
@@ -22,7 +22,7 @@ class ZhihuCommentRepository(
     private val api: ZhihuApi,
 ) : CommentRepository {
     override suspend fun getRootComments(
-        type: PostType,
+        type: CommentContentType,
         id: Long,
         orderBy: CommentSortOrder,
         offset: Int,
@@ -53,7 +53,7 @@ class ZhihuCommentRepository(
     }
 
     override suspend fun submitComment(
-        type: PostType,
+        type: CommentContentType,
         id: Long,
         content: String,
         replyToCommentId: String?,
@@ -109,19 +109,21 @@ class ZhihuCommentRepository(
         return CommentPage(comments = comments, isEnd = isEnd, nextUrl = nextUrl)
     }
 
-    private fun buildSubmitCommentUrl(type: PostType, id: Long): String {
+    private fun buildSubmitCommentUrl(type: CommentContentType, id: Long): String {
         val path = when (type) {
-            PostType.Answer -> "answers/$id"
-            PostType.Article -> "articles/$id"
-            PostType.Pin -> "pins/$id"
+            CommentContentType.Answer -> "answers/$id"
+            CommentContentType.Article -> "articles/$id"
+            CommentContentType.Pin -> "pins/$id"
+            CommentContentType.Question -> "questions/$id"
         }
         return "https://www.zhihu.com/api/v4/comment_v5/$path/comment"
     }
 
-    private fun PostType.toApiType(): String = when (this) {
-        PostType.Answer -> "answer"
-        PostType.Article -> "article"
-        PostType.Pin -> "pin"
+    private fun CommentContentType.toApiType(): String = when (this) {
+        CommentContentType.Answer -> "answer"
+        CommentContentType.Article -> "article"
+        CommentContentType.Pin -> "pin"
+        CommentContentType.Question -> "question"
     }
 
     private fun CommentDto.toDomain(): Comment = Comment(

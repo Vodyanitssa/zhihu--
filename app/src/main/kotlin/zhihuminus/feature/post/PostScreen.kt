@@ -28,6 +28,7 @@ import androidx.compose.ui.Modifier
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
 import com.zhihuminus.feature.post.components.PostActionsMenu
@@ -224,7 +225,7 @@ fun PostScreen(
                     CommentRoute(
                         showComments = uiState.showComments,
                         onDismiss = { onEvent(PostEvent.DismissComments) },
-                        contentType = state.post.type,
+                        contentType = state.post.type.toCommentContentType(),
                         contentId = state.post.id,
                         repository = commentRepository,
                         initialCommentId = initialCommentId,
@@ -241,4 +242,10 @@ fun PostScreen(
             thumbColor = MaterialTheme.colorScheme.primary,
         )
     }
+}
+
+private fun PostType.toCommentContentType(): CommentContentType = when (this) {
+    PostType.Answer -> CommentContentType.Answer
+    PostType.Article -> CommentContentType.Article
+    PostType.Pin -> CommentContentType.Pin
 }
