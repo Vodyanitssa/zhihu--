@@ -25,15 +25,6 @@ import android.os.Bundle
 import android.view.ViewGroup
 import android.view.Window
 import androidx.activity.ComponentDialog
-import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.EaseInCubic
-import androidx.compose.animation.core.EaseOutCubic
-import androidx.compose.animation.core.tween
-import androidx.compose.animation.fadeIn
-import androidx.compose.animation.fadeOut
-import androidx.compose.animation.slideInVertically
-import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -50,13 +41,17 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Share
+import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
+import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -80,6 +75,7 @@ import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.articleHost
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.luoTianYiUrlLauncher
+import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
 import me.saket.telephoto.zoomable.rememberZoomableState
@@ -87,9 +83,11 @@ import me.saket.telephoto.zoomable.rememberZoomableState
 /**
  * 通用分享弹窗内容。
  *
- * 弹窗采用底部滑入的操作面板，提供系统分享、复制链接和跳转分享设置三个动作。它只负责视觉和点击分发，
+ * 基于 Material 3 [ModalBottomSheet] 的底部操作面板，提供系统分享、复制链接和跳转分享设置三个动作。
+ * 下滑手势、返回键和点击遮罩都会触发 [onDismissRequest]；动作按钮先播放收起动画再执行注入的回调，
  * 具体分享、复制和设置导航由调用方注入，方便文章、问题、想法等内容复用同一套交互。
  */
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun ShareDialogContent(
     showDialog: Boolean,
@@ -98,84 +96,52 @@ fun ShareDialogContent(
     onCopyClick: () -> Unit,
     onSettingsClick: () -> Unit,
 ) {
-    AnimatedVisibility(
-        visible = showDialog,
-        enter = fadeIn(animationSpec = tween(300)),
-        exit = fadeOut(animationSpec = tween(300)),
-    ) {
-        Box(
-            modifier = Modifier
-                .fillMaxSize()
-                .background(Color.Black.copy(alpha = 0.5f))
-                .clickable { onDismissRequest() },
-        ) {
-            AnimatedVisibility(
-                visible = showDialog,
-                enter = slideInVertically(
-                    initialOffsetY = { it },
-                    animationSpec = tween(300, easing = EaseOutCubic),
-                ),
-                exit = slideOutVertically(
-                    targetOffsetY = { it },
-                    animationSpec = tween(300, easing = EaseInCubic),
-                ),
-                modifier = Modifier.align(Alignment.BottomCenter),
-            ) {
-                Surface(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .clickable(enabled = false) { /* 阻止点击穿透 */ },
-                    shape = RoundedCornerShape(topStart = 20.dp, topEnd = 20.dp),
-                    color = MaterialTheme.colorScheme.surface,
-                ) {
-                    Column(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(16.dp),
-                    ) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(bottom = 20.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Box(
-                                modifier = Modifier
-                                    .width(40.dp)
-                                    .height(4.dp)
-                                    .background(
-                                        MaterialTheme.colorScheme.onSurface.copy(alpha = 0.3f),
-                                        RoundedCornerShape(2.dp),
-                                    ),
-                            )
-                        }
+    if (!showDialog) return
 
-                        MenuActionButton(
-                            icon = Icons.Filled.Share,
-                            text = "分享",
-                            onClick = onShareClick,
-                        )
+    val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val scope = rememberCoroutineScope()
 
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        MenuActionButton(
-                            icon = Icons.Filled.ContentCopy,
-                            text = "复制链接",
-                            onClick = onCopyClick,
-                        )
-
-                        Spacer(modifier = Modifier.height(12.dp))
-
-                        MenuActionButton(
-                            icon = Icons.Filled.Settings,
-                            text = "分享设置",
-                            onClick = onSettingsClick,
-                        )
-
-                        Spacer(modifier = Modifier.height(16.dp))
-                    }
-                }
+    /** 先收起面板，动画结束后执行动作并通知调用方卸载弹层。 */
+    fun dismissWith(action: () -> Unit) {
+        scope
+            .launch { sheetState.hide() }
+            .invokeOnCompletion {
+                action()
+                onDismissRequest()
             }
+    }
+
+    ModalBottomSheet(
+        onDismissRequest = onDismissRequest,
+        sheetState = sheetState,
+    ) {
+        Column(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(horizontal = 16.dp)
+                .padding(bottom = 16.dp),
+        ) {
+            MenuActionButton(
+                icon = Icons.Filled.Share,
+                text = "分享",
+                onClick = { dismissWith(onShareClick) },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            MenuActionButton(
+                icon = Icons.Filled.ContentCopy,
+                text = "复制链接",
+                onClick = { dismissWith(onCopyClick) },
+            )
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            MenuActionButton(
+                icon = Icons.Filled.Settings,
+                text = "分享设置",
+                onClick = { dismissWith(onSettingsClick) },
+            )
         }
     }
 }
