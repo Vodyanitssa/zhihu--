@@ -34,3 +34,4 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
 - Conventional commits (`feat:`, `fix:`, `refactor:`, `chore:`).
 - ktlint android style with experimental rules on; exceptions configured in `.editorconfig` (max line 150, some rules disabled).
 - UI copy is Chinese-first and hardcoded in Compose code (no `stringResource` usage); the only string resource is `app_name` (`res/values` + `values-zh`).
+- Don't add AGPL copyright header for new files

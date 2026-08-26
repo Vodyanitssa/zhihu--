@@ -2,10 +2,15 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
+import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
+import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.PinDto
+import com.zhihuminus.data.zhihu.dto.QuestionDto
+import com.zhihuminus.util.Log
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
 import com.zhihuminus.viewmodel.postSigned
@@ -17,10 +22,13 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlinx.serialization.json.putJsonArray
@@ -35,6 +43,51 @@ class ZhihuApiImpl(
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch answer $answerId")
         return ZhihuJson.decodeJson(json)
+    }
+
+    override suspend fun getQuestion(questionId: Long): QuestionDto {
+        val url = "https://www.zhihu.com/api/v4/questions/$questionId"
+        val include =
+            "read_count,visit_count,answer_count,voteup_count,comment_count,follower_count,detail,excerpt,author,relationship.is_following,topics"
+        val json = environment.fetchJson(url, include)
+            ?: throw IllegalStateException("Failed to fetch question $questionId")
+        return ZhihuJson.decodeJson(json)
+    }
+
+    override suspend fun fetchFeedPage(url: String): FeedPage {
+        @Suppress("HttpUrlsUsage")
+        val json = environment.fetchJson(url.replace("http://", "https://"), FEED_INCLUDE)
+            ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: not json object."))
+        val jsonArray = json["data"] as? JsonArray
+            ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no \$.data"))
+        val items = jsonArray.mapNotNull { element ->
+            if ("type" in element.jsonObject &&
+                element.jsonObject["type"]?.jsonPrimitive?.content in SKIPPED_FEED_TYPES
+            ) {
+                return@mapNotNull null
+            }
+            try {
+                ZhihuJson.decodeJson<Feed>(element)
+            } catch (e: Exception) {
+                Log.e("ZhihuApiImpl", "Failed to decode feed item: $element", e)
+                null
+            }
+        }
+        val paging = json["paging"]?.let { ZhihuJson.decodeJson<ZhihuPaging>(it) }
+        return FeedPage(
+            items = items,
+            nextUrl = paging?.next?.takeIf { it.isNotEmpty() },
+            isEnd = paging?.isEnd == true,
+        )
+    }
+
+    override suspend fun followQuestion(questionId: Long, follow: Boolean) {
+        val url = "https://www.zhihu.com/api/v4/questions/$questionId/followers"
+        if (follow) {
+            environment.postSigned(url)
+        } else {
+            environment.deleteSigned(url)
+        }
     }
 
     override suspend fun getArticle(articleId: Long): ArticleDto {
@@ -228,3 +281,12 @@ class ZhihuApiImpl(
         }
     }
 }
+
+private const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
+
+/** 已知无法作为独立 feed 条目展示的响应类型，解码前直接跳过。 */
+private val SKIPPED_FEED_TYPES = setOf(
+    "invited_answer",
+    "tab_list",
+    "feed_item_index_group",
+)

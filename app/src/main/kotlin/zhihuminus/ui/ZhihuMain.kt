@@ -168,6 +168,7 @@ fun ZhihuMain(
     preferenceState: ZhihuMainPreferenceState,
     isDarkTheme: Boolean,
     postContent: @Composable (PostDestination, NavBackStackEntry) -> Unit = { _, _ -> },
+    questionContent: @Composable (Question, NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     val tapToScrollToTopEnabled = preferenceState.tapToScrollToTopEnabled
@@ -418,7 +419,7 @@ fun ZhihuMain(
                     }
                     composable<Question> { navEntry ->
                         val question: Question = navEntry.toRoute()
-                        QuestionScreen(question)
+                        questionContent(question, navEntry)
                     }
                     composable<Topic> { navEntry ->
                         TopicScreen(navEntry.toRoute())

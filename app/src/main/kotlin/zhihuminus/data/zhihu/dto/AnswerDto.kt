@@ -18,10 +18,34 @@ data class AnswerDto(
     val segmentInfos: List<SegmentInfoDto> = emptyList(),
 )
 
+/**
+ * 问题详情。嵌套在 [AnswerDto.question] 中时只有 id/title 有值；
+ * 作为 `/api/v4/questions/{id}` 的响应解码时包含完整字段。
+ */
 @Serializable
 data class QuestionDto(
-    val id: Long,
-    val title: String,
+    val id: Long = 0,
+    val title: String = "",
+    val detail: String = "",
+    val excerpt: String = "",
+    val answerCount: Int = 0,
+    val visitCount: Int = 0,
+    val commentCount: Int = 0,
+    val followerCount: Int = 0,
+    val voteupCount: Int = 0,
+    val relationship: QuestionRelationshipDto = QuestionRelationshipDto(),
+    val topics: List<QuestionTopicDto> = emptyList(),
+)
+
+@Serializable
+data class QuestionRelationshipDto(
+    val isFollowing: Boolean = false,
+)
+
+@Serializable
+data class QuestionTopicDto(
+    val id: String = "",
+    val name: String = "",
 )
 
 @Serializable

@@ -25,7 +25,9 @@ import com.zhihuminus.MainActivity
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuCommentRepository
 import com.zhihuminus.data.zhihu.ZhihuPostRepository
+import com.zhihuminus.data.zhihu.ZhihuQuestionRepository
 import com.zhihuminus.feature.post.PostRoute
+import com.zhihuminus.feature.question.QuestionRoute
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
@@ -63,6 +65,29 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 destination = destination,
                 repository = repository,
                 commentRepository = commentRepository,
+                initialCommentId = pendingCommentId,
+                onBack = { navController.popBackStack() },
+            )
+        },
+        questionContent = { destination, _ ->
+            // 深链锚点：MainActivity 暂存的评论 ID（若有），透传到评论组件做定位
+            val pendingCommentId = remember(destination) {
+                activity.consumePendingCommentId(destination)
+            }
+            val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+            val questionRepository = remember(environment) {
+                ZhihuQuestionRepository(ZhihuApiImpl(environment))
+            }
+            val commentRepository = remember(environment) {
+                ZhihuCommentRepository(ZhihuApiImpl(environment))
+            }
+            QuestionRoute(
+                destination = destination,
+                repository = questionRepository,
+                commentRepository = commentRepository,
+                apiEnvironment = environment,
+                articleHost = activity,
+                articleAnswerSwitchState = environment.articleAnswerSwitchState(),
                 initialCommentId = pendingCommentId,
                 onBack = { navController.popBackStack() },
             )
