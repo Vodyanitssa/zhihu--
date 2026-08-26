@@ -76,7 +76,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.data.DailySection
 import com.zhihuminus.data.DailyStory
 import com.zhihuminus.navigation.LocalNavigator
@@ -94,6 +93,7 @@ import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import org.jsoup.Jsoup
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -359,7 +359,7 @@ fun DailyScreen(
                                                 missingOriginStoryUrl = story.url
                                                 return@launch
                                             }
-                                            val doc = Ksoup.parse(body)
+                                            val doc = Jsoup.parse(body)
                                             val originUrl = doc.selectFirst("a.originUrl")?.attr("href")
                                             val destination = originUrl
                                                 ?.let(::resolveContent)

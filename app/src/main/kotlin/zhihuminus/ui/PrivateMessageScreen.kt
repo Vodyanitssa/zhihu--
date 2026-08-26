@@ -61,7 +61,6 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.data.ZhihuPrivateMessage
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Notification
@@ -72,6 +71,7 @@ import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.util.formatRelativeTime
 import com.zhihuminus.viewmodel.PrivateMessageViewModel
 import kotlinx.coroutines.launch
+import org.jsoup.Jsoup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -213,7 +213,7 @@ private fun PrivateMessageBubble(
     val displayText = (
         message.plugin?.excerpt?.takeIf { it.isNotBlank() }
             ?: message.content.takeIf { it.isNotBlank() }
-    )?.let { Ksoup.parse(it).text() }
+    )?.let { Jsoup.parse(it).text() }
         ?: "暂不支持显示这条消息"
     Row(
         modifier = Modifier

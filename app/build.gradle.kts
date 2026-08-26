@@ -87,7 +87,6 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
     buildFeatures {
-        viewBinding = true
         buildConfig = true
         compose = true
     }
@@ -119,7 +118,6 @@ val coil = "3.5.0"
 val aboutLibraries = "15.0.0"
 val composeVersion = "1.11.1"
 val jetbrainsLifecycleVersion = "2.10.0"
-val androidxLifecycleVersion = "2.11.0"
 
 // Force material3 to 1.10.0-alpha05，与 shared 模块保持一致。
 // 根因：shared 模块 commonMain 通过 material-kolor 的 strictly 约束解析到 1.10.0-alpha05，
@@ -158,7 +156,6 @@ dependencies {
     implementation("com.materialkolor:material-kolor:5.0.0")
 
     implementation("org.jsoup:jsoup:1.23.1")
-    implementation("com.fleeksoft.ksoup:ksoup:0.2.6")
 
     // ZXing for QR code scanning
     implementation("com.journeyapps:zxing-android-embedded:4.3.0")
@@ -168,8 +165,6 @@ dependencies {
     // Lifecycle (JetBrains KMP versions)
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:$jetbrainsLifecycleVersion")
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:$jetbrainsLifecycleVersion")
-    // LiveData is Android-specific, keep androidx
-    implementation("androidx.lifecycle:lifecycle-livedata-ktx:$androidxLifecycleVersion")
     // Navigation (JetBrains KMP version)
     //noinspection GradleDependency
     implementation("org.jetbrains.androidx.navigation:navigation-compose:2.9.2")

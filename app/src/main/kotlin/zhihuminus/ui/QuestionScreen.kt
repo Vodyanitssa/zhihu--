@@ -91,7 +91,7 @@ import androidx.compose.ui.unit.Constraints
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.fleeksoft.ksoup.Ksoup
+import org.jsoup.Jsoup
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
@@ -190,7 +190,7 @@ fun QuestionScreen(
     var isQuestionDetailExpanded by rememberSaveable(question.questionId) { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
     val questionContentPlainText =
-        remember(questionContent) { Ksoup.parse(questionContent).text().trim() }
+        remember(questionContent) { Jsoup.parse(questionContent).text().trim() }
     val shareText = getShareText(question, title)
 
     // 加载问题详情和答案

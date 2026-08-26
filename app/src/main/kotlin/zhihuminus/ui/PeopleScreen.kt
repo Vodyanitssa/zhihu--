@@ -68,7 +68,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.R
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
@@ -109,6 +108,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
+import org.jsoup.Jsoup
 import kotlin.reflect.typeOf
 import androidx.lifecycle.viewmodel.compose.viewModel as composeViewModel
 import com.zhihuminus.navigation.Search as SearchDestination
@@ -484,7 +484,7 @@ private fun DataHolder.Article.toPeopleArticleDisplayItem(): FeedDisplayItem {
 private fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem? {
     val pinId = id.toLongOrNull() ?: return null
     return FeedDisplayItem(
-        title = Ksoup.parse(excerptTitle).text(),
+        title = Jsoup.parse(excerptTitle).text(),
         summary = null,
         details = "想法 · $likeCount 赞 · $commentCount 评论",
         feed = null,
@@ -1101,7 +1101,7 @@ private fun PinListItem(
                 )
             }.padding(vertical = 8.dp, horizontal = 4.dp),
     ) {
-        val text = remember { Ksoup.parse(pin.excerptTitle).text() }
+        val text = remember { Jsoup.parse(pin.excerptTitle).text() }
         Text(
             text = text,
             style = MaterialTheme.typography.bodyMedium,

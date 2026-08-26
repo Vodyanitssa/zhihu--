@@ -39,7 +39,6 @@ import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.TopLevelDestination
-import com.zhihuminus.util.EmojiManager
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -236,12 +235,6 @@ private fun Context.zhihuVersionInfo(): String {
 
 @Composable
 fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
-
-fun commentEmojiInlineKey(placeholder: String): String? {
-    val emojiPath = EmojiManager.getEmojiPath(placeholder) ?: return null
-    val emojiFileName = emojiPath.substringAfterLast('/')
-    return "emoji_$emojiFileName"
-}
 
 fun Modifier.commentSelectionWorkaround(): Modifier = this
 

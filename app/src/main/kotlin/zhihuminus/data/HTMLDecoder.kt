@@ -17,12 +17,12 @@
 
 package com.zhihuminus.data
 
-import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.descriptors.PrimitiveKind
 import kotlinx.serialization.descriptors.PrimitiveSerialDescriptor
 import kotlinx.serialization.encoding.Decoder
 import kotlinx.serialization.encoding.Encoder
+import org.jsoup.Jsoup
 
 object HTMLDecoder : KSerializer<String> {
     override val descriptor = PrimitiveSerialDescriptor("HTMLDecoder", PrimitiveKind.STRING)
@@ -34,7 +34,7 @@ object HTMLDecoder : KSerializer<String> {
 
     override fun deserialize(decoder: Decoder): String {
         val string = decoder.decodeString()
-        return Ksoup
+        return Jsoup
             .parse(string)
             .apply {
                 select(".invisible").forEach { it.remove() }

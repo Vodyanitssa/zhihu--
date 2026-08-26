@@ -17,8 +17,8 @@
 
 package com.zhihuminus.data
 
-import com.fleeksoft.ksoup.Ksoup
 import kotlinx.serialization.Serializable
+import org.jsoup.Jsoup
 
 @Serializable
 data class FeedDisplayItem(
@@ -104,10 +104,10 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = tar
         val title = textContent?.title.orEmpty()
         val contentSummary = textContent
             ?.content
-            ?.let { Ksoup.parse(it).text() }
+            ?.let { Jsoup.parse(it).text() }
             ?.takeIf { it.isNotBlank() }
         val excerptSummary = target.excerpt
-            ?.let { Ksoup.parse(it).text() }
+            ?.let { Jsoup.parse(it).text() }
             ?.takeIf { it.isNotBlank() }
         val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
 

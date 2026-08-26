@@ -17,14 +17,14 @@
 
 package com.zhihuminus.util
 
-import com.fleeksoft.ksoup.Ksoup
-import com.fleeksoft.ksoup.nodes.Element
-import com.fleeksoft.ksoup.nodes.Node
-import com.fleeksoft.ksoup.nodes.TextNode
 import com.zhihuminus.data.SegmentInfoMark
 import com.zhihuminus.data.SegmentInfoMeta
 import com.zhihuminus.data.SegmentInfoParagraph
 import com.zhihuminus.data.effectiveSegInfo
+import org.jsoup.Jsoup
+import org.jsoup.nodes.Element
+import org.jsoup.nodes.Node
+import org.jsoup.nodes.TextNode
 
 data class SegmentHighlightSpan(
     val text: String,
@@ -153,7 +153,7 @@ fun applySegmentInfosToHtml(
 ): String {
     if (content.isBlank() || segmentInfos.isEmpty()) return content
 
-    val document = Ksoup.parseBodyFragment(content)
+    val document = Jsoup.parseBodyFragment(content)
     segmentInfos.forEach { paragraph ->
         val target = document.selectFirst("""p[data-pid="${paragraph.pid}"]""") ?: return@forEach
         if (target.text() != paragraph.text) return@forEach

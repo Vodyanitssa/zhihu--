@@ -55,7 +55,6 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.data.MobileNotificationTimelineItem
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Question
@@ -69,6 +68,7 @@ import com.zhihuminus.viewmodel.NotificationTimelineViewModel
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.number
 import kotlinx.datetime.toLocalDateTime
+import org.jsoup.Jsoup
 import kotlin.time.Clock
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
@@ -202,7 +202,7 @@ private fun InvitationAnswerItem(
         .firstOrNull()
         ?.text
         ?.takeIf { it.isNotBlank() }
-        ?.let { Ksoup.parse(it).text() }
+        ?.let { Jsoup.parse(it).text() }
         .orEmpty()
     Column(
         modifier = Modifier

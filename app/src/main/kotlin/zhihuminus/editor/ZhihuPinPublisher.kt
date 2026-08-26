@@ -20,7 +20,6 @@ package com.zhihuminus.editor
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.fleeksoft.ksoup.Ksoup
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.asApiEnvironment
@@ -39,6 +38,7 @@ import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
+import org.jsoup.Jsoup
 
 /**
  * 将“发布知乎想法”封装为平台能力。
@@ -221,7 +221,7 @@ internal class ZhihuApiPinPublisher(
 }
 
 internal fun calculatePinHtmlTextLength(html: String): Int =
-    Ksoup
+    Jsoup
         .parseBodyFragment(html)
         .body()
         .text()
