@@ -33,10 +33,8 @@ import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.Button
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -77,7 +75,6 @@ import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.navigation.WritePin
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.FeedCard
@@ -487,17 +484,6 @@ fun TopicScreen(topic: Topic) {
                                 }
                             }
                         },
-                        onWritePin = {
-                            navigator.onNavigate(
-                                WritePin(
-                                    topicName = viewModel.detail?.name?.ifBlank { topic.name } ?: topic.name,
-                                    publishTopicId = viewModel.detail
-                                        ?.topicId
-                                        ?.toString()
-                                        .orEmpty(),
-                                ),
-                            )
-                        },
                     )
                     PrimaryTabRow(selectedTabIndex = viewModel.selectedTab.ordinal) {
                         TopicFeedTab.entries.forEach { tab ->
@@ -567,7 +553,6 @@ private fun TopicHeader(
     isFollowingChanging: Boolean,
     onRetryDetail: () -> Unit,
     onFollowingChange: (Boolean) -> Unit,
-    onWritePin: () -> Unit,
 ) {
     Column(
         Modifier
@@ -632,14 +617,6 @@ private fun TopicHeader(
                 } else {
                     Text(if (detail?.isFollowing == true) "已关注" else "关注话题", maxLines = 1)
                 }
-            }
-            FilledTonalButton(
-                onClick = onWritePin,
-                enabled = detail?.topicId != null,
-                modifier = Modifier.weight(2f),
-                colors = ButtonDefaults.filledTonalButtonColors(),
-            ) {
-                Text("发想法", maxLines = 1)
             }
         }
     }

@@ -58,7 +58,6 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.data.MobileNotificationTimelineItem
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Question
-import com.zhihuminus.navigation.WriteAnswer
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -156,16 +155,7 @@ fun NotificationTimelineScreen(
                             if (destination != null) {
                                 navigator.onNavigate(destination)
                             } else {
-                                target?.id?.toLongOrNull()?.let { questionId ->
-                                    navigator.onNavigate(
-                                        WriteAnswer(
-                                            questionId = questionId,
-                                            questionTitle = target.title.ifBlank {
-                                                notification.targetSource?.text.orEmpty()
-                                            },
-                                        ),
-                                    )
-                                } ?: userMessages.showMessage("无法回答这个问题")
+                                userMessages.showMessage("正在施工")
                             }
                         },
                     )

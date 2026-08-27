@@ -21,15 +21,12 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Check
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.Button
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.FilledTonalButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -66,7 +63,6 @@ import com.zhihuminus.feature.question.QuestionEvent
 import com.zhihuminus.feature.question.QuestionSort
 import com.zhihuminus.feature.question.QuestionTopic
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.navigation.WriteAnswer
 import kotlin.math.roundToInt
 
 private val QUESTION_DETAIL_COLLAPSED_MAX_HEIGHT: Dp = 180.dp
@@ -212,17 +208,6 @@ internal fun QuestionBodyHeader(
                     QuestionPrimaryActions(
                         isFollowing = detail.isFollowing,
                         onFollowClick = { onEvent(QuestionEvent.ToggleFollow) },
-                        onWriteAnswerClick = {
-                            onEvent(
-                                QuestionEvent.Navigate(
-                                    WriteAnswer(
-                                        questionId = questionId,
-                                        questionTitle = detail.title,
-                                        questionDetail = detail.detailHtml,
-                                    ),
-                                ),
-                            )
-                        },
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -456,22 +441,8 @@ private fun QuestionDetailToggleButton(
 private fun QuestionPrimaryActions(
     isFollowing: Boolean,
     onFollowClick: () -> Unit,
-    onWriteAnswerClick: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Button(
-            onClick = onWriteAnswerClick,
-            modifier = Modifier.weight(1f),
-            colors =
-                ButtonDefaults.buttonColors(
-                    containerColor = MaterialTheme.colorScheme.secondaryContainer,
-                    contentColor = MaterialTheme.colorScheme.onSecondaryContainer,
-                ),
-        ) {
-            Icon(Icons.Filled.Edit, contentDescription = "写回答")
-            Spacer(Modifier.width(8.dp))
-            Text("写回答")
-        }
         androidx.compose.material3.FilledTonalButton(
             onClick = onFollowClick,
             modifier =

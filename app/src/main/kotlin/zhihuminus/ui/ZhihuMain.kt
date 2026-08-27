@@ -108,8 +108,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.navigation.WriteAnswer
-import com.zhihuminus.navigation.WritePin
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.NoOpPagerNestedScrollConnection
@@ -423,13 +421,6 @@ fun ZhihuMain(
                     }
                     composable<Topic> { navEntry ->
                         TopicScreen(navEntry.toRoute())
-                    }
-                    composable<WriteAnswer> { navEntry ->
-                        val args: WriteAnswer = navEntry.toRoute()
-                        WriteAnswerScreen(args)
-                    }
-                    composable<WritePin> { navEntry ->
-                        WritePinScreen(navEntry.toRoute())
                     }
                     composable<HotList> {
                         HotListScreen(innerPadding)

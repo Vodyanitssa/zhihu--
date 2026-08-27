@@ -21,7 +21,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import org.jsoup.Jsoup
-import kotlin.coroutines.coroutineContext
 
 data class QuestionUiState(
     val title: String = "",

@@ -43,6 +43,7 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
@@ -51,7 +52,6 @@ import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.renderer.EmojiItem
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
-import com.zhihuminus.ui.components.replaceSelection
 
 /**
  * 评论输入栏，包含回复目标提示、文本输入框和表情选择面板。
@@ -287,4 +287,22 @@ fun CommentInputBar(
             }
         }
     }
+}
+
+private fun TextFieldValue.replaceSelection(
+    insert: String,
+    cursorOffsetInInsert: Int,
+): TextFieldValue {
+    val start = selection.min
+    val end = selection.max
+    val newText = buildString {
+        append(text.substring(0, start))
+        append(insert)
+        append(text.substring(end))
+    }
+    val cursor = (start + cursorOffsetInInsert).coerceIn(0, newText.length)
+    return TextFieldValue(
+        text = newText,
+        selection = TextRange(cursor, cursor),
+    )
 }

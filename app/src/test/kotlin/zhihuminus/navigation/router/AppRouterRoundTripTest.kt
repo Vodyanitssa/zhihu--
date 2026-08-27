@@ -21,8 +21,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
-import com.zhihuminus.navigation.WriteAnswer
-import com.zhihuminus.navigation.WritePin
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -150,17 +148,6 @@ class AppRouterRoundTripTest {
         // History 同时实现两个接口，显式按 NavDestination 调用避免重载歧义。
         assertNull((History as NavDestination).toAppUrl())
     }
-
-    @Test
-    fun writeAnswer() = assertRoundTrip(WriteAnswer(questionId = 99L), "zhminus://write/answer/99")
-
-    @Test
-    fun writePinWithTopic() =
-        // 富字段（topicName）不参与 URL 编码，往返后保持默认空值。
-        assertRoundTrip(WritePin(publishTopicId = "5"), "zhminus://write/pin?topic_id=5")
-
-    @Test
-    fun writePinWithoutTopic() = assertRoundTrip(WritePin(), "zhminus://write/pin")
 
     @Test
     fun notificationRoot() = assertRoundTrip(Notification, "zhminus://notification")

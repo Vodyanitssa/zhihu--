@@ -21,8 +21,6 @@ import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
-import com.zhihuminus.navigation.WriteAnswer
-import com.zhihuminus.navigation.WritePin
 import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -238,40 +236,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                     ?.let(RouteResolution::Tab)
             },
             encode = { destination -> if (destination == MainTabs) buildAppUrl("tab", "home") else null },
-        ),
-    )
-
-    // ── 编辑器 ──────────────────────────────────────────────────────────────
-
-    add(
-        screenRule(
-            "write",
-            1..1,
-            parse = { args ->
-                when (args.segment(0)) {
-                    "pin" -> WritePin(publishTopicId = args["topic_id"].orEmpty())
-                    else -> null
-                }
-            },
-            encode = { destination ->
-                (destination as? WritePin)?.let {
-                    buildAppUrl("write", "pin", queryParameters = listOf("topic_id" to it.publishTopicId))
-                }
-            },
-        ),
-    )
-
-    add(
-        screenRule(
-            "write",
-            2..2,
-            parse = { args ->
-                if (args.segment(0) != "answer") return@screenRule null
-                args.longSegment(1)?.let { WriteAnswer(questionId = it) }
-            },
-            encode = { destination ->
-                (destination as? WriteAnswer)?.let { buildAppUrl("write", "answer", it.questionId.toString()) }
-            },
         ),
     )
 
