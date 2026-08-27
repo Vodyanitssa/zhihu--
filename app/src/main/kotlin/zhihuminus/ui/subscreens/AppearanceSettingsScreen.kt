@@ -90,22 +90,16 @@ import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.theme.ThemeManager
 import com.zhihuminus.theme.ThemeMode
-import com.zhihuminus.ui.components.ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY
 import com.zhihuminus.ui.components.ColorPickerDialog
-import com.zhihuminus.ui.components.DEFAULT_ANSWER_SWITCH_SENSITIVITY
-import com.zhihuminus.ui.components.MAX_ANSWER_SWITCH_SENSITIVITY
-import com.zhihuminus.ui.components.MIN_ANSWER_SWITCH_SENSITIVITY
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.ui.components.SettingItemWithSwitch
-import com.zhihuminus.ui.components.normalizedAnswerSwitchSensitivity
 import kotlinx.coroutines.delay
 import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
 const val PREF_FONT_SIZE = "contentFontSize"
 const val PREF_LINE_HEIGHT = "contentLineHeight"
-const val PREF_BLOCK_SPACING = "contentBlockSpacing"
 const val PREF_FAB_OPACITY = "fabOpacity"
 const val DEFAULT_FAB_OPACITY = 100
 const val APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY = "appearanceSettings.bottomBarSection"
@@ -564,34 +558,9 @@ fun AppearanceSettingsScreen(
                         )
                     },
                 )
-
-                var blockSpacing by remember { mutableIntStateOf(settings.getInt(PREF_BLOCK_SPACING, 100)) }
-                SettingItem(
-                    title = { Text("段间距") },
-                    description = { Text("调整正文段落和块级内容间距 ($blockSpacing%)") },
-                    settingKey = PREF_BLOCK_SPACING,
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor(PREF_BLOCK_SPACING),
-                    bottomAction = {
-                        Slider(
-                            value = blockSpacing.toFloat(),
-                            onValueChange = {
-                                val spacing = (it / 10).roundToInt() * 10
-                                blockSpacing = spacing
-                                settings.putInt(PREF_BLOCK_SPACING, spacing)
-                            },
-                            valueRange = 0f..300f,
-                            steps = 29,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(top = 8.dp),
-                        )
-                    },
-                )
             }
 
             // ── 信息流 ──────────────────────────────────────────────────────────
-            val showRefreshFab = remember { mutableStateOf(settings.getBoolean("showRefreshFab", true)) }
             SettingItemGroup(
                 title = "信息流",
             ) {
@@ -607,19 +576,6 @@ fun AppearanceSettingsScreen(
                     settingKey = "showFeedThumbnail",
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor("showFeedThumbnail"),
-                )
-
-                SettingItemWithSwitch(
-                    title = { Text("显示刷新悬浮按钮") },
-                    description = { Text("在页面上显示可拖动的刷新按钮。") },
-                    checked = showRefreshFab.value,
-                    onCheckedChange = {
-                        showRefreshFab.value = it
-                        settings.putBoolean("showRefreshFab", it)
-                    },
-                    settingKey = "showRefreshFab",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("showRefreshFab"),
                 )
 
                 var feedCardStyleExpanded by remember { mutableStateOf(false) }
@@ -671,171 +627,6 @@ fun AppearanceSettingsScreen(
                         }
                     },
                 )
-            }
-
-            // ── 回答页 ──────────────────────────────────────────────────────────
-            val buttonSkipAnswer = remember { mutableStateOf(settings.getBoolean("buttonSkipAnswer", true)) }
-            SettingItemGroup(
-                title = "回答页",
-            ) {
-                val isTitleAutoHide = remember { mutableStateOf(settings.getBoolean("titleAutoHide", false)) }
-                SettingItemWithSwitch(
-                    title = { Text("自动隐藏回答标题") },
-                    description = { Text("滚动时自动隐藏回答标题栏。") },
-                    checked = isTitleAutoHide.value,
-                    onCheckedChange = {
-                        isTitleAutoHide.value = it
-                        settings.putBoolean("titleAutoHide", it)
-                    },
-                    settingKey = "titleAutoHide",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("titleAutoHide"),
-                )
-
-                val autoHideArticleBottomBar = remember {
-                    mutableStateOf(settings.getBoolean("autoHideArticleBottomBar", false))
-                }
-                SettingItemWithSwitch(
-                    title = { Text("自动隐藏回答底部按钮") },
-                    description = { Text("上划时隐藏回答底部操作按钮，下划时重新显示。") },
-                    checked = autoHideArticleBottomBar.value,
-                    onCheckedChange = {
-                        autoHideArticleBottomBar.value = it
-                        settings.putBoolean("autoHideArticleBottomBar", it)
-                    },
-                    settingKey = "autoHideArticleBottomBar",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("autoHideArticleBottomBar"),
-                )
-
-                SettingItemWithSwitch(
-                    title = { Text("显示跳转下一个回答按钮") },
-                    description = { Text("在回答页面显示可拖动的快速跳转按钮。") },
-                    checked = buttonSkipAnswer.value,
-                    onCheckedChange = {
-                        buttonSkipAnswer.value = it
-                        settings.putBoolean("buttonSkipAnswer", it)
-                    },
-                    settingKey = "buttonSkipAnswer",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("buttonSkipAnswer"),
-                )
-
-                val autoHideSkipAnswerButton =
-                    remember { mutableStateOf(settings.getBoolean("autoHideSkipAnswerButton", true)) }
-                AnimatedVisibility(buttonSkipAnswer.value) {
-                    SettingItemWithSwitch(
-                        title = { Text("滚动时自动隐藏跳转按钮") },
-                        description = { Text("上划时淡出「下一个回答」按钮，下划时淡入显示。") },
-                        checked = autoHideSkipAnswerButton.value,
-                        onCheckedChange = {
-                            autoHideSkipAnswerButton.value = it
-                            settings.putBoolean("autoHideSkipAnswerButton", it)
-                        },
-                    )
-                }
-
-                val pinAnswerDate = remember { mutableStateOf(settings.getBoolean("pinAnswerDate", false)) }
-                SettingItemWithSwitch(
-                    title = { Text("置顶回答日期") },
-                    description = { Text("将回答的发布日期和编辑日期移动到内容最前面显示。") },
-                    checked = pinAnswerDate.value,
-                    onCheckedChange = {
-                        pinAnswerDate.value = it
-                        settings.putBoolean("pinAnswerDate", it)
-                    },
-                    settingKey = "pinAnswerDate",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("pinAnswerDate"),
-                )
-
-                var answerSwitchExpanded by remember { mutableStateOf(false) }
-                val answerSwitchMode = remember {
-                    mutableStateOf(settings.getString("answerSwitchMode", "vertical"))
-                }
-                val answerSwitchOptions = listOf(
-                    "off" to "关闭",
-                    "vertical" to "上下滑动",
-                    "horizontal" to "左右滑动",
-                )
-                SettingItem(
-                    title = { Text("回答切换手势") },
-                    description = { Text("在回答页面通过手势切换同一问题下的其他回答。") },
-                    settingKey = "answerSwitchMode",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("answerSwitchMode"),
-                    endAction = {
-                        ExposedDropdownMenuBox(
-                            expanded = answerSwitchExpanded,
-                            onExpandedChange = { answerSwitchExpanded = it },
-                        ) {
-                            OutlinedTextField(
-                                value = answerSwitchOptions.find { it.first == answerSwitchMode.value }?.second
-                                    ?: "上下滑动切换",
-                                onValueChange = {},
-                                readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = answerSwitchExpanded) },
-                                modifier = Modifier
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                    .width(160.dp),
-                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                            )
-                            ExposedDropdownMenu(
-                                expanded = answerSwitchExpanded,
-                                onDismissRequest = { answerSwitchExpanded = false },
-                            ) {
-                                answerSwitchOptions.forEach { (mode, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = {
-                                            answerSwitchMode.value = mode
-                                            settings.putString("answerSwitchMode", mode)
-                                            answerSwitchExpanded = false
-                                            userMessages.showShortMessage("已设置为：$label")
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    },
-                )
-
-                var answerSwitchSensitivity by remember {
-                    mutableStateOf(
-                        normalizedAnswerSwitchSensitivity(
-                            settings.getFloat(
-                                ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY,
-                                DEFAULT_ANSWER_SWITCH_SENSITIVITY,
-                            ),
-                        ),
-                    )
-                }
-                AnimatedVisibility(answerSwitchMode.value != "off") {
-                    SettingItem(
-                        title = { Text("回答切换灵敏度") },
-                        description = {
-                            Text("当前 ${(answerSwitchSensitivity * 10).roundToInt() / 10f}x，数值越高，滑动越短；同时作用于上下和左右切换。")
-                        },
-                        settingKey = ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY,
-                        highlightedKey = settingKey,
-                        bringIntoViewRequester = requesterFor(ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY),
-                        bottomAction = {
-                            Slider(
-                                value = answerSwitchSensitivity,
-                                onValueChange = {
-                                    val sensitivity = (it * 10).roundToInt() / 10f
-                                    answerSwitchSensitivity = sensitivity
-                                    settings.putFloat(ANSWER_SWITCH_SENSITIVITY_PREFERENCE_KEY, sensitivity)
-                                },
-                                valueRange = MIN_ANSWER_SWITCH_SENSITIVITY..MAX_ANSWER_SWITCH_SENSITIVITY,
-                                steps = 24,
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(top = 8.dp),
-                            )
-                        },
-                    )
-                }
             }
 
             // ── 底部导航栏 ──────────────────────────────────────────────────────
@@ -1178,41 +969,6 @@ fun AppearanceSettingsScreen(
                     settingKey = "showSearchHistory",
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor("showSearchHistory"),
-                )
-            }
-
-            // ── 导航 ────────────────────────────────────────────────────────────
-            SettingItemGroup(
-                title = "技术性导航设置",
-            ) {
-                val useCustomNavHost = remember { mutableStateOf(settings.getBoolean("use_custom_nav_host", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("使用自定义导航") },
-                    description = { Text("使用自定义导航替代系统默认的导航组件，可能部分提升国产手机上的操作手感，请视情况开启。") },
-                    checked = useCustomNavHost.value,
-                    onCheckedChange = {
-                        useCustomNavHost.value = it
-                        settings.putBoolean("use_custom_nav_host", it)
-                        userMessages.showShortMessage("需要重启应用生效")
-                    },
-                    settingKey = "use_custom_nav_host",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("use_custom_nav_host"),
-                )
-
-                val enablePredictiveBack =
-                    remember { mutableStateOf(settings.getBoolean("enable_predictive_back", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("启用预测性返回") },
-                    description = { Text("开启 Android 14+ 的预测性返回手势动画。") },
-                    checked = enablePredictiveBack.value,
-                    onCheckedChange = {
-                        enablePredictiveBack.value = it
-                        settings.putBoolean("enable_predictive_back", it)
-                    },
-                    settingKey = "enable_predictive_back",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("enable_predictive_back"),
                 )
             }
         }

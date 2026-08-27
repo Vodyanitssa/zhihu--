@@ -17,28 +17,22 @@
 
 package com.zhihuminus.ui.subscreens
 
-import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.filled.KeyboardArrowRight
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.LargeTopAppBar
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -202,72 +196,6 @@ fun ContentFilterSettingsScreen(
                     settingKey = "enableTopicBlocking",
                     highlightedKey = highlightedSetting,
                 )
-
-                AnimatedVisibility(visible = enableTopicBlocking.value) {
-                    val topicThreshold = remember { mutableStateOf(settings.getInt("topicBlockingThreshold", 1)) }
-                    var showThresholdDialog by remember { mutableStateOf(false) }
-
-                    SettingItem(
-                        title = { Text("主题屏蔽阈值") },
-                        description = {
-                            Text(
-                                "当回答的问题包含 >= ${topicThreshold.value} 个被屏蔽主题时，屏蔽该内容",
-                            )
-                        },
-                        settingKey = "topicBlockingThreshold",
-                        highlightedKey = highlightedSetting,
-                        endAction = {
-                            Text(
-                                topicThreshold.value.toString(),
-                                style = MaterialTheme.typography.titleMedium,
-                                color = MaterialTheme.colorScheme.primary,
-                                modifier = Modifier.padding(horizontal = 16.dp),
-                            )
-                        },
-                        onClick = { showThresholdDialog = true },
-                    )
-                    if (showThresholdDialog) {
-                        var inputValue by remember { mutableStateOf(topicThreshold.value.toString()) }
-
-                        AlertDialog(
-                            onDismissRequest = { showThresholdDialog = false },
-                            title = { Text("设置主题屏蔽阈值") },
-                            text = {
-                                Column {
-                                    Text("当内容包含的被屏蔽主题数量达到或超过此阈值时，该内容将被屏蔽。")
-                                    Spacer(modifier = Modifier.height(16.dp))
-                                    OutlinedTextField(
-                                        value = inputValue,
-                                        onValueChange = { inputValue = it },
-                                        label = { Text("阈值") },
-                                        singleLine = true,
-                                    )
-                                }
-                            },
-                            confirmButton = {
-                                TextButton(
-                                    onClick = {
-                                        val newThreshold = inputValue.toIntOrNull()
-                                        if (newThreshold != null && newThreshold > 0) {
-                                            topicThreshold.value = newThreshold
-                                            settings.putInt("topicBlockingThreshold", newThreshold)
-                                            showThresholdDialog = false
-                                        } else {
-                                            userMessages.showMessage("请输入大于0的整数")
-                                        }
-                                    },
-                                ) {
-                                    Text("确定")
-                                }
-                            },
-                            dismissButton = {
-                                TextButton(onClick = { showThresholdDialog = false }) {
-                                    Text("取消")
-                                }
-                            },
-                        )
-                    }
-                }
             }
 
             SettingItemGroup {

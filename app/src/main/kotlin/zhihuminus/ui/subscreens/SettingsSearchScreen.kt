@@ -183,56 +183,11 @@ private val settingsSearchEntries = buildList {
     )
     add(
         appearanceEntry(
-            "appearance.showRefreshFab",
-            "显示刷新 FAB 按钮",
-            "控制首页和列表的浮动刷新按钮。",
-            "showRefreshFab",
-            listOf("刷新按钮", "浮动按钮"),
-        ),
-    )
-    add(
-        appearanceEntry(
             "appearance.feedCardStyle",
             "信息流样式",
             "切换卡片或分割线样式。",
             "feedCardStyle",
             listOf("Feed", "列表样式", "卡片样式", "分割线"),
-        ),
-    )
-    add(
-        appearanceEntry(
-            "appearance.titleAutoHide",
-            "自动隐藏回答标题",
-            "阅读时自动收起顶部标题。",
-            "titleAutoHide",
-            listOf("标题栏"),
-        ),
-    )
-    add(
-        appearanceEntry(
-            "appearance.autoHideArticleBottomBar",
-            "自动隐藏回答底部按钮",
-            "滚动阅读时自动隐藏底部操作栏。",
-            "autoHideArticleBottomBar",
-        ),
-    )
-    add(
-        appearanceEntry(
-            "appearance.buttonSkipAnswer",
-            "显示跳转下一个回答按钮",
-            "在回答页显示快速跳转按钮。",
-            "buttonSkipAnswer",
-            listOf("下一个回答"),
-        ),
-    )
-    add(appearanceEntry("appearance.pinAnswerDate", "置顶回答日期", "调整回答日期在正文中的位置。", "pinAnswerDate"))
-    add(
-        appearanceEntry(
-            "appearance.answerSwitchMode",
-            "回答切换手势",
-            "设置回答之间的上下或左右切换。",
-            "answerSwitchMode",
-            listOf("手势", "上下滑动", "左右滑动", "切换回答"),
         ),
     )
     add(
@@ -287,16 +242,6 @@ private val settingsSearchEntries = buildList {
             listOf("搜索记录", "历史记录", "清除搜索历史"),
         ),
     )
-    add(appearanceEntry("appearance.customNavHost", "使用自定义导航", "切换实验性的导航实现。", "use_custom_nav_host"))
-    add(
-        appearanceEntry(
-            "appearance.predictiveBack",
-            "启用预测性返回",
-            "控制 Android 预测性返回动画。",
-            "enable_predictive_back",
-            listOf("返回手势"),
-        ),
-    )
     add(
         recommendEntry(
             "recommend.loginForRecommendation",
@@ -337,15 +282,6 @@ private val settingsSearchEntries = buildList {
             "按命中主题过滤内容。",
             "enableTopicBlocking",
             listOf("话题屏蔽", "屏蔽话题"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.topicBlockingThreshold",
-            "主题屏蔽阈值",
-            "设置命中多少个被屏蔽主题后才过滤内容。",
-            "topicBlockingThreshold",
-            listOf("主题阈值"),
         ),
     )
     add(

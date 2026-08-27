@@ -247,7 +247,6 @@ data class FeedFilterSettings(
     val enableContentFilter: Boolean = true,
     val enableKeywordBlocking: Boolean = true,
     val enableTopicBlocking: Boolean = true,
-    val topicBlockingThreshold: Int = 1,
     val adBlockSettings: FeedAdBlockSettings = FeedAdBlockSettings(),
 )
 
@@ -255,7 +254,6 @@ fun SettingsStore.toFeedFilterSettings(): FeedFilterSettings = FeedFilterSetting
     enableContentFilter = getBoolean("enableContentFilter", true),
     enableKeywordBlocking = getBoolean("enableKeywordBlocking", true),
     enableTopicBlocking = getBoolean("enableTopicBlocking", true),
-    topicBlockingThreshold = getInt("topicBlockingThreshold", 1),
     adBlockSettings = FeedAdBlockSettings(
         blockZhihuAdPlatform = getBoolean("blockZhihuAdPlatform", true),
         blockZhihuSchool = getBoolean("blockZhihuSchool", true),
