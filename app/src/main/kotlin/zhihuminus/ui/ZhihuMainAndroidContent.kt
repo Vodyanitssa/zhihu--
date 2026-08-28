@@ -52,7 +52,7 @@ fun AndroidZhihuMain(navController: NavHostController) {
             val pendingCommentId = remember(destination) {
                 activity.consumePendingCommentId(destination)
             }
-            val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+            val environment = rememberPaginationEnvironment()
             val repository = remember {
                 val api = ZhihuApiImpl(environment)
                 ZhihuPostRepository(api)
@@ -74,7 +74,7 @@ fun AndroidZhihuMain(navController: NavHostController) {
             val pendingCommentId = remember(destination) {
                 activity.consumePendingCommentId(destination)
             }
-            val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+            val environment = rememberPaginationEnvironment()
             val questionRepository = remember(environment) {
                 ZhihuQuestionRepository(ZhihuApiImpl(environment))
             }

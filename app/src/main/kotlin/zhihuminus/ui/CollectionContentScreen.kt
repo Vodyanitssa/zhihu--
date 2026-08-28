@@ -57,7 +57,7 @@ fun CollectionContentScreen(
 ) {
     val navigator = LocalNavigator.current
     val screenViewModel = viewModel { CollectionContentViewModel(collectionId) }
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val listState = rememberLazyListState()
 
     LaunchedEffect(screenViewModel) {

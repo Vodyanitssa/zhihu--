@@ -597,6 +597,6 @@ fun rememberNotificationEnvironment(
 ): com.zhihuminus.viewmodel.NotificationEnvironment {
     val context = LocalContext.current
     return remember(context, settingsStore) {
-        SharedAndroidNotificationEnvironment(context, false, settingsStore)
+        SharedAndroidNotificationEnvironment(context, settingsStore)
     }
 }

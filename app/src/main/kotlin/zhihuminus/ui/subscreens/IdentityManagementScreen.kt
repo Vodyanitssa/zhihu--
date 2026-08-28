@@ -100,7 +100,7 @@ data class IdentityManagementState(
 @Composable
 fun IdentityManagementScreen() {
     val navigator = LocalNavigator.current
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val identityClient = remember(environment) { environment.identityClient() }
     val userMessages = rememberUserMessageSink()
     val coroutineScope = rememberCoroutineScope()

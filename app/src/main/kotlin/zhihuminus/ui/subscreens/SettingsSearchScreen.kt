@@ -235,14 +235,6 @@ private val settingsSearchEntries = buildList {
     )
     add(
         recommendEntry(
-            "recommend.loginForRecommendation",
-            "推荐内容时登录",
-            "获取推荐内容时是否带登录凭证。",
-            "loginForRecommendation",
-        ),
-    )
-    add(
-        recommendEntry(
             "recommend.enableContentFilter",
             "启用智能内容过滤",
             "过滤重复出现但未点击内容。",

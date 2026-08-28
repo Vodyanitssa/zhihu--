@@ -87,7 +87,7 @@ fun CollectionBrowseScreen(
     testCollections: List<Collection>? = null,
 ) {
     val navigator = LocalNavigator.current
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val useTestCollections = testCollections != null || urlToken == null
     val collectionsViewModel: CollectionsViewModel = viewModel(key = urlToken) {
         CollectionsViewModel(urlToken.orEmpty())

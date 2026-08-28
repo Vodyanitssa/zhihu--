@@ -51,7 +51,7 @@ fun FeedPullToRefresh(
 ) {
     FeedPullToRefresh(
         viewModel = viewModel,
-        environment = rememberPaginationEnvironment(viewModel.allowGuestAccess),
+        environment = rememberPaginationEnvironment(),
         padding = padding,
         content = content,
     )

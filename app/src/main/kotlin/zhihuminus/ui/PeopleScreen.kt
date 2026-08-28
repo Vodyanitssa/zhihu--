@@ -580,7 +580,7 @@ fun PeopleScreen(
 ) {
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
-    val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val paginationEnvironment = rememberPaginationEnvironment()
     val viewModel = composeViewModel { PersonViewModel(person) }
     val coroutineScope = rememberCoroutineScope()
 

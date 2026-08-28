@@ -114,7 +114,7 @@ fun AccountSettingScreen(
     testAccountData: AccountSettingsAccountState? = null,
 ) {
     val navigator = LocalNavigator.current
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val accountState = rememberAccountSettingsAccountState()
     val requestQrLoginScan = rememberAccountQrLoginRequester()
     val settings = rememberSettingsStore()

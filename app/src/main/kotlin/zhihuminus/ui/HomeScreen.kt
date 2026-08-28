@@ -107,7 +107,7 @@ fun HomeScreen(
     innerPadding: PaddingValues,
 ) {
     val navigator = LocalNavigator.current
-    val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = true)
+    val paginationEnvironment = rememberPaginationEnvironment()
     val settings = rememberSettingsStore()
     val appPrivateDirectory = rememberAppPrivateDirectory()
     val notificationSettings = rememberNotificationSettingsStore()
@@ -183,9 +183,7 @@ fun HomeScreen(
 
     // 初始加载
     LaunchedEffect(account.login, autoRefreshOnStartup) {
-        if (!account.login &&
-            settings.getBoolean("loginForRecommendation", true)
-        ) {
+        if (!account.login) {
             if (!paginationEnvironment.requestLogin()) {
                 userMessages.showShortMessage("当前平台暂不支持登录")
             }

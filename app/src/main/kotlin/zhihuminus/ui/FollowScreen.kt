@@ -231,7 +231,7 @@ private fun FollowTabRow(
 fun FollowingUsersRow() {
     val navigator = LocalNavigator.current
     val viewModel: RecentMomentsViewModel = viewModel { RecentMomentsViewModel() }
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
 
     LaunchedEffect(Unit) {
         viewModel.load(environment)
@@ -312,7 +312,7 @@ fun FollowRecommendScreen(
 ) {
     val viewModel: FollowRecommendViewModel = viewModel { FollowRecommendViewModel() }
     val readingQueueSourceId = "follow:recommend"
-    val environment = rememberPaginationEnvironment(allowGuestAccess = viewModel.allowGuestAccess)
+    val environment = rememberPaginationEnvironment()
     val userMessages = rememberUserMessageSink()
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
@@ -375,7 +375,7 @@ fun FollowDynamicScreen(
 ) {
     val viewModel: FollowViewModel = viewModel { FollowViewModel() }
     val readingQueueSourceId = "follow:dynamic"
-    val environment = rememberPaginationEnvironment(allowGuestAccess = viewModel.allowGuestAccess)
+    val environment = rememberPaginationEnvironment()
     val userMessages = rememberUserMessageSink()
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }

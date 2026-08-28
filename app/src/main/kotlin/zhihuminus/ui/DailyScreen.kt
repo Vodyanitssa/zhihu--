@@ -111,7 +111,7 @@ fun DailyScreen(
     isActive: Boolean = true,
 ) {
     val navigator = LocalNavigator.current
-    val httpClient = rememberPaginationEnvironment(allowGuestAccess = false).httpClient()
+    val httpClient = rememberPaginationEnvironment().httpClient()
     val uriHandler = LocalUriHandler.current
     val viewModel = viewModel { DailyViewModel() }
     var isRefreshing by remember { mutableStateOf(false) }

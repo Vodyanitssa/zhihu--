@@ -69,7 +69,7 @@ fun OnlineHistoryScreen(
     val navigator = LocalNavigator.current
     val viewModel: OnlineHistoryViewModel = viewModel { OnlineHistoryViewModel() }
     val readingQueueSourceId = "history:online"
-    val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val paginationEnvironment = rememberPaginationEnvironment()
     val userMessages = rememberUserMessageSink()
     val coroutineScope = rememberCoroutineScope()
     val listState = rememberLazyListState()

@@ -45,10 +45,6 @@ import kotlinx.serialization.json.JsonArray
 class HomeFeedViewModel : BaseFeedViewModel() {
     private val reportedTouchedItems = hashSetOf<Pair<String, String>>()
 
-    init {
-        allowGuestAccess = true
-    }
-
     public override suspend fun fetchFeeds(environment: PaginationEnvironment) {
         markItemsAsTouched(environment)
         try {

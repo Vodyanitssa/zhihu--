@@ -163,7 +163,7 @@ fun SearchScreen(
         append(':')
         append(search.query)
     }
-    val paginationEnvironment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val paginationEnvironment = rememberPaginationEnvironment()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val searchInputFocusRequester = remember { FocusRequester() }

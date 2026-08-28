@@ -410,7 +410,7 @@ fun normalizeTopicPagingUrl(rawUrl: String): String? {
 @Composable
 fun TopicScreen(topic: Topic) {
     val navigator = LocalNavigator.current
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val messages = rememberUserMessageSink()
     val settings = rememberSettingsStore()
     val executeShareAction = rememberShareActionExecutor()

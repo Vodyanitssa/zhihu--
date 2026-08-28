@@ -60,7 +60,6 @@ import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.notification.NotificationSettingsStore
-import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.ArticleAnswerSwitchState
 import com.zhihuminus.ui.ArticleAnswerTransitionDirection
@@ -80,7 +79,6 @@ import com.zhihuminus.viewmodel.filter.getContentFilterDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
-import io.ktor.client.plugins.cache.HttpCache
 import io.ktor.client.plugins.contentnegotiation.ContentNegotiation
 import io.ktor.client.plugins.cookies.HttpCookies
 import io.ktor.client.request.HttpRequestBuilder
@@ -123,7 +121,6 @@ abstract class PaginationViewModel<T : Any>(
         protected set
     var errorMessage: String? = null
         protected set
-    var allowGuestAccess = false
     protected var lastPaging: ZhihuPaging? by mutableStateOf(null)
     open val isEnd: Boolean get() = lastPaging?.isEnd == true
 
@@ -558,9 +555,7 @@ private val ZHIHU_PP_ANDROID_HEADERS = createClientPlugin("ZhihuPPAndroidHeaders
 
 open class SharedAndroidPaginationEnvironment(
     override val context: Context,
-    private val allowGuestAccess: Boolean,
 ) : AndroidContextPaginationEnvironment {
-    private val settingsStore by lazy { androidSettingsStore(context) }
     private val userMessageSink by lazy { androidUserMessageSink(context) }
 
     override suspend fun refreshAccountProfile() {
@@ -608,26 +603,10 @@ open class SharedAndroidPaginationEnvironment(
         clearAccountSession()
     }
 
-    override fun httpClient(): HttpClient {
-        val loginForRecommendation = settingsStore.getBoolean("loginForRecommendation", true)
-        if (allowGuestAccess && !loginForRecommendation) {
-            return HttpClient {
-                install(HttpCache)
-                install(ContentNegotiation) {
-                    json(json)
-                }
-                install(UserAgent) {
-                    agent = AccountData.data.userAgent
-                }
-            }
-        }
-        return AccountData.httpClient(context)
-    }
+    override fun httpClient(): HttpClient = AccountData.httpClient(context)
 
-    override fun mobileHomeFeedHttpClient(): HttpClient {
-        val loginForRecommendation = settingsStore.getBoolean("loginForRecommendation", true)
-
-        return HttpClient {
+    override fun mobileHomeFeedHttpClient(): HttpClient =
+        HttpClient {
             install(ContentNegotiation) {
                 json(json)
             }
@@ -635,24 +614,14 @@ open class SharedAndroidPaginationEnvironment(
                 agent = AccountData.ANDROID_USER_AGENT
             }
             install(ZHIHU_PP_ANDROID_HEADERS)
-            if (loginForRecommendation) {
-                install(HttpCookies) {
-                    storage = ZhihuCookieStorage(AccountData.data.cookies) {
-                        AccountData.saveData(context, AccountData.data)
-                    }
+            install(HttpCookies) {
+                storage = ZhihuCookieStorage(AccountData.data.cookies) {
+                    AccountData.saveData(context, AccountData.data)
                 }
             }
         }
-    }
 
-    override fun authenticatedCookies(): Map<String, String> {
-        val loginForRecommendation = settingsStore.getBoolean("loginForRecommendation", true)
-        return if (allowGuestAccess && !loginForRecommendation) {
-            emptyMap()
-        } else {
-            AccountData.data.cookies
-        }
-    }
+    override fun authenticatedCookies(): Map<String, String> = AccountData.data.cookies
 
     override suspend fun handleFetchFailure(
         tag: String?,
@@ -828,18 +797,17 @@ open class SharedAndroidPaginationEnvironment(
 
 class SharedAndroidNotificationEnvironment(
     context: Context,
-    allowGuestAccess: Boolean,
     override val notificationSettingsStore: NotificationSettingsStore,
-) : SharedAndroidPaginationEnvironment(context, allowGuestAccess),
+) : SharedAndroidPaginationEnvironment(context),
     NotificationEnvironment
 
 fun PaginationViewModel<*>.paginationEnvironment(context: Context): AndroidContextPaginationEnvironment =
-    SharedAndroidPaginationEnvironment(context, allowGuestAccess)
+    SharedAndroidPaginationEnvironment(context)
 
 @Composable
-fun rememberPaginationEnvironment(allowGuestAccess: Boolean): PaginationEnvironment {
+fun rememberPaginationEnvironment(): PaginationEnvironment {
     val context = LocalContext.current
-    return remember(context, allowGuestAccess) { SharedAndroidPaginationEnvironment(context, allowGuestAccess) }
+    return remember(context) { SharedAndroidPaginationEnvironment(context) }
 }
 
 fun PaginationViewModel<*>.refresh(context: Context) {

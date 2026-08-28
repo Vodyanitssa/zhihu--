@@ -70,7 +70,7 @@ fun CollectionScreen(
     isActive: Boolean = true,
 ) {
     val navigator = LocalNavigator.current
-    val environment = rememberPaginationEnvironment(allowGuestAccess = false)
+    val environment = rememberPaginationEnvironment()
     val viewModel: CollectionsViewModel = viewModel(key = urlToken) {
         CollectionsViewModel(urlToken.orEmpty())
     }

@@ -120,22 +120,6 @@ fun ContentFilterSettingsScreen(
                 .padding(vertical = 16.dp),
         ) {
             SettingItemGroup {
-                val isLoginForRecommendation = remember {
-                    mutableStateOf(settings.getBoolean("loginForRecommendation", true))
-                }
-                SettingItemWithSwitch(
-                    modifier = Modifier,
-                    title = { Text("推荐内容时登录") },
-                    description = { Text("获取推荐内容时携带登录凭证") },
-                    checked = isLoginForRecommendation.value,
-                    onCheckedChange = { checked ->
-                        isLoginForRecommendation.value = checked
-                        settings.putBoolean("loginForRecommendation", checked)
-                    },
-                    settingKey = "loginForRecommendation",
-                    highlightedKey = highlightedSetting,
-                )
-
                 val autoRefreshHomeOnStartup = remember {
                     mutableStateOf(settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true))
                 }

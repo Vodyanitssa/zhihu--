@@ -55,7 +55,7 @@ fun HotListScreen(
 ) {
     val viewModel: HotListViewModel = viewModel { HotListViewModel() }
     val readingQueueSourceId = "hot-list:total"
-    val environment = rememberPaginationEnvironment(viewModel.allowGuestAccess)
+    val environment = rememberPaginationEnvironment()
     val userMessages = rememberUserMessageSink()
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
