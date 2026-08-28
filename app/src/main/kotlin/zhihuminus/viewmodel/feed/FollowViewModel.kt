@@ -26,17 +26,36 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.sourceLabel
 import com.zhihuminus.data.target
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuFeedRepository
 import com.zhihuminus.viewmodel.FeedDisplayEnvironment
+import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.jsonArray
 
 class FollowViewModel : BaseFeedViewModel() {
-    override val initialUrl: String
-        get() = "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true"
+    override suspend fun fetchFeeds(environment: PaginationEnvironment) {
+        try {
+            val repository = ZhihuFeedRepository(ZhihuApiImpl(environment))
+            val page = repository.fetchMomentsFeedPage(url = lastPaging?.next)
+            processResponse(environment, page.items, JsonArray(emptyList()))
+            lastPaging = ZhihuPaging(
+                isEnd = page.isEnd || page.nextUrl == null,
+                next = page.nextUrl.orEmpty(),
+            )
+        } catch (e: Exception) {
+            if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+            environment.handleFetchFailure(this::class.simpleName, e)
+        } finally {
+            isLoading = false
+        }
+    }
 
     override fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem {
         val item = super.createDisplayItem(environment, feed)

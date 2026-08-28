@@ -295,6 +295,10 @@ internal const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.autho
 internal const val RECOMMEND_FEED_URL =
     "https://www.zhihu.com/api/v3/feed/topstory/recommend?desktop=true&limit=10"
 
+/** 桌面 Web v3 关注流（动态）首页 URL；续页用响应里的 paging.next。 */
+internal const val MOMENTS_FEED_URL =
+    "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true"
+
 /** 已知无法作为独立 feed 条目展示的响应类型，解码前直接跳过。 */
 private val SKIPPED_FEED_TYPES = setOf(
     "invited_answer",
