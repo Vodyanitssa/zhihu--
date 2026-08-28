@@ -119,7 +119,7 @@ fun NotificationTimelineScreen(
                 onLoadMore = { viewModel.loadMore(environment) },
                 isEnd = { viewModel.isEnd },
                 modifier = Modifier.fillMaxSize(),
-                footer = ProgressIndicatorFooter,
+                footer = if (viewModel.isRefreshing) null else ProgressIndicatorFooter,
                 key = { it.stableId },
             ) { notification ->
                 when {

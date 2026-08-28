@@ -119,6 +119,13 @@ abstract class PaginationViewModel<T : Any>(
     val debugData: MutableList<JsonElement> = mutableListOf()
     var isLoading: Boolean by mutableStateOf(false)
         protected set
+
+    /**
+     * 正在加载第一页（首次加载或下拉刷新）。此时 [androidx.compose.material3.pulltorefresh.PullToRefreshBox]
+     * 会显示顶部的刷新指示器，列表 footer 不应再显示第二个加载圈圈。
+     */
+    val isRefreshing: Boolean
+        get() = isLoading && lastPaging == null
     var errorMessage: String? = null
         protected set
     protected var lastPaging: ZhihuPaging? by mutableStateOf(null)

@@ -191,7 +191,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                 reverseLayout = true,
                 contentPadding = PaddingValues(vertical = 12.dp),
                 modifier = Modifier.fillMaxSize(),
-                footer = ProgressIndicatorFooter,
+                footer = if (viewModel.isRefreshing) null else ProgressIndicatorFooter,
                 key = { it.stableId },
             ) { message ->
                 PrivateMessageBubble(

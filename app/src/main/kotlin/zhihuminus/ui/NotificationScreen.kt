@@ -164,7 +164,7 @@ fun NotificationScreen() {
                 onLoadMore = { viewModel.loadMore(environment) },
                 isEnd = { viewModel.isEnd },
                 modifier = Modifier.fillMaxSize(),
-                footer = ProgressIndicatorFooter,
+                footer = if (viewModel.isRefreshing) null else ProgressIndicatorFooter,
                 key = { it.stableId },
                 topContent = {
                     item(key = "notification_categories") {
