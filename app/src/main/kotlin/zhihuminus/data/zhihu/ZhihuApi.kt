@@ -20,8 +20,12 @@ interface ZhihuApi {
 
     /**
      * 按完整 URL 拉取一页 feed 条目（问题回答流等），并解析续页游标。
+     * @param include feed 字段 include 表达式，空串表示不传（桌面推荐流默认返回全量字段）
      */
-    suspend fun fetchFeedPage(url: String): FeedPage
+    suspend fun fetchFeedPage(
+        url: String,
+        include: String = FEED_INCLUDE,
+    ): FeedPage
 
     /**
      * 关注/取消关注问题

@@ -53,9 +53,12 @@ class ZhihuApiImpl(
         return ZhihuJson.decodeJson(json)
     }
 
-    override suspend fun fetchFeedPage(url: String): FeedPage {
+    override suspend fun fetchFeedPage(
+        url: String,
+        include: String,
+    ): FeedPage {
         @Suppress("HttpUrlsUsage")
-        val json = environment.fetchJson(url.replace("http://", "https://"), FEED_INCLUDE)
+        val json = environment.fetchJson(url.replace("http://", "https://"), include)
             ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: not json object."))
         val jsonArray = json["data"] as? JsonArray
             ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no \$.data"))
@@ -281,7 +284,11 @@ class ZhihuApiImpl(
     }
 }
 
-private const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
+internal const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
+
+/** 桌面 Web v3 推荐流首页 URL；续页用响应里的 paging.next。 */
+internal const val RECOMMEND_FEED_URL =
+    "https://www.zhihu.com/api/v3/feed/topstory/recommend?desktop=true&limit=10"
 
 /** 已知无法作为独立 feed 条目展示的响应类型，解码前直接跳过。 */
 private val SKIPPED_FEED_TYPES = setOf(

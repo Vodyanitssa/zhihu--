@@ -126,11 +126,17 @@ abstract class PaginationViewModel<T : Any>(
     var allowGuestAccess = false
     protected var lastPaging: ZhihuPaging? by mutableStateOf(null)
     open val isEnd: Boolean get() = lastPaging?.isEnd == true
-    protected abstract val initialUrl: String
+
+    /**
+     * 首页 URL，供基类 [fetchFeeds] 在没有续页游标时使用；
+     * 完全自定义取数（重写 [fetchFeeds]）的子类可不覆写。
+     */
+    protected open val initialUrl: String? = null
+
     private var currentJob: Job? = null
     protected open val shouldLogDecodeFailures: Boolean = true
 
-    protected open fun resolvePageUrl(): String = lastPaging?.next ?: initialUrl
+    protected open fun resolvePageUrl(): String = lastPaging?.next ?: initialUrl.orEmpty()
 
     /**
      * Generally used fields to include in the API request.

@@ -21,8 +21,11 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.target
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuFeedRepository
 import com.zhihuminus.util.Log
 import com.zhihuminus.viewmodel.ContentInteractionEnvironment
 import com.zhihuminus.viewmodel.PaginationEnvironment
@@ -42,17 +45,26 @@ import kotlinx.serialization.json.JsonArray
 class HomeFeedViewModel : BaseFeedViewModel() {
     private val reportedTouchedItems = hashSetOf<Pair<String, String>>()
 
-    override val initialUrl: String
-        //        get() = "https://www.zhihu.com/api/v3/feed/topstory/recommend?desktop=true&limit=10"
-        get() = "https://api.zhihu.com/topstory/recommend"
-
     init {
         allowGuestAccess = true
     }
 
     public override suspend fun fetchFeeds(environment: PaginationEnvironment) {
         markItemsAsTouched(environment)
-        super.fetchFeeds(environment)
+        try {
+            val repository = ZhihuFeedRepository(ZhihuApiImpl(environment))
+            val page = repository.fetchRecommendFeedPage(url = lastPaging?.next)
+            processResponse(environment, page.items, JsonArray(emptyList()))
+            lastPaging = ZhihuPaging(
+                isEnd = page.isEnd || page.nextUrl == null,
+                next = page.nextUrl.orEmpty(),
+            )
+        } catch (e: Exception) {
+            if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+            environment.handleFetchFailure(this::class.simpleName, e)
+        } finally {
+            isLoading = false
+        }
     }
 
     @OptIn(DelicateCoroutinesApi::class)
