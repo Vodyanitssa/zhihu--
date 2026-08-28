@@ -429,7 +429,6 @@ fun ZhihuMain(
                         FollowScreen(
                             scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
-                            parentPagerState = mainPagerState,
                         )
                     }
                     composable<Daily> {
@@ -572,7 +571,6 @@ private fun MainTabsPager(
             MainTabPage.FollowPage -> FollowScreen(
                 scrollToTopTrigger = scrollToTopTrigger,
                 innerPadding = innerPadding,
-                parentPagerState = pagerState,
             )
 
             MainTabPage.HotListPage -> HotListScreen(

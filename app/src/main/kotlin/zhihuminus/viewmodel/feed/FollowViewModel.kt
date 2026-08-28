@@ -67,11 +67,6 @@ class FollowViewModel : BaseFeedViewModel() {
     }
 }
 
-class FollowRecommendViewModel : BaseFeedViewModel() {
-    override val initialUrl: String
-        get() = "https://api.zhihu.com/moments_v3?feed_type=recommend"
-}
-
 class RecentMomentsViewModel : ViewModel() {
     @Serializable
     data class Actor(
