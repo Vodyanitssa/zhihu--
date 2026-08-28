@@ -299,9 +299,10 @@ internal const val RECOMMEND_FEED_URL =
 internal const val MOMENTS_FEED_URL =
     "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true"
 
-/** 已知无法作为独立 feed 条目展示的响应类型，解码前直接跳过。 */
+/** 已知无法作为独立 feed 条目展示的响应类型与广告类型，解码前直接跳过。 */
 private val SKIPPED_FEED_TYPES = setOf(
     "invited_answer",
     "tab_list",
     "feed_item_index_group",
+    "feed_advert",
 )
