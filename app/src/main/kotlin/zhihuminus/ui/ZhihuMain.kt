@@ -17,6 +17,7 @@
 
 package com.zhihuminus.ui
 
+import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
@@ -29,7 +30,7 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideInVertically
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.slideOutVertically
-import androidx.compose.foundation.ExperimentalFoundationApi
+import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.gestures.awaitFirstDown
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
@@ -37,9 +38,6 @@ import androidx.compose.foundation.layout.asPaddingValues
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Group
@@ -63,8 +61,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
@@ -110,7 +109,6 @@ import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.ui.components.NoOpPagerNestedScrollConnection
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.BlockedFeedHistoryScreen
 import com.zhihuminus.ui.subscreens.ContentFilterSettingsScreen
@@ -119,7 +117,6 @@ import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
 import com.zhihuminus.ui.subscreens.SystemAndUpdateSettingsScreen
 import kotlinx.coroutines.delay
-import kotlinx.coroutines.launch
 import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
@@ -146,14 +143,14 @@ private sealed class MainTabPage(
 /**
  * Zhihu++ 的共享应用主壳。
  *
- * 这个 composable 是顶层体验的唯一所有者：渲染可配置底部导航栏，承载横向主 tab pager，向子页面提供 [LocalNavigator]，
+ * 这个 composable 是顶层体验的唯一所有者：渲染可配置底部导航栏，承载仅可通过底栏点击/深链接切换的主 tab 页面，
+ * 向子页面提供 [LocalNavigator]，
  * 并注册跨平台共享的 typed [NavDestination] route。设计上把顶层 tab 收在 [MainTabs] 内部，而不是把每个 tab
  * 都作为独立 NavHost 页面 push，这样 tab 重选、回到顶部、顶/底栏自动隐藏和持久化 tab 选择都能使用同一套状态模型。
  *
  * 用户可见的主壳设置通过 [preferenceState] 流入。设置页退出时只 reload 这份状态，不重建 NavHost，从而在应用底栏和主题相关变更时
  * 保留已加载页面、返回栈和滚动位置。
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Suppress("RestrictedApi")
 @Composable
 fun ZhihuMain(
@@ -240,39 +237,32 @@ fun ZhihuMain(
             it.bottomDestination::class == startDestination::class
         }.takeIf { it >= 0 } ?: 0
 
-    val mainPagerState = rememberPagerState(
-        initialPage = pageIndexForDestination(startDestination),
-        pageCount = { mainTabPages.size },
-    )
-    val coroutineScope = rememberCoroutineScope()
+    var currentTabIndex by rememberSaveable {
+        mutableIntStateOf(pageIndexForDestination(startDestination))
+    }
 
     var currentMainTabDestination by remember { mutableStateOf(startDestination) }
 
     fun navigateTopLevel(destination: TopLevelDestination) {
-        val targetPage = pageIndexForDestination(destination)
-        coroutineScope.launch {
-            mainPagerState.animateScrollToPage(targetPage)
-        }
+        currentTabIndex = pageIndexForDestination(destination)
     }
 
-    LaunchedEffect(mainPagerState.currentPage, mainTabPages) {
-        mainTabPages.getOrNull(mainPagerState.currentPage)?.bottomDestination?.let { destination ->
+    LaunchedEffect(currentTabIndex, mainTabPages) {
+        mainTabPages.getOrNull(currentTabIndex)?.bottomDestination?.let { destination ->
             currentMainTabDestination = destination
             setCurrentMainTabOpenFrom(destination.openFrom)
         }
     }
 
-    PlatformBackHandler(mainPagerState.currentPage != 0) {
-        coroutineScope.launch {
-            mainPagerState.animateScrollToPage(0)
-        }
+    PlatformBackHandler(currentTabIndex != 0) {
+        currentTabIndex = 0
     }
 
     LaunchedEffect(mainTabNavigationTarget, mainTabPages) {
         mainTabNavigationTarget?.let { destination ->
             // 平台适配层会把旧的顶层 route 请求映射到 MainTabs。这里消费该请求，
             // 让 deeplink 等调用方仍能选中 Home/Follow 等 tab，而不是把旧 route 压入返回栈。
-            mainPagerState.scrollToPage(pageIndexForDestination(destination))
+            currentTabIndex = pageIndexForDestination(destination)
             consumeMainTabNavigationTarget(destination)
         }
     }
@@ -288,8 +278,8 @@ fun ZhihuMain(
                 startDestination
             }
             val targetPage = pageIndexForDestination(targetDestination)
-            if (mainPagerState.currentPage != targetPage || mainPagerState.currentPage !in mainTabPages.indices) {
-                mainPagerState.scrollToPage(targetPage)
+            if (currentTabIndex != targetPage || currentTabIndex !in mainTabPages.indices) {
+                currentTabIndex = targetPage
             }
         }
     }
@@ -304,7 +294,7 @@ fun ZhihuMain(
                     // 页面切换时重置底部导航栏可见状态
                     LaunchedEffect(navEntry) { isBottomBarVisible = true }
                     val currentBottomDestination = mainTabPages
-                        .getOrNull(mainPagerState.targetPage)
+                        .getOrNull(currentTabIndex)
                         ?.bottomDestination
                     AnimatedVisibility(
                         visible = showMainNavigation && (!autoHideBottomBar || isBottomBarVisible),
@@ -407,8 +397,8 @@ fun ZhihuMain(
                     },
                 ) {
                     composable<MainTabs> {
-                        MainTabsPager(
-                            pagerState = mainPagerState,
+                        MainTabsContent(
+                            currentTabIndex = currentTabIndex,
                             pages = mainTabPages,
                             scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
@@ -543,59 +533,68 @@ fun ZhihuMain(
 }
 
 /**
- * 渲染可配置底部导航主壳内的页面。
+ * 渲染可配置底部导航主壳内的页面。不支持左右滑动手势，只能通过底部导航栏或深链接等程序化导航切换，
+ * 切换时附带一个跟随切换方向的轻微横滑 + 淡入淡出过渡。
  *
  * 每个页面都接收主壳给出的 [innerPadding]，保证系统栏、底部栏和子页面之间的留白一致。
+ * [SaveableStateProvider] 按 [MainTabPage.key] 隔离各 tab 的可保存状态，切走再切回时滚动位置等不丢失。
  */
-@OptIn(ExperimentalFoundationApi::class)
 @Composable
-private fun MainTabsPager(
-    pagerState: PagerState,
+private fun MainTabsContent(
+    currentTabIndex: Int,
     pages: List<MainTabPage>,
     scrollToTopTrigger: Int,
     innerPadding: PaddingValues,
     collectionDirectBrowseEnabled: Boolean,
 ) {
-    HorizontalPager(
-        state = pagerState,
+    val stateHolder = rememberSaveableStateHolder()
+    AnimatedContent(
+        targetState = currentTabIndex,
         modifier = Modifier.fillMaxSize(),
-        pageNestedScrollConnection = NoOpPagerNestedScrollConnection,
-    ) { pageIndex ->
-        val page = pages.getOrNull(pageIndex) ?: return@HorizontalPager
-        when (page) {
-            MainTabPage.HomePage -> HomeScreen(
-                scrollToTopTrigger = scrollToTopTrigger,
-                innerPadding = innerPadding,
-            )
+        transitionSpec = {
+            if (targetState >= initialState) {
+                (fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 16 }) togetherWith
+                    (fadeOut(tween(160)) + slideOutHorizontally(tween(200)) { -it / 16 })
+            } else {
+                (fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 16 }) togetherWith
+                    (fadeOut(tween(160)) + slideOutHorizontally(tween(200)) { it / 16 })
+            }
+        },
+        label = "MainTabs",
+    ) { tabIndex ->
+        val page = pages.getOrNull(tabIndex) ?: return@AnimatedContent
+        stateHolder.SaveableStateProvider(page.key) {
+            when (page) {
+                MainTabPage.HomePage -> HomeScreen(
+                    scrollToTopTrigger = scrollToTopTrigger,
+                    innerPadding = innerPadding,
+                )
 
-            MainTabPage.FollowPage -> FollowScreen(
-                scrollToTopTrigger = scrollToTopTrigger,
-                innerPadding = innerPadding,
-            )
+                MainTabPage.FollowPage -> FollowScreen(
+                    scrollToTopTrigger = scrollToTopTrigger,
+                    innerPadding = innerPadding,
+                )
 
-            MainTabPage.HotListPage -> HotListScreen(
-                innerPadding = innerPadding,
-                scrollToTopTrigger = scrollToTopTrigger,
-                isActive = pagerState.currentPage == pageIndex,
-            )
+                MainTabPage.HotListPage -> HotListScreen(
+                    innerPadding = innerPadding,
+                    scrollToTopTrigger = scrollToTopTrigger,
+                )
 
-            MainTabPage.DailyPage -> DailyScreen(
-                scrollToTopTrigger = scrollToTopTrigger,
-                isActive = pagerState.currentPage == pageIndex,
-            )
+                MainTabPage.DailyPage -> DailyScreen(
+                    scrollToTopTrigger = scrollToTopTrigger,
+                )
 
-            MainTabPage.OnlineHistoryPage -> OnlineHistoryScreen(
-                scrollToTopTrigger = scrollToTopTrigger,
-                isActive = pagerState.currentPage == pageIndex,
-            )
+                MainTabPage.OnlineHistoryPage -> OnlineHistoryScreen(
+                    scrollToTopTrigger = scrollToTopTrigger,
+                )
 
-            MainTabPage.MyCollectionsPage -> MyCollectionsTopLevelPage(
-                scrollToTopTrigger = scrollToTopTrigger,
-                collectionDirectBrowseEnabled = collectionDirectBrowseEnabled,
-                isActive = pagerState.currentPage == pageIndex,
-            )
+                MainTabPage.MyCollectionsPage -> MyCollectionsTopLevelPage(
+                    scrollToTopTrigger = scrollToTopTrigger,
+                    collectionDirectBrowseEnabled = collectionDirectBrowseEnabled,
+                )
 
-            MainTabPage.AccountPage -> AccountSettingScreen(innerPadding)
+                MainTabPage.AccountPage -> AccountSettingScreen(innerPadding)
+            }
         }
     }
 }
@@ -604,7 +603,6 @@ private fun MainTabsPager(
 private fun MyCollectionsTopLevelPage(
     scrollToTopTrigger: Int,
     collectionDirectBrowseEnabled: Boolean,
-    isActive: Boolean,
 ) {
     val account = rememberAccountSettingsAccountState().value
     if (collectionDirectBrowseEnabled) {
@@ -612,13 +610,11 @@ private fun MyCollectionsTopLevelPage(
             urlToken = account.urlToken,
             showBackButton = false,
             scrollToTopTrigger = scrollToTopTrigger,
-            isActive = isActive,
         )
     } else {
         CollectionScreen(
             urlToken = account.urlToken,
             showBackButton = false,
-            isActive = isActive,
         )
     }
 }
