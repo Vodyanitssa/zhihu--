@@ -383,6 +383,7 @@ fun decodeTopicPinFeeds(json: kotlinx.serialization.json.JsonObject): List<FeedD
                     ).toFeedDisplayItemNavDestinationJson(),
                 avatarSrc = target.author.avatarUrl,
                 authorName = target.author.name,
+                contentTypeLabel = "想法",
             )
         }
     }

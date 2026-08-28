@@ -91,6 +91,8 @@ class CollectionContentViewModel(
             is Feed.QuestionTarget -> item.content.author?.avatarUrl
             else -> null
         },
+        contentTypeLabel = item.content.description(),
+        publishTimeSeconds = item.content.createdTime.takeIf { it > 0 },
     )
 
     override fun refresh(environment: PaginationEnvironment) {

@@ -183,15 +183,6 @@ private val settingsSearchEntries = buildList {
     )
     add(
         appearanceEntry(
-            "appearance.feedCardStyle",
-            "信息流样式",
-            "切换卡片或分割线样式。",
-            "feedCardStyle",
-            listOf("Feed", "列表样式", "卡片样式", "分割线"),
-        ),
-    )
-    add(
-        appearanceEntry(
             "appearance.bottomBar",
             "底部导航栏",
             "启动页、底栏显示页面和底栏行为。",

@@ -66,6 +66,8 @@ class ZhihuQuestionRepository(
                 details = target.detailsText,
                 feed = this@toAnswerDisplayItem,
                 title = "",
+                contentTypeLabel = "回答",
+                publishTimeSeconds = target.createdTime.takeIf { it > 0 },
             )
         }
         return toDisplayItem()

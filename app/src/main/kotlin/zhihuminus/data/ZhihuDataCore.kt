@@ -33,6 +33,8 @@ data class FeedDisplayItem(
     val isFiltered: Boolean = false,
     val content: String? = null,
     var raw: DataHolder.Content? = null,
+    val contentTypeLabel: String? = null,
+    val publishTimeSeconds: Long? = null,
 ) {
     val stableKey: String
         get() = navDestinationJson
@@ -80,8 +82,16 @@ fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
         authorName = target.author?.name,
         authorBadgeV2 = target.author?.badgeV2,
         feed = this,
+        contentTypeLabel = target.typeLabel,
+        publishTimeSeconds = target.publishTimeSeconds,
     )
 }
+
+private val Feed.Target.typeLabel: String
+    get() = description()
+
+private val Feed.Target.publishTimeSeconds: Long?
+    get() = createdTime.takeIf { it > 0 }
 
 private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = target) {
     is Feed.AnswerTarget,
@@ -95,6 +105,8 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = tar
         authorName = target.author?.name,
         authorBadgeV2 = target.author?.badgeV2,
         feed = this,
+        contentTypeLabel = target.typeLabel,
+        publishTimeSeconds = target.publishTimeSeconds,
     )
 
     is Feed.PinTarget -> {
@@ -119,6 +131,8 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = tar
             authorName = target.author.name,
             authorBadgeV2 = target.author.badgeV2,
             feed = this,
+            contentTypeLabel = target.typeLabel,
+            publishTimeSeconds = target.publishTimeSeconds,
         )
     }
 
@@ -127,5 +141,7 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = tar
         summary = "Not Implemented",
         details = target?.detailsText ?: "广告",
         feed = this,
+        contentTypeLabel = target?.typeLabel,
+        publishTimeSeconds = target?.publishTimeSeconds,
     )
 }

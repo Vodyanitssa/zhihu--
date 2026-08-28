@@ -18,8 +18,10 @@
 package com.zhihuminus.ui.components
 
 import androidx.compose.animation.ExperimentalSharedTransitionApi
+import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
+import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -36,15 +38,9 @@ import androidx.compose.foundation.layout.sizeIn
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.MoreVert
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -65,6 +61,7 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
+import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
@@ -88,12 +85,12 @@ import org.jsoup.Jsoup
 /**
  * 信息流卡片的 Material 3 实现。
  *
- * 卡片负责展示标题、摘要、作者、徽章、缩略图和更多菜单，始终使用 Duo3 排版。
- * 默认点击会解析 [FeedDisplayItem] 的导航目标并进入详情页；页面可以通过 [menuItems] 直接声明自己的业务菜单项。
+ * 卡片自上而下展示来源标签、标题、作者（头像、名称、徽章）、摘要、缩略图和统计数据，始终使用 Duo3 排版。
+ * 默认点击会解析 [FeedDisplayItem] 的导航目标并进入详情页；页面可以通过 [menuItems] 直接声明自己的业务菜单项，长按卡片弹出。
  *
- * 修改这个组件时要同步复核 `showFeedThumbnail` 和 `feedCardStyle` 对各信息流入口的影响。
+ * 修改这个组件时要同步复核 `showFeedThumbnail` 设置对各信息流入口的影响。
  */
-@OptIn(ExperimentalSharedTransitionApi::class)
+@OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedCard(
     item: FeedDisplayItem,
@@ -117,9 +114,6 @@ fun FeedCard(
     val showFeedThumbnail = remember {
         settings.getBoolean("showFeedThumbnail", true)
     }
-    val feedCardStyle = remember {
-        settings.getString("feedCardStyle", "divider")
-    }
     val pinImages = (item.feed?.target as? Feed.PinTarget)
         ?.content
         ?.filterIsInstance<DataHolder.Pin.ContentImage>()
@@ -139,16 +133,16 @@ fun FeedCard(
             }
         }
     }
-    if (feedCardStyle == "divider") {
+    Box(modifier = modifier.fillMaxWidth()) {
         Column(
-            modifier = modifier
+            modifier = Modifier
                 .fillMaxWidth()
                 .then(if (showPinImages) Modifier else Modifier.heightIn(max = maxHeight)),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .clickable { performClick(item) }
+                    .combinedClickable(onClick = { performClick(item) }, onLongClick = { showMenu = true })
                     .padding(horizontal = horizontalPadding, vertical = 12.dp),
             ) {
                 FeedCardContent(
@@ -156,98 +150,55 @@ fun FeedCard(
                     showFeedThumbnail = showFeedThumbnail,
                     thumbnailUrl = thumbnailUrl,
                     pinImages = pinImages,
-                    showMenu = showMenu,
-                    onShowMenuChange = { showMenu = it },
-                    menuItems = menuItems,
                     showSourceLabel = showSourceLabel,
                 )
             }
             HorizontalDivider(thickness = 0.3.dp)
         }
-    } else {
-        Box(
-            modifier = modifier
-                .fillMaxWidth()
-                .then(if (showPinImages) Modifier else Modifier.heightIn(max = maxHeight))
-                .padding(horizontal = horizontalPadding, vertical = 8.dp),
-        ) {
-            Card(
-                colors = CardDefaults.cardColors().copy(
-                    containerColor = MaterialTheme.colorScheme.surfaceBright,
-                ),
-                shape = RoundedCornerShape(24.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .clip(RoundedCornerShape(24.dp))
-                    .clickable { performClick(item) },
-                elevation = CardDefaults.cardElevation(),
-            ) {
-                Column(
-                    modifier = Modifier.padding(16.dp, 12.dp, 16.dp, 16.dp),
-                ) {
-                    FeedCardContent(
-                        item = item,
-                        showFeedThumbnail = showFeedThumbnail,
-                        thumbnailUrl = thumbnailUrl,
-                        pinImages = pinImages,
-                        showMenu = showMenu,
-                        onShowMenuChange = { showMenu = it },
-                        menuItems = menuItems,
-                        showSourceLabel = showSourceLabel,
-                    )
-                }
-            }
-        }
+        FeedCardMenu(
+            item = item,
+            showMenu = showMenu,
+            onShowMenuChange = { showMenu = it },
+            menuItems = menuItems,
+            navigator = navigator,
+        )
     }
 }
 
 /**
- * 信息流卡片右上角的更多菜单。
+ * 信息流卡片的长按菜单。
  *
  * 卡片只负责菜单的展开、收起和通用设置项；页面业务动作由 [menuItems] 直接提供。
  */
 @Composable
-private fun FeedCardMenuBox(
+private fun FeedCardMenu(
     item: FeedDisplayItem,
     showMenu: Boolean,
     onShowMenuChange: (Boolean) -> Unit,
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit,
     navigator: Navigator,
 ) {
-    Box {
-        IconButton(
-            onClick = { onShowMenuChange(true) },
-            modifier = Modifier.size(24.dp),
-        ) {
-            Icon(
-                imageVector = Icons.Default.MoreVert,
-                contentDescription = "更多选项",
-                tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.size(16.dp),
+    DropdownMenu(
+        expanded = showMenu,
+        onDismissRequest = { onShowMenuChange(false) },
+    ) {
+        menuItems { onShowMenuChange(false) }
+        if (item.isFiltered) {
+            DropdownMenuItem(
+                text = { Text("不再屏蔽低赞内容") },
+                onClick = {
+                    onShowMenuChange(false)
+                    navigator.onNavigate(Account.RecommendSettings("enableQualityFilter"))
+                },
             )
-        }
-        DropdownMenu(
-            expanded = showMenu,
-            onDismissRequest = { onShowMenuChange(false) },
-        ) {
-            menuItems { onShowMenuChange(false) }
-            if (item.isFiltered) {
-                DropdownMenuItem(
-                    text = { Text("不再屏蔽低赞内容") },
-                    onClick = {
-                        onShowMenuChange(false)
-                        navigator.onNavigate(Account.RecommendSettings("enableQualityFilter"))
-                    },
-                )
-            }
         }
     }
 }
 
 /**
- * 信息流卡片正文内容。
+ * 卡片正文内容。
  *
- * 这里决定标题、摘要、缩略图、作者信息和操作菜单在卡片内的排列方式。
+ * 这里决定来源标签、作者行、标题、摘要、缩略图和统计数据在卡片内的排列方式。
  */
 @Composable
 private fun FeedCardContent(
@@ -255,18 +206,15 @@ private fun FeedCardContent(
     showFeedThumbnail: Boolean,
     thumbnailUrl: String?,
     pinImages: List<DataHolder.Pin.ContentImage>,
-    showMenu: Boolean,
-    onShowMenuChange: (Boolean) -> Unit,
-    menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit,
     showSourceLabel: Boolean,
 ) {
     val settings = rememberSettingsStore()
     val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
-    val navigator = LocalNavigator.current
     val visiblePinImages = pinImages.takeIf { showFeedThumbnail && !item.isFiltered }.orEmpty()
     val sourceLabel = item.feed?.sourceLabel.takeUnless { item.isFiltered }
-    // ── 卡片排版：作者移至底部、调整图片和摘要结构、使用更大的标题字号 ─────────────────────
+    val typeLabel = item.contentTypeLabel.takeUnless { item.isFiltered }
+    // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要 → 图片 → 统计行 ─────────────────────
     if (showSourceLabel) {
         FeedCardSourceLabel(sourceLabel)
     }
@@ -280,6 +228,35 @@ private fun FeedCardContent(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(bottom = 8.dp),
             )
+        }
+    }
+    if (item.avatarSrc != null && item.authorName != null) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier
+                .padding(bottom = 8.dp)
+                .clickable {},
+        ) {
+            AsyncImage(
+                model = item.avatarSrc,
+                contentDescription = "Avatar",
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .size(24.dp),
+            )
+            Spacer(Modifier.width(8.dp))
+            Text(
+                text = item.authorName.orEmpty(),
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurface,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
+            val authorBadge = item.authorBadgeV2.officialBadge()
+            if (authorBadge?.isUsefulInList == true) {
+                Spacer(Modifier.width(4.dp))
+                AuthorBadge(authorBadge, compact = true)
+            }
         }
     }
 
@@ -320,56 +297,40 @@ private fun FeedCardContent(
             images = visiblePinImages,
             modifier = Modifier.padding(top = 8.dp),
         )
-        if (item.details.isNotEmpty() || (item.avatarSrc != null && item.authorName != null)) {
+        val statsText = typeLabel
+            ?.takeIf { item.details.startsWith("$it · ") }
+            ?.let { item.details.removePrefix("$it · ") }
+            ?: item.details
+        val publishTimeText = item.publishTimeSeconds
+            ?.takeUnless { item.isFiltered }
+            ?.let(::formatDateTime)
+        if (statsText.isNotEmpty() || publishTimeText != null) {
             Row(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(top = 8.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                val avatarSrc = item.avatarSrc
-                val authorName = item.authorName
-                if (avatarSrc != null && authorName != null) {
-                    Row(
-                        verticalAlignment = Alignment.CenterVertically,
-                        modifier = Modifier
-                            .weight(1f, fill = false)
-                            .clickable {},
-                    ) {
-                        AsyncImage(
-                            model = avatarSrc,
-                            contentDescription = "Avatar",
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .size(24.dp),
-                        )
-                        Spacer(Modifier.width(8.dp))
-                        Text(
-                            text = authorName,
-                            style = MaterialTheme.typography.labelMedium,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            modifier = Modifier.weight(1f, fill = false),
-                        )
-                        val authorBadge = item.authorBadgeV2.officialBadge()
-                        if (authorBadge?.isUsefulInList == true) {
-                            Spacer(Modifier.width(4.dp))
-                            AuthorBadge(authorBadge, compact = true)
-                        }
-                    }
-                    Spacer(Modifier.width(6.dp))
-                }
-                if (item.details.isNotEmpty()) {
+                if (statsText.isNotEmpty()) {
                     Text(
-                        text = item.details,
+                        text = statsText,
                         style = MaterialTheme.typography.labelMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                         maxLines = 1,
                         overflow = TextOverflow.Ellipsis,
                         modifier = Modifier.weight(1f),
                     )
-                    FeedCardMenuBox(item, showMenu, onShowMenuChange, menuItems, navigator)
+                } else {
+                    Spacer(Modifier.weight(1f))
+                }
+                publishTimeText?.let { time ->
+                    Spacer(Modifier.width(6.dp))
+                    Text(
+                        text = time,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                    )
                 }
             }
         }

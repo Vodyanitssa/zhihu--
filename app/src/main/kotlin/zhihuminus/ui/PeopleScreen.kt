@@ -458,6 +458,8 @@ private fun DataHolder.Answer.toPeopleAnswerDisplayItem(): FeedDisplayItem {
         feed = null,
         navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
         raw = this,
+        contentTypeLabel = "回答",
+        publishTimeSeconds = createdTime.takeIf { it > 0 },
     )
 }
 
@@ -478,6 +480,8 @@ private fun DataHolder.Article.toPeopleArticleDisplayItem(): FeedDisplayItem {
         feed = null,
         navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
         raw = this,
+        contentTypeLabel = "文章",
+        publishTimeSeconds = created.takeIf { it > 0 },
     )
 }
 
@@ -490,6 +494,8 @@ private fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem? {
         feed = null,
         navDestinationJson = PostDestination(type = PostType.Pin, id = pinId, authorName = author.name).toFeedDisplayItemNavDestinationJson(),
         raw = this,
+        contentTypeLabel = "想法",
+        publishTimeSeconds = created.takeIf { it > 0 },
     )
 }
 

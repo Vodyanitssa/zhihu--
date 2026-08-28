@@ -210,7 +210,7 @@ internal fun shouldShowAccountHistoryShortcut(
 /**
  * 外观与阅读体验设置页。
  *
- * 这里集中管理主题、字号/行高、信息流样式、文章页行为、底部导航栏、分享、搜索和技术性导航开关。页面支持通过 [setting]
+ * 这里集中管理主题、字号/行高、信息流缩略图、文章页行为、底部导航栏、分享、搜索和技术性导航开关。页面支持通过 [setting]
  * 跳入指定设置项并高亮滚动到位，因此新增设置时应提供稳定的 `settingKey`，必要时也补充 test tag。
  *
  * 底部导航栏相关设置会影响 [com.zhihuminus.ui.ZhihuMain] 的主壳状态；页面退出时必须通过 [onExit]
@@ -576,56 +576,6 @@ fun AppearanceSettingsScreen(
                     settingKey = "showFeedThumbnail",
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor("showFeedThumbnail"),
-                )
-
-                var feedCardStyleExpanded by remember { mutableStateOf(false) }
-                val feedCardStyle = remember {
-                    mutableStateOf(settings.getString("feedCardStyle", "divider"))
-                }
-                val feedCardStyleOptions = listOf(
-                    "card" to "卡片样式",
-                    "divider" to "分割线样式",
-                )
-                SettingItem(
-                    title = { Text("信息流样式") },
-                    description = { Text("卡片样式使用圆角卡片展示，分割线样式使用细线分隔条目。") },
-                    settingKey = "feedCardStyle",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("feedCardStyle"),
-                    endAction = {
-                        ExposedDropdownMenuBox(
-                            expanded = feedCardStyleExpanded,
-                            onExpandedChange = { feedCardStyleExpanded = it },
-                        ) {
-                            OutlinedTextField(
-                                value = feedCardStyleOptions.find { it.first == feedCardStyle.value }?.second
-                                    ?: "卡片样式",
-                                onValueChange = {},
-                                readOnly = true,
-                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = feedCardStyleExpanded) },
-                                modifier = Modifier
-                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
-                                    .width(160.dp),
-                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
-                            )
-                            ExposedDropdownMenu(
-                                expanded = feedCardStyleExpanded,
-                                onDismissRequest = { feedCardStyleExpanded = false },
-                            ) {
-                                feedCardStyleOptions.forEach { (mode, label) ->
-                                    DropdownMenuItem(
-                                        text = { Text(label) },
-                                        onClick = {
-                                            feedCardStyle.value = mode
-                                            settings.putString("feedCardStyle", mode)
-                                            feedCardStyleExpanded = false
-                                            userMessages.showShortMessage("已设置为：$label")
-                                        },
-                                    )
-                                }
-                            }
-                        }
-                    },
                 )
             }
 

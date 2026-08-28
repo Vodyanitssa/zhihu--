@@ -23,6 +23,7 @@ import com.zhihuminus.data.OnlineHistoryDeletePair
 import com.zhihuminus.data.OnlineHistoryItem
 import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.viewmodel.PaginationEnvironment
@@ -69,6 +70,14 @@ class OnlineHistoryViewModel : BaseFeedViewModel() {
                     else -> null
                 },
                 authorName = item.data.content?.authorName,
+                contentTypeLabel = when (matchedItem) {
+                    is PostDestination -> when (matchedItem.type) {
+                        PostType.Answer -> "回答"
+                        PostType.Article -> "文章"
+                        PostType.Pin -> "想法"
+                    }
+                    else -> null
+                },
             )
             deletionPairs[displayItem] = OnlineHistoryDeletePair(
                 contentToken = item.data.extra.contentToken,
