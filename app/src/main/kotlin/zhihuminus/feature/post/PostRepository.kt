@@ -6,6 +6,11 @@ interface PostRepository {
     suspend fun getPost(type: PostType, id: Long): Post
 
     /**
+     * 读取本地缓存的内容（feed 预热或上次的网络详情），未命中或解码失败返回 null
+     */
+    suspend fun getCachedPost(type: PostType, id: Long): Post?
+
+    /**
      * 投票（Answer/Article 支持 up/down/neutral，Pin 仅支持 up/neutral）
      * @param postType 内容类型
      * @param id 内容 ID

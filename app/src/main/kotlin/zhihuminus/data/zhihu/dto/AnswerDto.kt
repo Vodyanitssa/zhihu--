@@ -56,6 +56,7 @@ data class ReactionDto(
 @Serializable
 data class RelationDto(
     val vote: String = "Neutral",
+    val faved: Boolean? = null,
 )
 
 @Serializable

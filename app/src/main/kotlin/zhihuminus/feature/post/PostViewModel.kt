@@ -61,7 +61,7 @@ class PostViewModel(
 
     fun onEvent(event: PostEvent) {
         when (event) {
-            is PostEvent.Refresh -> loadPost()
+            is PostEvent.Refresh -> loadPost(forceNetwork = true)
             is PostEvent.VoteUp -> {
                 handleVote(if (uiState.bottomBarState.voteUpState == VoteUpState.Up) VoteUpState.Neutral else VoteUpState.Up)
             }
@@ -174,38 +174,72 @@ class PostViewModel(
         }
     }
 
-    private fun loadPost() {
-        // Only show loading if not already displaying content (avoids dialog flicker on refresh)
-        if (uiState.loadState !is PostLoadState.Success) {
-            uiState = uiState.copy(loadState = PostLoadState.Loading)
-        }
+    private fun loadPost(forceNetwork: Boolean = false) {
         viewModelScope.launch {
-            try {
-                val post = withContext(Dispatchers.Default) {
-                    repository.getPost(postType, postId)
+            val cached = if (forceNetwork) {
+                null
+            } else {
+                withContext(Dispatchers.Default) {
+                    repository.getCachedPost(postType, postId)
                 }
-                uiState = uiState.copy(
-                    loadState = PostLoadState.Success(post),
-                    bottomBarState = PostBottomBarState(
-                        voteUpState = post.voteState,
-                        voteUpCount = post.voteCount,
-                        commentCount = post.commentCount,
-                    ),
-                )
-                loadCollections()
-                viewModelScope.launch {
-                    try {
-                        withContext(Dispatchers.Default) {
-                            repository.recordHistory(postType, postId)
-                        }
-                    } catch (e: Exception) {
-                        Log.e("PostViewModel", "Failed to record history", e)
-                    }
-                }
-            } catch (e: Exception) {
-                Log.e("PostViewModel", "Failed to load post", e)
-                uiState = uiState.copy(loadState = PostLoadState.Error(e.message))
             }
+            val post = if (cached != null) {
+                applyPost(cached)
+                cached
+            } else {
+                // Only show loading if not already displaying content (avoids dialog flicker on refresh)
+                if (uiState.loadState !is PostLoadState.Success) {
+                    uiState = uiState.copy(loadState = PostLoadState.Loading)
+                }
+                try {
+                    val fresh = withContext(Dispatchers.Default) {
+                        repository.getPost(postType, postId)
+                    }
+                    applyPost(fresh)
+                    fresh
+                } catch (e: Exception) {
+                    Log.e("PostViewModel", "Failed to load post", e)
+                    uiState = uiState.copy(loadState = PostLoadState.Error(e.message))
+                    return@launch
+                }
+            }
+            applyCollectedState(post)
+            viewModelScope.launch {
+                try {
+                    withContext(Dispatchers.Default) {
+                        repository.recordHistory(postType, postId)
+                    }
+                } catch (e: Exception) {
+                    Log.e("PostViewModel", "Failed to record history", e)
+                }
+            }
+        }
+    }
+
+    private fun applyPost(post: Post) {
+        uiState = uiState.copy(
+            loadState = PostLoadState.Success(post),
+            bottomBarState = PostBottomBarState(
+                voteUpState = post.voteState,
+                voteUpCount = post.voteCount,
+                commentCount = post.commentCount,
+            ),
+        )
+    }
+
+    /**
+     * 收藏状态已知（缓存的 reaction.relation.faved）时直接采用，省去收藏夹列表请求；
+     * 未知时走原来的网络加载。收藏夹对话框打开时会自行补拉完整列表。
+     */
+    private fun applyCollectedState(post: Post) {
+        val faved = post.isFaved
+        if (faved == null) {
+            loadCollections()
+        } else {
+            uiState = uiState.copy(
+                isCollected = faved,
+                bottomBarState = uiState.bottomBarState.copy(isCollected = faved),
+            )
         }
     }
 

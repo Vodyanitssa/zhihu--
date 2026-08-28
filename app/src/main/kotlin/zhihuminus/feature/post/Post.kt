@@ -28,6 +28,8 @@ data class Post(
     val voteCount: Int,
     val commentCount: Int,
     val voteState: VoteUpState = VoteUpState.Neutral,
+    /** 收藏状态（feed/详情接口的 reaction.relation.faved），null 表示未知 */
+    val isFaved: Boolean? = null,
     val createdAt: Long = 0,
     val updatedAt: Long = 0,
     val ipInfo: String? = null,

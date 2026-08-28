@@ -5,6 +5,7 @@ import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
@@ -63,6 +64,10 @@ class ZhihuApiImpl(
         val jsonArray = json["data"] as? JsonArray
             ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no \$.data"))
         val items = jsonArray.mapNotNull { element ->
+            // feed target 自带全文，预热内容缓存（仅回答/文章，内部对异常形态静默跳过）
+            ((element as? JsonObject)?.get("target") as? JsonObject)?.let {
+                PostContentCache.putFromFeedTarget(it)
+            }
             if ("type" in element.jsonObject &&
                 element.jsonObject["type"]?.jsonPrimitive?.content in SKIPPED_FEED_TYPES
             ) {

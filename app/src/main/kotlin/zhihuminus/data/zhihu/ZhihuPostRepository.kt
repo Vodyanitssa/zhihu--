@@ -4,6 +4,8 @@ import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
+import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
@@ -16,14 +18,51 @@ import com.zhihuminus.feature.post.PostPollOption
 import com.zhihuminus.feature.post.PostRepository
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.ui.booleanCompat
+import com.zhihuminus.util.Log
+import kotlinx.serialization.json.encodeToJsonElement
+import kotlinx.serialization.json.jsonObject
+import kotlin.coroutines.cancellation.CancellationException
 
 class ZhihuPostRepository(
     private val api: ZhihuApi,
 ) : PostRepository {
     override suspend fun getPost(type: PostType, id: Long): Post = when (type) {
-        PostType.Answer -> mapAnswer(api.getAnswer(id))
-        PostType.Article -> mapArticle(api.getArticle(id))
-        PostType.Pin -> mapPin(api.getPin(id))
+        PostType.Answer -> api.getAnswer(id).also { cachePost(type, id, it) }.let(::mapAnswer)
+        PostType.Article -> api.getArticle(id).also { cachePost(type, id, it) }.let(::mapArticle)
+        PostType.Pin -> api.getPin(id).also { cachePost(type, id, it) }.let(::mapPin)
+    }
+
+    override suspend fun getCachedPost(type: PostType, id: Long): Post? {
+        val json = PostContentCache.get(type, id) ?: return null
+        return try {
+            when (type) {
+                PostType.Answer -> mapAnswer(ZhihuJson.decodeJson<AnswerDto>(json))
+                PostType.Article -> mapArticle(ZhihuJson.decodeJson<ArticleDto>(json))
+                PostType.Pin -> mapPin(ZhihuJson.decodeJson<PinDto>(json))
+            }
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("ZhihuPostRepository", "Failed to decode cached post $type/$id", e)
+            null
+        }
+    }
+
+    /**
+     * 网络详情写入缓存（详情数据保真度高于 feed 预热，直接覆盖）。
+     * 编码/写入失败只影响缓存，不抛出。
+     */
+    private suspend inline fun <reified T : Any> cachePost(
+        type: PostType,
+        id: Long,
+        dto: T,
+    ) {
+        try {
+            val payload = ZhihuJson.json.encodeToJsonElement(dto).jsonObject
+            PostContentCache.put(type, id, payload)
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("ZhihuPostRepository", "Failed to cache post $type/$id", e)
+        }
     }
 
     override suspend fun vote(postType: PostType, id: Long, vote: String): Int = when (postType) {
@@ -95,6 +134,7 @@ class ZhihuPostRepository(
             voteCount = dto.voteupCount,
             commentCount = dto.commentCount,
             voteState = VoteUpState.from(dto.reaction?.relation?.vote),
+            isFaved = dto.reaction?.relation?.faved,
             createdAt = dto.createdTime,
             updatedAt = dto.updatedTime,
             ipInfo = dto.ipInfo,
@@ -114,6 +154,7 @@ class ZhihuPostRepository(
             voteCount = dto.voteupCount,
             commentCount = dto.commentCount,
             voteState = VoteUpState.from(dto.reaction?.relation?.vote),
+            isFaved = dto.reaction?.relation?.faved,
             createdAt = dto.created,
             updatedAt = dto.updated,
             ipInfo = dto.ipInfo,
