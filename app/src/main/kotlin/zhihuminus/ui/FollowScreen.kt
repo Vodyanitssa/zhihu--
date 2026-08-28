@@ -135,6 +135,9 @@ fun FollowScreen(
     }
 }
 
+/** 已关注人条目的自然高度（8dp 上下 contentPadding + 4dp 条目 padding + 56dp 头像 + 4dp 间隔 + 18dp 名字）。 */
+private val FollowingUsersRowHeight = 102.dp
+
 @Composable
 fun FollowingUsersRow() {
     val navigator = LocalNavigator.current
@@ -145,67 +148,74 @@ fun FollowingUsersRow() {
         viewModel.load(environment)
     }
 
-    when {
-        viewModel.errorMessage != null -> {
-            Box(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 12.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(
-                    text = viewModel.errorMessage!!,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
+    // 固定高度占位：首帧即占据最终尺寸，避免数据到达后首个列表项变高导致 LazyColumn 滚动锚定把整行顶出视口。
+    Box(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(FollowingUsersRowHeight),
+    ) {
+        when {
+            viewModel.errorMessage != null -> {
+                Box(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 12.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = viewModel.errorMessage!!,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
             }
-        }
 
-        viewModel.users.isNotEmpty() -> {
-            LazyRow(
-                modifier = Modifier,
-                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-            ) {
-                items(viewModel.users) { user ->
-                    Column(
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                        modifier = Modifier
-                            .clickable {
-                                navigator.onNavigate(
-                                    Person(
-                                        id = user.actor.id,
-                                        urlToken = user.actor.urlToken,
-                                        name = user.actor.name,
-                                        jumpTo = "动态",
-                                    ),
-                                )
-                            }.padding(vertical = 4.dp),
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                if (user.unreadCount > 0) {
-                                    Badge()
-                                }
-                            },
+            viewModel.users.isNotEmpty() -> {
+                LazyRow(
+                    modifier = Modifier,
+                    contentPadding = PaddingValues(horizontal = 12.dp, vertical = 8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(16.dp),
+                ) {
+                    items(viewModel.users) { user ->
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            modifier = Modifier
+                                .clickable {
+                                    navigator.onNavigate(
+                                        Person(
+                                            id = user.actor.id,
+                                            urlToken = user.actor.urlToken,
+                                            name = user.actor.name,
+                                            jumpTo = "动态",
+                                        ),
+                                    )
+                                }.padding(vertical = 4.dp),
                         ) {
-                            AsyncImage(
-                                model = user.actor.avatarUrl,
-                                contentDescription = user.actor.name,
-                                modifier = Modifier
-                                    .size(56.dp)
-                                    .clip(CircleShape),
+                            BadgedBox(
+                                badge = {
+                                    if (user.unreadCount > 0) {
+                                        Badge()
+                                    }
+                                },
+                            ) {
+                                AsyncImage(
+                                    model = user.actor.avatarUrl,
+                                    contentDescription = user.actor.name,
+                                    modifier = Modifier
+                                        .size(56.dp)
+                                        .clip(CircleShape),
+                                )
+                            }
+                            Spacer(Modifier.height(4.dp))
+                            Text(
+                                text = user.actor.name,
+                                fontSize = 12.sp,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                textAlign = TextAlign.Center,
+                                modifier = Modifier.size(width = 60.dp, height = 18.dp),
                             )
                         }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            text = user.actor.name,
-                            fontSize = 12.sp,
-                            maxLines = 1,
-                            overflow = TextOverflow.Ellipsis,
-                            textAlign = TextAlign.Center,
-                            modifier = Modifier.size(width = 60.dp, height = 18.dp),
-                        )
                     }
                 }
             }
