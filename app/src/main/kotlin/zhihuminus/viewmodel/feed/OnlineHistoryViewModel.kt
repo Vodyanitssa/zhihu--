@@ -17,79 +17,85 @@
 
 package com.zhihuminus.viewmodel.feed
 
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.HistoryItem
 import com.zhihuminus.data.OnlineHistoryDeletePair
-import com.zhihuminus.data.OnlineHistoryItem
-import com.zhihuminus.data.ZhihuJson.decodeJson
+import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
-import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.viewmodel.PaginationEnvironment
-import com.zhihuminus.viewmodel.deleteOnlineHistoryItem
-import kotlinx.serialization.json.JsonArray
+import com.zhihuminus.viewmodel.feed.BaseFeedViewModel
 
 class OnlineHistoryViewModel : BaseFeedViewModel() {
     override val initialUrl: String = "https://api.zhihu.com/unify-consumption/read_history?offset=0&limit=10"
     override val shouldLogDecodeFailures: Boolean = false
     private val deletionPairs = mutableMapOf<FeedDisplayItem, OnlineHistoryDeletePair>()
 
-    override fun processResponse(environment: PaginationEnvironment, data: List<Feed>, rawData: JsonArray) {
-        if (displayItems.isEmpty()) {
-            deletionPairs.clear()
+    /**
+     * 通过 [ZhihuHistoryRepository.fetchPage] 获取历史记录。
+     * Repository 返回解析好的 [HistoryItem] 业务对象，ViewModel 不感知 API 细节。
+     */
+    override suspend fun fetchFeeds(environment: PaginationEnvironment) {
+        try {
+            val url = resolvePageUrl()
+            val result = ZhihuHistoryRepository(environment).fetchPage(url)
+
+            addHistoryItems(environment, result.items)
+            lastPaging = ZhihuPaging(
+                isEnd = result.isEnd || result.nextUrl == null,
+                next = result.nextUrl.orEmpty(),
+            )
+        } catch (e: Exception) {
+            if (e is kotlinx.coroutines.CancellationException) throw e
+            environment.handleFetchFailure(this::class.simpleName, e)
+        } finally {
+            isLoading = false
         }
-        val response = rawData.mapNotNull { item ->
-            runCatching { decodeJson<OnlineHistoryItem>(item) }.getOrNull()
-        }
+    }
+
+    /**
+     * 将 [HistoryItem] 业务对象映射为 UI 层 [FeedDisplayItem] 并填充 [deletionPairs]。
+     */
+    private fun addHistoryItems(environment: PaginationEnvironment, items: List<HistoryItem>) {
         val localHistory = environment.localHistory()
 
-        response.forEach { item ->
+        items.forEach { item ->
             val navDest = try {
-                resolveContent(item.data.action.url)
+                resolveContent(item.actionUrl)
             } catch (e: Exception) {
                 null
             }
 
-            val detailsText = item.data.matrix
-                ?.firstOrNull()
-                ?.data
-                ?.text ?: item.data.extra.contentType
-
-            val matchedItem = localHistory.firstOrNull {
-                it == navDest
-            }
+            val matchedItem = localHistory.firstOrNull { it == navDest }
             val displayItem = FeedDisplayItem(
-                title = item.data.header.title,
-                summary = item.data.content?.summary ?: "",
-                details = detailsText,
+                title = item.title,
+                summary = item.summary,
+                details = item.details,
                 feed = null,
                 navDestinationJson = navDest?.toFeedDisplayItemNavDestinationJson(),
                 avatarSrc = when (matchedItem) {
                     is PostDestination -> matchedItem.avatarSrc
                     else -> null
                 },
-                authorName = item.data.content?.authorName,
-                contentTypeLabel = when (matchedItem) {
-                    is PostDestination -> when (matchedItem.type) {
-                        PostType.Answer -> "回答"
-                        PostType.Article -> "文章"
-                        PostType.Pin -> "想法"
-                    }
-                    else -> null
-                },
+                authorName = item.authorName,
+                contentTypeLabel = item.contentTypeLabel,
             )
             deletionPairs[displayItem] = OnlineHistoryDeletePair(
-                contentToken = item.data.extra.contentToken,
-                contentType = item.data.extra.contentType,
+                contentToken = item.contentToken,
+                contentType = item.contentType,
             )
-            displayItems.add(displayItem)
+            // 去重
+            if (displayItems.none { it.stableKey == displayItem.stableKey }) {
+                displayItems.add(displayItem)
+            }
         }
     }
 
     suspend fun deleteItem(environment: PaginationEnvironment, item: FeedDisplayItem) {
         val pair = checkNotNull(deletionPairs[item]) { "在线历史记录缺少删除标识" }
-        environment.deleteOnlineHistoryItem(pair)
+        ZhihuHistoryRepository(environment).deleteHistoryItem(pair)
         displayItems.remove(item)
         deletionPairs.remove(item)
     }

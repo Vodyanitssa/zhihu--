@@ -77,3 +77,20 @@ internal data class OnlineHistoryDeletePair(
     val contentToken: String,
     val contentType: String,
 )
+
+/**
+ * 在线浏览历史记录的业务模型。
+ *
+ * 由 [com.zhihuminus.data.zhihu.ZhihuHistoryRepository] 从 API DTO 解析而来，
+ * ViewModel 层只依赖此类型，不感知 API 细节。
+ */
+data class HistoryItem(
+    val title: String,
+    val summary: String,
+    val details: String,
+    val authorName: String?,
+    val contentTypeLabel: String,
+    val actionUrl: String,
+    val contentToken: String,
+    val contentType: String,
+)
