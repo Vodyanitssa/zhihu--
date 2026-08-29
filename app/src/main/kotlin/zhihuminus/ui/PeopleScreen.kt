@@ -83,6 +83,8 @@ import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
+import com.zhihuminus.navigation.router.AppRouter
+import com.zhihuminus.navigation.router.RouteResolution
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImagePreviewOpener
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -1225,10 +1227,17 @@ private fun PeopleListItem(
     people: DataHolder.People,
 ) {
     val navigator = LocalNavigator.current
+    val token = people.urlToken ?: people.id
     Row(
         modifier = Modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .clickable {
+                val url = "zhminus://people/$token"
+                when (val resolution = AppRouter.resolve(url)) {
+                    is RouteResolution.Screen -> navigator.onNavigate(resolution.destination)
+                    else -> {}
+                }
+            }.padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
