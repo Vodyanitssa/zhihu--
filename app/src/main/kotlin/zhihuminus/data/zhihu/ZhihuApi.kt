@@ -4,6 +4,7 @@ import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
+import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
@@ -199,4 +200,11 @@ interface ZhihuApi {
      * @param contentType 内容类型: "answer", "article", "pin"
      */
     suspend fun markAsRead(contentToken: String, contentType: String)
+
+    /**
+     * 获取专栏文章列表
+     * @param columnId 专栏 ID
+     * @param nextUrl 分页续页 URL（为 null 时从第一页开始）
+     */
+    suspend fun getColumnArticles(columnId: String, nextUrl: String?): ColumnArticlePage
 }

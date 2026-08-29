@@ -23,9 +23,11 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuColumnRepository
 import com.zhihuminus.data.zhihu.ZhihuCommentRepository
 import com.zhihuminus.data.zhihu.ZhihuPostRepository
 import com.zhihuminus.data.zhihu.ZhihuQuestionRepository
+import com.zhihuminus.feature.column.ColumnRoute
 import com.zhihuminus.feature.post.PostRoute
 import com.zhihuminus.feature.question.QuestionRoute
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
@@ -89,6 +91,17 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 articleHost = activity,
                 articleAnswerSwitchState = environment.articleAnswerSwitchState(),
                 initialCommentId = pendingCommentId,
+                onBack = { navController.popBackStack() },
+            )
+        },
+        columnContent = { destination, _ ->
+            val environment = rememberPaginationEnvironment()
+            val columnRepository = remember(environment) {
+                ZhihuColumnRepository(ZhihuApiImpl(environment))
+            }
+            ColumnRoute(
+                columnId = destination.columnId,
+                repository = columnRepository,
                 onBack = { navController.popBackStack() },
             )
         },

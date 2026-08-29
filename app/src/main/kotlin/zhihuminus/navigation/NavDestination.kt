@@ -297,6 +297,11 @@ data class Topic(
     val section: String = "",
 ) : NavDestination
 
+@Serializable
+data class Column(
+    val columnId: String,
+) : NavDestination
+
 fun NavDestination.withReadingQueueSource(sourceId: String?): NavDestination = when (this) {
     is PostDestination -> copy(readingQueueSourceId = sourceId)
     is Question -> copy(readingQueueSourceId = sourceId)
@@ -379,12 +384,15 @@ fun resolveContent(url: Url): NavDestination? {
             ) {
                 val query = url.parameters["q"] ?: ""
                 return Search(query)
+            } else if (segments.size == 2 &&
+                segments[0] == "column"
+            ) {
+                return Column(columnId = segments[1])
             }
             /*
              * 尚未支持的 destination，等待后续补充对应的 NavDestination：
              * - https://www.zhihu.com/appview/roundtable -> https://www.zhihu.com/roundtable
              * - https://www.zhihu.com/appview/special -> https://www.zhihu.com/special/all
-             * - https://www.zhihu.com/column/{columnToken}
              * - https://daily.zhihu.com/story/{storyId}
              * - https://www.zhihu.com/special/{specialId}
              */

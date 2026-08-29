@@ -8,6 +8,7 @@ import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
+import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
@@ -286,6 +287,14 @@ class ZhihuApiImpl(
                 ),
             )
         }
+    }
+
+    override suspend fun getColumnArticles(columnId: String, nextUrl: String?): ColumnArticlePage {
+        val url = nextUrl
+            ?: "https://www.zhihu.com/api/v4/columns/$columnId/items?limit=10&offset=0&ws_qiangzhisafe=0"
+        val json = environment.fetchJson(url, "")
+            ?: throw IllegalStateException("Failed to fetch column articles for $columnId")
+        return ZhihuJson.decodeJson(json)
     }
 }
 

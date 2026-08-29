@@ -82,10 +82,10 @@ import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImagePreviewOpener
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.platform.rememberZhihuWebUrlOpener
 import com.zhihuminus.ui.components.AuthorBadge
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
@@ -1127,12 +1127,12 @@ private fun PinListItem(
 private fun ColumnListItem(
     column: DataHolder.Column,
 ) {
-    val openZhihuWebUrl = rememberZhihuWebUrlOpener()
+    val openInAppLink = rememberInAppLinkOpener()
     Row(
         modifier = Modifier
             .fillMaxWidth()
             .clickable {
-                openZhihuWebUrl(column.webUrl())
+                openInAppLink(column.webUrl())
             }.padding(vertical = 8.dp, horizontal = 4.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {

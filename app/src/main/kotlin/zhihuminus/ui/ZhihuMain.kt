@@ -89,6 +89,7 @@ import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
+import com.zhihuminus.navigation.Column
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.Home
@@ -164,6 +165,7 @@ fun ZhihuMain(
     isDarkTheme: Boolean,
     postContent: @Composable (PostDestination, NavBackStackEntry) -> Unit = { _, _ -> },
     questionContent: @Composable (Question, NavBackStackEntry) -> Unit = { _, _ -> },
+    columnContent: @Composable (Column, NavBackStackEntry) -> Unit = { _, _ -> },
 ) {
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     val tapToScrollToTopEnabled = preferenceState.tapToScrollToTopEnabled
@@ -470,6 +472,10 @@ fun ZhihuMain(
                     composable<Person> { navEntry ->
                         val person: Person = navEntry.toRoute()
                         PeopleScreen(person)
+                    }
+                    composable<Column> { navEntry ->
+                        val column: Column = navEntry.toRoute()
+                        columnContent(column, navEntry)
                     }
                     composable<PostDestination>(
                         typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),

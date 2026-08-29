@@ -4,6 +4,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
+import com.zhihuminus.navigation.Column
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
@@ -112,6 +113,17 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                 (destination as? Topic)?.let {
                     if (it.section.isEmpty()) buildAppUrl("topic", it.id) else buildAppUrl("topic", it.id, it.section)
                 }
+            },
+        ),
+    )
+
+    add(
+        screenRule(
+            "column",
+            1..1,
+            parse = { args -> args.segment(0)?.takeIf(String::isNotEmpty)?.let(::Column) },
+            encode = { destination ->
+                (destination as? Column)?.let { buildAppUrl("column", it.columnId) }
             },
         ),
     )
