@@ -523,7 +523,7 @@ private val PEOPLE_SCREEN_SUBSCRIPTION_TITLES = listOf(
 
 private fun peopleScreenInitialPage(person: Person): Int {
     val jumpToIndex = PEOPLE_SCREEN_TITLES.indexOf(person.jumpTo)
-    return if (jumpToIndex >= 0) jumpToIndex else 0
+    return if (jumpToIndex >= 0) jumpToIndex else 2
 }
 
 internal fun peopleProfileUrl(person: Person): String {
@@ -654,26 +654,6 @@ fun PeopleScreen(
                                     }
                                 }
                             },
-                            // onRecommendationBlockToggle = {
-                            //     coroutineScope.launch {
-                            //         try {
-                            //             viewModel.toggleRecommendationBlock(paginationEnvironment)
-                            //             userMessages.showShortMessage(if (viewModel.isBlockedInRecommendations) "已屏蔽推荐" else "已取消屏蔽推荐")
-                            //         } catch (e: Exception) {
-                            //             userMessages.showShortMessage("操作失败: ${e.message}")
-                            //         }
-                            //     }
-                            // },
-                            // onQuestionAuthorBlockToggle = {
-                            //     coroutineScope.launch {
-                            //         try {
-                            //             viewModel.toggleQuestionAuthorBlock(paginationEnvironment)
-                            //             userMessages.showShortMessage(if (viewModel.isBlockedAsQuestionAuthor) "已屏蔽其提问" else "已取消屏蔽其提问")
-                            //         } catch (e: Exception) {
-                            //             userMessages.showShortMessage("操作失败: ${e.message}")
-                            //         }
-                            //     }
-                            // },
                         )
                     },
                     colors = TopAppBarDefaults.topAppBarColors().copy(
@@ -1561,18 +1541,6 @@ private fun UserInfoHeader(
             ) {
                 Text(if (viewModel.isBlocking) "取消拉黑" else "拉黑")
             }
-            // OutlinedButton(
-            //     onClick = onRecommendationBlockToggle,
-            //     modifier = Modifier,
-            // ) {
-            //     Text(if (viewModel.isBlockedInRecommendations) "取消屏蔽推荐" else "屏蔽推荐")
-            // }
-            // OutlinedButton(
-            //     onClick = onQuestionAuthorBlockToggle,
-            //     modifier = Modifier,
-            // ) {
-            //     Text(if (viewModel.isBlockedAsQuestionAuthor) "取消屏蔽其提问" else "屏蔽其提问")
-            // }
         }
     }
 }
