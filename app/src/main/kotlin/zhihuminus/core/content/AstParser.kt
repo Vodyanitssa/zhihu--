@@ -177,12 +177,10 @@ object AstParser {
         }
 
         "ol", "ul" -> {
+            val items = element.children().map { node -> parseList(node) }
             listOf(
                 ContentNode.Listing(
-                    items = element
-                        .children()
-                        .filter { it.tagName() == "li" }
-                        .map { it.text() },
+                    items = items,
                     isSorted = element.tagName() == "ol",
                 ),
             )
@@ -223,6 +221,18 @@ object AstParser {
         "hr" -> listOf(ContentNode.Splitter)
 
         else -> emptyList()
+    }
+
+    private fun parseList(node: Node): ContentNode {
+        if (node is Element && (node.tagName() == "ul" || node.tagName() == "ol")) {
+            return ContentNode.Listing(
+                items = node.childNodes().map { node -> parseList(node) },
+                isSorted = node.tagName() == "ol",
+            )
+        }
+        return ContentNode.Paragraph(
+            content = node.childNodes().flatMap { node -> parseInline(node) },
+        )
     }
 
     private fun parseImage(element: Element): ContentNode.Image? {

@@ -48,7 +48,7 @@ sealed interface ContentNode {
 
     // avoid naming collision with List
     data class Listing(
-        val items: List<String>,
+        val items: List<ContentNode>,
         val isSorted: Boolean,
     ) : ContentNode
 

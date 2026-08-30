@@ -539,29 +539,56 @@ private fun Video(node: ContentNode.Video) {
 }
 
 @Composable
-private fun Listing(node: ContentNode.Listing) {
+private fun Listing(
+    node: ContentNode.Listing,
+    depth: Int = 0,
+) {
+    val indent = 16.dp * depth
     Column(
-        modifier = Modifier.fillMaxWidth(),
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(start = indent),
         verticalArrangement = Arrangement.spacedBy(8.dp),
     ) {
-        node.items.forEachIndexed { index, item ->
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                Text(
-                    text = if (node.isSorted) "${index + 1}." else "•",
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.alignByBaseline(),
-                )
+        var index = 0
+        node.items.forEach { item ->
+            when (item) {
+                is ContentNode.Paragraph -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = if (node.isSorted) "${index + 1}." else "•",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                        InlineNodes(
+                            nodes = item.content,
+                            modifier = Modifier
+                                .weight(1f)
+                                .alignByBaseline(),
+                        )
+                    }
+                    index++
+                }
 
-                Text(
-                    text = item,
-                    modifier = Modifier
-                        .weight(1f)
-                        .alignByBaseline(),
-                )
+                is ContentNode.Listing -> Listing(item, depth + 1)
+
+                else -> {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        Text(
+                            text = if (node.isSorted) "${index + 1}." else "•",
+                            style = MaterialTheme.typography.bodyLarge,
+                            modifier = Modifier.alignByBaseline(),
+                        )
+                        RenderContentNode(item)
+                    }
+                    index++
+                }
             }
         }
     }

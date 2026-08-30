@@ -120,7 +120,11 @@ object HtmlRenderer {
         val tag = if (node.isSorted) "ol" else "ul"
         append("<$tag>")
         node.items.forEach { item ->
-            append("<li>${escapeHtml(item)}</li>")
+            when (item) {
+                is ContentNode.Paragraph -> append("<li>${renderInline(item.content)}</li>")
+                is ContentNode.Listing -> append("<li>${renderListing(item)}</li>")
+                else -> append("<li>${renderNode(item)}</li>")
+            }
         }
         append("</$tag>")
     }
