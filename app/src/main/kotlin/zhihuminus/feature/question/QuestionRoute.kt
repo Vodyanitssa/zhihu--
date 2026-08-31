@@ -12,12 +12,14 @@ import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
+import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
+import com.zhihuminus.navigation.router.toAppUrl
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.ui.ArticleAnswerSwitchState
 import com.zhihuminus.ui.ArticleHost
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 
@@ -25,7 +27,6 @@ import com.zhihuminus.viewmodel.ZhihuApiEnvironment
  * 问题页路由组件：创建 ViewModel、收集副作用、挂载图片预览层。
  *
  * @param articleHost 宿主 Activity（用于把问题记入导航历史）
- * @param articleAnswerSwitchState 回答切换共享状态；点击回答卡片时把来源导航器交接给文章页
  */
 @Composable
 fun QuestionRoute(
@@ -34,7 +35,6 @@ fun QuestionRoute(
     commentRepository: CommentRepository,
     apiEnvironment: ZhihuApiEnvironment,
     articleHost: ArticleHost?,
-    articleAnswerSwitchState: ArticleAnswerSwitchState?,
     onBack: () -> Unit,
     initialCommentId: String? = null,
 ) {
@@ -43,6 +43,7 @@ fun QuestionRoute(
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
     val navigator = LocalNavigator.current
+    val inAppLinkOpener = rememberInAppLinkOpener()
     val imageViewManager = remember { ImageViewManager() }
 
     val viewModel: QuestionViewModel =
@@ -93,11 +94,10 @@ fun QuestionRoute(
             readingQueueSourceId = "question:${destination.questionId}:answers:${viewModel.uiState.sort.apiValue}",
             initialCommentId = initialCommentId,
             onEvent = viewModel::onEvent,
-            onAnswerClick = { item, itemDestination ->
-                viewModel.createAnswerNavigatorFor(item)?.let { answerNavigator ->
-                    articleAnswerSwitchState?.pendingNavigator = answerNavigator
+            onAnswerClick = { _, itemDestination ->
+                if (itemDestination is PostDestination) {
+                    itemDestination.toAppUrl()?.let(inAppLinkOpener)
                 }
-                itemDestination?.let(navigator.onNavigate)
             },
             onBack = onBack,
         )

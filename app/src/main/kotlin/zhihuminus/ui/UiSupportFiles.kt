@@ -34,11 +34,9 @@ import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.TopLevelDestination
-import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -73,40 +71,15 @@ fun articleActionText(
 /**
  * 文章页需要从外围应用获取的宿主级服务。
  *
- * 文章会参与历史记录、回答间导航、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
+ * 文章会参与历史记录、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
  */
 interface ArticleHost {
     val articleNavController: NavHostController
-    val articleAnswerSwitchState: ArticleAnswerSwitchState
     var clipboardDestination: NavDestination?
 
     fun postHistoryDestination(destination: NavDestination)
 
     fun consumePendingCommentId(destination: NavDestination): String? = null
-}
-
-/**
- * 同一问题下不同回答之间导航时使用的共享状态。
- *
- * 手势处理器会在导航前更新这里的状态，让平台适配层选择正确的入场/出场转场方向，并避免 route 切换时丢失待交接的
- * navigator 或内容。它不能放在单个文章 composable 内，因为离开页和进入页都需要通过它协调。
- */
-interface ArticleAnswerSwitchState {
-    var navigator: AnswerNavigator?
-    var pendingNavigator: AnswerNavigator?
-    var pendingInitialContent: CachedAnswerContent?
-    var navigatingFromAnswerSwitch: Boolean
-    var answerTransitionDirection: ArticleAnswerTransitionDirection
-
-    fun reset()
-}
-
-enum class ArticleAnswerTransitionDirection {
-    DEFAULT,
-    VERTICAL_NEXT,
-    VERTICAL_PREVIOUS,
-    HORIZONTAL_NEXT,
-    HORIZONTAL_PREVIOUS,
 }
 
 /**

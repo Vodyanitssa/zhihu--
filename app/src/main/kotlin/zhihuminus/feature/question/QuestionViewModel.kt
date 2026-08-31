@@ -8,10 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.navDestination
-import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.navigation.PostDestination
-import com.zhihuminus.navigation.QuestionAnswerNavigator
 import com.zhihuminus.util.Log
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import kotlinx.coroutines.CancellationException
@@ -72,30 +68,6 @@ class QuestionViewModel(
             is QuestionEvent.OpenHistoryLog ->
                 sendEffect(QuestionEffect.OpenExternalUrl("https://www.zhihu.com/question/$questionId/log"))
         }
-    }
-
-    /**
-     * 构建从 [item] 开始的回答切换导航器；非回答条目返回 null。
-     * 导航器携带当前列表中该回答之前/之后的队列与续页游标，供文章页无缝切换。
-     */
-    fun createAnswerNavigatorFor(item: FeedDisplayItem): QuestionAnswerNavigator? {
-        val clicked = item.navDestination as? PostDestination ?: return null
-        if (clicked.type != PostType.Answer) return null
-        val index = uiState.answers.indexOfFirst { it.stableKey == item.stableKey }
-        if (index < 0) return null
-        return QuestionAnswerNavigator(
-            questionId = questionId,
-            initialNextAnswers = uiState.answers
-                .drop(index + 1)
-                .mapNotNull { it.navDestination as? PostDestination },
-            initialPreviousAnswers = uiState.answers
-                .take(index)
-                .asReversed()
-                .mapNotNull { it.navDestination as? PostDestination },
-            initialNextUrl = answersCursor.orEmpty(),
-            order = uiState.sort.apiValue,
-            environment = apiEnvironment,
-        )
     }
 
     private fun loadQuestion() {

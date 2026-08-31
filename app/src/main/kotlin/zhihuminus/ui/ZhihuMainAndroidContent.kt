@@ -88,7 +88,6 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 commentRepository = commentRepository,
                 apiEnvironment = environment,
                 articleHost = activity,
-                articleAnswerSwitchState = environment.articleAnswerSwitchState(),
                 initialCommentId = pendingCommentId,
                 onBack = { navController.popBackStack() },
             )

@@ -33,7 +33,6 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
-import androidx.lifecycle.ViewModelProvider
 import androidx.lifecycle.lifecycleScope
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.rememberNavController
@@ -65,7 +64,6 @@ import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.theme.AndroidThemeSettings
 import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain
-import com.zhihuminus.ui.ArticleAnswerSwitchState
 import com.zhihuminus.ui.ArticleHost
 import com.zhihuminus.ui.components.getHighestQualityVideoUrl
 import com.zhihuminus.util.ZHIHU_WEB_ZSE93
@@ -73,7 +71,6 @@ import com.zhihuminus.util.ZhihuCredentialRefresher
 import com.zhihuminus.util.clearShareImageCache
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.enableEdgeToEdgeCompat
-import com.zhihuminus.viewmodel.ArticleAnswerSwitchData
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -90,8 +87,6 @@ class MainActivity :
     val sharedData by viewModels<SharedData>()
     override val articleNavController: NavHostController
         get() = navController
-    override val articleAnswerSwitchState: ArticleAnswerSwitchState
-        get() = ViewModelProvider(this)[ArticleAnswerSwitchData::class.java]
     override var clipboardDestination: NavDestination?
         get() = sharedData.clipboardDestination
         set(value) {

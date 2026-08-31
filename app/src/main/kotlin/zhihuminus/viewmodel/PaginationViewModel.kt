@@ -40,8 +40,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.ContentDetailCache
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.data.OnlineHistoryDeletePair
 import com.zhihuminus.data.ZhihuCookieStorage
@@ -50,15 +48,9 @@ import com.zhihuminus.data.ZhihuJson.json
 import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.executeZhihuAuthenticatedRequest
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
-import com.zhihuminus.data.fetchZhihuContentDetail
-import com.zhihuminus.data.getOrFetchContentDetail
-import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
-import com.zhihuminus.ui.ArticleAnswerSwitchState
-import com.zhihuminus.ui.ArticleAnswerTransitionDirection
-import com.zhihuminus.ui.articleHost
 import com.zhihuminus.ui.homeFeedStartupCacheFileNames
 import com.zhihuminus.util.HttpStatusException
 import com.zhihuminus.util.Log
@@ -66,7 +58,6 @@ import com.zhihuminus.util.ZhihuCredentialRefresher
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.saveBitmapToGallery
 import com.zhihuminus.util.signZhihuFetchRequest
-import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
@@ -218,36 +209,6 @@ abstract class PaginationViewModel<T : Any>(
     }
 }
 
-open class ArticleAnswerSwitchData :
-    ViewModel(),
-    ArticleAnswerSwitchState {
-    /** 活跃的导航器：管理来源、历史记录和预取 */
-    override var navigator: AnswerNavigator? by mutableStateOf(null)
-
-    /**
-     * 导航前由来源界面设置（如 CollectionContentScreen）。
-     * [reset] 时会将其应用到 [navigator]。
-     */
-    override var pendingNavigator: AnswerNavigator? = null
-
-    // 用于消除切换闪动：导航前设置，新页面用它初始化
-    override var pendingInitialContent: CachedAnswerContent? = null
-
-    // 标记是否从回答切换导航进入（避免被 LaunchedEffect 重置方向后误判）
-    @kotlin.concurrent.Volatile
-    override var navigatingFromAnswerSwitch = false
-
-    // 导航动画方向
-    override var answerTransitionDirection = ArticleAnswerTransitionDirection.DEFAULT
-
-    override fun reset() {
-        navigator = pendingNavigator
-        pendingNavigator = null
-        pendingInitialContent = null
-        navigatingFromAnswerSwitch = false
-    }
-}
-
 interface PreparedArticleExportContent
 
 interface ArticleImageExportRenderer {
@@ -340,30 +301,6 @@ interface AccountEnvironment {
         return requestLogin()
     }
 }
-
-suspend fun ZhihuApiEnvironment.fetchContentDetail(destination: NavDestination): DataHolder.Content? =
-    runCatching {
-        fetchZhihuContentDetail(destination) { url, include ->
-            fetchJson(url, include)
-        }
-    }.getOrElse { error ->
-        if (error !is CancellationException) {
-            Log.e("ZhihuApiEnvironment", "Failed to fetch content detail for $destination", error)
-        }
-        null
-    }
-
-suspend fun ZhihuApiEnvironment.getOrFetchContentDetail(destination: NavDestination): DataHolder.Content? =
-    runCatching {
-        ContentDetailCache.getOrFetchContentDetail(destination) { url, include ->
-            fetchJson(url, include)
-        }
-    }.getOrElse { error ->
-        if (error !is CancellationException) {
-            Log.e("ZhihuApiEnvironment", "Failed to fetch content detail for $destination", error)
-        }
-        null
-    }
 
 suspend fun ZhihuApiEnvironment.addReadHistory(
     contentToken: String,
@@ -468,10 +405,6 @@ interface ArticleExportContentEnvironment :
     ArticleExportEnvironment,
     ZhihuApiEnvironment
 
-interface ArticleNavigationEnvironment {
-    fun articleAnswerSwitchState(): ArticleAnswerSwitchState? = null
-}
-
 interface ContentLoadEnvironment :
     ZhihuApiEnvironment,
     HistoryEnvironment
@@ -480,8 +413,7 @@ interface ProfileLoadEnvironment : ContentLoadEnvironment
 
 interface ArticleLoadEnvironment :
     ZhihuApiEnvironment,
-    ContentLoadEnvironment,
-    ArticleNavigationEnvironment
+    ContentLoadEnvironment
 
 interface PaginationEnvironment :
     ZhihuApiEnvironment,
@@ -614,8 +546,6 @@ open class SharedAndroidPaginationEnvironment(
             )
         }
     }
-
-    override fun articleAnswerSwitchState() = context.articleHost()?.articleAnswerSwitchState
 
     private fun tryShowLoginExpiredDialog(error: HttpStatusException): Boolean {
         try {
