@@ -424,7 +424,7 @@ fun AccountSettingScreen(
                     description = { Text("版本号：$versionInfo") },
                     icon = {
                         Image(
-                            painterResource(R.drawable.ic_launcher_foreground),
+                            painterResource(R.mipmap.ic_zhihuminus_launcher_foreground),
                             contentDescription = null,
                             modifier = Modifier
                                 .clip(CircleShape)
