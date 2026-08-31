@@ -47,7 +47,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
@@ -404,14 +403,6 @@ fun AccountSettingScreen(
                     icon = { Icon(Icons.Default.Palette, null) },
                     modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
-                )
-
-                SettingItem(
-                    title = { Text("系统与更新") },
-                    description = { Text("GitHub、更新设置等") },
-                    icon = { Icon(Icons.Default.Settings, null) },
-                    modifier = Modifier,
-                    onClick = { navigator.onNavigate(Account.SystemAndUpdateSettings()) },
                 )
             }
 

@@ -19,7 +19,6 @@ package com.zhihuminus
 
 import android.annotation.SuppressLint
 import android.app.AlertDialog
-import android.content.Intent
 import android.os.Bundle
 import android.webkit.CookieManager
 import android.webkit.WebResourceRequest
@@ -87,7 +86,7 @@ class LoginActivity : ComponentActivity() {
                         .fillMaxSize()
                         .systemBarsPadding(),
                 ) {
-                    if (currentNoticeStep >= 3) {
+                    if (currentNoticeStep >= 2) {
                         LoginModeScreen(
                             activity = this@LoginActivity,
                             loginMode = loginMode,
@@ -122,20 +121,6 @@ class LoginActivity : ComponentActivity() {
                                     },
                                     onConfirm = {
                                         currentNoticeStep = 2
-                                    },
-                                )
-
-                            else ->
-                                LoginNoticeScreen(
-                                    message = "我知晓，本应用可能会收集部分匿名化的使用信息来确定使用人数，我可以在设置中随时关闭此项遥测。",
-                                    secondaryButtonText = "查看设置",
-                                    onSecondaryAction = {
-                                        startActivity(
-                                            Intent(this@LoginActivity, MainActivity::class.java),
-                                        )
-                                    },
-                                    onConfirm = {
-                                        currentNoticeStep = 3
                                     },
                                 )
                         }

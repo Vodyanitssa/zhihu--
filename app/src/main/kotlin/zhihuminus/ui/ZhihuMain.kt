@@ -110,7 +110,6 @@ import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.IdentityManagementScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
-import com.zhihuminus.ui.subscreens.SystemAndUpdateSettingsScreen
 import kotlinx.coroutines.delay
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
@@ -499,9 +498,6 @@ fun ZhihuMain(
                     }
                     composable<Account.IdentityManagement> {
                         IdentityManagementScreen()
-                    }
-                    composable<Account.SystemAndUpdateSettings> { navEntry ->
-                        SystemAndUpdateSettingsScreen()
                     }
                     composable<Account.SettingsSearch> {
                         SettingsSearchScreen()
