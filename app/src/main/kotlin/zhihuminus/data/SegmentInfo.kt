@@ -66,9 +66,6 @@ data class SegmentInfoMark(
     val masterSegInfo: SegmentInfoMeta? = null,
 )
 
-val SegmentInfoMark.effectiveSegInfo: SegmentInfoMeta?
-    get() = segInfo ?: masterSegInfo
-
 @Serializable
 data class SegmentInfoMeta(
     val segIds: List<String> = emptyList(),

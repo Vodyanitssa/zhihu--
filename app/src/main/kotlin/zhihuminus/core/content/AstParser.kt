@@ -280,7 +280,7 @@ object AstParser {
         )
     }
 
-    private fun parseCode(element: Element): ContentNode.Code? {
+    private fun parseCode(element: Element): ContentNode.Code {
         val code = element.selectFirst("code") ?: element
         val language = code
             .classNames()

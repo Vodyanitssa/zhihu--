@@ -385,7 +385,6 @@ fun NotificationItemView(
     notification: MobileNotificationTimelineItem,
     onClick: () -> Unit,
 ) {
-    val navigator = LocalNavigator.current
     val backgroundColor = if (notification.isRead) {
         Color.Transparent
     } else {

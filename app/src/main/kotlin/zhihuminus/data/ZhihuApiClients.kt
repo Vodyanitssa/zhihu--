@@ -36,10 +36,6 @@ import kotlin.time.Clock
 
 private var lastRefreshMillis: Long = 0
 
-internal fun resetZhihuAuthenticatedRequestRefreshThrottleForTesting() {
-    lastRefreshMillis = 0
-}
-
 fun Map<String, String>.toCookieHeaderString(): String =
     entries
         .asSequence()
@@ -117,10 +113,4 @@ data class ZhihuPaging(
     val totals: Int = 0,
     val next: String,
     val prev: String? = null,
-)
-
-@Serializable
-data class ZhihuVotersResponse(
-    val paging: ZhihuPaging,
-    val data: List<DataHolder.Author> = emptyList(),
 )

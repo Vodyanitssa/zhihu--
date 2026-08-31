@@ -483,7 +483,7 @@ data class Person(
     private val apiBadgeV2: DataHolder.BadgeV2? = null,
 ) {
     val badgeV2: DataHolder.BadgeV2?
-        get() = DataHolder.injectZhPlusAuthorBadge(id, apiBadgeV2)
+        get() = apiBadgeV2
 }
 
 val Feed.Target.questionAuthor: Person?

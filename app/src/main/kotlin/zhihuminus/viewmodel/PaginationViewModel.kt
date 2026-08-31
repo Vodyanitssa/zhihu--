@@ -56,7 +56,6 @@ import com.zhihuminus.util.HttpStatusException
 import com.zhihuminus.util.Log
 import com.zhihuminus.util.ZhihuCredentialRefresher
 import com.zhihuminus.util.clipboardManager
-import com.zhihuminus.util.saveBitmapToGallery
 import com.zhihuminus.util.signZhihuFetchRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
@@ -391,13 +390,6 @@ interface ArticleExportEnvironment {
 
     fun requestImageExportPermission() = Unit
 
-    fun saveImageToMediaStore(
-        displayName: String,
-        bitmap: Any,
-    ) = Unit
-
-    fun articleImageExportRenderer(): ArticleImageExportRenderer? = null
-
     fun loadExportAssetText(fileName: String): String = ""
 }
 
@@ -603,14 +595,6 @@ open class SharedAndroidPaginationEnvironment(
         context.clipboardManager.setPrimaryClip(ClipData.newPlainText(label, text))
     }
 
-    override fun saveImageToMediaStore(
-        displayName: String,
-        bitmap: Any,
-    ) = saveBitmapToGallery(context, displayName, bitmap as android.graphics.Bitmap)
-
-    override fun articleImageExportRenderer(): ArticleImageExportRenderer =
-        AndroidArticleExportRenderer(context)
-
     override fun hasImageExportPermission(): Boolean =
         Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
             ContextCompat.checkSelfPermission(context, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
@@ -640,7 +624,7 @@ class SharedAndroidNotificationEnvironment(
 ) : SharedAndroidPaginationEnvironment(context),
     NotificationEnvironment
 
-fun PaginationViewModel<*>.paginationEnvironment(context: Context): AndroidContextPaginationEnvironment =
+fun paginationEnvironment(context: Context): AndroidContextPaginationEnvironment =
     SharedAndroidPaginationEnvironment(context)
 
 @Composable

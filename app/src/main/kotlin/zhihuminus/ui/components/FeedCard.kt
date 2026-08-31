@@ -230,7 +230,7 @@ private fun FeedCardContent(
             )
             Spacer(Modifier.width(8.dp))
             Text(
-                text = item.authorName.orEmpty(),
+                text = item.authorName,
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.onSurface,
                 maxLines = 1,

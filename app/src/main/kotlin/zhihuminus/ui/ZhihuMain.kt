@@ -74,11 +74,9 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
-import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
-import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -108,14 +106,12 @@ import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.IdentityManagementScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
 import com.zhihuminus.ui.subscreens.SystemAndUpdateSettingsScreen
 import kotlinx.coroutines.delay
-import kotlin.reflect.KClass
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -170,9 +166,7 @@ fun ZhihuMain(
     val selectedBottomBarItemKeys = preferenceState.selectedBottomBarItemKeys
     val startDestination = preferenceState.startDestination
     val reloadBottomBarPreferences = preferenceState::reload
-    val settings = rememberSettingsStore()
     var isReadingPlayerExpandedByUser by remember { mutableStateOf(false) }
-    val density = LocalDensity.current
 
     val navEntry by navController.currentBackStackEntryAsState()
     val showMainNavigation = navEntry?.destination?.hasRoute<MainTabs>() == true
@@ -507,9 +501,7 @@ fun ZhihuMain(
                         IdentityManagementScreen()
                     }
                     composable<Account.SystemAndUpdateSettings> { navEntry ->
-                        SystemAndUpdateSettingsScreen(
-                            setting = navEntry.toRoute<Account.SystemAndUpdateSettings>().setting,
-                        )
+                        SystemAndUpdateSettingsScreen()
                     }
                     composable<Account.SettingsSearch> {
                         SettingsSearchScreen()
@@ -608,9 +600,4 @@ private fun MyCollectionsTopLevelPage(
             showBackButton = false,
         )
     }
-}
-
-internal fun NavBackStackEntry?.hasRoute(cls: KClass<out NavDestination>): Boolean {
-    val dest = this?.destination ?: return false
-    return dest.hierarchy.any { it.hasRoute(cls) }
 }

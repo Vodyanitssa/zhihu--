@@ -34,48 +34,10 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
 
 object DataHolder {
-    const val ZH_PLUS_AUTHOR_USER_ID = "ea09b6c82124e0162caa10d658058c10"
-    const val ZH_PLUS_AUTHOR_BADGE_ICON = "zhplus://zh_plus_author_badge_icon"
-
-    val zhPlusAuthorBadgeV2 = BadgeV2(
-        title = "知乎++ 作者",
-        mergedBadges = listOf(
-            BadgeV2.Badge(
-                type = "zhihu_plus_author",
-                detailType = "zhihu_plus_author",
-                title = "知乎++",
-                description = "作者",
-                icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                badgeStatus = "passed",
-            ),
-        ),
-        detailBadges = listOf(
-            BadgeV2.Badge(
-                type = "zhihu_plus_author",
-                detailType = "zhihu_plus_author",
-                title = "知乎++",
-                description = "作者",
-                icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-                badgeStatus = "passed",
-            ),
-        ),
-        icon = ZH_PLUS_AUTHOR_BADGE_ICON,
-        nightIcon = ZH_PLUS_AUTHOR_BADGE_ICON,
-    )
-
-    fun injectZhPlusAuthorBadge(userId: String, badgeV2: BadgeV2?): BadgeV2? = if (userId == ZH_PLUS_AUTHOR_USER_ID) {
-        zhPlusAuthorBadgeV2
-    } else {
-        badgeV2
-    }
+    fun injectBadge(badgeV2: BadgeV2?): BadgeV2? = badgeV2
 
     @Serializable
     sealed interface Content
-
-    @Serializable
-    object DummyContent : Content
 
     @Serializable
     data class QuestionRelationshipApiResponse(
@@ -103,12 +65,6 @@ object DataHolder {
     @Serializable
     data class ContentPublishResponseData(
         val result: String? = null,
-    )
-
-    @Serializable
-    data class PublishResult(
-        val id: String? = null,
-        val publish: PublishResultPublish? = null,
     )
 
     @Serializable
@@ -303,7 +259,6 @@ object DataHolder {
         val contentMark: JsonObject? = null,
         val decorativeLabels: List<JsonElement> = emptyList(),
         val visibleOnlyToAuthor: Boolean = false,
-        val zhiPlusExtraInfo: String = "",
         val thumbnailInfo: ThumbnailInfo? = null,
         val preload: Boolean = false,
         val stickyInfo: String = "",
@@ -317,14 +272,6 @@ object DataHolder {
         @Serializable(with = BooleanCompatSerializer::class)
         val allowSegmentInteraction: Boolean = false,
     ) : Content {
-        val endorsementTexts: List<String>
-            get() = endorsementItems.map { item -> item.text }
-
-        val endorsementItems: List<AnswerEndorsementDisplay>
-            get() = endorsements
-                .orEmpty()
-                .mapNotNull { endorsement -> endorsement.display }
-
         @Serializable
         data class PaginationInfo(
             val index: Int,
@@ -430,7 +377,6 @@ object DataHolder {
         val contentMark: JsonObject? = null,
         val decorativeLabels: List<JsonElement> = emptyList(),
         val visibleOnlyToAuthor: Boolean = false,
-        val zhiPlusExtraInfo: String = "",
         val thumbnailInfo: ThumbnailInfo? = null,
         val preload: Boolean = false,
         val stickyInfo: String = "",
@@ -621,11 +567,6 @@ object DataHolder {
     )
 
     @Serializable
-    data class MuteInfo(
-        val type: String,
-    )
-
-    @Serializable
     @Suppress("SpellCheckingInspection")
     data class ReactionInstruction(
         val isRelevant: Boolean = false,
@@ -708,10 +649,7 @@ object DataHolder {
             val vipInfo: JsonElement? = null,
             val levelInfo: JsonElement? = null,
             val kvipInfo: JsonElement? = null,
-        ) {
-            val badgeV2: BadgeV2?
-                get() = injectZhPlusAuthorBadge(id, apiBadgeV2)
-        }
+        )
 
         @Serializable
         data class CommentTag(
@@ -721,13 +659,6 @@ object DataHolder {
             val nightColor: String,
             val hasBorder: Boolean,
         )
-    }
-
-    data class ReferenceCount<T>(
-        val value: T,
-        var count: Int = 0,
-    ) : AutoCloseable {
-        override fun close() = Unit.also { count-- }
     }
 
     @Serializable
@@ -766,7 +697,7 @@ object DataHolder {
         val hasApplyingColumn: Boolean = false,
     ) {
         val badgeV2: BadgeV2?
-            get() = injectZhPlusAuthorBadge(id, apiBadgeV2)
+            get() = apiBadgeV2
     }
 
     @Serializable

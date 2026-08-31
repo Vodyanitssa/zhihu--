@@ -28,14 +28,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.TopLevelDestination
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.booleanOrNull
@@ -47,26 +44,6 @@ internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
         get(key)?.jsonPrimitive?.booleanOrNull
     } ?: false
 }
-
-/** 过滤部分设备文本选择菜单中的非预期系统项。 */
-
-fun articleActionText(
-    article: PostDestination,
-    questionId: Long,
-    title: String,
-    authorName: String,
-): String =
-    when (article.type) {
-        PostType.Answer -> {
-            "https://www.zhihu.com/question/$questionId/answer/${article.id}\n【$title - $authorName 的回答】"
-        }
-
-        PostType.Article -> {
-            "https://zhuanlan.zhihu.com/p/${article.id}\n【$title - $authorName 的文章】"
-        }
-
-        else -> ""
-    }
 
 /**
  * 文章页需要从外围应用获取的宿主级服务。
@@ -136,11 +113,6 @@ data class AccountSettingsAccountState(
 internal const val PEOPLE_PROFILE_INCLUDE_PATH =
     "allow_message,is_followed,is_following,is_org,is_blocking,badge_v2,answer_count,follower_count,following_count,articles_count,question_count,pins_count"
 
-data class CommentEmoji(
-    val placeholder: String,
-    val inlineKey: String,
-)
-
 private const val QR_CODE_SCAN_ACTIVITY_CLASS = "com.zhihuminus.QRCodeScanActivity"
 private const val WEBVIEW_ACTIVITY_CLASS = "com.zhihuminus.WebviewActivity"
 private const val QR_SCAN_RESULT_EXTRA = "scan_result"
@@ -203,12 +175,5 @@ private fun Context.zhihuVersionInfo(): String {
     return "$versionName $buildType, $gitHash"
 }
 
-@Composable
-fun rememberArticleHost(): ArticleHost? = LocalContext.current.articleHost()
-
-fun Modifier.commentSelectionWorkaround(): Modifier = this
-
 fun Context.articleHost(): ArticleHost? =
     (this as? ArticleHost) ?: (this as? ContextWrapper)?.baseContext?.takeIf { it !== this }?.articleHost()
-
-fun Modifier.questionSelectionWorkaround(): Modifier = this

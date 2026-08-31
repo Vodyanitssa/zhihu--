@@ -30,6 +30,7 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 子评论列表（第二个 bottom sheet 的内容）
@@ -81,7 +82,7 @@ fun ChildCommentSheet(
             }
             return@LaunchedEffect
         }
-        delay(3000)
+        delay(3000.milliseconds)
         highlightVisible = false
         onEvent(CommentEvent.ConsumeAnchor)
     }

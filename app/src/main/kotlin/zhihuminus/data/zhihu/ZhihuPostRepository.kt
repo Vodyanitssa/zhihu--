@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
@@ -124,7 +123,7 @@ class ZhihuPostRepository(
     }
 
     private fun mapAnswer(dto: AnswerDto): Post {
-        val contentNodes = AstParser.parseContent(dto.content)
+        val contentNodes = parseContent(dto.content)
         return Post(
             id = dto.id,
             type = PostType.Answer,
@@ -144,7 +143,7 @@ class ZhihuPostRepository(
     }
 
     private fun mapArticle(dto: ArticleDto): Post {
-        val contentNodes = AstParser.parseContent(dto.content)
+        val contentNodes = parseContent(dto.content)
         return Post(
             id = dto.id,
             type = PostType.Article,

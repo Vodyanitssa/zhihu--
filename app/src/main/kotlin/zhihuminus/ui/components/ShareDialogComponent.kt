@@ -70,7 +70,6 @@ import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.SettingsStore
-import com.zhihuminus.platform.UserMessageSink
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.articleHost
 import com.zhihuminus.util.clipboardManager
@@ -193,19 +192,6 @@ enum class ShareAction {
 
 typealias ShareActionExecutor = (ShareAction, NavDestination, String) -> Unit
 
-internal fun clipboardShareActionExecutor(
-    copyPlainText: (label: String, text: String) -> Unit,
-    userMessages: UserMessageSink,
-): ShareActionExecutor = { action, _, shareText ->
-    if (action == ShareAction.CopyLink) {
-        copyPlainText("Link", shareText)
-        userMessages.showMessage("已复制链接")
-    } else {
-        copyPlainText("Share", shareText)
-        userMessages.showMessage("已复制分享文本")
-    }
-}
-
 @Composable
 fun ShareDialog(
     content: NavDestination,
@@ -268,8 +254,6 @@ fun getShareText(content: NavDestination, title: String = "", authorName: String
             PostType.Pin -> {
                 "https://www.zhihu.com/pin/${content.id}"
             }
-
-            else -> null
         }
     }
 

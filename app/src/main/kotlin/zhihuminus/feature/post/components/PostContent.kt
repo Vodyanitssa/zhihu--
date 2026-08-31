@@ -19,12 +19,14 @@ import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
 
 @Composable
 fun PostContent(
     post: Post,
     onEvent: (PostEvent) -> Unit = {},
 ) {
+    val inAppLinkOpener = rememberInAppLinkOpener()
     val pinImages = mutableListOf<ContentNode>()
     Column(
         modifier = Modifier
@@ -78,12 +80,7 @@ fun PostContent(
                 PostLinkCard(
                     linkCard = linkCard,
                     onClick = {
-                        val destination = resolveLinkCardDestination(linkCard)
-                        if (destination != null) {
-                            onEvent(PostEvent.Navigate(destination))
-                        } else if (linkCard.url.isNotBlank()) {
-                            onEvent(PostEvent.OpenLink(linkCard.url))
-                        }
+                        inAppLinkOpener(linkCard.url)
                     },
                 )
             }

@@ -19,7 +19,6 @@ package com.zhihuminus.ui
 
 import androidx.compose.animation.ExperimentalAnimationApi
 import androidx.compose.foundation.ExperimentalFoundationApi
-import androidx.compose.foundation.Image
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -63,12 +62,10 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.input.nestedscroll.nestedScroll
-import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.ViewModel
 import coil3.compose.AsyncImage
-import com.zhihuminus.R
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
@@ -483,20 +480,6 @@ private fun DataHolder.Article.toPeopleArticleDisplayItem(): FeedDisplayItem {
         navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
         raw = this,
         contentTypeLabel = "文章",
-        publishTimeSeconds = created.takeIf { it > 0 },
-    )
-}
-
-private fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem? {
-    val pinId = id.toLongOrNull() ?: return null
-    return FeedDisplayItem(
-        title = Jsoup.parse(excerptTitle).text(),
-        summary = null,
-        details = "想法 · $likeCount 赞 · $commentCount 评论",
-        feed = null,
-        navDestinationJson = PostDestination(type = PostType.Pin, id = pinId, authorName = author.name).toFeedDisplayItemNavDestinationJson(),
-        raw = this,
-        contentTypeLabel = "想法",
         publishTimeSeconds = created.takeIf { it > 0 },
     )
 }
@@ -1320,23 +1303,13 @@ private fun OfficialBadgeDetails(
                 verticalAlignment = Alignment.CenterVertically,
             ) {
                 if (badge.iconUrl.isNotBlank()) {
-                    if (badge.iconUrl == DataHolder.ZH_PLUS_AUTHOR_BADGE_ICON) {
-                        Image(
-                            painter = painterResource(R.drawable.ic_zh_plus_author_badge),
-                            contentDescription = badge.description,
-                            modifier = Modifier
-                                .padding(end = 6.dp)
-                                .size(18.dp),
-                        )
-                    } else {
-                        AsyncImage(
-                            model = badge.iconUrl,
-                            contentDescription = badge.description,
-                            modifier = Modifier
-                                .padding(end = 6.dp)
-                                .size(18.dp),
-                        )
-                    }
+                    AsyncImage(
+                        model = badge.iconUrl,
+                        contentDescription = badge.description,
+                        modifier = Modifier
+                            .padding(end = 6.dp)
+                            .size(18.dp),
+                    )
                 }
                 Text(
                     text = "${badge.peopleDetailTitle}: ${badge.description}",

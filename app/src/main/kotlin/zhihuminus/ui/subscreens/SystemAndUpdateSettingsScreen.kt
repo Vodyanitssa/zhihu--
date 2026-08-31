@@ -42,7 +42,6 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.R
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 
@@ -53,13 +52,9 @@ import com.zhihuminus.ui.components.SettingItemGroup
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun SystemAndUpdateSettingsScreen(
-    setting: String? = null,
-) {
-    val settings = rememberSettingsStore()
+fun SystemAndUpdateSettingsScreen() {
     val openExternalUrl = rememberExternalUrlOpener()
     val navigator = LocalNavigator.current
-    val highlightedSetting = setting.orEmpty()
 
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
 

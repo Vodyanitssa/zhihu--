@@ -55,8 +55,6 @@ import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
-import com.zhihuminus.ui.FollowedQuestion as FollowedQuestionImpl
-import com.zhihuminus.ui.FollowedTopic as FollowedTopicImpl
 
 const val ZHIHU_ME_URL = "https://www.zhihu.com/api/v4/me"
 
@@ -257,6 +255,3 @@ object ZhihuJson {
     fun <T> decodeJson(serializer: KSerializer<T>, json: JsonElement): T =
         this.json.decodeFromJsonElement(serializer, snakeCaseToCamelCase(json))
 }
-
-typealias FollowedQuestion = FollowedQuestionImpl
-typealias FollowedTopic = FollowedTopicImpl

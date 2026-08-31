@@ -20,7 +20,6 @@ package com.zhihuminus.util
 import android.content.ContentValues
 import android.content.Context
 import android.content.Intent
-import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
@@ -33,23 +32,6 @@ import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpHeaders
 import java.io.OutputStream
-
-fun saveBitmapToGallery(
-    context: Context,
-    displayName: String,
-    bitmap: Bitmap,
-) {
-    saveImageToMediaStore(
-        context = context,
-        displayName = displayName,
-        mimeType = "image/jpeg",
-        relativePath = Environment.DIRECTORY_PICTURES + "/Zhihu++",
-    ) { outputStream ->
-        if (!bitmap.compress(Bitmap.CompressFormat.JPEG, 80, outputStream)) {
-            throw IllegalStateException("Failed to encode image")
-        }
-    }
-}
 
 private fun saveDownloadedImageToGallery(
     context: Context,

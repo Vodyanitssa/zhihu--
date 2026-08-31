@@ -26,7 +26,6 @@ import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.viewmodel.PaginationEnvironment
-import com.zhihuminus.viewmodel.feed.BaseFeedViewModel
 
 class OnlineHistoryViewModel : BaseFeedViewModel() {
     override val initialUrl: String = "https://api.zhihu.com/unify-consumption/read_history?offset=0&limit=10"

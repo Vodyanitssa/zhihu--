@@ -80,9 +80,6 @@ data class SettingsStore(
     val observeKeyChanges: (onChanged: (String) -> Unit) -> () -> Unit = { {} },
 )
 
-private const val WEBVIEW_ACTIVITY_CLASS = "com.zhihuminus.WebviewActivity"
-private const val VIDEO_PLAYER_ACTIVITY_CLASS = "com.zhihuminus.VideoPlayerActivity"
-
 @Composable
 fun rememberExternalUrlOpener(): (String) -> Unit {
     val context = LocalContext.current
@@ -93,21 +90,6 @@ fun rememberExternalUrlOpener(): (String) -> Unit {
 fun rememberSystemUrlOpener(): (String) -> Unit {
     val context = LocalContext.current
     return remember(context) { { url -> context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) } }
-}
-
-@Composable
-fun rememberZhihuWebUrlOpener(): (String) -> Unit {
-    val context = LocalContext.current
-    return remember(context) {
-        { url ->
-            context.startActivity(
-                Intent(Intent.ACTION_VIEW, url.toUri()).setClassName(
-                    context,
-                    WEBVIEW_ACTIVITY_CLASS,
-                ),
-            )
-        }
-    }
 }
 
 @Composable
