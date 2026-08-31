@@ -31,7 +31,6 @@ import com.zhihuminus.data.sourceLabel
 import com.zhihuminus.data.target
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuFeedRepository
-import com.zhihuminus.viewmodel.FeedDisplayEnvironment
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import kotlinx.coroutines.launch
@@ -57,14 +56,14 @@ class FollowViewModel : BaseFeedViewModel() {
         }
     }
 
-    override fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem {
-        val item = super.createDisplayItem(environment, feed)
-        return if (item.isFiltered || feed.sourceLabel == null) {
-            item
-        } else {
-            item.copy(details = feed.target?.detailsText ?: item.details)
+    override fun createDisplayItem(environment: PaginationEnvironment, feed: Feed): FeedDisplayItem =
+        super.createDisplayItem(environment, feed).let { item ->
+            if (feed.sourceLabel == null) {
+                item
+            } else {
+                item.copy(details = feed.target?.detailsText ?: item.details)
+            }
         }
-    }
 }
 
 class RecentMomentsViewModel : ViewModel() {

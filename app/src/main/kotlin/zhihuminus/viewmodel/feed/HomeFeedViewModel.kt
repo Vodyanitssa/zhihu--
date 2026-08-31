@@ -27,8 +27,8 @@ import com.zhihuminus.data.target
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuFeedRepository
 import com.zhihuminus.util.Log
-import com.zhihuminus.viewmodel.ContentInteractionEnvironment
 import com.zhihuminus.viewmodel.PaginationEnvironment
+import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
@@ -80,22 +80,10 @@ class HomeFeedViewModel : BaseFeedViewModel() {
     }
 
     /**
-     * 记录用户与内容的交互行为
-     * 应该在用户点击、点赞等操作时调用
-     */
-    suspend fun recordContentInteraction(environment: ContentInteractionEnvironment, feed: Feed) {
-        try {
-            environment.recordContentInteraction(feed)
-        } catch (e: Exception) {
-            environment.handleFetchFailure("HomeFeedViewModel", e)
-        }
-    }
-
-    /**
      * 记录用户点击内容
      * 在viewModelScope中运行，使用viewModelScope代替GlobalScope
      */
-    fun onUiContentClick(environment: ContentInteractionEnvironment, feed: Feed, item: FeedDisplayItem) {
+    fun onUiContentClick(environment: ZhihuApiEnvironment, feed: Feed, item: FeedDisplayItem) {
         viewModelScope.launch(Dispatchers.Default) {
             if (environment.authenticatedCookies()["d_c0"] != null) {
                 val payloadItem = when (val target = feed.target) {
@@ -117,18 +105,16 @@ class HomeFeedViewModel : BaseFeedViewModel() {
                     }
                 }
             }
-            recordContentInteraction(environment, feed)
         }
     }
 
     private suspend fun markItemsAsTouched(
-        environment: ContentInteractionEnvironment,
+        environment: ZhihuApiEnvironment,
     ) {
         try {
             if (environment.authenticatedCookies()["d_c0"] == null) return
             val currentTouchItems = displayItems
                 .asSequence()
-                .filterNot { it.isFiltered }
                 .mapNotNull { it.feed?.target }
                 .mapNotNull { target ->
                     when (target) {

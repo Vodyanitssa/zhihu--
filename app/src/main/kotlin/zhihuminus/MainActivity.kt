@@ -49,16 +49,10 @@ import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.filter.ContentOpenEventSupport
-import com.zhihuminus.filter.ContentOpenFrom
-import com.zhihuminus.filter.TrackedContentIdentity
-import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.CommentHolder
-import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
@@ -80,9 +74,6 @@ import com.zhihuminus.util.clearShareImageCache
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.enableEdgeToEdgeCompat
 import com.zhihuminus.viewmodel.ArticleAnswerSwitchData
-import com.zhihuminus.viewmodel.filter.ContentFilterManager
-import com.zhihuminus.viewmodel.filter.contentFilterSettings
-import com.zhihuminus.viewmodel.filter.getContentFilterDatabase
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -112,10 +103,7 @@ class MainActivity :
     }
 
     lateinit var navController: NavHostController
-    private var pendingContentOpenIdentity: TrackedContentIdentity? = null
-    private var pendingContentOpenFrom: String? = null
     private var pendingCommentHolder: CommentHolder? = null
-    private var currentMainTabOpenFrom: String? = null
     var mainTabNavigationTarget by mutableStateOf<TopLevelDestination?>(null)
         private set
 
@@ -151,7 +139,6 @@ class MainActivity :
         history = HistoryStorage(this)
         AccountData.loadData(this)
         AndroidThemeSettings.initialize(this)
-        getContentFilterDatabase(this)
 
         val settings = androidSettingsStore(this)
         val lastLaunchTimestamp = settings.getLong(KEY_LAST_LAUNCH_TIMESTAMP, 0L)
@@ -173,18 +160,6 @@ class MainActivity :
             }
         }
         settings.putLong(KEY_LAST_LAUNCH_TIMESTAMP, now)
-
-        // 应用启动时执行内容过滤数据库清理
-        lifecycleScope.launch {
-            try {
-                if (contentFilterSettings().enableContentFilter) {
-                    ContentFilterManager(getContentFilterDatabase(this@MainActivity).contentFilterDao()).cleanupOldData()
-                }
-                Log.i(TAG, "Content filter maintenance cleanup completed")
-            } catch (e: Exception) {
-                Log.e(TAG, "Failed to perform content filter cleanup", e)
-            }
-        }
 
         // 初始化emoji管理器
         lifecycleScope.launch {
@@ -341,7 +316,6 @@ class MainActivity :
         if (pendingCommentHolder?.article != route) {
             pendingCommentHolder = null
         }
-        preparePendingContentOpen(route)
         history.add(route)
         if (route is Video) {
             val current = runCatching {
@@ -405,39 +379,10 @@ class MainActivity :
         }
     }
 
-    override fun consumePendingContentOpenFrom(destination: NavDestination): String {
-        val identity = ContentOpenEventSupport.toTrackedContentIdentity(destination) ?: return ContentOpenFrom.UNKNOWN
-        if (identity != pendingContentOpenIdentity) {
-            return ContentOpenFrom.UNKNOWN
-        }
-        val openFrom = pendingContentOpenFrom ?: ContentOpenFrom.UNKNOWN
-        pendingContentOpenIdentity = null
-        pendingContentOpenFrom = null
-        return openFrom
-    }
-
     override fun consumePendingCommentId(destination: NavDestination): String? {
         val holder = pendingCommentHolder?.takeIf { it.article == destination } ?: return null
         pendingCommentHolder = null
         return holder.commentId
-    }
-
-    private fun preparePendingContentOpen(target: NavDestination) {
-        val identity = ContentOpenEventSupport.toTrackedContentIdentity(target)
-        if (identity == null) {
-            pendingContentOpenIdentity = null
-            pendingContentOpenFrom = null
-            return
-        }
-        pendingContentOpenIdentity = identity
-        pendingContentOpenFrom = if (
-            runCatching { navController.currentBackStackEntry?.toRoute<MainTabs>() }.getOrNull() != null
-        ) {
-            currentMainTabOpenFrom
-        } else {
-            null
-        }
-            ?: ContentOpenEventSupport.inferOpenFrom(currentContentOpenSource(), target)
     }
 
     private fun navigateToMainTabs(target: TopLevelDestination) {
@@ -455,31 +400,10 @@ class MainActivity :
         }
     }
 
-    fun setCurrentMainTabOpenFrom(openFrom: String?) {
-        currentMainTabOpenFrom = openFrom
-    }
-
     fun consumeMainTabNavigationTarget(destination: TopLevelDestination) {
         if (mainTabNavigationTarget == destination) {
             mainTabNavigationTarget = null
         }
-    }
-
-    private fun currentContentOpenSource(): NavDestination? {
-        val currentEntry = navController.currentBackStackEntry
-        return runCatching {
-            currentEntry?.toRoute<PostDestination>()
-        }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<Question>()
-        }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<PostDestination>()
-        }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<CollectionContent>()
-        }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<History>()
-        }.getOrNull() ?: runCatching {
-            currentEntry?.toRoute<Notification>()
-        }.getOrNull()
     }
 
     override fun postHistoryDestination(destination: NavDestination) {

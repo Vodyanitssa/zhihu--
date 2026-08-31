@@ -45,7 +45,6 @@ fun AndroidZhihuMain(navController: NavHostController) {
         navController = navController,
         mainTabNavigationTarget = activity.mainTabNavigationTarget,
         navigate = activity::navigate,
-        setCurrentMainTabOpenFrom = activity::setCurrentMainTabOpenFrom,
         consumeMainTabNavigationTarget = activity::consumeMainTabNavigationTarget,
         preferenceState = rememberAndroidZhihuMainPreferenceState(),
         isDarkTheme = com.zhihuminus.theme.ThemeManager.isDarkTheme,

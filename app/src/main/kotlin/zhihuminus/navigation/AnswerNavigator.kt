@@ -29,13 +29,10 @@ import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.officialBadge
 import com.zhihuminus.data.target
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.util.Log
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
 import com.zhihuminus.viewmodel.CollectionItem
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
-import com.zhihuminus.viewmodel.filter.ContentType
-import com.zhihuminus.viewmodel.filter.getContentFilterDatabase
 import com.zhihuminus.viewmodel.getOrFetchContentDetail
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
@@ -279,15 +276,6 @@ class QuestionAnswerNavigator(
     initialPreviousAnswers: List<PostDestination> = emptyList(),
     initialNextUrl: String = "",
     private val order: String? = null,
-    private val getAlreadyOpenedAnswerIds: suspend (List<Long>) -> Set<Long> = { answerIds ->
-        ContentOpenEventSupport
-            .getAlreadyOpenedContentIds(
-                database = getContentFilterDatabase(),
-                content = answerIds.map { ContentType.ANSWER to it.toString() },
-            ).mapNotNull { key ->
-                key.substringAfter(':', "").toLongOrNull()
-            }.toSet()
-    },
     environment: ZhihuApiEnvironment,
 ) : AnswerNavigator("此问题", environment) {
     private val pendingInitialNextAnswers = ArrayDeque<PostDestination>().also { deque ->
@@ -305,7 +293,6 @@ class QuestionAnswerNavigator(
     private val enqueuedPrevIds = mutableSetOf<Long>().also { set ->
         set.addAll(previousQueue.map { it.id })
     }
-    private val knownOpenedIds = mutableSetOf<Long>()
     private var initialNextAnswersProcessed = false
     private var nextSourceExhausted = false
     private val destinationsMutex = Mutex()
@@ -367,38 +354,17 @@ class QuestionAnswerNavigator(
                 fetchedNextUrl = page.nextUrl
                 page.items.mapNotNull { feed -> feed.target?.navDestination as? PostDestination }
             }
-            val idsToLookup = candidates
-                .asSequence()
-                .filter { it.type == PostType.Answer }
-                .map { it.id }
-                .filter { id ->
-                    id != currentArticleId &&
-                        id !in historyIds &&
-                        id !in enqueuedPrevIds &&
-                        id !in enqueuedNextIds &&
-                        id !in knownOpenedIds
-                }.toList()
-            if (idsToLookup.isNotEmpty()) {
-                knownOpenedIds += getAlreadyOpenedAnswerIds(idsToLookup)
-            }
-            val partition = ContentOpenEventSupport.partitionQuestionAnswerCandidates(
-                candidates = candidates,
-                openedAnswerIds = knownOpenedIds,
-                currentArticleId = currentArticleId,
-                historyIds = historyIds,
-                previousIds = enqueuedPrevIds,
-                nextIds = enqueuedNextIds,
-            )
-            partition.previousCandidates.forEach { article ->
-                if (enqueuedPrevIds.add(article.id)) {
-                    previousAnswerContent = null
-                    previousQueue.add(0, article)
+            candidates.forEach { article ->
+                if (article.type != PostType.Answer ||
+                    article.id == currentArticleId ||
+                    article.id in historyIds ||
+                    article.id in enqueuedPrevIds ||
+                    article.id in enqueuedNextIds
+                ) {
+                    return@forEach
                 }
-            }
-            partition.nextCandidates.forEach { article ->
-                if (enqueuedNextIds.add(article.id)) {
-                    destinations.addLast(article)
-                }
+                enqueuedNextIds.add(article.id)
+                destinations.addLast(article)
             }
             if (processingInitialNextAnswers) {
                 initialNextAnswersProcessed = true

@@ -119,9 +119,9 @@ val aboutLibraries = "15.0.0"
 val composeVersion = "1.11.1"
 val jetbrainsLifecycleVersion = "2.10.0"
 
-// Force material3 to 1.10.0-alpha05，与 shared 模块保持一致。
-// 根因：shared 模块 commonMain 通过 material-kolor 的 strictly 约束解析到 1.10.0-alpha05，
-// 但平台配置和本模块如果没有 force，会各自解析到不同版本（1.9.0 或 1.11.0-alpha07），
+// Force material3 to 1.10.0-alpha05。
+// 根因：material-kolor 的 strictly 约束需要解析到 1.10.0-alpha05，
+// 但如果没有 force，会各自解析到不同版本（1.9.0 或 1.11.0-alpha07），
 // 导致运行时类冲突或编译时 internal API 不可见。
 configurations.configureEach {
     resolutionStrategy {
@@ -130,7 +130,6 @@ configurations.configureEach {
 }
 
 dependencies {
-    implementation(project(":shared-local-db"))
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-core:1.11.0")
     implementation("org.jetbrains.kotlinx:kotlinx-io-core:0.8.1")
     implementation("io.ktor:ktor-client-core-jvm:$ktor")

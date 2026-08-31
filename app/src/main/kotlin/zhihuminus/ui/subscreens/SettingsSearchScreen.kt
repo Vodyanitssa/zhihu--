@@ -51,6 +51,7 @@ import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.notification.NotificationType
+import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 
@@ -96,21 +97,6 @@ private fun appearanceEntry(
     section = "外观与阅读体验",
     description = description,
     destination = Account.AppearanceSettings(setting = settingKey),
-    keywords = keywords,
-)
-
-private fun recommendEntry(
-    id: String,
-    title: String,
-    description: String,
-    settingKey: String,
-    keywords: List<String> = emptyList(),
-): SettingsSearchEntry = SettingsSearchEntry(
-    id = id,
-    title = title,
-    section = "推荐系统与内容过滤",
-    description = description,
-    destination = Account.RecommendSettings(setting = settingKey),
     keywords = keywords,
 )
 
@@ -234,93 +220,12 @@ private val settingsSearchEntries = buildList {
         ),
     )
     add(
-        recommendEntry(
-            "recommend.enableContentFilter",
-            "启用智能内容过滤",
-            "过滤重复出现但未点击内容。",
-            "enableContentFilter",
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.filterFollowedUserContent",
-            "过滤已关注用户内容",
-            "控制是否过滤已关注用户的内容。",
-            "filterFollowedUserContent",
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.enableKeywordBlocking",
-            "启用关键词屏蔽",
-            "按关键词过滤内容。",
-            "enableKeywordBlocking",
-            listOf("关键词", "屏蔽词"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.enableTopicBlocking",
-            "启用主题屏蔽",
-            "按命中主题过滤内容。",
-            "enableTopicBlocking",
-            listOf("话题屏蔽", "屏蔽话题"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.blockZhihuAdPlatform",
-            "屏蔽知乎广告平台内容",
-            "过滤知乎广告平台推广内容。",
-            "blockZhihuAdPlatform",
-            listOf("广告"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.blockZhihuSchool",
-            "屏蔽知乎学堂内容",
-            "过滤知乎学堂和教育推广内容。",
-            "blockZhihuSchool",
-            listOf("学堂"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.blockWeChatOfficialAccount",
-            "屏蔽微信公众号文章",
-            "过滤微信公众号外链内容。",
-            "blockWeChatOfficialAccount",
-            listOf("微信"),
-        ),
-    )
-    add(
-        recommendEntry(
-            "recommend.blockPaidContent",
-            "屏蔽知乎盐选付费内容",
-            "过滤会员付费内容。",
-            "blockPaidContent",
-            listOf("盐选", "付费"),
-        ),
-    )
-    add(
-        SettingsSearchEntry(
-            id = "recommend.blocklist",
-            title = "管理屏蔽列表",
-            section = "推荐系统与内容过滤",
-            description = "管理关键词和主题屏蔽。",
-            destination = Account.RecommendSettings.Blocklist,
-            keywords = listOf("黑名单", "屏蔽词", "屏蔽话题"),
-        ),
-    )
-    add(
-        SettingsSearchEntry(
-            id = "recommend.blockedHistory",
-            title = "屏蔽记录",
-            section = "推荐系统与内容过滤",
-            description = "查看最近被过滤的内容。",
-            destination = Account.RecommendSettings.BlockedFeedHistory,
-            keywords = listOf("过滤记录"),
+        appearanceEntry(
+            "appearance.autoRefreshHomeOnStartup",
+            "启动时自动刷新首页",
+            "关闭后启动时优先显示上次获取的一批首页推荐。",
+            AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY,
+            listOf("自动刷新", "首页缓存", "启动页刷新"),
         ),
     )
 

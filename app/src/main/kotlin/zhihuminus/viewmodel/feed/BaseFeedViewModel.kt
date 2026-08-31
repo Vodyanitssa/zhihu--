@@ -25,7 +25,6 @@ import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
-import com.zhihuminus.viewmodel.FeedDisplayEnvironment
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.PaginationViewModel
 import kotlinx.serialization.json.JsonArray
@@ -67,7 +66,7 @@ abstract class BaseFeedViewModel : PaginationViewModel<Feed>(typeOf<Feed>()) {
         isPullToRefresh = false
     }
 
-    open fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem = feed.toDisplayItem()
+    open fun createDisplayItem(environment: PaginationEnvironment, feed: Feed): FeedDisplayItem = feed.toDisplayItem()
 
     fun addDisplayItems(newItems: List<FeedDisplayItem>) {
         newItems.forEach {

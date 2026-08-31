@@ -22,12 +22,10 @@ import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zhihuminus.data.DataHolder
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.PeopleSearchResult
 import com.zhihuminus.data.SearchResult
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
-import com.zhihuminus.data.target
 import com.zhihuminus.util.raiseForStatus
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
@@ -196,23 +194,6 @@ open class SearchViewModel(
         } finally {
             isLoading = false
         }
-    }
-
-    override fun processResponse(
-        environment: PaginationEnvironment,
-        data: List<Feed>,
-        rawData: JsonArray,
-    ) {
-        val blockedUserIds = environment.blockedUserIds()
-        // 进行搜索filter逻辑。目前仅支持作者。
-        val filtered = if (blockedUserIds.isEmpty()) {
-            data
-        } else {
-            data.filterNot { feed ->
-                feed.target?.author?.id in blockedUserIds
-            }
-        }
-        super.processResponse(environment, filtered, rawData)
     }
 }
 

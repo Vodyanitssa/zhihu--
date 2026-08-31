@@ -42,8 +42,6 @@ import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.ContentDetailCache
 import com.zhihuminus.data.DataHolder
-import com.zhihuminus.data.Feed
-import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.data.OnlineHistoryDeletePair
 import com.zhihuminus.data.ZhihuCookieStorage
@@ -54,11 +52,8 @@ import com.zhihuminus.data.executeZhihuAuthenticatedRequest
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
 import com.zhihuminus.data.fetchZhihuContentDetail
 import com.zhihuminus.data.getOrFetchContentDetail
-import com.zhihuminus.data.target
-import com.zhihuminus.filter.ContentOpenEventSupport
 import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.ArticleAnswerSwitchState
@@ -72,10 +67,6 @@ import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.saveBitmapToGallery
 import com.zhihuminus.util.signZhihuFetchRequest
 import com.zhihuminus.viewmodel.ArticleViewModel.CachedAnswerContent
-import com.zhihuminus.viewmodel.filter.ContentFilterManager
-import com.zhihuminus.viewmodel.filter.ContentType
-import com.zhihuminus.viewmodel.filter.contentFilterSettings
-import com.zhihuminus.viewmodel.filter.getContentFilterDatabase
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
@@ -109,7 +100,6 @@ import kotlinx.serialization.json.put
 import kotlinx.serialization.serializer
 import java.io.File
 import kotlin.reflect.KType
-import com.zhihuminus.navigation.PostDestination as ArticleDestination
 import io.ktor.http.ContentType as KtorContentType
 
 abstract class PaginationViewModel<T : Any>(
@@ -444,55 +434,12 @@ interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
     }
 }
 
-interface FeedDisplayEnvironment {
-    suspend fun applyHomeFeedFilters(items: List<FeedDisplayItem>): List<FeedDisplayItem> = items
-}
-
 interface HistoryEnvironment {
     fun localHistory(): List<NavDestination> = emptyList()
 
     suspend fun clearAllHistory() = Unit
 
     suspend fun postHistoryDestination(destination: NavDestination) = Unit
-}
-
-interface ContentInteractionEnvironment : ZhihuApiEnvironment {
-    suspend fun recordContentInteraction(feed: Feed) = Unit
-}
-
-interface ContentOpenEnvironment {
-    suspend fun recordContentOpenEvent(
-        destination: NavDestination,
-        questionId: Long? = null,
-        openFrom: String = "",
-    ) = Unit
-
-    suspend fun recordOpenEvent(
-        destination: PostDestination,
-        questionId: Long?,
-    ) = Unit
-}
-
-interface ContentBlocklistEnvironment {
-    fun blockedUserIds(): Set<String> = emptySet()
-
-    suspend fun addBlockedUser(
-        userId: String,
-        userName: String,
-        urlToken: String? = null,
-        avatarUrl: String? = null,
-    ) = Unit
-
-    suspend fun addBlockedQuestionAuthor(
-        userId: String,
-        userName: String,
-        urlToken: String? = null,
-        avatarUrl: String? = null,
-    ) = Unit
-
-    suspend fun removeBlockedUser(userId: String) = Unit
-
-    suspend fun removeBlockedQuestionAuthor(userId: String) = Unit
 }
 
 interface ClipboardEnvironment {
@@ -527,12 +474,9 @@ interface ArticleNavigationEnvironment {
 
 interface ContentLoadEnvironment :
     ZhihuApiEnvironment,
-    HistoryEnvironment,
-    ContentOpenEnvironment
+    HistoryEnvironment
 
-interface ProfileLoadEnvironment :
-    ContentLoadEnvironment,
-    ContentBlocklistEnvironment
+interface ProfileLoadEnvironment : ContentLoadEnvironment
 
 interface ArticleLoadEnvironment :
     ZhihuApiEnvironment,
@@ -543,8 +487,6 @@ interface PaginationEnvironment :
     ZhihuApiEnvironment,
     AccountEnvironment,
     MobileHomeFeedEnvironment,
-    FeedDisplayEnvironment,
-    ContentInteractionEnvironment,
     ClipboardEnvironment,
     ProfileLoadEnvironment,
     ArticleLoadEnvironment,
@@ -658,46 +600,6 @@ open class SharedAndroidPaginationEnvironment(
 
     override suspend fun postHistoryDestination(destination: NavDestination) {
         HistoryStorage(context).add(destination)
-    }
-
-    override fun blockedUserIds(): Set<String> = emptySet()
-
-    override suspend fun recordContentOpenEvent(
-        destination: NavDestination,
-        questionId: Long?,
-        openFrom: String,
-    ) {
-        val resolvedOpenFrom = openFrom.ifBlank {
-            context.articleHost()?.consumePendingContentOpenFrom(destination) ?: ""
-        }
-        ContentOpenEventSupport.recordOpenEvent(
-            database = getContentFilterDatabase(context),
-            destination = destination,
-            questionId = questionId,
-            openFrom = resolvedOpenFrom.ifBlank { "unknown" },
-        )
-    }
-
-    override suspend fun recordOpenEvent(
-        destination: ArticleDestination,
-        questionId: Long?,
-    ) {
-        recordContentOpenEvent(destination, questionId)
-    }
-
-    override suspend fun recordContentInteraction(feed: Feed) {
-        val settings = context.contentFilterSettings()
-        if (!settings.enableContentFilter) return
-        val database = getContentFilterDatabase(context)
-        val target = feed.target ?: return
-        val (targetType, targetId) = when (target) {
-            is Feed.AnswerTarget -> ContentType.ANSWER to target.id.toString()
-            is Feed.ArticleTarget -> ContentType.ARTICLE to target.id.toString()
-            is Feed.QuestionTarget -> ContentType.QUESTION to target.id.toString()
-            is Feed.PinTarget -> ContentType.PIN to target.id.toString()
-            else -> return
-        }
-        ContentFilterManager(database.contentFilterDao()).recordContentInteraction(targetType, targetId)
     }
 
     override suspend fun clearAllHistory() {

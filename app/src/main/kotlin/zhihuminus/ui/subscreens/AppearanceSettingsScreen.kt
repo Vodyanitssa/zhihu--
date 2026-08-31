@@ -90,6 +90,7 @@ import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.theme.ThemeManager
 import com.zhihuminus.theme.ThemeMode
+import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.zhihuminus.ui.components.ColorPickerDialog
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
@@ -576,6 +577,21 @@ fun AppearanceSettingsScreen(
                     settingKey = "showFeedThumbnail",
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor("showFeedThumbnail"),
+                )
+                val autoRefreshHomeOnStartup = remember {
+                    mutableStateOf(settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true))
+                }
+                SettingItemWithSwitch(
+                    title = { Text("启动时自动刷新首页") },
+                    description = { Text("关闭后优先显示上次获取的一批首页推荐；没有缓存时仍会加载新推荐") },
+                    checked = autoRefreshHomeOnStartup.value,
+                    onCheckedChange = { checked ->
+                        autoRefreshHomeOnStartup.value = checked
+                        settings.putBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, checked)
+                    },
+                    settingKey = AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY,
+                    highlightedKey = settingKey,
+                    bringIntoViewRequester = requesterFor(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY),
                 )
             }
 

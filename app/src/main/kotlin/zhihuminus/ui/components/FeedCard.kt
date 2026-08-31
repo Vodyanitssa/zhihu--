@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -69,10 +68,8 @@ import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.officialBadge
 import com.zhihuminus.data.sourceLabel
 import com.zhihuminus.data.target
-import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Navigator
 import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberSettingsStore
@@ -118,7 +115,7 @@ fun FeedCard(
         ?.content
         ?.filterIsInstance<DataHolder.Pin.ContentImage>()
         .orEmpty()
-    val showPinImages = showFeedThumbnail && pinImages.isNotEmpty() && !item.isFiltered
+    val showPinImages = showFeedThumbnail && pinImages.isNotEmpty()
     val performClick: (FeedDisplayItem) -> Unit = { clickedItem ->
         val destination = clickedItem.navDestination?.withReadingQueueSource(readingQueueSourceId)
         if (onClick != null) {
@@ -156,11 +153,9 @@ fun FeedCard(
             HorizontalDivider(thickness = 0.3.dp)
         }
         FeedCardMenu(
-            item = item,
             showMenu = showMenu,
             onShowMenuChange = { showMenu = it },
             menuItems = menuItems,
-            navigator = navigator,
         )
     }
 }
@@ -172,26 +167,15 @@ fun FeedCard(
  */
 @Composable
 private fun FeedCardMenu(
-    item: FeedDisplayItem,
     showMenu: Boolean,
     onShowMenuChange: (Boolean) -> Unit,
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit,
-    navigator: Navigator,
 ) {
     DropdownMenu(
         expanded = showMenu,
         onDismissRequest = { onShowMenuChange(false) },
     ) {
         menuItems { onShowMenuChange(false) }
-        if (item.isFiltered) {
-            DropdownMenuItem(
-                text = { Text("不再屏蔽低赞内容") },
-                onClick = {
-                    onShowMenuChange(false)
-                    navigator.onNavigate(Account.RecommendSettings("enableQualityFilter"))
-                },
-            )
-        }
     }
 }
 
@@ -211,9 +195,9 @@ private fun FeedCardContent(
     val settings = rememberSettingsStore()
     val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
-    val visiblePinImages = pinImages.takeIf { showFeedThumbnail && !item.isFiltered }.orEmpty()
-    val sourceLabel = item.feed?.sourceLabel.takeUnless { item.isFiltered }
-    val typeLabel = item.contentTypeLabel.takeUnless { item.isFiltered }
+    val visiblePinImages = pinImages.takeIf { showFeedThumbnail }.orEmpty()
+    val sourceLabel = item.feed?.sourceLabel
+    val typeLabel = item.contentTypeLabel
     // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要 → 图片 → 统计行 ─────────────────────
     if (showSourceLabel) {
         FeedCardSourceLabel(sourceLabel)
@@ -280,7 +264,7 @@ private fun FeedCardContent(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            if (!thumbnailUrl.isNullOrEmpty() && showFeedThumbnail && !item.isFiltered) {
+            if (!thumbnailUrl.isNullOrEmpty() && showFeedThumbnail) {
                 Spacer(modifier = Modifier.width(8.dp))
                 AsyncImage(
                     model = thumbnailUrl,
@@ -302,7 +286,6 @@ private fun FeedCardContent(
             ?.let { item.details.removePrefix("$it · ") }
             ?: item.details
         val publishTimeText = item.publishTimeSeconds
-            ?.takeUnless { item.isFiltered }
             ?.let(::formatDateTime)
         if (statsText.isNotEmpty() || publishTimeText != null) {
             Row(

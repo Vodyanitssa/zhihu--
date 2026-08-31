@@ -41,7 +41,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.FilterAlt
 import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
@@ -405,14 +404,6 @@ fun AccountSettingScreen(
                     icon = { Icon(Icons.Default.Palette, null) },
                     modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
-                )
-
-                SettingItem(
-                    title = { Text("推荐系统与内容过滤") },
-                    description = { Text("推荐、智能过滤、关键词屏蔽等") },
-                    icon = { Icon(Icons.Default.FilterAlt, null) },
-                    modifier = Modifier,
-                    onClick = { navigator.onNavigate(Account.RecommendSettings()) },
                 )
 
                 SettingItem(

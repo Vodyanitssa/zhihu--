@@ -124,17 +124,6 @@ data object Account : TopLevelDestination {
     data object ReadingSettings : NavDestination
 
     @Serializable
-    data class RecommendSettings(
-        val setting: String = "",
-    ) : NavDestination {
-        @Serializable
-        data object Blocklist : NavDestination
-
-        @Serializable
-        data object BlockedFeedHistory : NavDestination
-    }
-
-    @Serializable
     data object IdentityManagement : NavDestination
 
     @Serializable

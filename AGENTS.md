@@ -1,6 +1,6 @@
 # AGENTS.md
 
-Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus): a third-party Zhihu client (Kotlin, Jetpack Compose via JetBrains Compose artifacts). Two Gradle modules: `:app` (the whole app) and `:shared-local-db` (Room DB for content filtering/blocklists).
+Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-plus-plus): a third-party Zhihu client (Kotlin, Jetpack Compose via JetBrains Compose artifacts). Single Gradle module `:app`.
 
 ## Commands
 

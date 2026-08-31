@@ -34,7 +34,6 @@ import androidx.core.net.toUri
 import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.AnswerNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
@@ -74,7 +73,7 @@ fun articleActionText(
 /**
  * 文章页需要从外围应用获取的宿主级服务。
  *
- * 文章会参与历史记录、回答间导航、内容打开来源归因、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
+ * 文章会参与历史记录、回答间导航、剪贴板和 deep link 交接。这个接口刻意比 Activity 窄，
  */
 interface ArticleHost {
     val articleNavController: NavHostController
@@ -82,8 +81,6 @@ interface ArticleHost {
     var clipboardDestination: NavDestination?
 
     fun postHistoryDestination(destination: NavDestination)
-
-    fun consumePendingContentOpenFrom(destination: NavDestination): String = ContentOpenFrom.UNKNOWN
 
     fun consumePendingCommentId(destination: NavDestination): String? = null
 }

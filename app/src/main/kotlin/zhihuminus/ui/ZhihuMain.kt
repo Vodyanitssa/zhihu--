@@ -85,7 +85,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.filter.ContentOpenFrom
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
@@ -111,8 +110,6 @@ import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
-import com.zhihuminus.ui.subscreens.BlockedFeedHistoryScreen
-import com.zhihuminus.ui.subscreens.ContentFilterSettingsScreen
 import com.zhihuminus.ui.subscreens.IdentityManagementScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
@@ -159,7 +156,6 @@ fun ZhihuMain(
     navController: NavHostController,
     mainTabNavigationTarget: TopLevelDestination?,
     navigate: (NavDestination) -> Unit,
-    setCurrentMainTabOpenFrom: (String?) -> Unit,
     consumeMainTabNavigationTarget: (TopLevelDestination) -> Unit,
     preferenceState: ZhihuMainPreferenceState,
     isDarkTheme: Boolean,
@@ -252,7 +248,6 @@ fun ZhihuMain(
     LaunchedEffect(currentTabIndex, mainTabPages) {
         mainTabPages.getOrNull(currentTabIndex)?.bottomDestination?.let { destination ->
             currentMainTabDestination = destination
-            setCurrentMainTabOpenFrom(destination.openFrom)
         }
     }
 
@@ -483,12 +478,6 @@ fun ZhihuMain(
                         val destination: PostDestination = navEntry.toRoute()
                         postContent(destination, navEntry)
                     }
-                    composable<Account.RecommendSettings.Blocklist> {
-                        BlocklistSettingsScreen()
-                    }
-                    composable<Account.RecommendSettings.BlockedFeedHistory> {
-                        BlockedFeedHistoryScreen()
-                    }
                     composable<Notification> {
                         NotificationScreen()
                     }
@@ -513,10 +502,6 @@ fun ZhihuMain(
                             setting = args.setting,
                             onExit = reloadBottomBarPreferences,
                         )
-                    }
-                    composable<Account.RecommendSettings> { navEntry ->
-                        val args = navEntry.toRoute<Account.RecommendSettings>()
-                        ContentFilterSettingsScreen(args.setting)
                     }
                     composable<Account.IdentityManagement> {
                         IdentityManagementScreen()
@@ -624,13 +609,6 @@ private fun MyCollectionsTopLevelPage(
         )
     }
 }
-
-private val TopLevelDestination.openFrom: String?
-    get() = when (this) {
-        Home -> ContentOpenFrom.HOME_FEED
-        OnlineHistory -> ContentOpenFrom.HISTORY
-        else -> null
-    }
 
 internal fun NavBackStackEntry?.hasRoute(cls: KClass<out NavDestination>): Boolean {
     val dest = this?.destination ?: return false

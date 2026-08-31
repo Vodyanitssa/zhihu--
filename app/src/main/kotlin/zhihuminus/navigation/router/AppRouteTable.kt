@@ -330,9 +330,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                 when (args.segment(0)) {
                     "appearance" -> Account.AppearanceSettings(setting)
                     "reading" -> Account.ReadingSettings
-                    "recommend" -> Account.RecommendSettings(setting)
-                    "blocklist" -> Account.RecommendSettings.Blocklist
-                    "blocked-feed-history" -> Account.RecommendSettings.BlockedFeedHistory
                     "identity" -> Account.IdentityManagement
                     "system" -> Account.SystemAndUpdateSettings(setting)
                     "search" -> Account.SettingsSearch
@@ -344,9 +341,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                 when (destination) {
                     is Account.AppearanceSettings -> settingsUrl("appearance", destination.setting)
                     is Account.ReadingSettings -> settingsUrl("reading", "")
-                    is Account.RecommendSettings -> settingsUrl("recommend", destination.setting)
-                    is Account.RecommendSettings.Blocklist -> settingsUrl("blocklist", "")
-                    is Account.RecommendSettings.BlockedFeedHistory -> settingsUrl("blocked-feed-history", "")
                     is Account.IdentityManagement -> settingsUrl("identity", "")
                     is Account.SystemAndUpdateSettings -> settingsUrl("system", destination.setting)
                     is Account.SettingsSearch -> settingsUrl("search", "")

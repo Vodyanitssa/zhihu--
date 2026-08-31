@@ -94,7 +94,7 @@
 | 双击手势 | 支持 | 移除 |
 | 遥测 | 支持 | 移除 |
 | 内容创作（写回答 / 发想法） | 支持 | 移除 |
-| 模块组织 | 单一 App 包 | 按 feature 划分（post / question / comment / imageview），另含 `shared-local-db` Room 模块 |
+| 模块组织 | 单一 App 包 | 按 feature 划分（post / question / comment / imageview） |
 
 ## 贡献者
 

@@ -30,7 +30,6 @@ data class FeedDisplayItem(
     val avatarSrc: String? = null,
     val authorName: String? = null,
     val authorBadgeV2: DataHolder.BadgeV2? = null,
-    val isFiltered: Boolean = false,
     val content: String? = null,
     var raw: DataHolder.Content? = null,
     val contentTypeLabel: String? = null,
@@ -67,7 +66,6 @@ fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
             ?.description ?: actionText,
         details = actionText + "广告",
         feed = this,
-        isFiltered = false,
         content = ad.creatives
             .firstOrNull()
             ?.landingUrl,

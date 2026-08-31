@@ -19,13 +19,13 @@ package com.zhihuminus.viewmodel.feed
 
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.viewmodel.FeedDisplayEnvironment
+import com.zhihuminus.viewmodel.PaginationEnvironment
 
 class HotListViewModel : BaseFeedViewModel() {
     override val initialUrl: String
         get() = "https://www.zhihu.com/api/v3/feed/topstory/hot-lists/total?limit=50&mobile=true"
 
-    override fun createDisplayItem(environment: FeedDisplayEnvironment, feed: Feed): FeedDisplayItem =
+    override fun createDisplayItem(environment: PaginationEnvironment, feed: Feed): FeedDisplayItem =
         super.createDisplayItem(environment, feed).copy(
             authorName = null,
             avatarSrc = null,
