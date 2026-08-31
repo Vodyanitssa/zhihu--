@@ -8,13 +8,13 @@ import com.zhihuminus.navigation.Column
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
+import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
@@ -357,7 +357,7 @@ private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "follow" to Follow,
     "hot" to HotList,
     "daily" to Daily,
-    "history" to OnlineHistory,
+    "history" to History,
     "collections" to MyCollections,
     "account" to Account,
 )

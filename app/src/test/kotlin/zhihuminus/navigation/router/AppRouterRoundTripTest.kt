@@ -14,7 +14,6 @@ import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
@@ -130,7 +129,7 @@ class AppRouterRoundTripTest {
             Follow to "zhminus://tab/follow",
             HotList to "zhminus://tab/hot",
             Daily to "zhminus://tab/daily",
-            OnlineHistory to "zhminus://tab/history",
+            History to "zhminus://tab/history",
             MyCollections to "zhminus://tab/collections",
             Account to "zhminus://tab/account",
         ).forEach { destination, url ->
@@ -141,12 +140,6 @@ class AppRouterRoundTripTest {
     @Test
     fun mainTabsEncodesToHomeTab() {
         assertEquals("zhminus://tab/home", MainTabs.toAppUrl())
-    }
-
-    @Test
-    fun legacyHistoryIsNotEncodable() {
-        // History 同时实现两个接口，显式按 NavDestination 调用避免重载歧义。
-        assertNull((History as NavDestination).toAppUrl())
     }
 
     @Test

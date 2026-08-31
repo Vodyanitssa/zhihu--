@@ -3,13 +3,17 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.Feed
+import com.zhihuminus.data.HistoryDeletePair
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.HistoryItemDto
+import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
 import com.zhihuminus.util.Log
@@ -24,6 +28,7 @@ import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
+import io.ktor.http.isSuccess
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
@@ -285,6 +290,64 @@ class ZhihuApiImpl(
                         append("items", ZhihuJson.json.encodeToString(items))
                     },
                 ),
+            )
+        }
+    }
+
+    override suspend fun fetchHistoryPage(url: String): HistoryPage {
+        @Suppress("HttpUrlsUsage")
+        val json = environment.fetchJson(url.replace("http://://", "https://"), "")
+            ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: not json object."))
+
+        val rawData = json["data"] as? JsonArray
+            ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no $.data"))
+
+        val paging = json["paging"]?.jsonObject
+        val nextUrl = paging?.get("next")?.jsonPrimitive?.content
+        val isEnd = paging
+            ?.get("is_end")
+            ?.jsonPrimitive
+            ?.content
+            ?.toBooleanStrictOrNull() ?: true
+
+        val items = rawData.mapNotNull { element ->
+            runCatching { decodeJson<HistoryItemDto>(element) }.getOrNull()
+        }
+
+        return HistoryPage(items, nextUrl, isEnd)
+    }
+
+    override suspend fun deleteHistoryItems(pairs: List<HistoryDeletePair>) {
+        val response = environment.postSigned("https://api.zhihu.com/read_history/batch_del") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put(
+                        "pairs",
+                        JsonArray(
+                            pairs.map { pair ->
+                                buildJsonObject {
+                                    put("content_token", pair.contentToken)
+                                    put("content_type", pair.contentType)
+                                }
+                            },
+                        ),
+                    )
+                    put("clear", false)
+                }.toString(),
+            )
+        }
+        check(response.status.isSuccess()) { "删除在线历史记录失败: ${response.status}" }
+    }
+
+    override suspend fun clearHistory() {
+        environment.postSigned("https://api.zhihu.com/read_history/batch_del") {
+            contentType(ContentType.Application.Json)
+            setBody(
+                buildJsonObject {
+                    put("pairs", JsonArray(emptyList()))
+                    put("clear", true)
+                }.toString(),
             )
         }
     }

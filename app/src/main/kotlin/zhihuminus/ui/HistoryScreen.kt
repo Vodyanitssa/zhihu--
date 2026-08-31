@@ -42,14 +42,15 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zhihuminus.navigation.History
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh
 import com.zhihuminus.ui.components.PaginatedList
-import com.zhihuminus.viewmodel.feed.OnlineHistoryViewModel
+import com.zhihuminus.viewmodel.feed.HistoryViewModel
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
@@ -62,12 +63,12 @@ import kotlinx.coroutines.launch
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun OnlineHistoryScreen(
+fun HistoryScreen(
     scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
 ) {
     val navigator = LocalNavigator.current
-    val viewModel: OnlineHistoryViewModel = viewModel { OnlineHistoryViewModel() }
+    val viewModel: HistoryViewModel = viewModel { HistoryViewModel() }
     val readingQueueSourceId = "history:online"
     val paginationEnvironment = rememberPaginationEnvironment()
     val userMessages = rememberUserMessageSink()
@@ -125,13 +126,6 @@ fun OnlineHistoryScreen(
                             onDismissRequest = { showActionsMenu = false },
                         ) {
                             DropdownMenuItem(
-                                text = { Text("查看本地历史记录") },
-                                onClick = {
-                                    showActionsMenu = false
-                                    navigator.onNavigate(History)
-                                },
-                            )
-                            DropdownMenuItem(
                                 text = { Text("清除历史记录") },
                                 onClick = {
                                     showActionsMenu = false
@@ -148,12 +142,13 @@ fun OnlineHistoryScreen(
             AlertDialog(
                 onDismissRequest = { showClearHistoryDialog = false },
                 title = { Text("确认清除历史记录") },
-                text = { Text("此操作会清除当前账号的在线和本地的全部历史记录。") },
+                text = { Text("此操作会清除当前账号的全部在线历史记录。") },
                 confirmButton = {
                     TextButton(onClick = {
                         showClearHistoryDialog = false
                         coroutineScope.launch {
-                            paginationEnvironment.clearAllHistory()
+                            val api = ZhihuApiImpl(paginationEnvironment)
+                            ZhihuHistoryRepository(api).clearAll()
                             viewModel.displayItems.clear()
                             userMessages.showShortMessage("已清除所有历史记录")
                         }

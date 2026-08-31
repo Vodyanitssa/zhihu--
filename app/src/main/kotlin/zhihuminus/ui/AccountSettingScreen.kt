@@ -76,9 +76,9 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
+import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberSettingsStore
@@ -333,7 +333,7 @@ fun AccountSettingScreen(
                                 .background(MaterialTheme.colorScheme.primaryContainer)
                                 .clickable {
                                     onDismissRequest()
-                                    navigator.onNavigateTopLevel(OnlineHistory)
+                                    navigator.onNavigateTopLevel(History)
                                 }.padding(8.dp, 16.dp),
                             verticalArrangement = Arrangement.Center,
                             horizontalAlignment = Alignment.CenterHorizontally,

@@ -41,7 +41,6 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
-import com.zhihuminus.data.OnlineHistoryDeletePair
 import com.zhihuminus.data.ZhihuCookieStorage
 import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.ZhihuJson.json
@@ -71,7 +70,6 @@ import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLProtocol
 import io.ktor.http.contentType
-import io.ktor.http.isSuccess
 import io.ktor.serialization.kotlinx.json.json
 import io.ktor.util.appendAll
 import kotlinx.coroutines.CancellationException
@@ -319,29 +317,6 @@ suspend fun ZhihuApiEnvironment.addReadHistory(
     }
 }
 
-internal suspend fun ZhihuApiEnvironment.deleteOnlineHistoryItem(item: OnlineHistoryDeletePair) {
-    val response = postSigned("https://api.zhihu.com/read_history/batch_del") {
-        contentType(KtorContentType.Application.Json)
-        setBody(
-            buildJsonObject {
-                put(
-                    "pairs",
-                    JsonArray(
-                        listOf(
-                            buildJsonObject {
-                                put("content_token", item.contentToken)
-                                put("content_type", item.contentType)
-                            },
-                        ),
-                    ),
-                )
-                put("clear", false)
-            }.toString(),
-        )
-    }
-    check(response.status.isSuccess()) { "删除在线历史记录失败: ${response.status}" }
-}
-
 suspend fun ZhihuApiEnvironment.postSigned(
     url: String,
     block: HttpRequestBuilder.() -> Unit = {},
@@ -372,8 +347,6 @@ interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
 
 interface HistoryEnvironment {
     fun localHistory(): List<NavDestination> = emptyList()
-
-    suspend fun clearAllHistory() = Unit
 
     suspend fun postHistoryDestination(destination: NavDestination) = Unit
 }
@@ -524,19 +497,6 @@ open class SharedAndroidPaginationEnvironment(
 
     override suspend fun postHistoryDestination(destination: NavDestination) {
         HistoryStorage(context).add(destination)
-    }
-
-    override suspend fun clearAllHistory() {
-        HistoryStorage(context).clearAndSave()
-        postSigned("https://api.zhihu.com/read_history/batch_del") {
-            contentType(KtorContentType.Application.Json)
-            setBody(
-                buildJsonObject {
-                    put("pairs", JsonArray(emptyList()))
-                    put("clear", true)
-                }.toString(),
-            )
-        }
     }
 
     private fun tryShowLoginExpiredDialog(error: HttpStatusException): Boolean {

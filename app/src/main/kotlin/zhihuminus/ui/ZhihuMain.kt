@@ -89,6 +89,7 @@ import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.Column
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
+import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.LocalNavigator
@@ -97,7 +98,6 @@ import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Navigator
 import com.zhihuminus.navigation.Notification
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.PostTypeNavType
@@ -127,7 +127,7 @@ private sealed class MainTabPage(
 
     data object DailyPage : MainTabPage(Daily, "daily")
 
-    data object OnlineHistoryPage : MainTabPage(OnlineHistory, "online_history")
+    data object HistoryPage : MainTabPage(History, "online_history")
 
     data object MyCollectionsPage : MainTabPage(MyCollections, "my_collections")
 
@@ -198,7 +198,7 @@ fun ZhihuMain(
         Triple(Follow, "关注", Icons.Filled.Group),
         Triple(HotList, "热榜", Icons.Filled.Whatshot),
         Triple(Daily, "日报", Icons.Filled.Newspaper),
-        Triple(OnlineHistory, "历史", Icons.Filled.History),
+        Triple(History, "历史", Icons.Filled.History),
         Triple(MyCollections, "收藏夹", Icons.Filled.Bookmarks),
         Triple(Account, "账号", Icons.Filled.ManageAccounts),
     )
@@ -213,7 +213,7 @@ fun ZhihuMain(
                 Follow -> listOf(MainTabPage.FollowPage)
                 HotList -> listOf(MainTabPage.HotListPage)
                 Daily -> listOf(MainTabPage.DailyPage)
-                OnlineHistory -> listOf(MainTabPage.OnlineHistoryPage)
+                History -> listOf(MainTabPage.HistoryPage)
                 MyCollections -> listOf(MainTabPage.MyCollectionsPage)
                 Account -> listOf(MainTabPage.AccountPage)
                 else -> emptyList()
@@ -415,8 +415,8 @@ fun ZhihuMain(
                     composable<Daily> {
                         DailyScreen()
                     }
-                    composable<OnlineHistory> {
-                        OnlineHistoryScreen()
+                    composable<History> {
+                        HistoryScreen()
                     }
                     composable<Account> {
                         AccountSettingScreen(innerPadding)
@@ -567,7 +567,7 @@ private fun MainTabsContent(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 
-                MainTabPage.OnlineHistoryPage -> OnlineHistoryScreen(
+                MainTabPage.HistoryPage -> HistoryScreen(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 

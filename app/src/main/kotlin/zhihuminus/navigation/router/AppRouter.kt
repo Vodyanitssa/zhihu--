@@ -3,11 +3,11 @@ package com.zhihuminus.navigation.router
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
+import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.util.Log
 import io.ktor.http.Url
@@ -75,14 +75,13 @@ fun NavDestination.toAppUrl(): String? =
 
 /**
  * 把顶层 tab 反向编码为 tab 切换 URL。
- * 历史遗留的本地 [com.zhihuminus.navigation.History] 页面没有稳定入口，返回 null。
  */
 fun TopLevelDestination.toAppUrl(): String? = when (this) {
     Home -> buildAppUrl("tab", "home")
     Follow -> buildAppUrl("tab", "follow")
     HotList -> buildAppUrl("tab", "hot")
     Daily -> buildAppUrl("tab", "daily")
-    OnlineHistory -> buildAppUrl("tab", "history")
+    History -> buildAppUrl("tab", "history")
     MyCollections -> buildAppUrl("tab", "collections")
     Account -> buildAppUrl("tab", "account")
     else -> null

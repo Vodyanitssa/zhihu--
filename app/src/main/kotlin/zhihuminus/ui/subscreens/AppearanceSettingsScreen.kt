@@ -80,11 +80,11 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
+import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.MyCollections
-import com.zhihuminus.navigation.OnlineHistory
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -118,7 +118,7 @@ private val topLevelDestinationsInOrder: List<Pair<String, TopLevelDestination>>
     Follow.name to Follow,
     HotList.name to HotList,
     Daily.name to Daily,
-    OnlineHistory.name to OnlineHistory,
+    History.name to History,
     MyCollections.name to MyCollections,
     Account.name to Account,
 )
@@ -137,7 +137,7 @@ internal fun resolveValidStartDestinationKey(
     else -> Home.name
 }
 
-internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name)
+internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name, History.name)
 
 internal fun normalizeBottomBarSelection(
     selectedKeys: Collection<String>,
@@ -156,9 +156,9 @@ internal fun normalizeBottomBarSelection(
 
     if (enforceMinimumSelection) {
         val fillOrder = if (Home.name in normalized) {
-            listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name)
+            listOf(Follow.name, Daily.name, HotList.name, History.name)
         } else {
-            listOf(Follow.name, Daily.name, HotList.name, OnlineHistory.name, Home.name)
+            listOf(Follow.name, Daily.name, HotList.name, History.name, Home.name)
         }
         fillOrder.forEach { key ->
             if (normalized.size < 3) {
@@ -206,7 +206,7 @@ internal fun bottomBarItemOrderFromPreference(
 
 internal fun shouldShowAccountHistoryShortcut(
     selectedKeys: Set<String>,
-): Boolean = OnlineHistory.name !in selectedKeys
+): Boolean = History.name !in selectedKeys
 
 /**
  * 外观与阅读体验设置页。
@@ -601,7 +601,7 @@ fun AppearanceSettingsScreen(
                 Follow.name to "关注",
                 HotList.name to "热榜",
                 Daily.name to "日报",
-                OnlineHistory.name to "历史",
+                History.name to "历史",
                 MyCollections.name to "收藏夹",
                 Account.name to "账号设置",
             )

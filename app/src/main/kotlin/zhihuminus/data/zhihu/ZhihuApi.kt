@@ -2,10 +2,12 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
+import com.zhihuminus.data.HistoryDeletePair
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
 import io.ktor.client.statement.HttpResponse
@@ -200,6 +202,23 @@ interface ZhihuApi {
      * @param contentType 内容类型: "answer", "article", "pin"
      */
     suspend fun markAsRead(contentToken: String, contentType: String)
+
+    /**
+     * 获取一页在线浏览历史记录。
+     * @param url 分页 URL（首页或续页）
+     */
+    suspend fun fetchHistoryPage(url: String): HistoryPage
+
+    /**
+     * 批量删除在线浏览历史记录。
+     * @param pairs 要删除的记录标识列表
+     */
+    suspend fun deleteHistoryItems(pairs: List<HistoryDeletePair>)
+
+    /**
+     * 清空全部在线浏览历史记录。
+     */
+    suspend fun clearHistory()
 
     /**
      * 获取专栏文章列表

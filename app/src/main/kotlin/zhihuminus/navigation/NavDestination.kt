@@ -78,24 +78,12 @@ data object HotList : TopLevelDestination {
 }
 
 /**
- * 历史遗留的本地浏览历史 route。
- *
- * 当前底部栏使用的是 [OnlineHistory]，所以这里仍是独立 NavHost 页面。除非本地历史重新变成可配置 tab，
- * 否则不要把它混进主 pager tab 列表。
- */
-@Serializable
-data object History : NavDestination, TopLevelDestination {
-    override val name: String
-        get() = "History"
-}
-
-/**
  * 主 pager 的历史顶层 tab 目标。
  */
 @Serializable
-data object OnlineHistory : TopLevelDestination {
+data object History : TopLevelDestination {
     override val name: String
-        get() = "OnlineHistory"
+        get() = "History"
 }
 
 /**
