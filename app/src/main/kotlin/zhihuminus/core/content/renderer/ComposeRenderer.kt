@@ -187,7 +187,6 @@ private fun AnnotatedString.Builder.appendInlineNode(
         }
 
         is InlineNode.Formula -> {
-            // alternateText 仅在 inlineContent 缺失时展示
             appendInlineContent(node.url, "[公式]")
         }
 
@@ -265,8 +264,10 @@ fun RenderContentNode(
         }
 
         is ContentNode.Formula -> {
+            FormulaManager.FormulaResolveEffect(node.url)
+            val localUrl = FormulaManager.urlToLocal[node.url] ?: node.url
             Image(
-                ContentNode.Image(url = node.url, caption = null),
+                ContentNode.Image(url = localUrl, caption = null),
                 colorFilter = ColorFilter.tint(MaterialTheme.colorScheme.onSurface),
             )
         }

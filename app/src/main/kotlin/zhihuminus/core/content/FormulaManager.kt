@@ -1,5 +1,6 @@
 package com.zhihuminus.core.content
 
+import android.util.Log
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.text.InlineTextContent
 import androidx.compose.material3.MaterialTheme
@@ -17,9 +18,8 @@ import androidx.compose.ui.text.PlaceholderVerticalAlign
 import androidx.compose.ui.unit.Dp
 import coil3.compose.AsyncImage
 import coil3.request.ImageRequest
-import com.zhihuminus.core.content.FormulaManager.metrics
+import com.zhihuminus.data.AccountData
 import io.ktor.client.HttpClient
-import io.ktor.client.plugins.HttpTimeout
 import io.ktor.client.request.get
 import io.ktor.client.statement.bodyAsText
 import kotlinx.coroutines.CoroutineScope
@@ -30,27 +30,28 @@ import kotlinx.coroutines.async
 import java.util.concurrent.ConcurrentHashMap
 
 /**
- * 行内公式（eeimg 的 img）的尺寸管理器。
+ * 公式管理器。
  *
- * 知乎公式接口返回的 SVG 根标签带有以 ex 为单位的物理尺寸：
- * `<svg width="8.976ex" height="2.676ex" style="font-size: 15px" viewBox="...">`。
+ * 知乎公式接口（`/equation?tex=...`）返回的 SVG 根标签带有以 ex 为单位的物理尺寸，
  * Coil 无法解析 ex 相对单位（会退化用 viewBox 原始坐标当固有尺寸），因此这里
  * 自行拉取 SVG 文本、解析根标签得到精确宽高比与相对大小，全局缓存。
  *
- * 渲染端读取 [metrics] 构建占位符；解析失败或未完成时由渲染端自行兜底。
+ * SVG 原文缓存在内存中，渲染阶段用 base64 data URI 喂给 Coil，绕开知乎的登录鉴权。
+ * 所有 fetch 统一通过 [AccountData.httpClient] 携带 Cookie。
+ * inline 和 block 公式共享同一套 [resolve] 逻辑。
  */
 object FormulaManager {
-    /** 公式度量：SVG 根标签声明的物理尺寸（ex 单位） */
+    private const val TAG = "FormulaManager"
+
     data class Metrics(
         val widthEx: Float,
         val heightEx: Float,
     ) {
-        /** 宽高比，可直接用于布局 */
         val aspectRatio: Float get() = widthEx / heightEx
     }
 
-    /** 0.53 为 ex 到 em 的换算系数（MathJax 的 x 高度约定，约半个 em） */
-    const val EX_TO_EM = 0.35f
+    /** 0.53 为 ex 到 em 的换算系数（MathJax 的 x 高度约定，约半个 em）但会太大，故用 0.4 保证不会撑出行 */
+    const val EX_TO_EM = 0.4f
 
     /** 无度量时的兜底高度（em） */
     private const val FALLBACK_HEIGHT_EM = 1.3f
@@ -58,23 +59,16 @@ object FormulaManager {
     /** 无度量时的兜底宽高比（首帧占位用，图片加载后被真实比例替换） */
     private const val FALLBACK_RATIO = 1.5f
 
-    /** Compose 可观察状态：url -> 已解析度量（进程级缓存） */
+    /** Compose 可观察状态：url -> 已解析度量 */
     val metrics = mutableStateMapOf<String, Metrics>()
+    val urlToLocal = mutableStateMapOf<String, String>()
 
-    private val client by lazy {
-        HttpClient {
-            install(HttpTimeout) {
-                requestTimeoutMillis = 5000
-            }
-        }
-    }
+    private val svgCache = ConcurrentHashMap<String, String>()
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
     private val inFlight = ConcurrentHashMap<String, Deferred<Unit>>()
-
     private val widthRegex = Regex("width=\"([\\d.]+)ex\"")
     private val heightRegex = Regex("height=\"([\\d.]+)ex\"")
 
-    /** 从节点树中收集全部公式节点（含粗体/斜体嵌套） */
     fun collectFormulas(nodes: List<InlineNode>): List<InlineNode.Formula> = nodes.flatMap { node ->
         when (node) {
             is InlineNode.Formula -> listOf(node)
@@ -84,11 +78,6 @@ object FormulaManager {
         }
     }
 
-    /**
-     * 计算公式的显示尺寸（宽, 高）。
-     * 有度量时按 ex 物理换算；否则用兜底高度 + 兜底比例。
-     * [maxWidth] 非 null 时，宽度超出可用宽度则强制占满并等比缩放高度。
-     */
     fun displaySize(
         metrics: Metrics?,
         fallbackRatio: Float?,
@@ -107,11 +96,6 @@ object FormulaManager {
         return widthDp to heightDp
     }
 
-    /**
-     * 构建 [nodes] 中行内公式的 InlineTextContent 表（key 为图片 URL），
-     * 同时触发缺失度量的解析。渲染端与 [EmojiManager.inlineContent] 合并使用。
-     * 超出 [maxWidth] 的公式强制占满可用宽度、高度等比缩放。
-     */
     @Composable
     fun formulaInlineContent(
         nodes: List<InlineNode>,
@@ -119,10 +103,12 @@ object FormulaManager {
         maxWidth: Dp,
     ): Map<String, InlineTextContent> {
         val urls = remember(nodes) { collectFormulas(nodes).map { it.url }.distinct() }
-        LaunchedEffect(urls) { resolve(urls) }
+        val context = LocalContext.current
+        LaunchedEffect(urls) {
+            resolve(urls, AccountData.httpClient(context))
+        }
         val fallbackRatios = remember { mutableStateMapOf<String, Float>() }
         val density = LocalDensity.current
-        val context = LocalContext.current
         return urls.associateWith { url ->
             val (widthDp, heightDp) = displaySize(
                 metrics = metrics[url],
@@ -133,6 +119,7 @@ object FormulaManager {
             )
             val widthPx = with(density) { widthDp.roundToPx() }
             val heightPx = with(density) { heightDp.roundToPx() }
+            val localUrl = urlToLocal[url] ?: url
             InlineTextContent(
                 placeholder = Placeholder(
                     width = with(density) { widthDp.toSp() },
@@ -140,12 +127,10 @@ object FormulaManager {
                     placeholderVerticalAlign = PlaceholderVerticalAlign.TextCenter,
                 ),
             ) {
-                // 显式按占位符像素尺寸请求，让 SVG 以显示分辨率光栅化；
-                // 否则 Compose 会对行内内容做绘制时缩放，长公式会被放大而模糊
-                val imageRequest = remember(url, widthPx, heightPx) {
+                val imageRequest = remember(localUrl, widthPx, heightPx) {
                     ImageRequest
                         .Builder(context)
-                        .data(url)
+                        .data(localUrl)
                         .size(widthPx, heightPx)
                         .build()
                 }
@@ -165,16 +150,20 @@ object FormulaManager {
         }
     }
 
-    /**
-     * 批量补齐 [urls] 中缺失的度量。同一 URL 并发去重；
-     * 拉取失败静默跳过（允许后续重试），渲染端走兜底路径。
-     */
-    suspend fun resolve(urls: Collection<String>) {
+    @Composable
+    fun FormulaResolveEffect(url: String) {
+        val context = LocalContext.current
+        LaunchedEffect(url) {
+            resolve(listOf(url), AccountData.httpClient(context))
+        }
+    }
+
+    suspend fun resolve(urls: Collection<String>, httpClient: HttpClient) {
         urls
-            .filter { it !in metrics }
+            .filter { it !in metrics && it !in urlToLocal }
             .forEach { url ->
                 val deferred = inFlight.getOrPut(url) {
-                    scope.async { fetchAndStore(url) }
+                    scope.async { fetchAndStore(url, httpClient) }
                 }
                 runCatching { deferred.await() }
                     .onFailure { inFlight.remove(url, deferred) }
@@ -196,9 +185,27 @@ object FormulaManager {
         return Metrics(width, height)
     }
 
-    private suspend fun fetchAndStore(url: String) {
-        val text = client.get(url).bodyAsText()
-        val parsed = parseSvgRoot(text) ?: return
-        metrics[url] = parsed
+    private suspend fun fetchAndStore(url: String, httpClient: HttpClient) {
+        svgCache[url]?.let { cached ->
+            urlToLocal[url] = toDataUri(cached)
+            parseSvgRoot(cached)?.let { metrics[url] = it }
+            return
+        }
+        try {
+            val text = httpClient.get(url).bodyAsText()
+            svgCache[url] = text
+            urlToLocal[url] = toDataUri(text)
+            parseSvgRoot(text)?.let { metrics[url] = it }
+        } catch (e: Exception) {
+            Log.w(TAG, "Failed to fetch formula: $url", e)
+        }
+    }
+
+    private fun toDataUri(svgText: String): String {
+        val encoded = android.util.Base64.encodeToString(
+            svgText.toByteArray(Charsets.UTF_8),
+            android.util.Base64.NO_WRAP,
+        )
+        return "data:image/svg+xml;base64,$encoded"
     }
 }
