@@ -41,4 +41,9 @@ sealed interface QuestionEffect {
     data class ContentOpened(
         val title: String,
     ) : QuestionEffect
+
+    /** 在 WebView 中显示页面（如问题日志）。 */
+    data class ShowLog(
+        val url: String,
+    ) : QuestionEffect
 }

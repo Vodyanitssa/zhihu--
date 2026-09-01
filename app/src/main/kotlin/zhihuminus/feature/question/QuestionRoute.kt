@@ -3,7 +3,10 @@ package com.zhihuminus.feature.question
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
@@ -11,6 +14,7 @@ import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
+import com.zhihuminus.feature.question.components.HistoryLogSheet
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
@@ -45,6 +49,7 @@ fun QuestionRoute(
     val navigator = LocalNavigator.current
     val inAppLinkOpener = rememberInAppLinkOpener()
     val imageViewManager = remember { ImageViewManager() }
+    var showLogUrl by remember { mutableStateOf<String?>(null) }
 
     val viewModel: QuestionViewModel =
         viewModel(key = "question_${destination.questionId}") {
@@ -69,6 +74,8 @@ fun QuestionRoute(
                 is QuestionEffect.Navigate -> navigator.onNavigate(effect.destination)
 
                 is QuestionEffect.OpenExternalUrl -> openExternalUrl(effect.url)
+
+                is QuestionEffect.ShowLog -> showLogUrl = effect.url
 
                 is QuestionEffect.ContentOpened ->
                     articleHost?.postHistoryDestination(Question(destination.questionId, effect.title))
@@ -110,6 +117,13 @@ fun QuestionRoute(
                 onShare = { shareImage(it) },
                 onOpenInBrowser = { openExternalUrl(it) },
             ),
+        )
+    }
+
+    showLogUrl?.let { url ->
+        HistoryLogSheet(
+            url = url,
+            onDismiss = { showLogUrl = null },
         )
     }
 }

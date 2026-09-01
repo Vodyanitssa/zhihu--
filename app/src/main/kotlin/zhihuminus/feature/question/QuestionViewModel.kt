@@ -66,7 +66,7 @@ class QuestionViewModel(
             is QuestionEvent.ToggleFollow -> toggleFollow()
             is QuestionEvent.Navigate -> sendEffect(QuestionEffect.Navigate(event.destination))
             is QuestionEvent.OpenHistoryLog ->
-                sendEffect(QuestionEffect.OpenExternalUrl("https://www.zhihu.com/question/$questionId/log"))
+                sendEffect(QuestionEffect.ShowLog("https://www.zhihu.com/question/$questionId/log"))
         }
     }
 
