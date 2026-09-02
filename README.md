@@ -35,10 +35,11 @@
 - 信息流与推荐
   - 支持切换 **登录状态 / 非登录状态** 下的推荐，防止信息茧房
   - 支持关注页（推荐/动态，可显示动态来源说明）、热榜、知乎日报、搜索（含热搜、历史、排序/类型/时间筛选）
+  - 信息流自动过滤广告条目
 - 内容浏览
   - 阅读回答
   - 阅读文章
-  - 浏览问题详情页（排序、关注、日志、分享、评论）
+  - 浏览问题详情页（排序、关注、日志 WebView 弹窗浏览、分享、评论）
   - 浏览想法（Pin）详情页（点赞、评论、分享、话题、投票，多图画廊浏览）
   - 信息流卡片摘要基于 AST 解析渲染
   - 文章与想法采用统一的 Post 阅读页（正文可选中复制、顶栏标题随滚动浮现）
@@ -64,6 +65,7 @@
   - 通知（支持分类、红点设置、全部标记已读、自动标记已读与通知筛选）
   - 表情包
 - 其他
+  - 动态图标（Android 12+ Material You 系统取色，Android 11- 使用固定配色）
   - 支持 zse96 v2 签名算法（可以调用 99% 的网页端 API）
   - 支持模拟安卓端 API 调用
   - 支持 Deep Link 与剪贴板链接识别跳转；注册 `zhminus://` 应用内路由，知乎内容链接直接在应用内打开而不跳转浏览器
@@ -75,26 +77,28 @@
   - 采用 AST + Parser + Renderer 渲染
   - 支持段落、标题、分割线、链接、代码块、引用、图片、视频、列表、表格等内容节点
   - 支持文本、加粗 / 斜体与 Emoji 行内节点，支持行内 LaTeX 公式
+  - 引用块指示器使用 drawBehind 绘制
   - 支持图片预览功能
   - HTML 解析统一基于 Jsoup
 
 ## 架构调整 (相比原项目)
 
-| 项目 | 原项目 (zly2006) | 此分支 (Vodyanitssa) |
-| --- | --- | --- |
-| 模块架构 | KMP (shared + desktopApp) | 仅 Android 端 (app) |
-| 包名 | `com.github.zly2006.zhplus` | `com.zhihuminus` |
-| minSdk | 27 | 28 |
-| 视频播放 | MediaPlayer | Media3 ExoPlayer |
-| 内容渲染 | WebView / Markdown 解析后渲染 | AST + Compose 渲染 |
+| 项目 | 原项目 (zly2006)                | 此分支 (Vodyanitssa) |
+| --- |------------------------------| --- |
+| 模块架构 | KMP (shared + desktopApp)    | 仅 Android 端 (app) |
+| 包名 | `com.github.zly2006.zhplus`  | `com.zhihuminus` |
+| minSdk | 27                           | 28 |
+| 视频播放 | MediaPlayer                  | Media3 ExoPlayer |
+| 内容渲染 | WebView / Markdown 解析后渲染     | AST + Compose 渲染 |
+| 启动图标 | 静态图 (ic_launcher)            | 自适应图标 + Material You 动态取色 (ic_zhihuminus_launcher) |
 | AI / NLP | 支持 (onnx, sentence_embeddings) | 移除 |
-| 桌面版 | 支持 | 移除 |
-| 本地推荐算法 | 支持 | 移除 |
-| 阅读朗读 | 支持 | 移除 |
-| 双击手势 | 支持 | 移除 |
-| 遥测 | 支持 | 移除 |
-| 内容创作（写回答 / 发想法） | 支持 | 移除 |
-| 模块组织 | 单一 App 包 | 按 feature 划分（post / question / comment / imageview） |
+| 桌面版 | 支持                           | 移除 |
+| 本地推荐算法 | 支持                           | 移除 |
+| 阅读朗读 | 支持                           | 移除 |
+| 双击手势 | 支持                           | 移除 |
+| 遥测 | 支持                           | 移除 |
+| 内容创作（写回答 / 发想法） | 支持                           | 移除 |
+| 模块组织 | 单一 App 包                     | 按 feature 划分（post / question / comment / imageview） |
 
 ## 贡献者
 

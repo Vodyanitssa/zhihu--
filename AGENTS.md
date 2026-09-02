@@ -13,7 +13,7 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
 
 ## Gotchas
 
-- **Package ≠ directory.** App code lives in `app/src/main/kotlin/zhihuminus/...` but declares package `com.zhihuminus.*`. Shared-local-db files live under `src/main/kotlin/com/github/zly2006/zhihuminus/...` but declare `com.zhihuminus.data` / `com.zhihuminus.viewmodel.filter`. Never infer imports or new-file paths from directories.
+- **Package ≠ directory.** App code lives in `app/src/main/kotlin/zhihuminus/...` but declares package `com.zhihuminus.*`. Never infer imports or new-file paths from directories.
 - **material3 is force-pinned** to `1.10.0-alpha05` via `resolutionStrategy` in `app/build.gradle.kts` (strict constraint from material-kolor; mismatched resolution breaks internal APIs at runtime). Don't bump it alone.
 - Core UI comes from JetBrains Compose (`org.jetbrains.compose.*`), not AndroidX; AndroidX Compose BOM is used only for icons/tooling.
 - Repositories are centralized (`FAIL_ON_PROJECT_REPOS`) — never add `repositories {}` in module build scripts.
