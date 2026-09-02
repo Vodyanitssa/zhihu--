@@ -20,7 +20,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
@@ -40,6 +39,10 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -415,23 +418,21 @@ private fun Code(node: ContentNode.Code) {
 
 @Composable
 private fun Quote(node: ContentNode.Quote) {
-    Row(
+    val indicatorColor = MaterialTheme.colorScheme.outlineVariant
+    Column(
         modifier = Modifier
-            .fillMaxWidth()
-            .clip(MaterialTheme.shapes.small)
-            .background(MaterialTheme.colorScheme.surfaceVariant)
-            .padding(vertical = 10.dp, horizontal = 12.dp),
-        horizontalArrangement = Arrangement.spacedBy(12.dp),
-        verticalAlignment = Alignment.Top,
+            .drawBehind {
+                drawRoundRect(
+                    color = indicatorColor,
+                    topLeft = Offset.Zero,
+                    size = Size(
+                        width = 4.dp.toPx(),
+                        height = size.height,
+                    ),
+                    cornerRadius = CornerRadius(2.dp.toPx()),
+                )
+            }.padding(start = 12.dp),
     ) {
-        Box(
-            modifier = Modifier
-                .width(4.dp)
-                .height(24.dp)
-                .clip(RoundedCornerShape(2.dp))
-                .background(MaterialTheme.colorScheme.primary),
-        )
-
         InlineNodes(node.content)
     }
 }
