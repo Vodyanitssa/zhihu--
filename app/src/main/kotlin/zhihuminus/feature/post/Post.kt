@@ -37,7 +37,7 @@ data class Post(
     // Answer-specific
     val questionId: Long? = null,
     // Article-specific
-    val topics: List<String> = emptyList(),
+    val topics: List<PostTopic> = emptyList(),
     // Pin-specific
     val poll: PostPoll? = null,
     val linkCards: List<PostLinkCard> = emptyList(),
@@ -97,6 +97,11 @@ data class PostPollOption(
     val title: String,
     val votingCount: Int,
     val isSelected: Boolean,
+)
+
+data class PostTopic(
+    val id: String,
+    val name: String,
 )
 
 data class PostLinkCard(

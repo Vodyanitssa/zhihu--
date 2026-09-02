@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.post.components
 
+import androidx.compose.foundation.clickable
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -88,12 +89,24 @@ fun PostContent(
 
         // Topics (for articles and pins)
         if (post.topics.isNotEmpty()) {
-            Text(
-                text = post.topics.joinToString(" · ") { "#$it" },
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.primary,
-                modifier = Modifier.padding(top = 16.dp),
-            )
+            Column(modifier = Modifier.padding(top = 16.dp)) {
+                Text(
+                    text = "话题",
+                    style = MaterialTheme.typography.labelMedium,
+                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
+                )
+                post.topics.forEach { topic ->
+                    Text(
+                        text = "#${topic.name}",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .clickable { inAppLinkOpener("https://www.zhihu.com/topic/${topic.id}") }
+                            .padding(vertical = 4.dp),
+                    )
+                }
+            }
         }
     }
 }

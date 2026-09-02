@@ -15,6 +15,7 @@ import com.zhihuminus.feature.post.PostLinkCard
 import com.zhihuminus.feature.post.PostPoll
 import com.zhihuminus.feature.post.PostPollOption
 import com.zhihuminus.feature.post.PostRepository
+import com.zhihuminus.feature.post.PostTopic
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.ui.booleanCompat
 import com.zhihuminus.util.Log
@@ -158,7 +159,7 @@ class ZhihuPostRepository(
             updatedAt = dto.updated,
             ipInfo = dto.ipInfo,
             excerpt = dto.excerpt,
-            topics = dto.topics.map { it.name },
+            topics = dto.topics.map { PostTopic(id = it.id, name = it.name) },
         )
     }
 
@@ -217,7 +218,7 @@ class ZhihuPostRepository(
             createdAt = dto.created,
             updatedAt = dto.updated,
             excerpt = dto.excerptTitle,
-            topics = dto.topics?.map { it.name }.orEmpty(),
+            topics = dto.topics?.map { PostTopic(id = it.id, name = it.name) }.orEmpty(),
             poll = poll,
             linkCards = linkCards,
         )
