@@ -19,6 +19,10 @@ import com.zhihuminus.feature.post.PostTopic
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.ui.booleanCompat
 import com.zhihuminus.util.Log
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.SupervisorJob
+import kotlinx.coroutines.launch
 import kotlinx.serialization.json.encodeToJsonElement
 import kotlinx.serialization.json.jsonObject
 import kotlin.coroutines.cancellation.CancellationException
@@ -26,6 +30,19 @@ import kotlin.coroutines.cancellation.CancellationException
 class ZhihuPostRepository(
     private val api: ZhihuApi,
 ) : PostRepository {
+    private val cacheScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
+
+    private fun refreshCache(type: PostType, id: Long) {
+        cacheScope.launch {
+            try {
+                getPost(type, id)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("ZhihuPostRepository", "Failed to refresh cache $type/$id", e)
+            }
+        }
+    }
+
     override suspend fun getPost(type: PostType, id: Long): Post = when (type) {
         PostType.Answer -> api.getAnswer(id).also { cachePost(type, id, it) }.let(::mapAnswer)
         PostType.Article -> api.getArticle(id).also { cachePost(type, id, it) }.let(::mapArticle)
@@ -65,14 +82,18 @@ class ZhihuPostRepository(
         }
     }
 
-    override suspend fun vote(postType: PostType, id: Long, vote: String): Int = when (postType) {
-        PostType.Answer -> api.voteAnswer(id, vote)
-        PostType.Article -> api.voteArticle(id, vote)
-        PostType.Pin -> when (vote) {
-            "up" -> api.likePin(id)
-            "neutral" -> api.unlikePin(id)
-            else -> throw UnsupportedOperationException("Pin does not support vote: $vote")
+    override suspend fun vote(postType: PostType, id: Long, vote: String): Int {
+        val result = when (postType) {
+            PostType.Answer -> api.voteAnswer(id, vote)
+            PostType.Article -> api.voteArticle(id, vote)
+            PostType.Pin -> when (vote) {
+                "up" -> api.likePin(id)
+                "neutral" -> api.unlikePin(id)
+                else -> throw UnsupportedOperationException("Pin does not support vote: $vote")
+            }
         }
+        refreshCache(postType, id)
+        return result
     }
 
     override suspend fun submitPinPollVote(pollId: String, optionId: String) = api.submitPinPollVote(pollId, optionId)
@@ -94,6 +115,7 @@ class ZhihuPostRepository(
             PostType.Pin -> "pin"
         }
         api.addToCollection(type, id, collectionId)
+        refreshCache(postType, id)
     }
 
     override suspend fun removeFromCollection(postType: PostType, id: Long, collectionId: String) {
@@ -103,6 +125,7 @@ class ZhihuPostRepository(
             PostType.Pin -> "pin"
         }
         api.removeFromCollection(type, id, collectionId)
+        refreshCache(postType, id)
     }
 
     override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection =
