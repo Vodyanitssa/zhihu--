@@ -82,6 +82,7 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import com.zhihuminus.feature.daily.DailyRoute
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
@@ -412,7 +413,7 @@ fun ZhihuMain(
                         )
                     }
                     composable<Daily> {
-                        DailyScreen()
+                        DailyRoute()
                     }
                     composable<History> {
                         HistoryScreen()
@@ -559,7 +560,7 @@ private fun MainTabsContent(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 
-                MainTabPage.DailyPage -> DailyScreen(
+                MainTabPage.DailyPage -> DailyRoute(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 

@@ -11,6 +11,7 @@ import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
+import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
@@ -23,12 +24,15 @@ import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import io.ktor.http.isSuccess
+import io.ktor.util.network.UnresolvedAddressException
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
@@ -359,6 +363,24 @@ class ZhihuApiImpl(
             ?: throw IllegalStateException("Failed to fetch column articles for $columnId")
         return ZhihuJson.decodeJson(json)
     }
+
+    override suspend fun getDailyLatest(): DailyStoriesResponse =
+        fetchDailyStories("/latest")
+
+    override suspend fun getDailyStoriesBefore(date: String): DailyStoriesResponse =
+        fetchDailyStories("/before/$date")
+
+    private suspend fun fetchDailyStories(path: String): DailyStoriesResponse {
+        val client = environment.httpClient()
+        return try {
+            client.get("$DAILY_PRIMARY_API_BASE$path").body()
+        } catch (e: Exception) {
+            if (e is CancellationException || !e.isHostResolutionFailure()) {
+                throw e
+            }
+            client.get("$DAILY_FALLBACK_API_BASE$path").body()
+        }
+    }
 }
 
 internal const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
@@ -378,3 +400,23 @@ private val SKIPPED_FEED_TYPES = setOf(
     "feed_item_index_group",
     "feed_advert",
 )
+
+private const val DAILY_PRIMARY_API_BASE = "https://news-at.zhihu.com/api/4/stories"
+
+// Zhihu Daily's documented Android API host can fail DNS resolution in some
+// overseas networks because of Zhihu-side DNS/server configuration. Keep this
+// fallback host as a narrow workaround for host-resolution failures only.
+// See https://github.com/zly2006/zhihu-plus-plus/issues/417.
+private const val DAILY_FALLBACK_API_BASE = "https://daily.zhihu.com/api/4/stories"
+
+private fun Throwable.isHostResolutionFailure(): Boolean =
+    this is UnresolvedAddressException ||
+        this::class.simpleName == "UnknownHostException" ||
+        message?.contains("Unable to resolve host", ignoreCase = true) == true ||
+        message?.contains("No address associated with hostname", ignoreCase = true) == true ||
+        message?.contains("Name or service not known", ignoreCase = true) == true ||
+        message?.contains("nodename nor servname provided", ignoreCase = true) == true ||
+        generateSequence(cause) { it.cause }.any {
+            it is UnresolvedAddressException ||
+                it::class.simpleName == "UnknownHostException"
+        }

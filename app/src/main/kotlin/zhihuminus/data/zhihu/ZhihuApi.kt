@@ -6,6 +6,7 @@ import com.zhihuminus.data.HistoryDeletePair
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
+import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
@@ -226,4 +227,17 @@ interface ZhihuApi {
      * @param nextUrl 分页续页 URL（为 null 时从第一页开始）
      */
     suspend fun getColumnArticles(columnId: String, nextUrl: String?): ColumnArticlePage
+
+    // 知乎日报相关
+
+    /**
+     * 获取最新一期知乎日报
+     */
+    suspend fun getDailyLatest(): DailyStoriesResponse
+
+    /**
+     * 获取指定日期之前的知乎日报
+     * @param date 日期字符串，格式 yyyyMMdd
+     */
+    suspend fun getDailyStoriesBefore(date: String): DailyStoriesResponse
 }
