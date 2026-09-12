@@ -84,6 +84,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.feature.daily.DailyRoute
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.topic.TopicRoute
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
@@ -401,7 +402,7 @@ fun ZhihuMain(
                         questionContent(question, navEntry)
                     }
                     composable<Topic> { navEntry ->
-                        TopicScreen(navEntry.toRoute())
+                        TopicRoute(navEntry.toRoute())
                     }
                     composable<HotList> {
                         HotListScreen(innerPadding)

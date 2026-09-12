@@ -82,6 +82,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.feature.topic.formatTopicCount
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person

@@ -18,6 +18,7 @@ import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.raiseForStatus
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
 import com.zhihuminus.viewmodel.postSigned
@@ -380,6 +381,29 @@ class ZhihuApiImpl(
             }
             client.get("$DAILY_FALLBACK_API_BASE$path").body()
         }
+    }
+
+    override suspend fun getTopicDetail(topicId: String): JsonObject {
+        val url = "https://www.zhihu.com/api/v5.1/topics/$topicId"
+        val include = "name,excerpt,avatar_url,followers_count,questions_count,is_following,topic_id,total_pv,discuss_count"
+        return environment.fetchJson(url, include)
+            ?: throw IllegalStateException("话题详情响应为空")
+    }
+
+    override suspend fun getTopicFeed(url: String, include: String): JsonObject {
+        @Suppress("HttpUrlsUsage")
+        return environment.fetchJson(url.replace("http://", "https://"), include)
+            ?: throw IllegalStateException("话题内容响应为空")
+    }
+
+    override suspend fun followTopic(topicId: String, follow: Boolean) {
+        val url = "https://www.zhihu.com/api/v4/topics/$topicId/followers"
+        val response = if (follow) {
+            environment.postSigned(url)
+        } else {
+            environment.deleteSigned(url)
+        }
+        response.raiseForStatus()
     }
 }
 
