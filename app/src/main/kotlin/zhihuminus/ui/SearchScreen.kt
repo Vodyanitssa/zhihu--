@@ -81,8 +81,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.feature.topic.formatTopicCount
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
@@ -631,8 +631,8 @@ fun SearchScreen(
                                         )
                                     }
                                     Text(
-                                        "${formatTopicCount(result.visitCount.toString())} 浏览 · ${
-                                            formatTopicCount(
+                                        "${formatCount(result.visitCount.toString())} 浏览 · ${
+                                            formatCount(
                                                 result.discussCount.toString(),
                                             )
                                         } 讨论",

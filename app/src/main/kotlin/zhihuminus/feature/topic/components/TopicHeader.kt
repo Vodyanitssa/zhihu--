@@ -22,8 +22,8 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.topic.TopicDetail
-import com.zhihuminus.feature.topic.formatTopicCount
 
 @Composable
 fun TopicHeader(
@@ -61,8 +61,8 @@ fun TopicHeader(
                 when {
                     detail != null -> Text(
                         listOfNotNull(
-                            detail.totalPv.takeIf(String::isNotBlank)?.let { "${formatTopicCount(it)} 浏览" },
-                            detail.discussCount.takeIf(String::isNotBlank)?.let { "${formatTopicCount(it)} 讨论" },
+                            detail.totalPv.takeIf(String::isNotBlank)?.let { "${formatCount(it)} 浏览" },
+                            detail.discussCount.takeIf(String::isNotBlank)?.let { "${formatCount(it)} 讨论" },
                             "${detail.followersCount} 关注",
                             "${detail.questionsCount} 问题",
                         ).joinToString(" · "),
