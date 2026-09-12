@@ -8,13 +8,13 @@ data class TopicDetailDto(
     val id: String,
     val name: String = "",
     val excerpt: String = "",
-    val avatar_url: String? = null,
-    val followers_count: Int = 0,
-    val questions_count: Int = 0,
-    val is_following: Boolean = false,
-    val topic_id: Long? = null,
-    val total_pv: String = "",
-    val discuss_count: String = "",
+    val avatarUrl: String? = null,
+    val followersCount: Int = 0,
+    val questionsCount: Int = 0,
+    val isFollowing: Boolean = false,
+    val topicId: Long? = null,
+    val totalPv: Long = 0,
+    val discussCount: Long = 0,
 )
 
 @Serializable
@@ -32,13 +32,13 @@ data class TopicPinTargetDto(
     val title: String = "",
     val excerpt: String = "",
     val content: String = "",
-    val plain_content: String = "",
+    val plainContent: String = "",
     val counter: TopicPinCounterDto = TopicPinCounterDto(),
 )
 
 @Serializable
 data class TopicPinAuthorDto(
-    val avatar_url: String = "",
+    val avatarUrl: String = "",
     val name: String = "",
 )
 
@@ -53,6 +53,6 @@ data class TopicPinCounterDto(
 
 @Serializable
 data class TopicPagingDto(
-    val is_end: Boolean = true,
+    val isEnd: Boolean = true,
     val next: String? = null,
 )

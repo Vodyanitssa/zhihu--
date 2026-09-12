@@ -30,13 +30,13 @@ class ZhihuTopicRepository(
             id = dto.id,
             name = dto.name,
             excerpt = dto.excerpt,
-            avatarUrl = dto.avatar_url,
-            followersCount = dto.followers_count,
-            questionsCount = dto.questions_count,
-            isFollowing = dto.is_following,
-            topicId = dto.topic_id,
-            totalPv = dto.total_pv,
-            discussCount = dto.discuss_count,
+            avatarUrl = dto.avatarUrl,
+            followersCount = dto.followersCount,
+            questionsCount = dto.questionsCount,
+            isFollowing = dto.isFollowing,
+            topicId = dto.topicId,
+            viewCount = dto.totalPv,
+            discussCount = dto.discussCount,
         )
     }
 
@@ -72,7 +72,7 @@ class ZhihuTopicRepository(
         val isEnd = if (rawNext != null && normalizedNext == null) {
             true
         } else {
-            paging?.is_end ?: true
+            paging?.isEnd ?: true
         }
         val error = if (rawNext != null && normalizedNext == null) {
             "服务端返回了不受信任的分页地址，已停止加载"
@@ -113,7 +113,7 @@ private fun decodeTopicPinFeeds(json: kotlinx.serialization.json.JsonObject): Li
             val pinId = target.id.content.toLongOrNull() ?: return@let null
             FeedDisplayItem(
                 title = target.title.ifBlank { "想法" },
-                summary = target.plain_content
+                summary = target.plainContent
                     .ifBlank { target.excerpt.ifBlank { target.content } }
                     .takeIf(String::isNotBlank),
                 details = "想法 · ${target.counter.applaud} 赞 · ${target.counter.comment} 评论",
@@ -122,7 +122,7 @@ private fun decodeTopicPinFeeds(json: kotlinx.serialization.json.JsonObject): Li
                     type = PostType.Pin,
                     id = pinId,
                 ).toFeedDisplayItemNavDestinationJson(),
-                avatarSrc = target.author.avatar_url,
+                avatarSrc = target.author.avatarUrl,
                 authorName = target.author.name,
                 contentTypeLabel = "想法",
             )

@@ -12,9 +12,7 @@ fun formatDateTime(seconds: Long): String =
         .atZone(ZoneId.systemDefault())
         .format(timeFormatter)
 
-fun formatCount(raw: String): String {
-    val value = raw.toLongOrNull() ?: return raw
-
+fun formatCount(value: Long): String {
     fun scaled(divisor: Double, unit: String): String {
         val number = (value / divisor * 10).toLong() / 10.0
         val text = if (number % 1.0 == 0.0) number.toLong().toString() else number.toString()

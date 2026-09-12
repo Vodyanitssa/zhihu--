@@ -631,9 +631,9 @@ fun SearchScreen(
                                         )
                                     }
                                     Text(
-                                        "${formatCount(result.visitCount.toString())} 浏览 · ${
+                                        "${formatCount(result.visitCount)} 浏览 · ${
                                             formatCount(
-                                                result.discussCount.toString(),
+                                                result.discussCount,
                                             )
                                         } 讨论",
                                         style = MaterialTheme.typography.bodySmall,

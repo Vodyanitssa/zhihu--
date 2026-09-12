@@ -61,11 +61,10 @@ fun TopicHeader(
                 when {
                     detail != null -> Text(
                         listOfNotNull(
-                            detail.totalPv.takeIf(String::isNotBlank)?.let { "${formatCount(it)} 浏览" },
-                            detail.discussCount.takeIf(String::isNotBlank)?.let { "${formatCount(it)} 讨论" },
-                            "${detail.followersCount} 关注",
-                            "${detail.questionsCount} 问题",
+                            detail.viewCount.takeIf { it > 0 }?.let { "${formatCount(it)}浏览" },
+                            detail.discussCount.takeIf { it > 0 }?.let { "${formatCount(it)}讨论" },
                         ).joinToString(" · "),
+                        style = MaterialTheme.typography.labelMedium,
                     )
 
                     detailErrorMessage != null -> TextButton(onClick = onRetryDetail) {

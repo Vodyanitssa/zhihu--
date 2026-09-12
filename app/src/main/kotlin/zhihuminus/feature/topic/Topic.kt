@@ -11,8 +11,8 @@ data class TopicDetail(
     val questionsCount: Int = 0,
     val isFollowing: Boolean = false,
     val topicId: Long? = null,
-    val totalPv: String = "",
-    val discussCount: String = "",
+    val viewCount: Long = 0,
+    val discussCount: Long = 0,
 )
 
 enum class TopicFeedTab(
