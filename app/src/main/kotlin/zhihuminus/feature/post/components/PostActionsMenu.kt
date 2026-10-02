@@ -18,6 +18,7 @@ import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
@@ -28,7 +29,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.post.Post
-import com.zhihuminus.ui.components.MyModalBottomSheet
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -103,7 +103,7 @@ fun PostActionsMenu(
     }
 
     if (showMenu) {
-        MyModalBottomSheet(
+        ModalBottomSheet(
             onDismissRequest = onDismissRequest,
             sheetState = sheetState,
         ) {

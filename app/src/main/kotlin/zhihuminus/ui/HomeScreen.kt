@@ -44,6 +44,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -76,7 +77,6 @@ import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh
-import com.zhihuminus.ui.components.MyModalBottomSheet
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.viewmodel.feed.BaseFeedViewModel
@@ -312,7 +312,7 @@ fun HomeScreen(
             },
         ) { scaffoldPadding ->
             if (showAccountBottomSheet) {
-                MyModalBottomSheet(
+                ModalBottomSheet(
                     onDismissRequest = { showAccountBottomSheet = false },
                     containerColor = MaterialTheme.colorScheme.surfaceContainer,
                 ) {
