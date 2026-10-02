@@ -52,6 +52,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.zhihuminus.data.ZHIHU_ME_URL
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.util.ZHIHU_WEB_ZSE93
+import com.zhihuminus.util.friendlyErrorMessage
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -461,7 +462,7 @@ fun SharedQrLoginPane(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            statusText = e.message ?: "二维码获取失败，请重试"
+            statusText = "二维码获取失败：${friendlyErrorMessage(e)}"
             isWorking = false
         } finally {
             client.close()

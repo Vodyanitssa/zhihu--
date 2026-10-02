@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -97,7 +98,7 @@ class TopicViewModel(
                 Log.e("TopicViewModel", "Failed to load topic detail", e)
                 uiState = uiState.copy(
                     isLoadingDetail = false,
-                    detailErrorMessage = e.message,
+                    detailErrorMessage = friendlyErrorMessage(e),
                 )
             }
         }
@@ -181,7 +182,7 @@ class TopicViewModel(
                 if (generation == requestGeneration) {
                     uiState = uiState.copy(
                         isLoading = false,
-                        errorMessage = e.message ?: e::class.simpleName ?: "未知错误",
+                        errorMessage = friendlyErrorMessage(e),
                     )
                 }
             }
@@ -210,7 +211,7 @@ class TopicViewModel(
                     )
                 }.onFailure {
                     uiState = uiState.copy(isFollowingChanging = false)
-                    _effect.send(TopicEffect.ShowMessage("${if (following) "关注" else "取消关注"}失败：${it.message}"))
+                    _effect.send(TopicEffect.ShowMessage("${if (following) "关注" else "取消关注"}失败：${friendlyErrorMessage(it)}"))
                 }
         }
     }

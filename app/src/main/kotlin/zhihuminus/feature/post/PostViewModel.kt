@@ -12,6 +12,8 @@ import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -24,7 +26,7 @@ class PostViewModel(
     private val postType: PostType,
     private val repository: PostRepository,
 ) : AndroidViewModel(application) {
-    var uiState: PostUiState by mutableStateOf(PostUiState())
+    var uiState: PostUiState by mutableStateOf(PostUiState(postType = postType))
         private set
 
     private val _effect = Channel<PostEffect>(capacity = Channel.BUFFERED)
@@ -165,9 +167,10 @@ class PostViewModel(
                 uiState = uiState.copy(isExporting = false)
                 sendEffect(PostEffect.ShowMessage("图片已保存到相册"))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Image export failed", e)
                 uiState = uiState.copy(isExporting = false)
-                sendEffect(PostEffect.ShowMessage("图片导出失败: ${e.message}"))
+                sendEffect(PostEffect.ShowMessage("图片导出失败: ${friendlyErrorMessage(e)}"))
             } finally {
                 result?.bitmap?.recycle()
             }
@@ -179,8 +182,14 @@ class PostViewModel(
             val cached = if (forceNetwork) {
                 null
             } else {
-                withContext(Dispatchers.Default) {
-                    repository.getCachedPost(postType, postId)
+                try {
+                    withContext(Dispatchers.Default) {
+                        repository.getCachedPost(postType, postId)
+                    }
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.e("PostViewModel", "Failed to get cached post", e)
+                    null
                 }
             }
             val post = if (cached != null) {
@@ -198,20 +207,26 @@ class PostViewModel(
                     applyPost(fresh)
                     fresh
                 } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     Log.e("PostViewModel", "Failed to load post", e)
-                    uiState = uiState.copy(loadState = PostLoadState.Error(e.message))
+                    val friendlyMsg = friendlyErrorMessage(e)
+                    if (uiState.loadState is PostLoadState.Success) {
+                        sendEffect(PostEffect.ShowMessage("刷新失败: $friendlyMsg"))
+                    } else {
+                        uiState = uiState.copy(loadState = PostLoadState.Error(friendlyMsg))
+                        sendEffect(PostEffect.ShowMessage(friendlyMsg))
+                    }
                     return@launch
                 }
             }
             applyCollectedState(post)
-            viewModelScope.launch {
-                try {
-                    withContext(Dispatchers.Default) {
-                        repository.recordHistory(postType, postId)
-                    }
-                } catch (e: Exception) {
-                    Log.e("PostViewModel", "Failed to record history", e)
+            try {
+                withContext(Dispatchers.Default) {
+                    repository.recordHistory(postType, postId)
                 }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("PostViewModel", "Failed to record history", e)
             }
         }
     }
@@ -256,6 +271,7 @@ class PostViewModel(
                     bottomBarState = uiState.bottomBarState.copy(isCollected = collected),
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Failed to load collections", e)
             }
         }
@@ -273,7 +289,9 @@ class PostViewModel(
                 }
                 loadCollections()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Failed to toggle collection", e)
+                sendEffect(PostEffect.ShowMessage("操作收藏夹失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -286,7 +304,9 @@ class PostViewModel(
                 }
                 loadCollections()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Failed to create collection", e)
+                sendEffect(PostEffect.ShowMessage("创建收藏夹失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -324,6 +344,7 @@ class PostViewModel(
                 }
                 uiState = uiState.copy(bottomBarState = uiState.bottomBarState.copy(voteUpCount = newCount))
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Vote failed", e)
                 uiState = uiState.copy(
                     bottomBarState = bar.copy(
@@ -331,6 +352,7 @@ class PostViewModel(
                         voteUpCount = previousCount,
                     ),
                 )
+                sendEffect(PostEffect.ShowMessage("投票失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -363,9 +385,11 @@ class PostViewModel(
                 // Auto-like after voting
                 handleVote(VoteUpState.Up)
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Poll vote failed", e)
                 // Revert optimistic update
                 uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(poll = poll)))
+                sendEffect(PostEffect.ShowMessage("投票失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -384,9 +408,11 @@ class PostViewModel(
                     repository.followMember(author.urlToken, newFollowing)
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Follow failed", e)
                 // Rollback
                 uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(author = author)))
+                sendEffect(PostEffect.ShowMessage("关注失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

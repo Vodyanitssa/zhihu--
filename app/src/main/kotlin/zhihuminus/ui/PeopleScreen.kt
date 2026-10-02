@@ -90,6 +90,7 @@ import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.util.raiseForStatus
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.PaginationViewModel
@@ -585,7 +586,8 @@ fun PeopleScreen(
         try {
             viewModel.load(paginationEnvironment)
         } catch (e: Exception) {
-            userMessages.showShortMessage("加载用户信息失败: ${e.message}")
+            if (e is CancellationException) throw e
+            userMessages.showShortMessage("加载用户信息失败: ${friendlyErrorMessage(e)}")
         }
     }
     LaunchedEffect(pagerState.currentPage) {
@@ -600,7 +602,8 @@ fun PeopleScreen(
                 }
             }
         } catch (e: Exception) {
-            userMessages.showShortMessage("加载页面内容失败: ${e.message}")
+            if (e is CancellationException) throw e
+            userMessages.showShortMessage("加载页面内容失败: ${friendlyErrorMessage(e)}")
         }
     }
 
@@ -624,7 +627,8 @@ fun PeopleScreen(
                                     try {
                                         viewModel.toggleFollow(paginationEnvironment)
                                     } catch (e: Exception) {
-                                        userMessages.showShortMessage("操作失败: ${e.message}")
+                                        if (e is CancellationException) throw e
+                                        userMessages.showShortMessage("操作失败: ${friendlyErrorMessage(e)}")
                                     }
                                 }
                             },
@@ -633,7 +637,8 @@ fun PeopleScreen(
                                     try {
                                         viewModel.toggleBlock(paginationEnvironment)
                                     } catch (e: Exception) {
-                                        userMessages.showShortMessage("操作失败: ${e.message}")
+                                        if (e is CancellationException) throw e
+                                        userMessages.showShortMessage("操作失败: ${friendlyErrorMessage(e)}")
                                     }
                                 }
                             },

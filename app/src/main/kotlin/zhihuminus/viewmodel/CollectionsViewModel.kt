@@ -21,6 +21,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.zhihuminus.data.Collection
+import com.zhihuminus.util.friendlyErrorMessage
 import io.ktor.client.call.body
 import io.ktor.client.request.setBody
 import io.ktor.http.ContentType
@@ -92,7 +93,7 @@ class CollectionsViewModel(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            createCollectionError = e.message ?: "创建收藏夹失败"
+            createCollectionError = friendlyErrorMessage(e)
             false
         } finally {
             isCreatingCollection = false
@@ -131,7 +132,7 @@ class CollectionsViewModel(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            deleteCollectionError = e.message ?: "删除收藏夹失败"
+            deleteCollectionError = friendlyErrorMessage(e)
             false
         } finally {
             deletingCollectionId = null

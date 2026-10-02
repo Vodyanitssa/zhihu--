@@ -29,6 +29,8 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.util.Log
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -145,7 +147,12 @@ class CollectionContentViewModel(
     private fun refreshCurrentPagingMode(environment: PaginationEnvironment) {
         displayItems.clear()
         viewModelScope.launch {
-            collection = environment.fetchCollection(collectionId)
+            try {
+                collection = environment.fetchCollection(collectionId)
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("CollectionContentVM", "Failed to fetch collection $collectionId", e)
+            }
         }
         super.refresh(environment)
     }

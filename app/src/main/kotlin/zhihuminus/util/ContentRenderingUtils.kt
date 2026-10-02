@@ -31,6 +31,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpHeaders
+import kotlinx.coroutines.CancellationException
 import java.io.OutputStream
 
 private fun saveDownloadedImageToGallery(
@@ -116,7 +117,8 @@ suspend fun saveImageToGallery(
         )
         userMessages.showShortMessage("图片已保存到相册")
     } catch (e: Exception) {
-        userMessages.showShortMessage("保存失败: ${e.message}")
+        if (e is CancellationException) throw e
+        userMessages.showShortMessage("保存失败: ${friendlyErrorMessage(e)}")
     }
 }
 
@@ -145,7 +147,8 @@ suspend fun shareImage(
         }
         context.startActivity(Intent.createChooser(shareIntent, "分享图片"))
     } catch (e: Exception) {
-        userMessages.showShortMessage("分享失败: ${e.message}")
+        if (e is CancellationException) throw e
+        userMessages.showShortMessage("分享失败: ${friendlyErrorMessage(e)}")
     }
 }
 

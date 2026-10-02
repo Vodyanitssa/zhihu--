@@ -36,6 +36,7 @@ import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.isSuccess
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.DelicateCoroutinesApi
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -85,25 +86,30 @@ class HomeFeedViewModel : BaseFeedViewModel() {
      */
     fun onUiContentClick(environment: ZhihuApiEnvironment, feed: Feed, item: FeedDisplayItem) {
         viewModelScope.launch(Dispatchers.Default) {
-            if (environment.authenticatedCookies()["d_c0"] != null) {
-                val payloadItem = when (val target = feed.target) {
-                    is Feed.AnswerTarget -> listOf("answer", target.id.toString(), "read")
-                    is Feed.ArticleTarget -> listOf("article", target.id.toString(), "read")
-                    is Feed.PinTarget -> listOf("pin", target.id.toString(), "read")
-                    else -> null
-                }
-                if (payloadItem != null) {
-                    environment.postSigned("https://www.zhihu.com/lastread/touch") {
-                        header("x-requested-with", "fetch")
-                        setBody(
-                            MultiPartFormDataContent(
-                                formData {
-                                    append("items", ZhihuJson.json.encodeToString(listOf(payloadItem)))
-                                },
-                            ),
-                        )
+            try {
+                if (environment.authenticatedCookies()["d_c0"] != null) {
+                    val payloadItem = when (val target = feed.target) {
+                        is Feed.AnswerTarget -> listOf("answer", target.id.toString(), "read")
+                        is Feed.ArticleTarget -> listOf("article", target.id.toString(), "read")
+                        is Feed.PinTarget -> listOf("pin", target.id.toString(), "read")
+                        else -> null
+                    }
+                    if (payloadItem != null) {
+                        environment.postSigned("https://www.zhihu.com/lastread/touch") {
+                            header("x-requested-with", "fetch")
+                            setBody(
+                                MultiPartFormDataContent(
+                                    formData {
+                                        append("items", ZhihuJson.json.encodeToString(listOf(payloadItem)))
+                                    },
+                                ),
+                            )
+                        }
                     }
                 }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.w("HomeFeedViewModel", "Failed to report content touch", e)
             }
         }
     }

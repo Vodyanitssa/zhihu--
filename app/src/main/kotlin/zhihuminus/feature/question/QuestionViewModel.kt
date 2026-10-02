@@ -9,6 +9,7 @@ import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -98,7 +99,7 @@ class QuestionViewModel(
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load question $questionId", e)
                 uiState = uiState.copy(isLoadingQuestion = false)
-                sendEffect(QuestionEffect.ShowMessage("获取问题详情失败"))
+                sendEffect(QuestionEffect.ShowMessage("获取问题详情失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -153,7 +154,7 @@ class QuestionViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e(TAG, "Failed to load question feeds", e)
-                sendEffect(QuestionEffect.ShowMessage("加载失败: ${e.message}"))
+                sendEffect(QuestionEffect.ShowMessage("加载失败: ${friendlyErrorMessage(e)}"))
             } finally {
                 // 被取消说明已有新任务接管加载标志，不能在这里清掉
                 if (coroutineContext.isActive) {
@@ -182,7 +183,7 @@ class QuestionViewModel(
                 Log.e(TAG, "Failed to toggle follow for question $questionId", e)
                 // 回滚乐观更新
                 uiState = uiState.copy(detail = detail)
-                sendEffect(QuestionEffect.ShowMessage("关注操作失败"))
+                sendEffect(QuestionEffect.ShowMessage("关注操作失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

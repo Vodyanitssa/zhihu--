@@ -1,14 +1,18 @@
 package com.zhihuminus.feature.post
 
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
+import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -25,6 +29,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.data.Collection
@@ -54,6 +60,7 @@ sealed interface PostLoadState {
 }
 
 data class PostUiState(
+    val postType: PostType = PostType.Answer,
     val loadState: PostLoadState = PostLoadState.Loading,
     val bottomBarState: PostBottomBarState = PostBottomBarState(),
     val collections: List<Collection> = emptyList(),
@@ -95,7 +102,13 @@ fun PostScreen(
                                 PostType.Pin -> "${loadState.post.author.name}的想法" to "想法"
                             }
 
-                            else -> "加载中" to "加载中"
+                            is PostLoadState.Error -> when (uiState.postType) {
+                                PostType.Answer -> "回答" to "回答"
+                                PostType.Article -> "文章" to "文章"
+                                PostType.Pin -> "想法" to "想法"
+                            }
+
+                            is PostLoadState.Loading -> "加载中" to "加载中"
                         }
                         ScrollAwareTopBarTitle(state = scrollState, title = title, placeholder = placeholder)
                     },
@@ -135,7 +148,17 @@ fun PostScreen(
                             .padding(paddingValues),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.spacedBy(12.dp),
+                            modifier = Modifier.padding(horizontal = 24.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Default.Warning,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.error,
+                                modifier = Modifier.size(48.dp),
+                            )
                             Text(
                                 text = "加载失败",
                                 style = MaterialTheme.typography.titleMedium,
@@ -144,7 +167,14 @@ fun PostScreen(
                                 text = state.message ?: "未知错误",
                                 style = MaterialTheme.typography.bodyMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                textAlign = TextAlign.Center,
                             )
+                            Button(
+                                onClick = { onEvent(PostEvent.Refresh) },
+                                modifier = Modifier.padding(top = 8.dp),
+                            ) {
+                                Text("重新加载")
+                            }
                         }
                     }
                 }

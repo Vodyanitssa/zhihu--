@@ -226,10 +226,21 @@ fun DailyScreen(
                         modifier = Modifier.fillMaxSize(),
                         contentAlignment = Alignment.Center,
                     ) {
-                        Text(
-                            state.error.orEmpty(),
-                            color = MaterialTheme.colorScheme.error,
-                        )
+                        Column(
+                            horizontalAlignment = Alignment.CenterHorizontally,
+                            verticalArrangement = Arrangement.Center,
+                            modifier = Modifier.padding(24.dp),
+                        ) {
+                            Text(
+                                state.error.orEmpty(),
+                                color = MaterialTheme.colorScheme.error,
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            Spacer(modifier = Modifier.height(16.dp))
+                            TextButton(onClick = { onEvent(DailyEvent.Refresh) }) {
+                                Text("重新加载")
+                            }
+                        }
                     }
                 }
 

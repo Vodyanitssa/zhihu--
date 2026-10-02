@@ -55,6 +55,7 @@ import com.zhihuminus.util.HttpStatusException
 import com.zhihuminus.util.Log
 import com.zhihuminus.util.ZhihuCredentialRefresher
 import com.zhihuminus.util.clipboardManager
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.util.signZhihuFetchRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
@@ -179,6 +180,7 @@ abstract class PaginationViewModel<T : Any>(
             }
         } catch (e: Exception) {
             if (e is kotlin.coroutines.cancellation.CancellationException) throw e
+            errorMessage = friendlyErrorMessage(e)
             environment.handleFetchFailure(this::class.simpleName, e)
         } finally {
             isLoading = false
@@ -200,7 +202,7 @@ abstract class PaginationViewModel<T : Any>(
 
     protected fun errorHandle(e: Exception) {
         if (e !is CancellationException) {
-            errorMessage = e.message
+            errorMessage = friendlyErrorMessage(e)
             isLoading = false
         }
     }
@@ -482,14 +484,14 @@ open class SharedAndroidPaginationEnvironment(
         }
         Log.e(tag, "Failed to fetch feeds", error)
         context.mainExecutor.execute {
-            userMessageSink.showShortMessage("加载失败: ${error.message}")
+            userMessageSink.showShortMessage("加载失败: ${friendlyErrorMessage(error)}")
         }
     }
 
     override suspend fun handleMobileHomeFeedFailure(error: Exception) {
         Log.e("AndroidHomeFeedViewModel", "Failed to fetch feeds", error)
         context.mainExecutor.execute {
-            userMessageSink.showShortMessage("安卓端推荐加载失败: ${error.message}")
+            userMessageSink.showShortMessage("安卓端推荐加载失败: ${friendlyErrorMessage(error)}")
         }
     }
 

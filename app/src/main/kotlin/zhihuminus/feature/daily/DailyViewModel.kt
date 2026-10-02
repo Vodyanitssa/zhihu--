@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -60,7 +61,7 @@ class DailyViewModel(
                 Log.e("DailyViewModel", "Failed to load latest daily", e)
                 uiState = uiState.copy(
                     isLoading = false,
-                    error = "加载失败: ${e.message}",
+                    error = "加载失败: ${friendlyErrorMessage(e)}",
                 )
             }
         }
@@ -88,7 +89,7 @@ class DailyViewModel(
                 Log.e("DailyViewModel", "Failed to load daily for date $date", e)
                 uiState = uiState.copy(
                     isLoading = false,
-                    error = "加载失败: ${e.message}",
+                    error = "加载失败: ${friendlyErrorMessage(e)}",
                 )
             }
         }
@@ -115,6 +116,7 @@ class DailyViewModel(
             } catch (e: Exception) {
                 Log.e("DailyViewModel", "Failed to load more daily stories", e)
                 uiState = uiState.copy(isLoadingMore = false)
+                _effect.send(DailyEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

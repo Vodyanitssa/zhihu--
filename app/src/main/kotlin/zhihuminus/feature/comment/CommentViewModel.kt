@@ -5,9 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.util.friendlyErrorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
+import kotlinx.coroutines.coroutineScope
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -67,17 +70,14 @@ class CommentViewModel(
         uiState = uiState.copy(isLoading = true, errorMessage = null)
         viewModelScope.launch {
             try {
-                // 锚点解析与首页数据并行拉取，避免串行阻塞首屏
-                val anchorDeferred = async {
-                    withContext(Dispatchers.Default) { resolveAnchor() }
-                }
-                val pageDeferred = async {
-                    withContext(Dispatchers.Default) {
+                // 锚点解析与首页数据并行拉取，避免串行阻塞首屏；使用 coroutineScope 保证子协程异常能被正常捕获
+                val (anchor, page) = coroutineScope {
+                    val anchorDeferred = async(Dispatchers.Default) { resolveAnchor() }
+                    val pageDeferred = async(Dispatchers.Default) {
                         repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
                     }
+                    anchorDeferred.await() to pageDeferred.await()
                 }
-                val anchor = anchorDeferred.await()
-                val page = pageDeferred.await()
                 items.clear()
                 items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
@@ -101,9 +101,10 @@ class CommentViewModel(
                 emitState()
                 autoOpenRoot?.let { openChildComments(it) }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "加载评论失败",
+                    errorMessage = friendlyErrorMessage(e),
                 )
             }
         }
@@ -127,8 +128,9 @@ class CommentViewModel(
                 uiState = uiState.copy(isLoadingMore = false, isEnd = page.isEnd)
                 emitState()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 uiState = uiState.copy(isLoadingMore = false)
-                sendEffect(CommentEffect.ShowMessage("加载更多失败: ${e.message}"))
+                sendEffect(CommentEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -147,9 +149,10 @@ class CommentViewModel(
                 nextUrl = page.nextUrl
                 emitState()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "刷新评论失败",
+                    errorMessage = friendlyErrorMessage(e),
                 )
             }
         }
@@ -170,9 +173,10 @@ class CommentViewModel(
                 nextUrl = page.nextUrl
                 emitState()
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 uiState = uiState.copy(
                     isLoading = false,
-                    errorMessage = e.message ?: "切换排序失败",
+                    errorMessage = friendlyErrorMessage(e),
                 )
             }
         }
@@ -189,7 +193,8 @@ class CommentViewModel(
                 emitState()
                 sendEffect(CommentEffect.ScrollToTop)
             } catch (e: Exception) {
-                sendEffect(CommentEffect.ShowMessage("评论发送失败: ${e.message}"))
+                if (e is CancellationException) throw e
+                sendEffect(CommentEffect.ShowMessage("评论发送失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -202,8 +207,9 @@ class CommentViewModel(
                     repository.likeComment(commentId)
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 updateCommentLike(commentId, liked = false)
-                sendEffect(CommentEffect.ShowMessage("点赞失败: ${e.message}"))
+                sendEffect(CommentEffect.ShowMessage("点赞失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -216,8 +222,9 @@ class CommentViewModel(
                     repository.unlikeComment(commentId)
                 }
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 updateCommentLike(commentId, liked = true)
-                sendEffect(CommentEffect.ShowMessage("取消点赞失败: ${e.message}"))
+                sendEffect(CommentEffect.ShowMessage("取消点赞失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -241,7 +248,8 @@ class CommentViewModel(
                 removeFromTree(items, commentId)
                 emitState()
             } catch (e: Exception) {
-                sendEffect(CommentEffect.ShowMessage("删除评论失败: ${e.message}"))
+                if (e is CancellationException) throw e
+                sendEffect(CommentEffect.ShowMessage("删除评论失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -268,7 +276,8 @@ class CommentViewModel(
                 updateItemChildren(comment.id, childItems, complete = true)
                 childNextUrls[comment.id] = page.nextUrl
             } catch (e: Exception) {
-                sendEffect(CommentEffect.ShowMessage("加载子评论失败: ${e.message}"))
+                if (e is CancellationException) throw e
+                sendEffect(CommentEffect.ShowMessage("加载子评论失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -294,7 +303,8 @@ class CommentViewModel(
                 updateItemChildren(parentId, children + newItems, complete = true)
                 childNextUrls[parentId] = page.nextUrl
             } catch (e: Exception) {
-                sendEffect(CommentEffect.ShowMessage("加载更多子评论失败: ${e.message}"))
+                if (e is CancellationException) throw e
+                sendEffect(CommentEffect.ShowMessage("加载更多子评论失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -411,12 +421,14 @@ class CommentViewModel(
             } else {
                 val root = try {
                     repository.getComment(rootId)
-                } catch (_: Exception) {
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
                     null
                 }
                 ResolvedAnchor(target = target, rootId = rootId, root = root)
             }
-        } catch (_: Exception) {
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
             null
         }
     }

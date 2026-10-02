@@ -34,6 +34,7 @@ import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.notification.matchNotificationType
 import com.zhihuminus.util.Log
 import com.zhihuminus.util.ZhihuMessageBodyEncryptor
+import com.zhihuminus.util.friendlyErrorMessage
 import io.ktor.client.call.body
 import io.ktor.client.request.get
 import io.ktor.client.request.header
@@ -153,6 +154,7 @@ class NotificationViewModel :
             lastPaging = page.paging ?: ZhihuPaging(isEnd = true, next = "")
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            errorMessage = friendlyErrorMessage(e)
             environment.handleFetchFailure(this::class.simpleName, e)
         } finally {
             refreshingFirstPage = false
@@ -251,6 +253,7 @@ class NotificationTimelineViewModel(
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            errorMessage = friendlyErrorMessage(e)
             environment.handleFetchFailure(this::class.simpleName, e)
         } finally {
             isLoading = false
@@ -347,7 +350,7 @@ class PrivateMessageViewModel(
         } catch (e: Exception) {
             if (e is CancellationException) throw e
             Log.e("PrivateMessageViewModel", "Failed to send private message", e)
-            errorMessage = e.message ?: "发送失败"
+            errorMessage = "发送失败: ${friendlyErrorMessage(e)}"
             false
         } finally {
             isSending = false
@@ -395,6 +398,7 @@ class PrivateMessageViewModel(
             }
         } catch (e: Exception) {
             if (e is CancellationException) throw e
+            errorMessage = friendlyErrorMessage(e)
             environment.handleFetchFailure(this::class.simpleName, e)
         } finally {
             isLoading = false

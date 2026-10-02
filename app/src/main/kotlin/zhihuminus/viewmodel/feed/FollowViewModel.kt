@@ -31,8 +31,10 @@ import com.zhihuminus.data.sourceLabel
 import com.zhihuminus.data.target
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuFeedRepository
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
@@ -103,8 +105,9 @@ class RecentMomentsViewModel : ViewModel() {
                     },
                 )
             } catch (e: Exception) {
+                if (e is CancellationException) throw e
                 environment.handleFetchFailure("RecentMomentsVM", e)
-                errorMessage = "加载关注动态失败"
+                errorMessage = "加载关注动态失败: ${friendlyErrorMessage(e)}"
             } finally {
                 isLoading = false
             }

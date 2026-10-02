@@ -96,6 +96,7 @@ import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.FeedPullToRefresh
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.util.parseEmphasizedHtmlTextWithTheme
 import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.feed.SearchContentType
@@ -647,7 +648,7 @@ fun SearchScreen(
                                         coroutineScope.launch {
                                             viewModel
                                                 .setTopicFollowing(paginationEnvironment, topic.id, !result.isFollowing)
-                                                .onFailure { userMessages.showShortMessage("关注操作失败：${it.message}") }
+                                                .onFailure { userMessages.showShortMessage("关注操作失败：${friendlyErrorMessage(it)}") }
                                         }
                                     },
                                 ) { Text(if (result.isFollowing) "已关注" else "关注") }

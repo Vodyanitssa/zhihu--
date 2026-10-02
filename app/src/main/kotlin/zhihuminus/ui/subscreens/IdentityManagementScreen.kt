@@ -67,6 +67,7 @@ import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
+import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 
@@ -131,7 +132,7 @@ fun IdentityManagementScreen() {
                 loading = false,
             )
         } catch (e: Exception) {
-            state.copy(loading = false, errorMessage = e.message ?: "获取身份列表失败")
+            state.copy(loading = false, errorMessage = friendlyErrorMessage(e))
         }
     }
 
@@ -339,7 +340,7 @@ fun IdentityManagementScreen() {
                                 } catch (e: Exception) {
                                     state = state.copy(
                                         switchingToAccountId = null,
-                                        errorMessage = e.message ?: "切换账号失败",
+                                        errorMessage = friendlyErrorMessage(e),
                                     )
                                     throw e
                                 }
@@ -347,7 +348,7 @@ fun IdentityManagementScreen() {
                                 userMessages.showShortMessage("已切换到 ${account.name}")
                                 environment.restartApplication()
                             }.onFailure {
-                                userMessages.showLongMessage(it.message ?: "切换账号失败")
+                                userMessages.showLongMessage(friendlyErrorMessage(it))
                             }
                         }
                     },
@@ -418,7 +419,7 @@ fun IdentityManagementScreen() {
                                 } catch (e: Exception) {
                                     state = state.copy(
                                         creating = false,
-                                        errorMessage = e.message ?: "创建新账号失败",
+                                        errorMessage = friendlyErrorMessage(e),
                                     )
                                     throw e
                                 }
@@ -426,7 +427,7 @@ fun IdentityManagementScreen() {
                                 userMessages.showLongMessage("新账号已创建并初始化，正在重新加载")
                                 environment.restartApplication()
                             }.onFailure {
-                                userMessages.showLongMessage(it.message ?: "创建新账号失败")
+                                userMessages.showLongMessage(friendlyErrorMessage(it))
                             }
                         }
                     },

@@ -74,7 +74,7 @@ suspend fun fetchZhihuAuthenticatedJson(
         client = client,
         url = url,
         block = block,
-    )
+    ).raiseForStatus()
     if (response.status == HttpStatusCode.NoContent) {
         return null
     }

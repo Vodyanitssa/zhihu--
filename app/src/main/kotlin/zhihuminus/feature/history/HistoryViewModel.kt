@@ -6,6 +6,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -91,10 +92,10 @@ class HistoryViewModel(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${e.message}",
+                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
                 )
                 if (!reset) {
-                    _effect.send(HistoryEffect.ShowMessage("加载更多失败: ${e.message}"))
+                    _effect.send(HistoryEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
                 }
             }
         }
@@ -114,7 +115,7 @@ class HistoryViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e("HistoryViewModel", "Failed to delete history item", e)
-                _effect.send(HistoryEffect.ShowMessage("操作失败"))
+                _effect.send(HistoryEffect.ShowMessage("删除失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
@@ -129,7 +130,7 @@ class HistoryViewModel(
                 throw e
             } catch (e: Exception) {
                 Log.e("HistoryViewModel", "Failed to clear history", e)
-                _effect.send(HistoryEffect.ShowMessage("操作失败"))
+                _effect.send(HistoryEffect.ShowMessage("清除失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

@@ -71,7 +71,8 @@ import com.zhihuminus.util.ZhihuCredentialRefresher
 import com.zhihuminus.util.clearShareImageCache
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.enableEdgeToEdgeCompat
-import kotlinx.coroutines.CoroutineScope
+import com.zhihuminus.util.friendlyErrorMessage
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -337,24 +338,29 @@ class MainActivity :
 
                 else -> error("Unsupported content type for video: $current")
             }
-            CoroutineScope(Dispatchers.Main).launch {
-                val videoUrl = getHighestQualityVideoUrl(
-                    this@MainActivity,
-                    httpClient,
-                    route.id.toString(),
-                    contentId,
-                    contentType,
-                )
-                if (videoUrl == null) {
-                    androidUserMessageSink(this@MainActivity).showShortMessage("获取视频链接失败")
-                    return@launch
+            lifecycleScope.launch {
+                try {
+                    val videoUrl = getHighestQualityVideoUrl(
+                        this@MainActivity,
+                        httpClient,
+                        route.id.toString(),
+                        contentId,
+                        contentType,
+                    )
+                    if (videoUrl == null) {
+                        androidUserMessageSink(this@MainActivity).showShortMessage("获取视频链接失败")
+                        return@launch
+                    }
+                    startActivity(
+                        Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
+                            putExtra("video_url", videoUrl)
+                            putExtra("video_id", route.id)
+                        },
+                    )
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    androidUserMessageSink(this@MainActivity).showShortMessage("打开视频失败: ${friendlyErrorMessage(e)}")
                 }
-                startActivity(
-                    Intent(this@MainActivity, VideoPlayerActivity::class.java).apply {
-                        putExtra("video_url", videoUrl)
-                        putExtra("video_id", route.id)
-                    },
-                )
             }
             return
         }

@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -86,7 +87,7 @@ class ColumnViewModel(
                     isRefreshing = false,
                     isLoadingMore = false,
                 )
-                sendEffect(ColumnEffect.ShowMessage("加载失败: ${e.message}"))
+                sendEffect(ColumnEffect.ShowMessage("加载失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }
