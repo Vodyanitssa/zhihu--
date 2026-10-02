@@ -1,8 +1,9 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.HistoryDeletePair
-import com.zhihuminus.data.HistoryItem
+import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
+import com.zhihuminus.feature.history.HistoryDeletePair
+import com.zhihuminus.feature.history.HistoryItem
 import com.zhihuminus.feature.history.HistoryPageResult
 import com.zhihuminus.feature.history.HistoryRepository
 
@@ -15,7 +16,8 @@ import com.zhihuminus.feature.history.HistoryRepository
 class ZhihuHistoryRepository(
     private val api: ZhihuApi,
 ) : HistoryRepository {
-    override suspend fun fetchPage(url: String): HistoryPageResult {
+    override suspend fun fetchHistory(nextUrl: String?): HistoryPageResult {
+        val url = nextUrl ?: DEFAULT_HISTORY_URL
         val page = api.fetchHistoryPage(url)
         return HistoryPageResult(
             items = page.items.map { it.toHistoryItem() },
@@ -25,11 +27,17 @@ class ZhihuHistoryRepository(
     }
 
     override suspend fun deleteItem(pair: HistoryDeletePair) {
-        api.deleteHistoryItems(listOf(pair))
+        api.deleteHistoryItems(
+            listOf(HistoryDeletePairDto(contentToken = pair.contentToken, contentType = pair.contentType)),
+        )
     }
 
     override suspend fun clearAll() {
         api.clearHistory()
+    }
+
+    companion object {
+        const val DEFAULT_HISTORY_URL = "https://api.zhihu.com/unify-consumption/read_history?offset=0&limit=10"
     }
 }
 

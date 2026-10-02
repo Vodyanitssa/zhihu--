@@ -55,3 +55,9 @@ data class HistoryExtraDto(
     val readTime: Long,
     val questionToken: String,
 )
+
+@Serializable
+data class HistoryDeletePairDto(
+    val contentToken: String,
+    val contentType: String,
+)

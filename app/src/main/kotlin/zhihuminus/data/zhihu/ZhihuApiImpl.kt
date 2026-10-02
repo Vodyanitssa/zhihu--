@@ -3,7 +3,6 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.Feed
-import com.zhihuminus.data.HistoryDeletePair
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.ZhihuPaging
@@ -13,6 +12,7 @@ import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
@@ -322,7 +322,7 @@ class ZhihuApiImpl(
         return HistoryPage(items, nextUrl, isEnd)
     }
 
-    override suspend fun deleteHistoryItems(pairs: List<HistoryDeletePair>) {
+    override suspend fun deleteHistoryItems(pairs: List<HistoryDeletePairDto>) {
         val response = environment.postSigned("https://api.zhihu.com/read_history/batch_del") {
             contentType(ContentType.Application.Json)
             setBody(

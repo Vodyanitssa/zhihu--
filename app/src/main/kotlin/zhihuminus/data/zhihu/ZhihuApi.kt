@@ -2,12 +2,12 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.Collection
 import com.zhihuminus.data.CollectionResponse
-import com.zhihuminus.data.HistoryDeletePair
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
@@ -214,7 +214,7 @@ interface ZhihuApi {
      * 批量删除在线浏览历史记录。
      * @param pairs 要删除的记录标识列表
      */
-    suspend fun deleteHistoryItems(pairs: List<HistoryDeletePair>)
+    suspend fun deleteHistoryItems(pairs: List<HistoryDeletePairDto>)
 
     /**
      * 清空全部在线浏览历史记录。
