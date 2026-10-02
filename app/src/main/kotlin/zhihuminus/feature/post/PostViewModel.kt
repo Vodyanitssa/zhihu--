@@ -8,8 +8,8 @@ import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.renderer.PictureRenderer
 import com.zhihuminus.core.platform.FileExporter
-import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.util.Log
 import com.zhihuminus.util.friendlyErrorMessage

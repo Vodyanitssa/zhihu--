@@ -1,21 +1,4 @@
-/*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
- * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation (version 3 only).
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-package com.zhihuminus.ui.components
+package com.zhihuminus.feature.collection.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -51,7 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.collection.Collection
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -63,7 +46,6 @@ fun CollectionDialogComponent(
     onToggleFavorite: (Collection) -> Unit,
     onCreateCollection: (title: String, description: String, isPublic: Boolean) -> Unit,
 ) {
-    // 新建收藏夹对话框状态
     var showCreateDialog by remember { mutableStateOf(false) }
 
     LaunchedEffect(showDialog) {
@@ -72,7 +54,6 @@ fun CollectionDialogComponent(
         }
     }
 
-    // 对话框内容
     if (showDialog) {
         ModalBottomSheet(
             onDismissRequest = onDismiss,
@@ -82,7 +63,6 @@ fun CollectionDialogComponent(
                     .fillMaxSize()
                     .padding(16.dp),
             ) {
-                // 标题
                 Text(
                     text = "选择收藏夹",
                     style = MaterialTheme.typography.headlineSmall,
@@ -90,12 +70,10 @@ fun CollectionDialogComponent(
                     modifier = Modifier.padding(bottom = 16.dp),
                 )
 
-                // 收藏夹列表
                 LazyColumn(
                     modifier = Modifier.weight(1f),
                     verticalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    // 新建收藏夹按钮
                     item {
                         Surface(
                             modifier = Modifier
@@ -143,7 +121,6 @@ fun CollectionDialogComponent(
         }
     }
 
-    // 新建收藏夹对话框
     CreateCollectionDialog(
         showDialog = showCreateDialog,
         onDismiss = { showCreateDialog = false },

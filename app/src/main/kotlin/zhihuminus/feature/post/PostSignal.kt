@@ -1,6 +1,6 @@
 package com.zhihuminus.feature.post
 
-import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.navigation.NavDestination
 
 sealed interface PostEvent {

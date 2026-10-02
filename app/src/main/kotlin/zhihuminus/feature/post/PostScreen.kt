@@ -33,7 +33,8 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
-import com.zhihuminus.data.Collection
+import com.zhihuminus.feature.collection.Collection
+import com.zhihuminus.feature.collection.components.CollectionDialogComponent
 import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
@@ -43,7 +44,6 @@ import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
-import com.zhihuminus.ui.components.CollectionDialogComponent
 import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
 

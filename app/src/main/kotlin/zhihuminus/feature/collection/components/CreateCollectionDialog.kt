@@ -1,21 +1,4 @@
-/*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
- * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation (version 3 only).
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-package com.zhihuminus.ui.components
+package com.zhihuminus.feature.collection.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -54,6 +37,7 @@ fun CreateCollectionDialog(
     if (showDialog) {
         var title by remember { mutableStateOf("") }
         var description by remember { mutableStateOf("") }
+        var isPublic by remember { mutableStateOf(false) }
 
         Dialog(
             onDismissRequest = {
@@ -75,26 +59,22 @@ fun CreateCollectionDialog(
                         .padding(24.dp),
                     verticalArrangement = Arrangement.spacedBy(16.dp),
                 ) {
-                    // 标题
                     Text(
                         text = "新建收藏夹",
                         style = MaterialTheme.typography.headlineSmall,
                         fontWeight = FontWeight.Bold,
                     )
 
-                    // 收藏夹名称输入框
                     OutlinedTextField(
                         value = title,
                         onValueChange = { title = it },
                         label = { Text("收藏夹名称") },
                         placeholder = { Text("请输入收藏夹名称") },
-                        modifier = Modifier
-                            .fillMaxWidth(),
+                        modifier = Modifier.fillMaxWidth(),
                         enabled = !isSubmitting,
                         singleLine = true,
                     )
 
-                    // 描述输入框（可选）
                     OutlinedTextField(
                         value = description,
                         onValueChange = { description = it },
@@ -105,7 +85,6 @@ fun CreateCollectionDialog(
                         maxLines = 3,
                     )
 
-                    var isPublic by remember { mutableStateOf(false) }
                     Row(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
@@ -129,7 +108,6 @@ fun CreateCollectionDialog(
                         )
                     }
 
-                    // 按钮行
                     Row(
                         modifier = Modifier.fillMaxWidth(),
                         horizontalArrangement = Arrangement.End,

@@ -1,7 +1,6 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.content.AstParser.parseContent
-import com.zhihuminus.data.Collection
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.cache.PostContentCache
@@ -9,6 +8,7 @@ import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.PinDto
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostLinkCard
@@ -105,7 +105,7 @@ class ZhihuPostRepository(
             PostType.Pin -> "pin"
         }
         val response = api.getCollections(type, id)
-        return response.data
+        return response.data.map { it.toDomain() }
     }
 
     override suspend fun addToCollection(postType: PostType, id: Long, collectionId: String) {
@@ -129,7 +129,7 @@ class ZhihuPostRepository(
     }
 
     override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection =
-        api.createCollection(title, description, isPublic)
+        api.createCollection(title, description, isPublic).toDomain()
 
     override suspend fun followMember(urlToken: String, follow: Boolean) {
         if (follow) api.followMember(urlToken) else api.unfollowMember(urlToken)

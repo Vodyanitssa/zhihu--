@@ -1,7 +1,5 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.Collection
-import com.zhihuminus.data.CollectionResponse
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
@@ -9,6 +7,10 @@ import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
+import com.zhihuminus.data.zhihu.dto.CollectionDto
+import com.zhihuminus.data.zhihu.dto.CollectionItemDto
+import com.zhihuminus.data.zhihu.dto.CollectionItemsPageDto
+import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
@@ -37,7 +39,9 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.add
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -185,7 +189,7 @@ class ZhihuApiImpl(
             ?: -1
     }
 
-    override suspend fun getCollections(type: String, id: Long): CollectionResponse {
+    override suspend fun getCollections(type: String, id: Long): CollectionResponseDto {
         val url = "https://api.zhihu.com/collections/contents/$type/$id?limit=50"
         val json = environment.fetchJson(url, "")
             ?: throw IllegalStateException("Failed to fetch collections")
@@ -206,7 +210,7 @@ class ZhihuApiImpl(
         }
     }
 
-    override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection {
+    override suspend fun createCollection(title: String, description: String, isPublic: Boolean): CollectionDto {
         val url = "https://www.zhihu.com/api/v4/collections"
         val response = environment.postSigned(url) {
             contentType(ContentType.Application.Json)
@@ -218,7 +222,82 @@ class ZhihuApiImpl(
                 },
             )
         }
-        return response.body()
+        if (!response.status.isSuccess()) {
+            error("创建收藏夹失败：${response.status}")
+        }
+        val responseBody = response.body<JsonObject>()
+        val collectionObj = responseBody["collection"] as? JsonObject
+        if (responseBody["status"]?.jsonPrimitive?.intOrNull != 100 || collectionObj == null) {
+            error(
+                responseBody["message"]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.takeIf(String::isNotBlank)
+                    ?: "创建收藏夹失败：响应无效",
+            )
+        }
+        return ZhihuJson.decodeJson(collectionObj)
+    }
+
+    override suspend fun getUserCollections(urlToken: String, nextUrl: String?): CollectionResponseDto {
+        val url = nextUrl ?: "https://www.zhihu.com/api/v4/people/$urlToken/collections"
+        val json = environment.fetchJson(url, "")
+            ?: throw IllegalStateException("获取收藏夹列表失败")
+        return ZhihuJson.decodeJson(json)
+    }
+
+    override suspend fun deleteCollection(collectionId: String): Boolean {
+        val response = environment.deleteSigned("https://www.zhihu.com/api/v4/collections/$collectionId")
+        if (!response.status.isSuccess()) {
+            error("删除收藏夹失败：${response.status}")
+        }
+        val responseBody = response.body<JsonObject>()
+        if (responseBody["success"]?.jsonPrimitive?.booleanOrNull != true) {
+            error(
+                responseBody["message"]
+                    ?.jsonPrimitive
+                    ?.contentOrNull
+                    ?.takeIf(String::isNotBlank)
+                    ?: "删除收藏夹失败：响应无效",
+            )
+        }
+        return true
+    }
+
+    override suspend fun getCollection(collectionId: String): CollectionDto {
+        val json = environment.fetchJson("https://www.zhihu.com/api/v4/collections/$collectionId", "")
+            ?: error("收藏夹信息为空")
+        val collectionObj = json["collection"] as? JsonObject ?: throw IllegalStateException("收藏夹信息为空")
+        return ZhihuJson.decodeJson(collectionObj)
+    }
+
+    override suspend fun getCollectionItems(
+        collectionId: String,
+        offset: Int?,
+        limit: Int,
+        nextUrl: String?,
+    ): CollectionItemsPageDto {
+        val url = nextUrl ?: if (offset != null) {
+            "https://www.zhihu.com/api/v4/collections/$collectionId/items?offset=$offset&limit=$limit"
+        } else {
+            "https://www.zhihu.com/api/v4/collections/$collectionId/items?limit=$limit"
+        }
+        val json = environment.fetchJson(url, "")
+            ?: throw IllegalStateException("获取收藏夹内容失败")
+        val paging = json["paging"]?.let { ZhihuJson.decodeJson<ZhihuPaging>(it) } ?: ZhihuPaging(isEnd = true, next = "")
+        val rawData = json["data"] as? JsonArray ?: JsonArray(emptyList())
+        val items = runCatching {
+            ZhihuJson.decodeJson<List<CollectionItemDto>>(rawData)
+        }.getOrElse {
+            rawData.mapNotNull { itemJson ->
+                try {
+                    ZhihuJson.decodeJson<CollectionItemDto>(itemJson)
+                } catch (e: Exception) {
+                    null
+                }
+            }
+        }
+        return CollectionItemsPageDto(data = items, paging = paging)
     }
 
     override suspend fun fetchCommentsPage(url: String): JsonObject =

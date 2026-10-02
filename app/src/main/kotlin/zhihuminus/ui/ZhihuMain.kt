@@ -82,6 +82,9 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import com.zhihuminus.feature.collection.CollectionBrowseRoute
+import com.zhihuminus.feature.collection.CollectionContentRoute
+import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
 import com.zhihuminus.feature.history.HistoryRoute
 import com.zhihuminus.feature.post.PostType
@@ -453,12 +456,26 @@ fun ZhihuMain(
                         SearchScreen(search)
                     }
                     composable<Collections> { navEntry ->
+                        val navigator = LocalNavigator.current
                         val data: Collections = navEntry.toRoute()
-                        CollectionScreen(data.userToken)
+                        CollectionRoute(
+                            urlToken = data.userToken,
+                            onNavigateBack = navigator.onNavigateBack,
+                            onCollectionClick = { collection ->
+                                navigator.onNavigate(CollectionContent(collection.id))
+                            },
+                        )
                     }
                     composable<CollectionContent> { navEntry ->
+                        val navigator = LocalNavigator.current
                         val content: CollectionContent = navEntry.toRoute()
-                        CollectionContentScreen(content.collectionId)
+                        CollectionContentRoute(
+                            collectionId = content.collectionId,
+                            onNavigateBack = navigator.onNavigateBack,
+                            onDestinationClick = { destination ->
+                                destination?.let(navigator.onNavigate)
+                            },
+                        )
                     }
                     composable<Person> { navEntry ->
                         val person: Person = navEntry.toRoute()
@@ -587,16 +604,25 @@ private fun MyCollectionsTopLevelPage(
     collectionDirectBrowseEnabled: Boolean,
 ) {
     val account = rememberAccountSettingsAccountState().value
+    val navigator = LocalNavigator.current
     if (collectionDirectBrowseEnabled) {
-        CollectionBrowseScreen(
+        CollectionBrowseRoute(
             urlToken = account.urlToken,
             showBackButton = false,
             scrollToTopTrigger = scrollToTopTrigger,
+            onDestinationClick = { destination ->
+                destination?.let(navigator.onNavigate)
+            },
         )
     } else {
-        CollectionScreen(
+        CollectionRoute(
             urlToken = account.urlToken,
             showBackButton = false,
+            scrollToTopTrigger = scrollToTopTrigger,
+            onNavigateBack = {},
+            onCollectionClick = { collection ->
+                navigator.onNavigate(CollectionContent(collection.id))
+            },
         )
     }
 }
