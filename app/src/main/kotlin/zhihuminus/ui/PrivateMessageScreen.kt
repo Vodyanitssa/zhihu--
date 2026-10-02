@@ -17,6 +17,11 @@
 
 package com.zhihuminus.ui
 
+import androidx.compose.animation.AnimatedVisibility
+import androidx.compose.animation.expandVertically
+import androidx.compose.animation.fadeIn
+import androidx.compose.animation.fadeOut
+import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
@@ -35,7 +40,8 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.automirrored.outlined.Send
-import androidx.compose.material.icons.outlined.SentimentSatisfied
+import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -51,13 +57,20 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
+import androidx.compose.ui.platform.LocalFocusManager
+import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
@@ -65,9 +78,12 @@ import com.zhihuminus.data.ZhihuPrivateMessage
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.notification.rememberNotificationSettingsStore
+import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberUserMessageSink
+import com.zhihuminus.ui.components.EmojiPicker
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.ui.components.replaceSelection
 import com.zhihuminus.util.formatRelativeTime
 import com.zhihuminus.viewmodel.PrivateMessageViewModel
 import kotlinx.coroutines.launch
@@ -85,7 +101,20 @@ fun PrivateMessageScreen(destination: Notification.Message) {
     val peerAvatar = viewModel.peer?.avatarUrl?.ifBlank { destination.avatarUrl } ?: destination.avatarUrl
     val coroutineScope = rememberCoroutineScope()
     val userMessages = rememberUserMessageSink()
-    var draft by rememberSaveable(destination.peerId) { mutableStateOf("") }
+    val focusManager = LocalFocusManager.current
+    val keyboardController = LocalSoftwareKeyboardController.current
+    val inputFocusRequester = remember { FocusRequester() }
+    var messageFieldValue by rememberSaveable(
+        destination.peerId,
+        stateSaver = TextFieldValue.Saver,
+    ) {
+        mutableStateOf(TextFieldValue())
+    }
+    var showEmojiPicker by rememberSaveable { mutableStateOf(false) }
+
+    PlatformBackHandler(enabled = showEmojiPicker) {
+        showEmojiPicker = false
+    }
 
     LaunchedEffect(destination.peerId) {
         if (viewModel.allData.isEmpty()) {
@@ -131,48 +160,96 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                 color = MaterialTheme.colorScheme.surface,
                 tonalElevation = 2.dp,
             ) {
-                Row(
+                Column(
                     modifier = Modifier
                         .fillMaxWidth()
                         .navigationBarsPadding()
-                        .imePadding()
-                        .padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
+                        .imePadding(),
                 ) {
-                    OutlinedTextField(
-                        value = draft,
-                        onValueChange = { draft = it },
+                    Row(
                         modifier = Modifier
-                            .weight(1f),
-                        placeholder = { Text("发私信") },
-                        enabled = !viewModel.isSending,
-                        maxLines = 4,
-                        shape = RoundedCornerShape(12.dp),
-                    )
-                    IconButton(onClick = {}, enabled = false) {
-                        Icon(
-                            Icons.Outlined.SentimentSatisfied,
-                            contentDescription = "表情（暂不可用）",
-                            tint = MaterialTheme.colorScheme.outline,
-                        )
-                    }
-                    IconButton(
-                        onClick = {
-                            val content = draft
-                            coroutineScope.launch {
-                                if (viewModel.sendMessage(content, environment)) {
-                                    draft = ""
-                                } else {
-                                    userMessages.showMessage(viewModel.errorMessage ?: "发送失败")
-                                }
-                            }
-                        },
-                        enabled = draft.isNotBlank() && !viewModel.isSending,
-                        modifier = Modifier,
+                            .fillMaxWidth()
+                            .padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Icon(
-                            Icons.AutoMirrored.Outlined.Send,
-                            contentDescription = "发送",
+                        OutlinedTextField(
+                            value = messageFieldValue,
+                            onValueChange = { messageFieldValue = it },
+                            modifier = Modifier
+                                .weight(1f)
+                                .focusRequester(inputFocusRequester)
+                                .onFocusChanged {
+                                    if (it.isFocused) {
+                                        showEmojiPicker = false
+                                    }
+                                },
+                            placeholder = { Text("发私信") },
+                            enabled = !viewModel.isSending,
+                            maxLines = 4,
+                            shape = RoundedCornerShape(12.dp),
+                        )
+                        IconButton(
+                            onClick = {
+                                if (showEmojiPicker) {
+                                    showEmojiPicker = false
+                                    inputFocusRequester.requestFocus()
+                                    keyboardController?.show()
+                                } else {
+                                    focusManager.clearFocus(force = true)
+                                    keyboardController?.hide()
+                                    showEmojiPicker = true
+                                }
+                            },
+                            enabled = !viewModel.isSending,
+                        ) {
+                            Icon(
+                                imageVector = if (showEmojiPicker) {
+                                    Icons.Outlined.Keyboard
+                                } else {
+                                    Icons.Outlined.EmojiEmotions
+                                },
+                                contentDescription = if (showEmojiPicker) "切换到键盘" else "选择表情",
+                                tint = if (showEmojiPicker) {
+                                    MaterialTheme.colorScheme.primary
+                                } else {
+                                    MaterialTheme.colorScheme.onSurfaceVariant
+                                },
+                            )
+                        }
+                        IconButton(
+                            onClick = {
+                                val content = messageFieldValue.text
+                                coroutineScope.launch {
+                                    if (viewModel.sendMessage(content, environment)) {
+                                        messageFieldValue = TextFieldValue("")
+                                        showEmojiPicker = false
+                                    } else {
+                                        userMessages.showMessage(viewModel.errorMessage ?: "发送失败")
+                                    }
+                                }
+                            },
+                            enabled = messageFieldValue.text.isNotBlank() && !viewModel.isSending,
+                            modifier = Modifier,
+                        ) {
+                            Icon(
+                                Icons.AutoMirrored.Outlined.Send,
+                                contentDescription = "发送",
+                            )
+                        }
+                    }
+
+                    AnimatedVisibility(
+                        visible = showEmojiPicker,
+                        enter = expandVertically() + fadeIn(),
+                        exit = shrinkVertically() + fadeOut(),
+                    ) {
+                        EmojiPicker(
+                            onEmojiClick = { placeholder ->
+                                messageFieldValue = messageFieldValue.replaceSelection(
+                                    insert = placeholder,
+                                    cursorOffsetInInsert = placeholder.length,
+                                )
+                            },
                         )
                     }
                 }

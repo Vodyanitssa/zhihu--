@@ -7,18 +7,13 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Reply
@@ -43,15 +38,14 @@ import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import com.zhihuminus.core.content.EmojiManager
-import com.zhihuminus.core.content.renderer.EmojiItem
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
+import com.zhihuminus.ui.components.EmojiPicker
+import com.zhihuminus.ui.components.replaceSelection
 
 /**
  * 评论输入栏，包含回复目标提示、文本输入框和表情选择面板。
@@ -238,71 +232,18 @@ fun CommentInputBar(
                     enter = expandVertically() + fadeIn(),
                     exit = shrinkVertically() + fadeOut(),
                 ) {
-                    if (EmojiManager.mapping.isEmpty()) {
-                        Box(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(
-                                text = "暂无可用表情",
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    EmojiPicker(
+                        onEmojiClick = { placeholder ->
+                            updateDraft(
+                                commentFieldValue.replaceSelection(
+                                    insert = placeholder,
+                                    cursorOffsetInInsert = placeholder.length,
+                                ),
                             )
-                        }
-                    } else {
-                        LazyVerticalGrid(
-                            columns = GridCells.Adaptive(minSize = 48.dp),
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(240.dp),
-                            contentPadding = PaddingValues(8.dp),
-                        ) {
-                            items(
-                                items = EmojiManager.mapping.entries.toList(),
-                                key = { it.key },
-                            ) { entry ->
-                                val placeholder = entry.key
-                                IconButton(
-                                    onClick = {
-                                        updateDraft(
-                                            commentFieldValue.replaceSelection(
-                                                insert = placeholder,
-                                                cursorOffsetInInsert = placeholder.length,
-                                            ),
-                                        )
-                                    },
-                                    modifier = Modifier.size(48.dp),
-                                ) {
-                                    EmojiItem(
-                                        name = entry.key,
-                                        resource = entry.value,
-                                        modifier = Modifier.size(36.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
+                        },
+                    )
                 }
             }
         }
     }
-}
-
-private fun TextFieldValue.replaceSelection(
-    insert: String,
-    cursorOffsetInInsert: Int,
-): TextFieldValue {
-    val start = selection.min
-    val end = selection.max
-    val newText = buildString {
-        append(text.substring(0, start))
-        append(insert)
-        append(text.substring(end))
-    }
-    val cursor = (start + cursorOffsetInInsert).coerceIn(0, newText.length)
-    return TextFieldValue(
-        text = newText,
-        selection = TextRange(cursor, cursor),
-    )
 }
