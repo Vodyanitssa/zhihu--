@@ -1,6 +1,5 @@
 @file:OptIn(ExperimentalEncodingApi::class)
 
-import buildlogic.gitHash
 import kotlin.io.encoding.Base64
 import kotlin.io.encoding.ExperimentalEncodingApi
 
@@ -47,12 +46,19 @@ android {
     }
 
     signingConfigs {
-        if (System.getenv("signingKey") != null) {
+        val signingKeyEnv = System.getenv("signingKey")
+        if (signingKeyEnv != null) {
             register("env") {
-                storeFile =
-                    file("zhihu.jks").apply {
-                        writeBytes(Base64.decode(System.getenv("signingKey")))
-                    }
+                val jksFile =
+                    layout.buildDirectory
+                        .file("signing/zhihu.jks")
+                        .get()
+                        .asFile
+                if (!jksFile.exists()) {
+                    jksFile.parentFile.mkdirs()
+                    jksFile.writeBytes(Base64.decode(signingKeyEnv))
+                }
+                storeFile = jksFile
                 storePassword = System.getenv("keyStorePassword")
                 keyAlias = System.getenv("keyAlias")
                 keyPassword = System.getenv("keyPassword")
@@ -60,8 +66,19 @@ android {
         }
     }
 
+    val gitHash =
+        runCatching {
+            providers
+                .exec {
+                    isIgnoreExitValue = true
+                    commandLine("git", "rev-parse", "--short=7", "HEAD")
+                }.standardOutput.asText
+                .map { it.trim().ifEmpty { "unknown" } }
+                .orElse("unknown")
+                .get()
+        }.getOrDefault("unknown")
+
     buildTypes {
-        val gitHash = gitHash(rootProject.projectDir)
         debug {
             buildConfigField("String", "GIT_HASH", "\"$gitHash\"")
             manifestPlaceholders["zhihuBuildType"] = "debug"
@@ -96,14 +113,12 @@ android {
             excludes +=
                 listOf(
                     "META-INF/DEPENDENCIES",
-//                    "META-INF/*.version",
                     "META-INF/**/LICENSE",
                     "META-INF/**/LICENSE.txt",
                     "META-INF/proguard/*",
                     "**.kotlin_module",
                     "kotlin-tooling-metadata.json",
                     "DebugProbesKt.bin",
-//                    "META-INF/*.kotlin_module",
                 )
         }
     }
@@ -115,7 +130,7 @@ tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
 
 val ktor = "3.5.0"
 val coil = "3.5.0"
-val aboutLibraries = "15.0.0"
+val aboutLibraries = "15.0.4"
 val composeVersion = "1.11.1"
 val jetbrainsLifecycleVersion = "2.10.0"
 
