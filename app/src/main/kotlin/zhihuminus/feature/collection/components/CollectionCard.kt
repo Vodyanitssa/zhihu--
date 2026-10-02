@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.collection.components
 
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -16,6 +17,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.collection.Collection
+import com.zhihuminus.feature.collection.subtitleText
 
 @Composable
 fun CollectionCard(
@@ -28,7 +30,7 @@ fun CollectionCard(
     Card(
         modifier = modifier
             .fillMaxWidth()
-            .padding(vertical = 8.dp),
+            .padding(vertical = 6.dp),
         elevation = CardDefaults.cardElevation(4.dp),
         onClick = onClick,
     ) {
@@ -38,11 +40,20 @@ fun CollectionCard(
                 .padding(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            Text(
-                text = collection.title,
-                style = MaterialTheme.typography.titleMedium,
+            Column(
                 modifier = Modifier.weight(1f),
-            )
+            ) {
+                Text(
+                    text = collection.title,
+                    style = MaterialTheme.typography.titleLarge,
+                )
+                Text(
+                    text = collection.subtitleText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    modifier = Modifier.padding(top = 4.dp),
+                )
+            }
             if (!collection.isDefault) {
                 IconButton(
                     onClick = onDeleteClick,

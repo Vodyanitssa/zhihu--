@@ -59,3 +59,6 @@ interface CollectionRepository {
 
     suspend fun removeFromCollection(type: String, id: Long, collectionId: String)
 }
+
+val Collection.subtitleText: String
+    get() = "$itemCount 内容·${if (isPublic) "公开" else "仅自己可见"}"
