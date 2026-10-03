@@ -19,6 +19,7 @@ package com.zhihuminus.ui.components
 
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.spring
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -119,7 +120,10 @@ fun <T> PaginatedList(
     contentPadding: PaddingValues = PaddingValues(0.dp),
     listState: LazyListState = rememberLazyListState(),
     reverseLayout: Boolean = false,
+    verticalArrangement: Arrangement.Vertical =
+        if (!reverseLayout) Arrangement.Top else Arrangement.Bottom,
     isEnd: () -> Boolean = { false },
+    showEndNotice: Boolean = true,
     footer: @Composable ((LazyListState) -> Unit)? = null,
     key: ((T) -> Any)? = null,
     topContent: LazyListScope.() -> Unit = {},
@@ -152,6 +156,7 @@ fun <T> PaginatedList(
         modifier = modifier,
         contentPadding = contentPadding,
         reverseLayout = reverseLayout,
+        verticalArrangement = verticalArrangement,
     ) {
         topContent(this)
 
@@ -168,21 +173,25 @@ fun <T> PaginatedList(
 
         bottomContent(this)
 
-        item {
-            if (isEnd()) {
-                Box(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(16.dp),
-                    contentAlignment = Alignment.Center,
-                ) {
-                    Text(
-                        text = "已经到底啦",
-                        textAlign = TextAlign.Center,
-                    )
+        if (isEnd()) {
+            if (showEndNotice) {
+                item {
+                    Box(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(16.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        Text(
+                            text = "已经到底啦",
+                            textAlign = TextAlign.Center,
+                        )
+                    }
                 }
-            } else {
-                footer?.invoke(listState)
+            }
+        } else if (footer != null) {
+            item {
+                footer(listState)
             }
         }
     }

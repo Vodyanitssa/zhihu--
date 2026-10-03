@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -227,6 +228,8 @@ fun PrivateMessageScreen(
                 onLoadMore = { onEvent(PrivateMessageEvent.LoadMore) },
                 isEnd = { state.isEnd },
                 reverseLayout = true,
+                verticalArrangement = Arrangement.Top,
+                showEndNotice = false,
                 contentPadding = PaddingValues(vertical = 12.dp),
                 modifier = Modifier.fillMaxSize(),
                 footer = if (state.isRefreshing) null else ProgressIndicatorFooter,
