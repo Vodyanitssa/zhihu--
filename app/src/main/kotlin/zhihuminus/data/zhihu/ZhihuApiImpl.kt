@@ -17,9 +17,18 @@ import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
+import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
+import com.zhihuminus.data.zhihu.dto.NotificationHeadEntryDto
+import com.zhihuminus.data.zhihu.dto.NotificationOverviewDto
+import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
 import com.zhihuminus.data.zhihu.dto.PinDto
+import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
+import com.zhihuminus.data.zhihu.dto.PrivateMessagePageDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
+import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.util.Log
+import com.zhihuminus.util.ZhihuMessageBodyEncryptor
 import com.zhihuminus.util.raiseForStatus
 import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import com.zhihuminus.viewmodel.deleteSigned
@@ -29,10 +38,14 @@ import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.get
 import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
+import io.ktor.http.Parameters
 import io.ktor.http.contentType
+import io.ktor.http.formUrlEncode
 import io.ktor.http.isSuccess
 import io.ktor.util.network.UnresolvedAddressException
 import kotlinx.coroutines.CancellationException
@@ -43,6 +56,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -484,7 +498,132 @@ class ZhihuApiImpl(
         }
         response.raiseForStatus()
     }
+
+    override suspend fun getNotificationOverview(nextUrl: String?): NotificationOverviewDto {
+        @Suppress("HttpUrlsUsage")
+        val url = (nextUrl ?: "$MOBILE_NOTIFICATION_MESSAGE_URL?limit=20").replace("http://", "https://")
+        val response = environment.httpClient().get(url)
+        val json = response.body<JsonObject>()
+        val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
+        val items = rawData.mapNotNull {
+            runCatching { decodeJson<NotificationTimelineItemDto>(it) }.getOrNull()
+        }
+        val head = json["head"]?.let {
+            runCatching { decodeJson<List<NotificationHeadEntryDto>>(it) }.getOrNull()
+        } ?: emptyList()
+        val columnHead = json["columnHead"]?.let {
+            runCatching { decodeJson<List<NotificationColumnHeadDto>>(it) }.getOrNull()
+        } ?: emptyList()
+        val paging = json["paging"]?.let {
+            runCatching { decodeJson<ZhihuPaging>(it) }.getOrNull()
+        }
+        return NotificationOverviewDto(
+            head = head,
+            columnHead = columnHead,
+            data = items,
+            paging = paging,
+        )
+    }
+
+    override suspend fun getNotificationTimeline(entryName: String, nextUrl: String?): NotificationOverviewDto {
+        @Suppress("HttpUrlsUsage")
+        val url = (
+            nextUrl ?: buildString {
+                append("$MOBILE_NOTIFICATION_TIMELINE_URL/$entryName?")
+                if (entryName == "invite") {
+                    append("invite_with_time_slice=1&")
+                }
+                append("limit=20")
+            }
+        ).replace("http://", "https://")
+        val response = environment.httpClient().get(url)
+        val json = response.body<JsonObject>()
+        val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
+        val items = rawData.mapNotNull {
+            runCatching { decodeJson<NotificationTimelineItemDto>(it) }.getOrNull()
+        }
+        val paging = json["paging"]?.let {
+            runCatching { decodeJson<ZhihuPaging>(it) }.getOrNull()
+        }
+        return NotificationOverviewDto(
+            data = items,
+            paging = paging,
+        )
+    }
+
+    override suspend fun markNotificationCategoryRead(entryName: String): Boolean {
+        val url = "$MOBILE_NOTIFICATION_TIMELINE_URL/$entryName/actions/readall"
+        val response = environment.httpClient().post(url)
+        return response.status.isSuccess()
+    }
+
+    override suspend fun getPrivateMessages(peerId: String, nextUrl: String?): PrivateMessagePageDto {
+        @Suppress("HttpUrlsUsage")
+        val url = (nextUrl ?: "$MOBILE_PRIVATE_MESSAGE_URL?limit=20&sender_id=$peerId").replace("http://", "https://")
+        val response = environment.httpClient().get(url)
+        val json = response.body<JsonObject>()
+        val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
+        val items = rawData.mapNotNull {
+            runCatching { decodeJson<PrivateMessageDto>(it) }.getOrNull()
+        }
+        val paging = json["paging"]?.let {
+            runCatching { decodeJson<ZhihuPaging>(it) }.getOrNull()
+        } ?: ZhihuPaging(isEnd = true, next = "")
+        return PrivateMessagePageDto(
+            data = items,
+            paging = paging,
+        )
+    }
+
+    override suspend fun getPrivateMessagePeer(peerId: String): NotificationAuthorDto {
+        val url = "$MOBILE_PRIVATE_MESSAGE_USER_URL/$peerId"
+        val response = environment.httpClient().get(url)
+        val json = response.body<JsonObject>()
+        return decodeJson<NotificationAuthorDto>(json)
+    }
+
+    override suspend fun sendPrivateMessage(peerId: String, content: String): PrivateMessageDto {
+        val response = environment.httpClient().post(MOBILE_PRIVATE_MESSAGE_URL) {
+            contentType(ContentType.Application.FormUrlEncoded)
+            header("X-Zse-93", "101_1_1.0")
+            val form = Parameters
+                .build {
+                    append("receiver_id", peerId)
+                    append("content", content)
+                    append("content_type", "0")
+                    append("source_type", "message_list")
+                }.formUrlEncode()
+            setBody(ZhihuMessageBodyEncryptor.encrypt(form))
+        }
+        if (!response.status.isSuccess()) {
+            val responseText = response.bodyAsText()
+            val errorMsg = runCatching {
+                ZhihuJson.json
+                    .parseToJsonElement(responseText)
+                    .jsonObject["error"]
+                    ?.jsonObject
+                    ?.get("message")
+                    ?.jsonPrimitive
+                    ?.content
+            }.getOrNull() ?: "发送失败（${response.status.value}）"
+            throw IllegalStateException(errorMsg)
+        }
+        return decodeJson<PrivateMessageDto>(
+            ZhihuJson.json.parseToJsonElement(response.bodyAsText()),
+        )
+    }
+
+    override suspend fun getMeNotifications(): ZhihuMeNotificationsDto {
+        val json = environment.fetchJson("https://www.zhihu.com/api/v4/me", "")
+            ?: throw IllegalStateException("获取个人通知信息失败")
+        return decodeJson<ZhihuMeNotificationsDto>(json)
+    }
 }
+
+private const val MOBILE_NOTIFICATION_MESSAGE_URL = "https://api.zhihu.com/notifications/v3/message/v3"
+private const val MOBILE_NOTIFICATION_TIMELINE_URL = "https://api.zhihu.com/notifications/v3/timeline/entry"
+private const val MOBILE_PRIVATE_MESSAGE_URL = "https://api.zhihu.com/messages"
+private const val MOBILE_PRIVATE_MESSAGE_USER_URL = "https://api.zhihu.com/messages/user"
 
 internal const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
 

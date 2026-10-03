@@ -48,7 +48,6 @@ import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.executeZhihuAuthenticatedRequest
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.notification.NotificationSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.homeFeedStartupCacheFileNames
 import com.zhihuminus.util.HttpStatusException
@@ -579,12 +578,6 @@ open class SharedAndroidPaginationEnvironment(
         }
     }
 }
-
-class SharedAndroidNotificationEnvironment(
-    context: Context,
-    override val notificationSettingsStore: NotificationSettingsStore,
-) : SharedAndroidPaginationEnvironment(context),
-    NotificationEnvironment
 
 fun paginationEnvironment(context: Context): AndroidContextPaginationEnvironment =
     SharedAndroidPaginationEnvironment(context)

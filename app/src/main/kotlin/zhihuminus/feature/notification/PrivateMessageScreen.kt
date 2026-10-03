@@ -1,21 +1,4 @@
-/*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
- * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
- *
- * This program is free software: you can redistribute it and/or modify
- * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation (version 3 only).
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU Affero General Public License for more details.
- *
- * You should have received a copy of the GNU Affero General Public License
- * along with this program.  If not, see <https://www.gnu.org/licenses/>.
- */
-
-package com.zhihuminus.ui
+package com.zhihuminus.feature.notification
 
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
@@ -23,7 +6,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.shrinkVertically
 import androidx.compose.foundation.background
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -54,11 +36,9 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -72,40 +52,29 @@ import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
-import com.zhihuminus.data.ZhihuPrivateMessage
-import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.navigation.Notification
-import com.zhihuminus.notification.rememberNotificationSettingsStore
+import com.zhihuminus.feature.notification.components.PrivateMessageBubble
 import com.zhihuminus.platform.PlatformBackHandler
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.EmojiPicker
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.ui.components.replaceSelection
-import com.zhihuminus.util.formatRelativeTime
-import com.zhihuminus.viewmodel.PrivateMessageViewModel
-import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun PrivateMessageScreen(destination: Notification.Message) {
-    val navigator = LocalNavigator.current
-    val environment = rememberNotificationEnvironment(rememberNotificationSettingsStore())
-    val viewModel = viewModel(key = "private_message_${destination.peerId}") {
-        PrivateMessageViewModel(destination.peerId)
-    }
-    val peerName = viewModel.peer?.name?.ifBlank { destination.name } ?: destination.name
-    val peerAvatar = viewModel.peer?.avatarUrl?.ifBlank { destination.avatarUrl } ?: destination.avatarUrl
-    val coroutineScope = rememberCoroutineScope()
-    val userMessages = rememberUserMessageSink()
+fun PrivateMessageScreen(
+    state: PrivateMessageUiState,
+    peerName: String,
+    peerAvatar: String,
+    onEvent: (PrivateMessageEvent) -> Unit,
+    onNavigateBack: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
     val inputFocusRequester = remember { FocusRequester() }
     var messageFieldValue by rememberSaveable(
-        destination.peerId,
+        state.peerId,
         stateSaver = TextFieldValue.Saver,
     ) {
         mutableStateOf(TextFieldValue())
@@ -116,14 +85,8 @@ fun PrivateMessageScreen(destination: Notification.Message) {
         showEmojiPicker = false
     }
 
-    LaunchedEffect(destination.peerId) {
-        if (viewModel.allData.isEmpty()) {
-            viewModel.refresh(environment)
-        }
-    }
-
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
+        modifier = modifier.fillMaxSize(),
         topBar = {
             CenterAlignedTopAppBar(
                 title = {
@@ -146,7 +109,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                     }
                 },
                 navigationIcon = {
-                    IconButton(onClick = navigator.onNavigateBack) {
+                    IconButton(onClick = onNavigateBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
                     }
                 },
@@ -184,7 +147,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                                     }
                                 },
                             placeholder = { Text("发私信") },
-                            enabled = !viewModel.isSending,
+                            enabled = !state.isSending,
                             maxLines = 4,
                             shape = RoundedCornerShape(12.dp),
                         )
@@ -200,7 +163,7 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                                     showEmojiPicker = true
                                 }
                             },
-                            enabled = !viewModel.isSending,
+                            enabled = !state.isSending,
                         ) {
                             Icon(
                                 imageVector = if (showEmojiPicker) {
@@ -219,17 +182,11 @@ fun PrivateMessageScreen(destination: Notification.Message) {
                         IconButton(
                             onClick = {
                                 val content = messageFieldValue.text
-                                coroutineScope.launch {
-                                    if (viewModel.sendMessage(content, environment)) {
-                                        messageFieldValue = TextFieldValue("")
-                                        showEmojiPicker = false
-                                    } else {
-                                        userMessages.showMessage(viewModel.errorMessage ?: "发送失败")
-                                    }
-                                }
+                                onEvent(PrivateMessageEvent.SendMessage(content))
+                                messageFieldValue = TextFieldValue("")
+                                showEmojiPicker = false
                             },
-                            enabled = messageFieldValue.text.isNotBlank() && !viewModel.isSending,
-                            modifier = Modifier,
+                            enabled = messageFieldValue.text.isNotBlank() && !state.isSending,
                         ) {
                             Icon(
                                 Icons.AutoMirrored.Outlined.Send,
@@ -257,89 +214,27 @@ fun PrivateMessageScreen(destination: Notification.Message) {
         },
     ) { paddingValues ->
         PullToRefreshBox(
-            isRefreshing = viewModel.isLoading,
-            onRefresh = { viewModel.refresh(environment) },
+            isRefreshing = state.isRefreshing,
+            onRefresh = { onEvent(PrivateMessageEvent.Refresh) },
             modifier = Modifier.padding(paddingValues),
         ) {
             PaginatedList(
-                items = viewModel.allData,
-                onLoadMore = { viewModel.loadMore(environment) },
-                isEnd = { viewModel.isEnd },
+                items = state.messages,
+                onLoadMore = { onEvent(PrivateMessageEvent.LoadMore) },
+                isEnd = { state.isEnd },
                 reverseLayout = true,
                 contentPadding = PaddingValues(vertical = 12.dp),
                 modifier = Modifier.fillMaxSize(),
-                footer = if (viewModel.isRefreshing) null else ProgressIndicatorFooter,
+                footer = if (state.isRefreshing) null else ProgressIndicatorFooter,
                 key = { it.stableId },
             ) { message ->
                 PrivateMessageBubble(
                     message = message,
                     incoming = message.sender?.let { sender ->
-                        sender.id == destination.peerId || sender.urlToken == destination.peerId
+                        sender.id == state.peerId || sender.urlToken == state.peerId
                     } == true,
                 )
             }
-        }
-    }
-}
-
-@Composable
-private fun PrivateMessageBubble(
-    message: ZhihuPrivateMessage,
-    incoming: Boolean,
-) {
-    val displayText = (
-        message.plugin?.excerpt?.takeIf { it.isNotBlank() }
-            ?: message.content.takeIf { it.isNotBlank() }
-    )?.let { Jsoup.parse(it).text() }
-        ?: "暂不支持显示这条消息"
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(horizontal = 14.dp, vertical = 5.dp),
-        horizontalArrangement = if (incoming) Arrangement.Start else Arrangement.End,
-        verticalAlignment = Alignment.Bottom,
-    ) {
-        if (incoming) {
-            AsyncImage(
-                model = message.sender?.avatarUrl,
-                contentDescription = null,
-                modifier = Modifier
-                    .size(34.dp)
-                    .clip(CircleShape)
-                    .background(MaterialTheme.colorScheme.surfaceVariant),
-            )
-            Spacer(Modifier.width(8.dp))
-        }
-        Column(
-            modifier = Modifier.weight(1f),
-            horizontalAlignment = if (incoming) Alignment.Start else Alignment.End,
-        ) {
-            Surface(
-                modifier = Modifier.fillMaxWidth(if (incoming) 1f else 0.88f),
-                shape = RoundedCornerShape(
-                    topStart = 16.dp,
-                    topEnd = 16.dp,
-                    bottomStart = if (incoming) 4.dp else 16.dp,
-                    bottomEnd = if (incoming) 16.dp else 4.dp,
-                ),
-                color = if (incoming) {
-                    MaterialTheme.colorScheme.surfaceContainerLow
-                } else {
-                    MaterialTheme.colorScheme.primaryContainer
-                },
-            ) {
-                Text(
-                    text = displayText,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
-                )
-            }
-            Text(
-                text = formatRelativeTime(message.createdTime),
-                style = MaterialTheme.typography.labelSmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                modifier = Modifier.padding(horizontal = 4.dp, vertical = 2.dp),
-            )
         }
     }
 }

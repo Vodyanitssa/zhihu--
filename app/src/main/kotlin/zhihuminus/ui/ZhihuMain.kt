@@ -87,6 +87,9 @@ import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
 import com.zhihuminus.feature.history.HistoryRoute
+import com.zhihuminus.feature.notification.NotificationRoute
+import com.zhihuminus.feature.notification.NotificationTimelineRoute
+import com.zhihuminus.feature.notification.PrivateMessageRoute
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.topic.TopicRoute
 import com.zhihuminus.navigation.Account
@@ -492,17 +495,45 @@ fun ZhihuMain(
                         postContent(destination, navEntry)
                     }
                     composable<Notification> {
-                        NotificationScreen()
+                        val navigator = LocalNavigator.current
+                        NotificationRoute(
+                            onNavigateBack = navigator.onNavigateBack,
+                            onCategoryClick = { category ->
+                                navigator.onNavigate(
+                                    Notification.Entry(category.entryName, category.detailTitle),
+                                )
+                            },
+                            onInvitationClick = { navigator.onNavigate(Notification.Invitations) },
+                            onConversationClick = { destination -> navigator.onNavigate(destination) },
+                            onSettingsClick = { navigator.onNavigate(Notification.NotificationSettings()) },
+                        )
                     }
                     composable<Notification.Entry> { navEntry ->
+                        val navigator = LocalNavigator.current
                         val entry: Notification.Entry = navEntry.toRoute()
-                        NotificationTimelineScreen(entry.entryName, entry.title)
+                        NotificationTimelineRoute(
+                            entryName = entry.entryName,
+                            title = entry.title,
+                            onNavigateBack = navigator.onNavigateBack,
+                            onDestinationClick = { destination -> navigator.onNavigate(destination) },
+                        )
                     }
                     composable<Notification.Invitations> {
-                        NotificationTimelineScreen("invite", "邀请回答")
+                        val navigator = LocalNavigator.current
+                        NotificationTimelineRoute(
+                            entryName = "invite",
+                            title = "邀请回答",
+                            onNavigateBack = navigator.onNavigateBack,
+                            onDestinationClick = { destination -> navigator.onNavigate(destination) },
+                        )
                     }
                     composable<Notification.Message> { navEntry ->
-                        PrivateMessageScreen(navEntry.toRoute())
+                        val navigator = LocalNavigator.current
+                        val destination: Notification.Message = navEntry.toRoute()
+                        PrivateMessageRoute(
+                            destination = destination,
+                            onNavigateBack = navigator.onNavigateBack,
+                        )
                     }
                     composable<Notification.NotificationSettings> { navEntry ->
                         NotificationSettingsScreen(

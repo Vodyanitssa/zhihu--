@@ -67,8 +67,8 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZHIHU_ME_URL
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.data.ZhihuMeNotifications
 import com.zhihuminus.data.target
+import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.notification.rememberNotificationSettingsStore
@@ -160,7 +160,7 @@ fun HomeScreen(
         try {
             unreadCount = paginationEnvironment
                 .fetchJson(ZHIHU_ME_URL, "")
-                ?.let { ZhihuJson.decodeJson<ZhihuMeNotifications>(it) }
+                ?.let { ZhihuJson.decodeJson<ZhihuMeNotificationsDto>(it) }
                 ?.totalCount ?: 0
         } catch (_: Exception) {
             // 忽略错误

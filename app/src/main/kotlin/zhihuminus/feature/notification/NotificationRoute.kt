@@ -1,0 +1,66 @@
+package com.zhihuminus.feature.notification
+
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.remember
+import androidx.compose.ui.Modifier
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
+import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
+import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.notification.rememberNotificationSettingsStore
+import com.zhihuminus.platform.rememberUserMessageSink
+import com.zhihuminus.viewmodel.rememberPaginationEnvironment
+
+@Composable
+fun NotificationRoute(
+    onNavigateBack: () -> Unit,
+    onCategoryClick: (NotificationCategory) -> Unit,
+    onInvitationClick: () -> Unit,
+    onConversationClick: (NavDestination) -> Unit,
+    onSettingsClick: () -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val environment = rememberPaginationEnvironment()
+    val settingsStore = rememberNotificationSettingsStore()
+    val repository = remember(environment) {
+        ZhihuNotificationRepository(ZhihuApiImpl(environment))
+    }
+    val viewModel: NotificationViewModel = viewModel {
+        NotificationViewModel(repository)
+    }
+    val userMessages = rememberUserMessageSink()
+    val lifecycleOwner = LocalLifecycleOwner.current
+
+    LaunchedEffect(lifecycleOwner, viewModel) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            viewModel.onEvent(NotificationEvent.Refresh)
+        }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.effect.collect { effect ->
+            when (effect) {
+                is NotificationEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+            }
+        }
+    }
+
+    NotificationScreen(
+        state = viewModel.uiState,
+        onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack,
+        onCategoryClick = onCategoryClick,
+        onInvitationClick = onInvitationClick,
+        onConversationClick = { notification ->
+            notification.navDestination()?.let(onConversationClick)
+                ?: userMessages.showShortMessage("暂不支持打开此消息")
+        },
+        onSettingsClick = onSettingsClick,
+        showUnreadBadges = settingsStore.getUnreadBadgeEnabled(),
+        modifier = modifier,
+    )
+}
