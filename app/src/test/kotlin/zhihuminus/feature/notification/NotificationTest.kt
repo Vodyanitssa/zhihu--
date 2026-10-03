@@ -1,5 +1,8 @@
 package com.zhihuminus.feature.notification
 
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
 import com.zhihuminus.data.zhihu.dto.NotificationContentDto
@@ -217,5 +220,90 @@ class NotificationTest {
         val msg4 = PrivateMessage(id = "msg4", createdTime = 1140L)
         val continuousList = listOf(msg4, msg2Within2Min, msg1)
         assertEquals(setOf("msg1", "msg4"), calculateTimestampVisibleIds(continuousList))
+    }
+
+    @Test
+    fun testAstParserParseInline() {
+        val prevMapping = EmojiManager.mapping
+        try {
+            EmojiManager.mapping = mapOf("[微笑]" to "smile.png", "[握手]" to "handshake.png")
+
+            // Empty & blank
+            assertEquals(emptyList(), AstParser.parseInline(""))
+            assertEquals(emptyList(), AstParser.parseInline("   "))
+
+            // Plain text with emojis
+            val inlineNodes = AstParser.parseInline("你好[微笑]世界[握手]")
+            assertEquals(
+                listOf(
+                    InlineNode.Text("你好"),
+                    InlineNode.Emoji("[微笑]"),
+                    InlineNode.Text("世界"),
+                    InlineNode.Emoji("[握手]"),
+                ),
+                inlineNodes,
+            )
+
+            // Plain text with unknown emoji brackets
+            val unknownNodes = AstParser.parseInline("你好[未知]世界")
+            assertEquals(
+                listOf(InlineNode.Text("你好[未知]世界")),
+                unknownNodes,
+            )
+
+            // Plain text with newlines
+            val newlineNodes = AstParser.parseInline("第一行\n第二行")
+            assertEquals(
+                listOf(
+                    InlineNode.Text("第一行"),
+                    InlineNode.LineBreak,
+                    InlineNode.Text("第二行"),
+                ),
+                newlineNodes,
+            )
+
+            // HTML with bold, br, and emojis
+            val htmlNodes = AstParser.parseInline("<p>Hello <b>bold</b><br>[微笑]</p>")
+            assertEquals(
+                listOf(
+                    InlineNode.Text("Hello "),
+                    InlineNode.Bold(listOf(InlineNode.Text("bold"))),
+                    InlineNode.LineBreak,
+                    InlineNode.Emoji("[微笑]"),
+                ),
+                htmlNodes,
+            )
+
+            // Multi-paragraph HTML
+            val multiParaNodes = AstParser.parseInline("<p>段落1</p><p>段落2</p>")
+            assertEquals(
+                listOf(
+                    InlineNode.Text("段落1"),
+                    InlineNode.LineBreak,
+                    InlineNode.Text("段落2"),
+                ),
+                multiParaNodes,
+            )
+        } finally {
+            EmojiManager.mapping = prevMapping
+        }
+    }
+
+    @Test
+    fun testPrivateMessageInlineContentFallback() {
+        val blankMsg = PrivateMessage(id = "1", content = "   ")
+        val blankParsed = AstParser.parseInline(blankMsg.content).ifEmpty {
+            listOf(InlineNode.Text("暂不支持显示这条消息"))
+        }
+        assertEquals(listOf(InlineNode.Text("暂不支持显示这条消息")), blankParsed)
+
+        val excerptMsg = PrivateMessage(
+            id = "2",
+            content = "",
+            plugin = PrivateMessagePluginDto(excerpt = "分享内容").toDomain(),
+        )
+        val textToParse = excerptMsg.plugin?.excerpt?.takeIf { it.isNotBlank() } ?: excerptMsg.content
+        val parsed = AstParser.parseInline(textToParse)
+        assertEquals(listOf(InlineNode.Text("分享内容")), parsed)
     }
 }

@@ -17,15 +17,18 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.coerceAtMost
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.notification.PrivateMessage
-import org.jsoup.Jsoup
 
 @Composable
 fun PrivateMessageBubble(
@@ -34,11 +37,17 @@ fun PrivateMessageBubble(
     modifier: Modifier = Modifier,
     showTimestamp: Boolean = true,
 ) {
-    val displayText = (
-        message.plugin?.excerpt?.takeIf { it.isNotBlank() }
-            ?: message.content.takeIf { it.isNotBlank() }
-    )?.let { Jsoup.parse(it).text() }
-        ?: "暂不支持显示这条消息"
+    val rawText = message.plugin?.excerpt?.takeIf { it.isNotBlank() }
+        ?: message.content.takeIf { it.isNotBlank() }
+
+    val inlineNodes = remember(rawText) {
+        if (rawText != null) {
+            val parsed = AstParser.parseInline(rawText)
+            parsed.ifEmpty { listOf(InlineNode.Text("暂不支持显示这条消息")) }
+        } else {
+            listOf(InlineNode.Text("暂不支持显示这条消息"))
+        }
+    }
 
     BoxWithConstraints(
         modifier = modifier
@@ -89,8 +98,8 @@ fun PrivateMessageBubble(
                         MaterialTheme.colorScheme.primaryContainer
                     },
                 ) {
-                    Text(
-                        text = displayText,
+                    InlineNodes(
+                        nodes = inlineNodes,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
                     )

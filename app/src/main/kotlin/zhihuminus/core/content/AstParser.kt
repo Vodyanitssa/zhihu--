@@ -31,6 +31,31 @@ object AstParser {
         }
     }
 
+    fun parseInline(text: String): List<InlineNode> {
+        if (text.isBlank()) return emptyList()
+        val normalized = if (text.contains('\n') &&
+            !text.contains("<br", ignoreCase = true) &&
+            !text.contains("<p", ignoreCase = true)
+        ) {
+            text.replace("\r\n", "\n").replace("\n", "<br>")
+        } else {
+            text
+        }
+        val document = Jsoup.parseBodyFragment(normalized)
+        val bodyNodes = document.body().childNodes()
+        val result = mutableListOf<InlineNode>()
+        for (node in bodyNodes) {
+            val inlineNodes = parseInline(node)
+            if (inlineNodes.isNotEmpty()) {
+                if (result.isNotEmpty() && node is Element && (node.tagName() == "p" || node.tagName() == "div")) {
+                    result.add(InlineNode.LineBreak)
+                }
+                result.addAll(inlineNodes)
+            }
+        }
+        return result
+    }
+
     fun parseInline(node: Node): List<InlineNode> = when (node) {
         is TextNode -> parseText(node.text())
 
@@ -46,6 +71,8 @@ object AstParser {
                     children = node.childNodes().flatMap(::parseInline),
                 ),
             )
+
+            "span", "p", "div" -> node.childNodes().flatMap(::parseInline)
 
             "br" -> listOf(InlineNode.LineBreak)
 
@@ -97,6 +124,15 @@ object AstParser {
         val textBuffer = StringBuilder()
         var i = 0
         while (i < text.length) {
+            if (text[i] == '\n') {
+                if (textBuffer.isNotEmpty()) {
+                    result.add(InlineNode.Text(textBuffer.toString()))
+                    textBuffer.clear()
+                }
+                result.add(InlineNode.LineBreak)
+                i++
+                continue
+            }
             if (text[i] == '[') {
                 val closeIdx = text.indexOf(']', i + 1)
                 if (closeIdx != -1) {
