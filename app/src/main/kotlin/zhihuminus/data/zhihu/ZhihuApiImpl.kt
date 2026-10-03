@@ -502,7 +502,7 @@ class ZhihuApiImpl(
     override suspend fun getNotificationOverview(nextUrl: String?): NotificationOverviewDto {
         @Suppress("HttpUrlsUsage")
         val url = (nextUrl ?: "$MOBILE_NOTIFICATION_MESSAGE_URL?limit=20").replace("http://", "https://")
-        val response = environment.httpClient().get(url)
+        val response = environment.mobileHttpClient().get(url)
         val json = response.body<JsonObject>()
         val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
         val items = rawData.mapNotNull {
@@ -511,7 +511,7 @@ class ZhihuApiImpl(
         val head = json["head"]?.let {
             runCatching { decodeJson<List<NotificationHeadEntryDto>>(it) }.getOrNull()
         } ?: emptyList()
-        val columnHead = json["columnHead"]?.let {
+        val columnHead = (json["column_head"] ?: json["columnHead"])?.let {
             runCatching { decodeJson<List<NotificationColumnHeadDto>>(it) }.getOrNull()
         } ?: emptyList()
         val paging = json["paging"]?.let {
@@ -536,7 +536,7 @@ class ZhihuApiImpl(
                 append("limit=20")
             }
         ).replace("http://", "https://")
-        val response = environment.httpClient().get(url)
+        val response = environment.mobileHttpClient().get(url)
         val json = response.body<JsonObject>()
         val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
         val items = rawData.mapNotNull {
@@ -553,14 +553,14 @@ class ZhihuApiImpl(
 
     override suspend fun markNotificationCategoryRead(entryName: String): Boolean {
         val url = "$MOBILE_NOTIFICATION_TIMELINE_URL/$entryName/actions/readall"
-        val response = environment.httpClient().post(url)
+        val response = environment.mobileHttpClient().post(url)
         return response.status.isSuccess()
     }
 
     override suspend fun getPrivateMessages(peerId: String, nextUrl: String?): PrivateMessagePageDto {
         @Suppress("HttpUrlsUsage")
         val url = (nextUrl ?: "$MOBILE_PRIVATE_MESSAGE_URL?limit=20&sender_id=$peerId").replace("http://", "https://")
-        val response = environment.httpClient().get(url)
+        val response = environment.mobileHttpClient().get(url)
         val json = response.body<JsonObject>()
         val rawData = json["data"]?.jsonArray ?: JsonArray(emptyList())
         val items = rawData.mapNotNull {
@@ -577,13 +577,13 @@ class ZhihuApiImpl(
 
     override suspend fun getPrivateMessagePeer(peerId: String): NotificationAuthorDto {
         val url = "$MOBILE_PRIVATE_MESSAGE_USER_URL/$peerId"
-        val response = environment.httpClient().get(url)
+        val response = environment.mobileHttpClient().get(url)
         val json = response.body<JsonObject>()
         return decodeJson<NotificationAuthorDto>(json)
     }
 
     override suspend fun sendPrivateMessage(peerId: String, content: String): PrivateMessageDto {
-        val response = environment.httpClient().post(MOBILE_PRIVATE_MESSAGE_URL) {
+        val response = environment.mobileHttpClient().post(MOBILE_PRIVATE_MESSAGE_URL) {
             contentType(ContentType.Application.FormUrlEncoded)
             header("X-Zse-93", "101_1_1.0")
             val form = Parameters

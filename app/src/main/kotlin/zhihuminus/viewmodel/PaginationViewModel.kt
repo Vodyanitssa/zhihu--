@@ -222,6 +222,8 @@ interface ArticleImageExportRenderer {
 interface ZhihuApiEnvironment {
     fun httpClient(): HttpClient
 
+    fun mobileHttpClient(): HttpClient = httpClient()
+
     fun authenticatedCookies(): Map<String, String>
 
     suspend fun <T> withAuthenticatedClient(
@@ -451,6 +453,8 @@ open class SharedAndroidPaginationEnvironment(
     }
 
     override fun httpClient(): HttpClient = AccountData.httpClient(context)
+
+    override fun mobileHttpClient(): HttpClient = mobileHomeFeedHttpClient()
 
     override fun mobileHomeFeedHttpClient(): HttpClient =
         HttpClient {

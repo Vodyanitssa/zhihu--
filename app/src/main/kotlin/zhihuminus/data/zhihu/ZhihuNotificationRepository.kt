@@ -40,7 +40,7 @@ class ZhihuNotificationRepository(
         val unreadCounts = mutableMapOf<NotificationCategory, Int>()
         NotificationCategory.entries.forEach { category ->
             unreadCounts[category] = dto.head
-                .firstOrNull { it.detailTitle == category.detailTitle }
+                .firstOrNull { it.detailTitle == category.detailTitle || it.entryName == category.entryName }
                 ?.unreadCount ?: 0
         }
         val invitation = dto.columnHead.firstOrNull()?.toDomain()
@@ -80,6 +80,7 @@ class ZhihuNotificationRepository(
                 allSuccess = false
             }
         }
+        runCatching { markCategoryRead("invite") }
         return allSuccess
     }
 

@@ -62,6 +62,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
 import com.zhihuminus.data.Feed
@@ -156,14 +159,17 @@ fun HomeScreen(
 
     // 未读通知数
     var unreadCount by remember { mutableIntStateOf(0) }
-    LaunchedEffect(Unit) {
-        try {
-            unreadCount = paginationEnvironment
-                .fetchJson(ZHIHU_ME_URL, "")
-                ?.let { ZhihuJson.decodeJson<ZhihuMeNotificationsDto>(it) }
-                ?.totalCount ?: 0
-        } catch (_: Exception) {
-            // 忽略错误
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            try {
+                unreadCount = paginationEnvironment
+                    .fetchJson(ZHIHU_ME_URL, "")
+                    ?.let { ZhihuJson.decodeJson<ZhihuMeNotificationsDto>(it) }
+                    ?.totalCount ?: 0
+            } catch (_: Exception) {
+                // 忽略错误
+            }
         }
     }
 

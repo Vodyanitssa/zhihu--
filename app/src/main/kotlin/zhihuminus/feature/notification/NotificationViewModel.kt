@@ -107,6 +107,7 @@ class NotificationViewModel(
                     val clearedCounts = uiState.unreadCounts.mapValues { 0 }
                     uiState = uiState.copy(
                         unreadCounts = clearedCounts,
+                        invitation = uiState.invitation?.copy(unreadCount = 0),
                         unreadCount = 0,
                     )
                     _effect.send(NotificationEffect.ShowMessage("已全部标记为已读"))

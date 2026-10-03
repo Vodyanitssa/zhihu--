@@ -37,7 +37,10 @@ class NotificationTimelineViewModel(
 
     fun onEvent(event: NotificationTimelineEvent) {
         when (event) {
-            is NotificationTimelineEvent.Refresh -> loadData(reset = true)
+            is NotificationTimelineEvent.Refresh -> {
+                markedAsRead = false
+                loadData(reset = true)
+            }
             is NotificationTimelineEvent.LoadMore -> loadData(reset = false)
             is NotificationTimelineEvent.MarkAsRead -> markAsRead()
         }
@@ -95,8 +98,13 @@ class NotificationTimelineViewModel(
                 )
 
                 if (!markedAsRead && settingsStore.getAutoMarkAsReadEnabled()) {
-                    markedAsRead = true
-                    repository.markCategoryRead(entryName)
+                    val success = repository.markCategoryRead(entryName)
+                    if (success) {
+                        markedAsRead = true
+                        uiState = uiState.copy(
+                            items = uiState.items.map { it.copy(isRead = true) },
+                        )
+                    }
                 }
             } catch (e: CancellationException) {
                 throw e
@@ -118,7 +126,13 @@ class NotificationTimelineViewModel(
     private fun markAsRead() {
         viewModelScope.launch {
             try {
-                repository.markCategoryRead(entryName)
+                val success = repository.markCategoryRead(entryName)
+                if (success) {
+                    markedAsRead = true
+                    uiState = uiState.copy(
+                        items = uiState.items.map { it.copy(isRead = true) },
+                    )
+                }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {

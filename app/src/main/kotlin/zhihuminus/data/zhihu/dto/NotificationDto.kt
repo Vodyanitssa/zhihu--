@@ -13,6 +13,7 @@ data class NotificationOverviewDto(
 
 @Serializable
 data class NotificationHeadEntryDto(
+    val entryName: String = "",
     val detailTitle: String = "",
     val unreadCount: Int = 0,
 )
