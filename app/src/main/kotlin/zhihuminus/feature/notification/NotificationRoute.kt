@@ -21,7 +21,6 @@ fun NotificationRoute(
     onCategoryClick: (NotificationCategory) -> Unit,
     onInvitationClick: () -> Unit,
     onConversationClick: (NavDestination) -> Unit,
-    onSettingsClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val environment = rememberPaginationEnvironment()
@@ -59,7 +58,6 @@ fun NotificationRoute(
             notification.navDestination()?.let(onConversationClick)
                 ?: userMessages.showShortMessage("暂不支持打开此消息")
         },
-        onSettingsClick = onSettingsClick,
         showUnreadBadges = settingsStore.getUnreadBadgeEnabled(),
         modifier = modifier,
     )

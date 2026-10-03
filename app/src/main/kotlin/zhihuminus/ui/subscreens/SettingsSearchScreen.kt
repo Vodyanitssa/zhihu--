@@ -49,7 +49,6 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Notification
 import com.zhihuminus.notification.NotificationType
 import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.zhihuminus.ui.components.SettingItem
@@ -126,7 +125,7 @@ private fun notificationEntry(
     title = title,
     section = "通知设置",
     description = description,
-    destination = Notification.NotificationSettings(setting = settingKey),
+    destination = Account.NotificationSettings(setting = settingKey),
     keywords = keywords,
 )
 

@@ -300,19 +300,12 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
             parse = { args ->
                 when (args.segment(0)) {
                     "invitations" -> Notification.Invitations
-                    "settings" -> Notification.NotificationSettings(setting = args["setting"].orEmpty())
                     else -> null
                 }
             },
             encode = { destination ->
                 when (destination) {
                     is Notification.Invitations -> buildAppUrl("notification", "invitations")
-                    is Notification.NotificationSettings -> buildAppUrl(
-                        "notification",
-                        "settings",
-                        queryParameters = listOf("setting" to destination.setting),
-                    )
-
                     else -> null
                 }
             },
@@ -332,6 +325,7 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                     "reading" -> Account.ReadingSettings
                     "identity" -> Account.IdentityManagement
                     "system" -> Account.SystemAndUpdateSettings(setting)
+                    "notification" -> Account.NotificationSettings(setting)
                     "search" -> Account.SettingsSearch
                     "licenses" -> Account.OpenSourceLicenses
                     else -> null
@@ -343,6 +337,7 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                     is Account.ReadingSettings -> settingsUrl("reading", "")
                     is Account.IdentityManagement -> settingsUrl("identity", "")
                     is Account.SystemAndUpdateSettings -> settingsUrl("system", destination.setting)
+                    is Account.NotificationSettings -> settingsUrl("notification", destination.setting)
                     is Account.SettingsSearch -> settingsUrl("search", "")
                     is Account.OpenSourceLicenses -> settingsUrl("licenses", "")
                     else -> null

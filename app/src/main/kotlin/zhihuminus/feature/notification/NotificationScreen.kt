@@ -5,7 +5,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MarkChatRead
-import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -34,7 +33,6 @@ fun NotificationScreen(
     onCategoryClick: (NotificationCategory) -> Unit,
     onInvitationClick: () -> Unit,
     onConversationClick: (NotificationTimelineItem) -> Unit,
-    onSettingsClick: () -> Unit,
     showUnreadBadges: Boolean,
     modifier: Modifier = Modifier,
 ) {
@@ -53,9 +51,6 @@ fun NotificationScreen(
                         IconButton(onClick = { onEvent(NotificationEvent.MarkAllAsRead) }) {
                             Icon(Icons.Default.MarkChatRead, contentDescription = "已读")
                         }
-                    }
-                    IconButton(onClick = onSettingsClick) {
-                        Icon(Icons.Default.Settings, contentDescription = "设置")
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(

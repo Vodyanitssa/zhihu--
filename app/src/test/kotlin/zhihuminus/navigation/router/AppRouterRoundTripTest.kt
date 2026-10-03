@@ -160,19 +160,14 @@ class AppRouterRoundTripTest {
         assertRoundTrip(Notification.Invitations, "zhminus://notification/invitations")
 
     @Test
-    fun notificationSettings() =
-        assertRoundTrip(
-            Notification.NotificationSettings(setting = "key"),
-            "zhminus://notification/settings?setting=key",
-        )
-
-    @Test
     fun settingsPages() {
         assertRoundTrip(Account.AppearanceSettings(setting = "dark"), "zhminus://settings/appearance?setting=dark")
         assertRoundTrip(Account.AppearanceSettings(), "zhminus://settings/appearance")
         assertRoundTrip(Account.ReadingSettings, "zhminus://settings/reading")
         assertRoundTrip(Account.IdentityManagement, "zhminus://settings/identity")
         assertRoundTrip(Account.SystemAndUpdateSettings(setting = "s"), "zhminus://settings/system?setting=s")
+        assertRoundTrip(Account.NotificationSettings(setting = "s"), "zhminus://settings/notification?setting=s")
+        assertRoundTrip(Account.NotificationSettings(), "zhminus://settings/notification")
         assertRoundTrip(Account.SettingsSearch, "zhminus://settings/search")
         assertRoundTrip(Account.OpenSourceLicenses, "zhminus://settings/licenses")
     }

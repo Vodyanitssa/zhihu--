@@ -117,6 +117,7 @@ import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.IdentityManagementScreen
+import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
 import kotlinx.coroutines.delay
@@ -505,7 +506,6 @@ fun ZhihuMain(
                             },
                             onInvitationClick = { navigator.onNavigate(Notification.Invitations) },
                             onConversationClick = { destination -> navigator.onNavigate(destination) },
-                            onSettingsClick = { navigator.onNavigate(Notification.NotificationSettings()) },
                         )
                     }
                     composable<Notification.Entry> { navEntry ->
@@ -535,9 +535,9 @@ fun ZhihuMain(
                             onNavigateBack = navigator.onNavigateBack,
                         )
                     }
-                    composable<Notification.NotificationSettings> { navEntry ->
+                    composable<Account.NotificationSettings> { navEntry ->
                         NotificationSettingsScreen(
-                            setting = navEntry.toRoute<Notification.NotificationSettings>().setting,
+                            setting = navEntry.toRoute<Account.NotificationSettings>().setting,
                         )
                     }
                     composable<Account.AppearanceSettings> { navEntry ->

@@ -404,6 +404,14 @@ fun AccountSettingScreen(
                     modifier = Modifier,
                     onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
                 )
+
+                SettingItem(
+                    title = { Text("通知设置") },
+                    description = { Text("未读红点、系统通知与应用内显示") },
+                    icon = { Icon(Icons.Default.Notifications, null) },
+                    modifier = Modifier,
+                    onClick = { navigator.onNavigate(Account.NotificationSettings()) },
+                )
             }
 
             SettingItemGroup(
