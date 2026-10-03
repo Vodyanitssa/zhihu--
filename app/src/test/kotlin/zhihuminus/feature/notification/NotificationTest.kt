@@ -194,4 +194,28 @@ class NotificationTest {
         assertEquals("PM Content", pmDomain.content)
         assertEquals("Excerpt text", pmDomain.plugin?.excerpt)
     }
+
+    @Test
+    fun testPrivateMessageTimestampCollapsing() {
+        assertEquals(emptySet(), calculateTimestampVisibleIds(emptyList()))
+
+        val invalidTimeMessage = PrivateMessage(id = "msg0", createdTime = 0L)
+        assertEquals(emptySet(), calculateTimestampVisibleIds(listOf(invalidTimeMessage)))
+
+        val msg1 = PrivateMessage(id = "msg1", createdTime = 1000L)
+        assertEquals(setOf("msg1"), calculateTimestampVisibleIds(listOf(msg1)))
+
+        // Note: in messages list, index 0 is newest, index 1 is oldest
+        val msg2Within2Min = PrivateMessage(id = "msg2", createdTime = 1080L)
+        val listWithin2Min = listOf(msg2Within2Min, msg1)
+        assertEquals(setOf("msg1"), calculateTimestampVisibleIds(listWithin2Min))
+
+        val msg3Beyond2Min = PrivateMessage(id = "msg3", createdTime = 1120L)
+        val listBeyond2Min = listOf(msg3Beyond2Min, msg1)
+        assertEquals(setOf("msg1", "msg3"), calculateTimestampVisibleIds(listBeyond2Min))
+
+        val msg4 = PrivateMessage(id = "msg4", createdTime = 1140L)
+        val continuousList = listOf(msg4, msg2Within2Min, msg1)
+        assertEquals(setOf("msg1", "msg4"), calculateTimestampVisibleIds(continuousList))
+    }
 }

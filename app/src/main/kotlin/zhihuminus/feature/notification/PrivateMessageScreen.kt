@@ -85,6 +85,10 @@ fun PrivateMessageScreen(
         showEmojiPicker = false
     }
 
+    val timestampVisibleIds = remember(state.messages) {
+        calculateTimestampVisibleIds(state.messages)
+    }
+
     Scaffold(
         modifier = modifier.fillMaxSize(),
         topBar = {
@@ -233,8 +237,29 @@ fun PrivateMessageScreen(
                     incoming = message.sender?.let { sender ->
                         sender.id == state.peerId || sender.urlToken == state.peerId
                     } == true,
+                    showTimestamp = message.stableId in timestampVisibleIds,
                 )
             }
         }
     }
+}
+
+internal const val PRIVATE_MESSAGE_TIMESTAMP_COLLAPSE_INTERVAL_SECONDS = 120L
+
+internal fun calculateTimestampVisibleIds(messages: List<PrivateMessage>): Set<String> {
+    val visibleIds = mutableSetOf<String>()
+    var lastDisplayedTime: Long? = null
+
+    for (i in messages.indices.reversed()) {
+        val message = messages[i]
+        val time = message.createdTime
+        if (time <= 0) continue
+
+        val lastTime = lastDisplayedTime
+        if (lastTime == null || kotlin.math.abs(time - lastTime) >= PRIVATE_MESSAGE_TIMESTAMP_COLLAPSE_INTERVAL_SECONDS) {
+            visibleIds.add(message.stableId)
+            lastDisplayedTime = time
+        }
+    }
+    return visibleIds
 }
