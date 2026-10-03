@@ -7,6 +7,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuTopicRepository
 import com.zhihuminus.navigation.LocalNavigator
@@ -17,7 +18,6 @@ import com.zhihuminus.ui.components.ShareDialog
 import com.zhihuminus.ui.components.getShareText
 import com.zhihuminus.ui.components.handleShareAction
 import com.zhihuminus.ui.components.rememberShareActionExecutor
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 @Composable
 fun TopicRoute(topic: Topic) {

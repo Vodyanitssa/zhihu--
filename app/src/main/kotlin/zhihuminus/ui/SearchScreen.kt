@@ -81,6 +81,8 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.environment.PaginationEnvironment
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.navigation.Account
@@ -98,14 +100,12 @@ import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.util.friendlyErrorMessage
 import com.zhihuminus.util.parseEmphasizedHtmlTextWithTheme
-import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.feed.SearchContentType
 import com.zhihuminus.viewmodel.feed.SearchSortOption
 import com.zhihuminus.viewmodel.feed.SearchTab
 import com.zhihuminus.viewmodel.feed.SearchTimeRange
 import com.zhihuminus.viewmodel.feed.SearchViewModel
 import com.zhihuminus.viewmodel.feed.ZHIHU_HOT_SEARCH_URL
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.yield
 import kotlinx.serialization.Serializable

@@ -73,6 +73,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.History
@@ -90,7 +91,6 @@ import com.zhihuminus.ui.subscreens.defaultBottomBarSelectionKeys
 import com.zhihuminus.ui.subscreens.normalizeBottomBarSelection
 import com.zhihuminus.ui.subscreens.shouldShowAccountHistoryShortcut
 import com.zhihuminus.util.Log
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
  * 账号与设置入口页。

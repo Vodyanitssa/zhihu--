@@ -63,12 +63,12 @@ import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.account.ZhihuIdentityAccount
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.util.friendlyErrorMessage
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 
 data class IdentityManagementState(

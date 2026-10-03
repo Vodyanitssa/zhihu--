@@ -8,12 +8,12 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 @Composable
 fun NotificationRoute(

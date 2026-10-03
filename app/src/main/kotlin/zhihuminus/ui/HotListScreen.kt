@@ -31,6 +31,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.HotListFeed
 import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -39,7 +40,6 @@ import com.zhihuminus.ui.components.FeedPullToRefresh
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.viewmodel.feed.HotListViewModel
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
  * 热榜页面。

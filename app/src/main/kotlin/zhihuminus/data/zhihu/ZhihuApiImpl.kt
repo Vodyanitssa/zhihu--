@@ -1,5 +1,8 @@
 package com.zhihuminus.data.zhihu
 
+import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.environment.deleteSigned
+import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
@@ -30,9 +33,6 @@ import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.util.Log
 import com.zhihuminus.util.ZhihuMessageBodyEncryptor
 import com.zhihuminus.util.raiseForStatus
-import com.zhihuminus.viewmodel.ZhihuApiEnvironment
-import com.zhihuminus.viewmodel.deleteSigned
-import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData

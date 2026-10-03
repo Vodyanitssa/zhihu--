@@ -1,12 +1,17 @@
 package com.zhihuminus.core.platform
 
+import android.Manifest
+import android.app.Activity
 import android.content.ContentValues
 import android.content.Context
+import android.content.pm.PackageManager
 import android.graphics.Bitmap
 import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.OutputStream
@@ -80,3 +85,26 @@ class FileExporter(
         }
     }
 }
+
+fun Context.hasImageExportPermission(): Boolean =
+    Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q ||
+        ContextCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) ==
+        PackageManager.PERMISSION_GRANTED
+
+fun Context.requestImageExportPermission() {
+    if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+        val activity = this as? Activity ?: return
+        ActivityCompat.requestPermissions(
+            activity,
+            arrayOf(Manifest.permission.WRITE_EXTERNAL_STORAGE),
+            1001,
+        )
+    }
+}
+
+fun Context.loadExportAssetText(fileName: String): String =
+    assets.open(fileName).use { inputStream ->
+        inputStream.bufferedReader().use { reader ->
+            reader.readText()
+        }
+    }

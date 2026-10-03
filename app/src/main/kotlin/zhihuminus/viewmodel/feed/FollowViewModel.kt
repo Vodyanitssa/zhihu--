@@ -23,6 +23,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.environment.PaginationEnvironment
+import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
@@ -32,8 +34,6 @@ import com.zhihuminus.data.target
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuFeedRepository
 import com.zhihuminus.util.friendlyErrorMessage
-import com.zhihuminus.viewmodel.PaginationEnvironment
-import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.serialization.Serializable

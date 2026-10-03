@@ -33,9 +33,9 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.viewmodel.PaginationEnvironment
+import com.zhihuminus.core.environment.PaginationEnvironment
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.viewmodel.feed.BaseFeedViewModel
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.launch
 
 val LocalPullToRefreshViewModel = compositionLocalOf<BaseFeedViewModel?> {

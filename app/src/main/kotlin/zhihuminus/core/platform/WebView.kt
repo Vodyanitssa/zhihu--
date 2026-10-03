@@ -19,7 +19,6 @@ import kotlin.math.roundToInt
 /**
  * 用于将 HTML 渲染为图片的离屏 WebView 包装。
  *
- * 参考 [com.zhihuminus.viewmodel.AndroidArticleExportRenderer] 的实现，
  * 但作为独立的平台工具类，不依赖 Article 的 ViewModel 层。
  */
 class PictureExportWebView(

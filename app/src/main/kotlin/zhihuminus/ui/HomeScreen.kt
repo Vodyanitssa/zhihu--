@@ -67,6 +67,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZHIHU_ME_URL
 import com.zhihuminus.data.ZhihuJson
@@ -85,7 +86,6 @@ import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.viewmodel.feed.BaseFeedViewModel
 import com.zhihuminus.viewmodel.feed.HomeFeedViewModel
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.io.buffered

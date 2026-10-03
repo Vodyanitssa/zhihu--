@@ -22,6 +22,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuColumnRepository
 import com.zhihuminus.data.zhihu.ZhihuCommentRepository
@@ -30,7 +31,6 @@ import com.zhihuminus.data.zhihu.ZhihuQuestionRepository
 import com.zhihuminus.feature.column.ColumnRoute
 import com.zhihuminus.feature.post.PostRoute
 import com.zhihuminus.feature.question.QuestionRoute
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
  * Android 平台的 Zhihu++ 主界面入口。

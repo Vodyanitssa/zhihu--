@@ -5,11 +5,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuCollectionRepository
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 @Composable
 fun CollectionContentRoute(

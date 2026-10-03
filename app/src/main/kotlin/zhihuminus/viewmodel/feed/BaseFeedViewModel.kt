@@ -21,11 +21,11 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.zhihuminus.core.environment.PaginationEnvironment
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
-import com.zhihuminus.viewmodel.PaginationEnvironment
 import com.zhihuminus.viewmodel.PaginationViewModel
 import kotlinx.serialization.json.JsonArray
 import kotlin.reflect.typeOf

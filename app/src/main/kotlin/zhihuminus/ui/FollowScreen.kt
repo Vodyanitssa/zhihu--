@@ -50,6 +50,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.viewmodel.compose.viewModel
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.platform.UserMessageDuration
@@ -60,7 +61,6 @@ import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import com.zhihuminus.viewmodel.feed.FollowViewModel
 import com.zhihuminus.viewmodel.feed.RecentMomentsViewModel
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 /**
  * 关注顶层页的生产入口。

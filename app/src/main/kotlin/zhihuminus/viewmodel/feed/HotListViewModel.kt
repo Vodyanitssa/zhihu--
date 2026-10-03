@@ -17,9 +17,9 @@
 
 package com.zhihuminus.viewmodel.feed
 
+import com.zhihuminus.core.environment.PaginationEnvironment
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.viewmodel.PaginationEnvironment
 
 class HotListViewModel : BaseFeedViewModel() {
     override val initialUrl: String

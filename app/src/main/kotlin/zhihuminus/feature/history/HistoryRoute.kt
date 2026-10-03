@@ -4,10 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.viewmodel.rememberPaginationEnvironment
 
 @Composable
 fun HistoryRoute(

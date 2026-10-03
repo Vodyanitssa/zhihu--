@@ -10,6 +10,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
+import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
@@ -25,7 +26,6 @@ import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.ArticleHost
-import com.zhihuminus.viewmodel.ZhihuApiEnvironment
 
 /**
  * 问题页路由组件：创建 ViewModel、收集副作用、挂载图片预览层。

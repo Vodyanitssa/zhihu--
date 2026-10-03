@@ -18,6 +18,9 @@
 package com.zhihuminus.viewmodel.feed
 
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.environment.PaginationEnvironment
+import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
@@ -27,9 +30,6 @@ import com.zhihuminus.data.target
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuFeedRepository
 import com.zhihuminus.util.Log
-import com.zhihuminus.viewmodel.PaginationEnvironment
-import com.zhihuminus.viewmodel.ZhihuApiEnvironment
-import com.zhihuminus.viewmodel.postSigned
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
