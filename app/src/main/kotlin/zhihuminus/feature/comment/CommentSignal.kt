@@ -42,6 +42,14 @@ sealed interface CommentEvent {
 
     data object DismissReply : CommentEvent
 
+    /** 打开评论输入弹窗（可选传入回复目标） */
+    data class OpenInput(
+        val replyTo: Comment? = null,
+    ) : CommentEvent
+
+    /** 关闭评论输入弹窗 */
+    data object DismissInput : CommentEvent
+
     /** 深链锚点已被 UI 消费（滚动/高亮完成），清除锚点状态 */
     data object ConsumeAnchor : CommentEvent
 }

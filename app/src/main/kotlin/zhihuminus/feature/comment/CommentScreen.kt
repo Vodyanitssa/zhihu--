@@ -26,9 +26,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.feature.comment.components.CommentInputBar
+import com.zhihuminus.feature.comment.components.CommentBottomBar
 import com.zhihuminus.feature.comment.components.CommentItemWithPreview
 import com.zhihuminus.feature.comment.components.SortBar
 
@@ -47,6 +46,7 @@ data class CommentUiState(
     val errorMessage: String? = null,
     val activeParentId: String? = null, // 当前打开子sheet的父评论ID
     val replyToComment: Comment? = null, // 当前回复的目标评论
+    val isInputActive: Boolean = false, // 输入弹窗是否打开
     val anchorRootId: String? = null, // 深链锚点：目标根评论 ID，用于滚动定位
     val anchorTargetId: String? = null, // 深链锚点：高亮目标评论 ID（锚点为子评论时非空）
 )
@@ -57,17 +57,8 @@ fun CommentScreen(
     onEvent: (CommentEvent) -> Unit,
     modifier: Modifier = Modifier,
     listState: LazyListState = rememberLazyListState(),
-    inputFocusRequester: FocusRequester = remember { FocusRequester() },
     commentInput: String = "",
-    onCommentInputChange: ((String) -> Unit)? = null,
 ) {
-    // 当 replyToComment 从 null 变为非 null 时，自动聚焦输入框
-    LaunchedEffect(uiState.replyToComment) {
-        if (uiState.replyToComment != null) {
-            inputFocusRequester.requestFocus()
-        }
-    }
-
     // 滚动加载更多
     val shouldLoadMore = remember {
         derivedStateOf {
@@ -189,13 +180,11 @@ fun CommentScreen(
                     }
                 }
 
-                // 评论输入栏
-                CommentInputBar(
-                    onEvent = onEvent,
-                    replyToComment = uiState.replyToComment,
-                    inputFocusRequester = inputFocusRequester,
-                    initialDraft = commentInput,
-                    onDraftChange = onCommentInputChange,
+                // 底部评论触发栏
+                CommentBottomBar(
+                    placeholder = "写下你的评论...",
+                    draft = commentInput,
+                    onClick = { onEvent(CommentEvent.OpenInput(null)) },
                 )
             }
         }

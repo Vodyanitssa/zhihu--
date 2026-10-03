@@ -60,8 +60,10 @@ class CommentViewModel(
             is CommentEvent.OpenChildComments -> openChildComments(event.comment)
             is CommentEvent.DismissChildComments -> dismissChildComments()
             is CommentEvent.OpenLink -> sendEffect(CommentEffect.OpenExternalUrl(event.url))
-            is CommentEvent.Reply -> uiState = uiState.copy(replyToComment = event.comment)
+            is CommentEvent.Reply -> uiState = uiState.copy(replyToComment = event.comment, isInputActive = true)
             is CommentEvent.DismissReply -> uiState = uiState.copy(replyToComment = null)
+            is CommentEvent.OpenInput -> uiState = uiState.copy(isInputActive = true, replyToComment = event.replyTo)
+            is CommentEvent.DismissInput -> uiState = uiState.copy(isInputActive = false, replyToComment = null)
             is CommentEvent.ConsumeAnchor -> uiState = uiState.copy(anchorRootId = null, anchorTargetId = null)
         }
     }
@@ -184,6 +186,7 @@ class CommentViewModel(
 
     private fun submitComment(text: String, replyToCommentId: String?) {
         if (text.isBlank()) return
+        uiState = uiState.copy(isInputActive = false, replyToComment = null)
         viewModelScope.launch {
             try {
                 val newComment = withContext(Dispatchers.Default) {

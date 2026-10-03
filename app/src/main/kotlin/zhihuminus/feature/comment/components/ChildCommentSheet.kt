@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
@@ -92,69 +93,83 @@ fun ChildCommentSheet(
         shape = RoundedCornerShape(topStart = 16.dp, topEnd = 16.dp),
         color = MaterialTheme.colorScheme.surfaceContainerLow,
     ) {
-        LazyColumn(
-            state = listState,
-            modifier = Modifier.fillMaxSize(),
-            contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
+        Column(
+            modifier = Modifier
+                .fillMaxSize()
+                .navigationBarsPadding(),
         ) {
-            // 父评论
-            item(key = "parent_${parentComment.id}") {
-                CommentItem(
-                    comment = parentComment,
-                    onEvent = onEvent,
-                )
-            }
+            Box(modifier = Modifier.weight(1f)) {
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.fillMaxSize(),
+                    contentPadding = PaddingValues(bottom = 16.dp, start = 16.dp, end = 16.dp, top = 8.dp),
+                ) {
+                    // 父评论
+                    item(key = "parent_${parentComment.id}") {
+                        CommentItem(
+                            comment = parentComment,
+                            onEvent = onEvent,
+                        )
+                    }
 
-            // 回复数栏
-            item(key = "reply_header") {
-                Column {
-                    Spacer(modifier = Modifier.height(10.dp))
-                    Text(
-                        text = "回复 ${parentComment.childCommentCount}",
-                        style = MaterialTheme.typography.titleMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        modifier = Modifier.padding(bottom = 8.dp),
-                    )
-                }
-            }
+                    // 回复数栏
+                    item(key = "reply_header") {
+                        Column {
+                            Spacer(modifier = Modifier.height(10.dp))
+                            Text(
+                                text = "回复 ${parentComment.childCommentCount}",
+                                style = MaterialTheme.typography.titleMedium,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                modifier = Modifier.padding(bottom = 8.dp),
+                            )
+                        }
+                    }
 
-            // 子评论列表
-            if (childComments.isEmpty() && !isLoading) {
-                item(key = "empty") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(vertical = 32.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Text("暂无回复", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    // 子评论列表
+                    if (childComments.isEmpty() && !isLoading) {
+                        item(key = "empty") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 32.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text("暂无回复", color = MaterialTheme.colorScheme.onSurfaceVariant)
+                            }
+                        }
+                    } else {
+                        items(
+                            items = childComments,
+                            key = { it.id },
+                        ) { comment ->
+                            CommentItem(
+                                comment = comment,
+                                onEvent = onEvent,
+                                highlight = highlightVisible && comment.id == highlightCommentId,
+                            )
+                        }
+                    }
+
+                    if (isLoading) {
+                        item(key = "loading") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(8.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            }
+                        }
                     }
                 }
-            } else {
-                items(
-                    items = childComments,
-                    key = { it.id },
-                ) { comment ->
-                    CommentItem(
-                        comment = comment,
-                        onEvent = onEvent,
-                        highlight = highlightVisible && comment.id == highlightCommentId,
-                    )
-                }
             }
 
-            if (isLoading) {
-                item(key = "loading") {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
-                    }
-                }
-            }
+            // 底部回复触发栏
+            CommentBottomBar(
+                placeholder = "回复 @${parentComment.author.name}...",
+                onClick = { onEvent(CommentEvent.OpenInput(parentComment)) },
+            )
         }
     }
 }
