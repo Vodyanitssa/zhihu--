@@ -158,8 +158,6 @@ dependencies {
     implementation("androidx.media3:media3-exoplayer:1.11.0")
     implementation("androidx.media3:media3-ui:1.11.0")
 
-    implementation("io.github.zly2006:latex-renderer-android:0.0.1-alpha5")
-
     implementation("io.coil-kt.coil3:coil-compose:$coil")
     implementation("io.coil-kt.coil3:coil-network-core:$coil")
     implementation("io.coil-kt.coil3:coil-network-ktor3-android:$coil")

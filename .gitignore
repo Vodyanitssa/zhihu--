@@ -55,8 +55,5 @@ __pycache__/
 .codex/autoreview-state.json
 .codex/hooks/__pycache__/
 
-# Local replay corpus contains complete third-party Zhihu responses.
-tools/zhihu-formula-corpus/
-
 # Sample zhihu html
 samples/
