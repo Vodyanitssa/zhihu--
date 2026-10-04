@@ -62,20 +62,19 @@ interface ArticleHost {
 /**
  * 影响应用主壳形态的不可变设置快照。
  *
- * 这些值决定底部栏有哪些入口、主 pager 从哪个页面开始、重选 tab 是否回到顶部/刷新，以及顶栏/底栏是否自动隐藏。
+ * 这些值决定主 pager 从哪个页面开始、重选 tab 是否回到顶部/刷新，以及顶栏/底栏是否自动隐藏。
  * [ZhihuMain] 按快照读取它们，避免把更新到一半的导航设置应用到主界面。
  */
 data class ZhihuMainPreferenceSnapshot(
     val tapToScrollToTopEnabled: Boolean,
     val autoHideBottomBar: Boolean,
-    val selectedBottomBarItemKeys: List<String>,
     val startDestination: TopLevelDestination,
 )
 
 /**
  * 长生命周期主壳使用的 [ZhihuMainPreferenceSnapshot] 可变持有者。
  *
- * 用户每次修改外观设置时不应该重建 NavHost。设置页退出时调用 [reload] 即可；主壳会原地更新底部栏和 pager 状态，
+ * 用户每次修改外观设置时不应该重建 NavHost。设置页退出时调用 [reload] 即可；主壳会原地更新 pager 状态，
  * 同时保持已加载 tab、返回栈和滚动位置稳定。
  */
 class ZhihuMainPreferenceState(
@@ -85,7 +84,6 @@ class ZhihuMainPreferenceState(
 
     val tapToScrollToTopEnabled: Boolean get() = snapshot.tapToScrollToTopEnabled
     val autoHideBottomBar: Boolean get() = snapshot.autoHideBottomBar
-    val selectedBottomBarItemKeys: List<String> get() = snapshot.selectedBottomBarItemKeys
     val startDestination: TopLevelDestination get() = snapshot.startDestination
 
     fun reload() {

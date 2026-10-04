@@ -1,6 +1,5 @@
 package com.zhihuminus.navigation.router
 
-import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.Home
@@ -77,6 +76,5 @@ fun TopLevelDestination.toAppUrl(): String? = when (this) {
     Home -> buildAppUrl("tab", "home")
     Follow -> buildAppUrl("tab", "follow")
     Daily -> buildAppUrl("tab", "daily")
-    Account -> buildAppUrl("tab", "account")
     else -> null
 }

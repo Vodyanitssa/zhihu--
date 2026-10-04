@@ -139,11 +139,13 @@ class AppRouterRoundTripTest {
             Home to "zhminus://tab/home",
             Follow to "zhminus://tab/follow",
             Daily to "zhminus://tab/daily",
-            Account to "zhminus://tab/account",
         ).forEach { destination, url ->
             assertEquals(RouteResolution.Tab(destination), AppRouter.resolve(url), url)
         }
     }
+
+    @Test
+    fun accountLegacyTabUrlResolvesToScreen() = assertRoundTrip(Account, "zhminus://tab/account")
 
     @Test
     fun historyRoot() = assertRoundTrip(History, "zhminus://history")

@@ -41,7 +41,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
-import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Newspaper
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -128,8 +127,6 @@ private sealed class MainTabPage(
     data object FollowPage : MainTabPage(Follow, "follow")
 
     data object DailyPage : MainTabPage(Daily, "daily")
-
-    data object AccountPage : MainTabPage(Account, "account")
 }
 
 /**
@@ -160,9 +157,7 @@ fun ZhihuMain(
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     val tapToScrollToTopEnabled = preferenceState.tapToScrollToTopEnabled
     val autoHideBottomBar = preferenceState.autoHideBottomBar
-    val selectedBottomBarItemKeys = preferenceState.selectedBottomBarItemKeys
     val startDestination = preferenceState.startDestination
-    val reloadBottomBarPreferences = preferenceState::reload
     var isReadingPlayerExpandedByUser by remember { mutableStateOf(false) }
 
     val navEntry by navController.currentBackStackEntryAsState()
@@ -190,35 +185,32 @@ fun ZhihuMain(
         }
     }
 
-    val allBottomBarItems = listOf(
-        Triple(Home, "主页", Icons.Filled.Home),
-        Triple(Follow, "关注", Icons.Filled.Group),
-        Triple(Daily, "日报", Icons.Filled.Newspaper),
-        Triple(Account, "账号", Icons.Filled.ManageAccounts),
-    )
-    val bottomBarItems = selectedBottomBarItemKeys.mapNotNull { key ->
-        allBottomBarItems.firstOrNull { it.first.name == key }
+    val bottomBarItems = remember {
+        listOf(
+            Triple(Home, "主页", Icons.Filled.Home),
+            Triple(Follow, "关注", Icons.Filled.Group),
+            Triple(Daily, "日报", Icons.Filled.Newspaper),
+        )
     }
 
-    val mainTabPages = remember(bottomBarItems) {
-        bottomBarItems.flatMap { item ->
-            when (item.first) {
-                Home -> listOf(MainTabPage.HomePage)
-                Follow -> listOf(MainTabPage.FollowPage)
-                Daily -> listOf(MainTabPage.DailyPage)
-                Account -> listOf(MainTabPage.AccountPage)
-                else -> emptyList()
-            }
+    val mainTabPages = remember {
+        listOf(
+            MainTabPage.HomePage,
+            MainTabPage.FollowPage,
+            MainTabPage.DailyPage,
+        )
+    }
+
+    fun pageIndexForDestination(destination: TopLevelDestination): Int = when (destination) {
+        Home -> 0
+        Follow -> 1
+        Daily -> 2
+        else -> when (startDestination) {
+            Follow -> 1
+            Daily -> 2
+            else -> 0
         }
     }
-
-    fun pageIndexForDestination(destination: TopLevelDestination): Int = mainTabPages
-        .indexOfFirst {
-            it.bottomDestination::class == destination::class
-        }.takeIf { it >= 0 } ?: mainTabPages
-        .indexOfFirst {
-            it.bottomDestination::class == startDestination::class
-        }.takeIf { it >= 0 } ?: 0
 
     var currentTabIndex by rememberSaveable {
         mutableIntStateOf(pageIndexForDestination(startDestination))
@@ -230,7 +222,7 @@ fun ZhihuMain(
         currentTabIndex = pageIndexForDestination(destination)
     }
 
-    LaunchedEffect(currentTabIndex, mainTabPages) {
+    LaunchedEffect(currentTabIndex) {
         mainTabPages.getOrNull(currentTabIndex)?.bottomDestination?.let { destination ->
             currentMainTabDestination = destination
         }
@@ -240,29 +232,12 @@ fun ZhihuMain(
         currentTabIndex = 0
     }
 
-    LaunchedEffect(mainTabNavigationTarget, mainTabPages) {
+    LaunchedEffect(mainTabNavigationTarget) {
         mainTabNavigationTarget?.let { destination ->
             // 平台适配层会把旧的顶层 route 请求映射到 MainTabs。这里消费该请求，
             // 让 deeplink 等调用方仍能选中 Home/Follow 等 tab，而不是把旧 route 压入返回栈。
             currentTabIndex = pageIndexForDestination(destination)
             consumeMainTabNavigationTarget(destination)
-        }
-    }
-
-    LaunchedEffect(mainTabPages) {
-        if (mainTabPages.isNotEmpty()) {
-            val currentDestinationStillVisible = mainTabPages.any {
-                it.bottomDestination::class == currentMainTabDestination::class
-            }
-            val targetDestination = if (currentDestinationStillVisible) {
-                currentMainTabDestination
-            } else {
-                startDestination
-            }
-            val targetPage = pageIndexForDestination(targetDestination)
-            if (currentTabIndex != targetPage || currentTabIndex !in mainTabPages.indices) {
-                currentTabIndex = targetPage
-            }
         }
     }
 
@@ -296,10 +271,10 @@ fun ZhihuMain(
                                 icon: ImageVector,
                             ) {
                                 NavigationBarItem(
-                                    currentBottomDestination?.let { it::class == destination::class } == true,
+                                    selected = currentBottomDestination == destination,
                                     onClick = {
                                         isReadingPlayerExpandedByUser = false
-                                        if (currentBottomDestination?.let { it::class == destination::class } != true) {
+                                        if (currentBottomDestination != destination) {
                                             navigateTopLevel(destination)
                                         } else if (tapToScrollToTopEnabled) {
                                             scrollToTopTrigger++
@@ -526,7 +501,7 @@ fun ZhihuMain(
                         val args = navEntry.toRoute<Account.AppearanceSettings>()
                         AppearanceSettingsScreen(
                             setting = args.setting,
-                            onExit = reloadBottomBarPreferences,
+                            onExit = preferenceState::reload,
                         )
                     }
                     composable<Account.SettingsSearch> {
@@ -586,8 +561,6 @@ private fun MainTabsContent(
                 MainTabPage.DailyPage -> DailyRoute(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
-
-                MainTabPage.AccountPage -> AccountSettingScreen(innerPadding)
             }
         }
     }

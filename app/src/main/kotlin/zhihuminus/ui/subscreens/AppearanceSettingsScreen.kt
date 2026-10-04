@@ -18,33 +18,24 @@
 package com.zhihuminus.ui.subscreens
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.core.Spring
-import androidx.compose.animation.core.spring
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
-import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.relocation.BringIntoViewRequester
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.KeyboardArrowDown
-import androidx.compose.material.icons.filled.KeyboardArrowUp
 import androidx.compose.material3.ButtonDefaults
-import androidx.compose.material3.Checkbox
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuAnchorType
@@ -70,14 +61,12 @@ import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
-import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.Home
@@ -103,99 +92,24 @@ const val DEFAULT_FAB_OPACITY = 100
 const val APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY = "appearanceSettings.bottomBarSection"
 
 const val START_DESTINATION_PREFERENCE_KEY = "startDestination"
-const val BOTTOM_BAR_ITEMS_PREFERENCE_KEY = "bottom_bar_items"
-const val BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY = "bottom_bar_item_order"
-private const val BOTTOM_BAR_ITEM_ORDER_SEPARATOR = ","
-private val bottomBarSettingItemHeight = 64.dp
-private val bottomBarSettingItemSpacing = 4.dp
 
-private val topLevelDestinationsInOrder: List<Pair<String, TopLevelDestination>> = listOf(
-    Home.name to Home,
-    Follow.name to Follow,
-    Daily.name to Daily,
-    Account.name to Account,
+private val startDestinationOptions = listOf(
+    Home.name to "主页",
+    Follow.name to "关注",
+    Daily.name to "日报",
 )
 
-internal fun navDestinationFromName(name: String): TopLevelDestination = topLevelDestinationsInOrder
-    .firstOrNull { it.first == name }
-    ?.second
-    ?: Home
+internal fun navDestinationFromName(name: String): TopLevelDestination = when (name) {
+    Follow.name -> Follow
+    Daily.name -> Daily
+    else -> Home
+}
 
-internal fun resolveValidStartDestinationKey(
-    preferredKey: String?,
-    availableKeysInOrder: List<String>,
-): String = when {
-    !preferredKey.isNullOrEmpty() && preferredKey in availableKeysInOrder -> preferredKey
-    availableKeysInOrder.isNotEmpty() -> availableKeysInOrder.first()
+internal fun resolveValidStartDestinationKey(preferredKey: String?): String = when (preferredKey) {
+    Follow.name -> Follow.name
+    Daily.name -> Daily.name
     else -> Home.name
 }
-
-internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name)
-
-internal fun normalizeBottomBarSelection(
-    selectedKeys: Collection<String>,
-    enforceMinimumSelection: Boolean = false,
-): Set<String> {
-    val allowedKeys = topLevelDestinationsInOrder.map { it.first }.toSet()
-    val normalized = selectedKeys
-        .filterTo(linkedSetOf()) { it in allowedKeys }
-        .ifEmpty { defaultBottomBarSelectionKeys().toMutableSet() }
-
-    if (Home.name in normalized) {
-        normalized.remove(Account.name)
-    } else {
-        normalized.add(Account.name)
-    }
-
-    if (enforceMinimumSelection) {
-        val fillOrder = if (Home.name in normalized) {
-            listOf(Follow.name, Daily.name)
-        } else {
-            listOf(Follow.name, Daily.name, Home.name)
-        }
-        fillOrder.forEach { key ->
-            if (normalized.size < 3) {
-                normalized.add(key)
-            }
-        }
-    }
-
-    return normalized
-}
-
-internal fun normalizeBottomBarItemOrder(
-    preferredOrderKeys: List<String>,
-    selectedKeys: Set<String>,
-): List<String> {
-    val allowedKeys = topLevelDestinationsInOrder.map { it.first }.toSet()
-    val orderedKeys = mutableListOf<String>()
-    preferredOrderKeys.forEach { key ->
-        if (key in allowedKeys && key in selectedKeys && key !in orderedKeys) {
-            orderedKeys.add(key)
-        }
-    }
-    topLevelDestinationsInOrder.forEach { (key, _) ->
-        if (key in selectedKeys && key !in orderedKeys) {
-            orderedKeys.add(key)
-        }
-    }
-    return orderedKeys
-}
-
-internal fun bottomBarItemOrderPreferenceValue(keys: List<String>): String =
-    keys.joinToString(BOTTOM_BAR_ITEM_ORDER_SEPARATOR)
-
-internal fun bottomBarItemOrderFromPreference(
-    preferenceValue: String?,
-    selectedKeys: Set<String>,
-): List<String> = normalizeBottomBarItemOrder(
-    preferenceValue
-        .orEmpty()
-        .split(BOTTOM_BAR_ITEM_ORDER_SEPARATOR)
-        .map { it.trim() }
-        .filter { it.isNotEmpty() },
-    selectedKeys,
-)
 
 /**
  * 外观与阅读体验设置页。
@@ -226,22 +140,6 @@ fun AppearanceSettingsScreen(
 
     fun requesterFor(settingKey: String): BringIntoViewRequester =
         bringIntoViewRequesters.getOrPut(settingKey) { BringIntoViewRequester() }
-
-    val selectedBottomBarItemKeys = remember {
-        val normalizedSelection = normalizeBottomBarSelection(
-            settings.getStringSet(
-                BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
-                defaultBottomBarSelectionKeys(),
-            ),
-            enforceMinimumSelection = true,
-        )
-        mutableStateOf(
-            bottomBarItemOrderFromPreference(
-                settings.getStringOrNull(BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY),
-                normalizedSelection,
-            ),
-        )
-    }
 
     DisposableEffect(Unit) {
         onDispose {
@@ -585,54 +483,13 @@ fun AppearanceSettingsScreen(
             }
 
             // ── 底部导航栏 ──────────────────────────────────────────────────────
-            val allBottomBarItems = listOf(
-                Home.name to "主页",
-                Follow.name to "关注",
-                Daily.name to "日报",
-                Account.name to "账号设置",
-            )
-            val bottomBarItemLabels = allBottomBarItems.toMap()
             var startDestinationExpanded by remember { mutableStateOf(false) }
             var startDestinationKey by remember {
                 mutableStateOf(
                     resolveValidStartDestinationKey(
                         settings.getString(START_DESTINATION_PREFERENCE_KEY, Home.name),
-                        allBottomBarItems.map { it.first }.filter { it in selectedBottomBarItemKeys.value },
                     ),
                 )
-            }
-
-            fun persistBottomBarSelection(
-                currentOrderKeys: List<String>,
-            ) {
-                val normalizedSet = normalizeBottomBarSelection(
-                    currentOrderKeys,
-                    enforceMinimumSelection = true,
-                )
-                val normalizedOrderKeys = normalizeBottomBarItemOrder(currentOrderKeys, normalizedSet)
-                val availableKeys = normalizedOrderKeys
-                val resolvedStartDestination = resolveValidStartDestinationKey(startDestinationKey, availableKeys)
-                selectedBottomBarItemKeys.value = normalizedOrderKeys
-                startDestinationKey = resolvedStartDestination
-                settings.putStringSet(BOTTOM_BAR_ITEMS_PREFERENCE_KEY, normalizedSet)
-                settings.putString(
-                    BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY,
-                    bottomBarItemOrderPreferenceValue(normalizedOrderKeys),
-                )
-                settings.putString(START_DESTINATION_PREFERENCE_KEY, resolvedStartDestination)
-            }
-
-            fun moveBottomBarItem(key: String, offset: Int) {
-                val currentOrderKeys = selectedBottomBarItemKeys.value
-                val fromIndex = currentOrderKeys.indexOf(key)
-                val toIndex = fromIndex + offset
-                if (fromIndex < 0 || toIndex !in currentOrderKeys.indices) {
-                    return
-                }
-                val reorderedKeys = currentOrderKeys.toMutableList()
-                reorderedKeys.removeAt(fromIndex)
-                reorderedKeys.add(toIndex, key)
-                persistBottomBarSelection(reorderedKeys)
             }
 
             SettingItemGroup(
@@ -641,32 +498,18 @@ fun AppearanceSettingsScreen(
                 highlightedKey = settingKey,
                 bringIntoViewRequester = requesterFor(APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY),
             ) {
-                val selectedBottomBarItemKeySet = selectedBottomBarItemKeys.value.toSet()
-                val startDestinationItems = selectedBottomBarItemKeys.value.mapNotNull { key ->
-                    bottomBarItemLabels[key]?.let { label -> key to label }
-                }
-                val orderedSettingItems = selectedBottomBarItemKeys.value.mapNotNull { key ->
-                    bottomBarItemLabels[key]?.let { label -> key to label }
-                } + allBottomBarItems.filter { it.first !in selectedBottomBarItemKeySet }
-
                 SettingItem(
                     title = { Text("应用启动默认页面") },
-                    description = { Text("仅可选择已在底部导航栏中显示的页面。") },
+                    description = { Text("可选择应用打开时的初始页面。") },
                     endAction = {
                         ExposedDropdownMenuBox(
                             expanded = startDestinationExpanded,
-                            onExpandedChange = {
-                                if (startDestinationItems.isNotEmpty()) {
-                                    startDestinationExpanded = it
-                                }
-                            },
+                            onExpandedChange = { startDestinationExpanded = it },
                         ) {
                             OutlinedTextField(
-                                value = startDestinationItems.find { it.first == startDestinationKey }?.second
-                                    ?: "主页",
+                                value = startDestinationOptions.find { it.first == startDestinationKey }?.second ?: "主页",
                                 onValueChange = {},
                                 readOnly = true,
-                                enabled = startDestinationItems.isNotEmpty(),
                                 trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = startDestinationExpanded) },
                                 modifier = Modifier
                                     .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
@@ -677,9 +520,8 @@ fun AppearanceSettingsScreen(
                                 expanded = startDestinationExpanded,
                                 onDismissRequest = { startDestinationExpanded = false },
                             ) {
-                                startDestinationItems.forEach { (key, label) ->
+                                startDestinationOptions.forEach { (key, label) ->
                                     DropdownMenuItem(
-                                        modifier = Modifier,
                                         text = { Text(label) },
                                         onClick = {
                                             startDestinationKey = key
@@ -688,107 +530,6 @@ fun AppearanceSettingsScreen(
                                             userMessages.showShortMessage("已设置启动页：$label，重启后生效")
                                         },
                                     )
-                                }
-                            }
-                        }
-                    },
-                )
-
-                SettingItem(
-                    title = { Text("选择要在底部栏显示的页面") },
-                    description = {
-                        Text("建议选择 3-5 项，可用箭头调整显示和滑动顺序。")
-                    },
-                    bottomAction = {
-                        LazyColumn(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .height(
-                                    8.dp +
-                                        bottomBarSettingItemHeight * orderedSettingItems.size +
-                                        bottomBarSettingItemSpacing * (orderedSettingItems.size - 1).coerceAtLeast(0),
-                                ).padding(top = 8.dp),
-                            userScrollEnabled = false,
-                            verticalArrangement = Arrangement.spacedBy(bottomBarSettingItemSpacing),
-                        ) {
-                            items(
-                                items = orderedSettingItems,
-                                key = { it.first },
-                            ) { (key, label) ->
-                                val isChecked = selectedBottomBarItemKeys.value.contains(key)
-                                val selectedIndex = selectedBottomBarItemKeys.value.indexOf(key)
-                                val candidateOrderKeys = if (isChecked) {
-                                    selectedBottomBarItemKeys.value.filter { it != key }
-                                } else {
-                                    selectedBottomBarItemKeys.value + key
-                                }
-                                val isEnabled = key != Account.name
-
-                                Row(
-                                    modifier = Modifier
-                                        .animateItem(
-                                            fadeInSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                            fadeOutSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                            placementSpec = spring(stiffness = Spring.StiffnessMediumLow),
-                                        ).fillMaxWidth()
-                                        .height(bottomBarSettingItemHeight)
-                                        .clickable(enabled = isEnabled) {
-                                            when {
-                                                isChecked && selectedBottomBarItemKeys.value.size <= 3 -> {
-                                                    userMessages.showShortMessage("至少保留3项")
-                                                }
-
-                                                !isChecked && selectedBottomBarItemKeys.value.size >= 5 -> {
-                                                    userMessages.showShortMessage("最多选择5项")
-                                                }
-
-                                                else -> persistBottomBarSelection(candidateOrderKeys)
-                                            }
-                                        },
-                                    verticalAlignment = Alignment.CenterVertically,
-                                    horizontalArrangement = Arrangement.SpaceBetween,
-                                ) {
-                                    Row(
-                                        modifier = Modifier.weight(1f),
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        Checkbox(
-                                            checked = isChecked,
-                                            onCheckedChange = null,
-                                            enabled = isEnabled,
-                                        )
-                                        Text(
-                                            text = label,
-                                            style = MaterialTheme.typography.bodyLarge,
-                                            color = if (isEnabled) {
-                                                MaterialTheme.colorScheme.onSurface
-                                            } else {
-                                                MaterialTheme.colorScheme.onSurface.copy(alpha = 0.38f)
-                                            },
-                                        )
-                                    }
-                                    Row(
-                                        modifier = Modifier.width(96.dp),
-                                        horizontalArrangement = Arrangement.End,
-                                        verticalAlignment = Alignment.CenterVertically,
-                                    ) {
-                                        if (isChecked) {
-                                            IconButton(
-                                                onClick = { moveBottomBarItem(key, -1) },
-                                                enabled = selectedIndex > 0,
-                                                modifier = Modifier,
-                                            ) {
-                                                Icon(Icons.Filled.KeyboardArrowUp, contentDescription = "上移$label")
-                                            }
-                                            IconButton(
-                                                onClick = { moveBottomBarItem(key, 1) },
-                                                enabled = selectedIndex in 0 until selectedBottomBarItemKeys.value.lastIndex,
-                                                modifier = Modifier,
-                                            ) {
-                                                Icon(Icons.Filled.KeyboardArrowDown, contentDescription = "下移$label")
-                                            }
-                                        }
-                                    }
                                 }
                             }
                         }

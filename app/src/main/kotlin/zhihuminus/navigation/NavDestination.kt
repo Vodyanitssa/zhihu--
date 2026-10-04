@@ -78,7 +78,7 @@ data object History : NavDestination
  * Legacy top-level tab target for the main pager.
  */
 @Serializable
-data object Account : TopLevelDestination {
+data object Account : TopLevelDestination, NavDestination {
     override val name: String
         get() = "Account"
 

@@ -170,7 +170,7 @@ private val settingsSearchEntries = buildList {
         appearanceEntry(
             "appearance.bottomBar",
             "底部导航栏",
-            "启动页、底栏显示页面和底栏行为。",
+            "启动页与底栏行为。",
             APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY,
             listOf(
                 "启动默认页面",
@@ -179,11 +179,6 @@ private val settingsSearchEntries = buildList {
                 "首页",
                 "关注",
                 "日报",
-                "历史",
-                "浏览历史",
-                "收藏",
-                "收藏夹",
-                "账号",
                 "回到顶部",
                 "双击刷新",
                 "自动隐藏底栏",

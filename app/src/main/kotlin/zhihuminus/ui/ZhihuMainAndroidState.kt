@@ -15,32 +15,20 @@
  * along with this program.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-@file:Suppress("INVISIBLE_MEMBER", "INVISIBLE_REFERENCE")
-
 package com.zhihuminus.ui
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.zhihuminus.navigation.Account
-import com.zhihuminus.navigation.Daily
-import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.platform.androidSettingsStore
-import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
-import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY
 import com.zhihuminus.ui.subscreens.START_DESTINATION_PREFERENCE_KEY
-import com.zhihuminus.ui.subscreens.bottomBarItemOrderFromPreference
-import com.zhihuminus.ui.subscreens.defaultBottomBarSelectionKeys
 import com.zhihuminus.ui.subscreens.navDestinationFromName
-import com.zhihuminus.ui.subscreens.normalizeBottomBarSelection
-import com.zhihuminus.ui.subscreens.resolveValidStartDestinationKey
 
 /**
  * 读取 Android SharedPreferences 中会影响主壳的设置快照。
  *
- * 这些设置决定底部栏项目、启动页和自动隐藏行为。设置页退出后会重新读取这份快照，
- * 因此新增主壳设置时要同步这里和 Desktop 的读取逻辑。
+ * 这些设置决定启动页和自动隐藏行为。设置页退出后会重新读取这份快照。
  */
 @Composable
 fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
@@ -48,30 +36,12 @@ fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
     val settings = remember(context) {
         androidSettingsStore(context)
     }
-    val allBottomBarItemKeys = remember {
-        listOf(Home.name, Follow.name, Daily.name, Account.name)
-    }
     return rememberZhihuMainPreferenceState {
-        val selectedKeys = normalizeBottomBarSelection(
-            settings.getStringSet(
-                BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
-                defaultBottomBarSelectionKeys(),
-            ),
-            enforceMinimumSelection = true,
-        )
-        val orderedSelectedKeys = bottomBarItemOrderFromPreference(
-            settings.getStringOrNull(BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY),
-            selectedKeys,
-        )
         ZhihuMainPreferenceSnapshot(
             tapToScrollToTopEnabled = settings.getBoolean("bottomBarTapScrollToTop", true),
             autoHideBottomBar = settings.getBoolean("autoHideBottomBar", false),
-            selectedBottomBarItemKeys = orderedSelectedKeys,
             startDestination = navDestinationFromName(
-                resolveValidStartDestinationKey(
-                    settings.getString(START_DESTINATION_PREFERENCE_KEY, Home.name),
-                    orderedSelectedKeys.ifEmpty { allBottomBarItemKeys.filter { it in selectedKeys } },
-                ),
+                settings.getString(START_DESTINATION_PREFERENCE_KEY, Home.name),
             ),
         )
     }

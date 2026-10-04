@@ -240,13 +240,19 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
             segmentCounts = 1..1,
             resolve = { args ->
                 val tab = args.segment(0)?.lowercase()
-                if (tab == "history") {
-                    RouteResolution.Screen(History)
-                } else {
-                    tab?.let(TAB_DESTINATIONS::get)?.let(RouteResolution::Tab)
+                when (tab) {
+                    "history" -> RouteResolution.Screen(History)
+                    "account" -> RouteResolution.Screen(Account)
+                    else -> tab?.let(TAB_DESTINATIONS::get)?.let(RouteResolution::Tab)
                 }
             },
-            encode = { destination -> if (destination == MainTabs) buildAppUrl("tab", "home") else null },
+            encode = { destination ->
+                when (destination) {
+                    MainTabs -> buildAppUrl("tab", "home")
+                    Account -> buildAppUrl("tab", "account")
+                    else -> null
+                }
+            },
         ),
     )
 
@@ -359,7 +365,6 @@ private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "home" to Home,
     "follow" to Follow,
     "daily" to Daily,
-    "account" to Account,
 )
 
 private val PostType.urlSegment: String
