@@ -397,7 +397,10 @@ fun ZhihuMain(
                         )
                     }
                     composable<Account> {
-                        AccountSettingScreen(innerPadding)
+                        val navigator = LocalNavigator.current
+                        AccountSettingScreen(
+                            onNavigateBack = navigator.onNavigateBack,
+                        )
                     }
                     composable<Search>(
                         enterTransition = {

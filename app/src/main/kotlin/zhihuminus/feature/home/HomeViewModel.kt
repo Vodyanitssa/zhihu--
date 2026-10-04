@@ -10,6 +10,7 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.target
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
@@ -27,7 +28,6 @@ data class HomeUiState(
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
     val unreadCount: Int = 0,
-    val showAccountBottomSheet: Boolean = false,
     val errorMessage: String? = null,
 )
 
@@ -73,10 +73,9 @@ class HomeViewModel(
                 }
             }
             is HomeEvent.AvatarClick -> {
-                uiState = uiState.copy(showAccountBottomSheet = true)
-            }
-            is HomeEvent.DismissAccountSheet -> {
-                uiState = uiState.copy(showAccountBottomSheet = false)
+                viewModelScope.launch {
+                    _effect.send(HomeEffect.Navigate(Account))
+                }
             }
             is HomeEvent.RequestLogin -> {}
             is HomeEvent.ReselectTop -> {

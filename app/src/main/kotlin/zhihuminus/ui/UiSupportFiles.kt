@@ -115,7 +115,7 @@ private const val QR_SCAN_RESULT_EXTRA = "scan_result"
 @Composable
 fun rememberAccountSettingsAccountState(): androidx.compose.runtime.State<AccountSettingsAccountState> {
     val accountDataState = AccountData.asState()
-    return remember(accountDataState.value) {
+    return remember {
         androidx.compose.runtime.derivedStateOf {
             accountDataState.value.toAccountSettingsAccountState()
         }
@@ -158,7 +158,10 @@ fun AccountData.Data.toAccountSettingsAccountState(): AccountSettingsAccountStat
     urlToken = self?.urlToken,
 )
 
+private var cachedVersionInfo: String? = null
+
 private fun Context.zhihuVersionInfo(): String {
+    cachedVersionInfo?.let { return it }
     val versionName = runCatching {
         packageManager.getPackageInfo(packageName, 0).versionName
     }.getOrNull() ?: "unknown"
@@ -169,7 +172,7 @@ private fun Context.zhihuVersionInfo(): String {
     val buildType = metaData?.getString("com.zhihuminus.BUILD_TYPE")
         ?: if ((applicationInfo.flags and ApplicationInfo.FLAG_DEBUGGABLE) != 0) "debug" else "release"
     val gitHash = metaData?.getString("com.zhihuminus.GIT_HASH") ?: "unknown"
-    return "$versionName $buildType, $gitHash"
+    return "$versionName $buildType, $gitHash".also { cachedVersionInfo = it }
 }
 
 fun Context.articleHost(): ArticleHost? =

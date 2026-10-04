@@ -17,8 +17,6 @@ sealed interface HomeEvent {
 
     data object AvatarClick : HomeEvent
 
-    data object DismissAccountSheet : HomeEvent
-
     data object RequestLogin : HomeEvent
 
     data class ReselectTop(

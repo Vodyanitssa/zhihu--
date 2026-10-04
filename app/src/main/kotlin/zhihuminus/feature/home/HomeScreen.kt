@@ -6,17 +6,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.home.components.HomeLoginPrompt
 import com.zhihuminus.feature.home.components.HomeTopBar
-import com.zhihuminus.ui.AccountSettingScreen
 import com.zhihuminus.ui.AccountSettingsAccountState
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
@@ -33,23 +29,6 @@ fun HomeScreen(
     onEvent: (HomeEvent) -> Unit,
     onRequestLogin: () -> Unit,
 ) {
-    if (state.showAccountBottomSheet) {
-        val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
-        ModalBottomSheet(
-            onDismissRequest = { onEvent(HomeEvent.DismissAccountSheet) },
-            sheetState = sheetState,
-            containerColor = MaterialTheme.colorScheme.surfaceContainer,
-        ) {
-            AccountSettingScreen(
-                innerPadding = PaddingValues(0.dp),
-                unreadCount = state.unreadCount,
-                showUnreadBadge = showUnreadBadge,
-                onDismissRequest = { onEvent(HomeEvent.DismissAccountSheet) },
-                refreshAccountProfileOnEnter = false,
-            )
-        }
-    }
-
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
