@@ -239,13 +239,25 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
             host = "tab",
             segmentCounts = 1..1,
             resolve = { args ->
-                args
-                    .segment(0)
-                    ?.lowercase()
-                    ?.let(TAB_DESTINATIONS::get)
-                    ?.let(RouteResolution::Tab)
+                val tab = args.segment(0)?.lowercase()
+                if (tab == "history") {
+                    RouteResolution.Screen(History)
+                } else {
+                    tab?.let(TAB_DESTINATIONS::get)?.let(RouteResolution::Tab)
+                }
             },
             encode = { destination -> if (destination == MainTabs) buildAppUrl("tab", "home") else null },
+        ),
+    )
+
+    // ── 历史记录 ────────────────────────────────────────────────────────────
+
+    add(
+        screenRule(
+            "history",
+            0..0,
+            parse = { History },
+            encode = { destination -> if (destination == History) buildAppUrl("history") else null },
         ),
     )
 
@@ -347,7 +359,6 @@ private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "home" to Home,
     "follow" to Follow,
     "daily" to Daily,
-    "history" to History,
     "account" to Account,
 )
 

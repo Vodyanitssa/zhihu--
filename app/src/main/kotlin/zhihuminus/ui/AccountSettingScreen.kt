@@ -41,7 +41,6 @@ import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.ArrowOutward
 import androidx.compose.material.icons.filled.Bookmark
-import androidx.compose.material.icons.filled.Groups
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
@@ -85,16 +84,12 @@ import com.zhihuminus.platform.rememberSystemUrlOpener
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
-import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
-import com.zhihuminus.ui.subscreens.defaultBottomBarSelectionKeys
-import com.zhihuminus.ui.subscreens.normalizeBottomBarSelection
-import com.zhihuminus.ui.subscreens.shouldShowAccountHistoryShortcut
 import com.zhihuminus.util.Log
 
 /**
  * 账号与设置入口页。
  *
- * 已登录时顶部展示头像、昵称、扫码登录和退出登录，并额外展示收藏夹、关注订阅、通知和历史等快捷块；
+ * 已登录时顶部展示头像、昵称、扫码登录和退出登录，并额外展示收藏夹、历史和通知等快捷块；
  * 未登录时只展示登录入口。下方设置区是外观、推荐过滤、系统更新、开发者选项和开源许可的统一入口，其中开发者选项通过连续点击版本号开启。
  *
  * 这个页面既可以作为底部栏 tab 展示，也可以作为主页头像弹出的账号面板内容使用，所以 [innerPadding]、[onDismissRequest]
@@ -120,15 +115,6 @@ fun AccountSettingScreen(
     val userMessages = rememberUserMessageSink()
     val versionInfo = rememberAppVersionInfo()
 
-    val selectedBottomBarItemKeys = remember {
-        normalizeBottomBarSelection(
-            settings.getStringSet(
-                BOTTOM_BAR_ITEMS_PREFERENCE_KEY,
-                defaultBottomBarSelectionKeys(),
-            ),
-            enforceMinimumSelection = true,
-        )
-    }
     var showLogoutDialog by remember { mutableStateOf(false) }
     val liveData by accountState
     val data = testAccountData ?: liveData
@@ -267,26 +253,20 @@ fun AccountSettingScreen(
                             .clip(RoundedCornerShape(4.dp))
                             .background(MaterialTheme.colorScheme.primaryContainer)
                             .clickable {
-                                navigator.onNavigate(
-                                    Person(
-                                        id = data.id,
-                                        urlToken = data.urlToken ?: "",
-                                        name = data.username,
-                                        jumpTo = "关注订阅",
-                                    ),
-                                )
+                                onDismissRequest()
+                                navigator.onNavigate(History)
                             }.padding(8.dp, 16.dp),
                         verticalArrangement = Arrangement.Center,
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
                         Icon(
-                            Icons.Default.Groups,
+                            Icons.Default.History,
                             null,
                             tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
                         Spacer(Modifier.height(4.dp))
                         Text(
-                            "关注订阅",
+                            "历史",
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
@@ -322,32 +302,6 @@ fun AccountSettingScreen(
                             style = MaterialTheme.typography.labelLarge,
                             color = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
-                    }
-                    if (shouldShowAccountHistoryShortcut(selectedBottomBarItemKeys)) {
-                        Column(
-                            Modifier
-                                .weight(1f)
-                                .clip(RoundedCornerShape(4.dp))
-                                .background(MaterialTheme.colorScheme.primaryContainer)
-                                .clickable {
-                                    onDismissRequest()
-                                    navigator.onNavigateTopLevel(History)
-                                }.padding(8.dp, 16.dp),
-                            verticalArrangement = Arrangement.Center,
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                        ) {
-                            Icon(
-                                Icons.Default.History,
-                                null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                            Spacer(Modifier.height(4.dp))
-                            Text(
-                                "浏览历史",
-                                style = MaterialTheme.typography.labelLarge,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        }
                     }
                 }
             }

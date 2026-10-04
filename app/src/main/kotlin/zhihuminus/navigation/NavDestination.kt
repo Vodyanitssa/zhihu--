@@ -69,13 +69,10 @@ data object Follow : TopLevelDestination {
 }
 
 /**
- * 主 pager 的历史顶层 tab 目标。
+ * 历史记录目的地。
  */
 @Serializable
-data object History : TopLevelDestination {
-    override val name: String
-        get() = "History"
-}
+data object History : NavDestination
 
 /**
  * Legacy top-level tab target for the main pager.

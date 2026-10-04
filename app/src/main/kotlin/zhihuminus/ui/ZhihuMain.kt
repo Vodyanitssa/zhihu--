@@ -40,7 +40,6 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
-import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Newspaper
@@ -130,8 +129,6 @@ private sealed class MainTabPage(
 
     data object DailyPage : MainTabPage(Daily, "daily")
 
-    data object HistoryPage : MainTabPage(History, "online_history")
-
     data object AccountPage : MainTabPage(Account, "account")
 }
 
@@ -197,7 +194,6 @@ fun ZhihuMain(
         Triple(Home, "主页", Icons.Filled.Home),
         Triple(Follow, "关注", Icons.Filled.Group),
         Triple(Daily, "日报", Icons.Filled.Newspaper),
-        Triple(History, "历史", Icons.Filled.History),
         Triple(Account, "账号", Icons.Filled.ManageAccounts),
     )
     val bottomBarItems = selectedBottomBarItemKeys.mapNotNull { key ->
@@ -210,7 +206,6 @@ fun ZhihuMain(
                 Home -> listOf(MainTabPage.HomePage)
                 Follow -> listOf(MainTabPage.FollowPage)
                 Daily -> listOf(MainTabPage.DailyPage)
-                History -> listOf(MainTabPage.HistoryPage)
                 Account -> listOf(MainTabPage.AccountPage)
                 else -> emptyList()
             }
@@ -408,7 +403,10 @@ fun ZhihuMain(
                         DailyRoute()
                     }
                     composable<History> {
-                        HistoryRoute()
+                        val navigator = LocalNavigator.current
+                        HistoryRoute(
+                            onNavigateBack = navigator.onNavigateBack,
+                        )
                     }
                     composable<Account> {
                         AccountSettingScreen(innerPadding)
@@ -586,10 +584,6 @@ private fun MainTabsContent(
                 )
 
                 MainTabPage.DailyPage -> DailyRoute(
-                    scrollToTopTrigger = scrollToTopTrigger,
-                )
-
-                MainTabPage.HistoryPage -> HistoryRoute(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 

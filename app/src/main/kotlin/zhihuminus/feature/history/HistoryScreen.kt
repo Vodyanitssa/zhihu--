@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.MoreVert
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.DropdownMenu
@@ -42,6 +43,7 @@ import com.zhihuminus.ui.topLevelReselectAction
 fun HistoryScreen(
     state: HistoryUiState,
     onEvent: (HistoryEvent) -> Unit,
+    onNavigateBack: () -> Unit = {},
     scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
 ) {
@@ -73,6 +75,14 @@ fun HistoryScreen(
         topBar = {
             TopAppBar(
                 title = { Text("历史记录") },
+                navigationIcon = {
+                    IconButton(onClick = onNavigateBack) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = "返回",
+                        )
+                    }
+                },
                 actions = {
                     var showActionsMenu by remember { mutableStateOf(false) }
                     PlatformBackHandler(enabled = showActionsMenu) {

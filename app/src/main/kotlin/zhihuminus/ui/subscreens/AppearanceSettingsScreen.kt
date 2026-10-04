@@ -80,7 +80,6 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
-import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.TopLevelDestination
@@ -114,7 +113,6 @@ private val topLevelDestinationsInOrder: List<Pair<String, TopLevelDestination>>
     Home.name to Home,
     Follow.name to Follow,
     Daily.name to Daily,
-    History.name to History,
     Account.name to Account,
 )
 
@@ -132,7 +130,7 @@ internal fun resolveValidStartDestinationKey(
     else -> Home.name
 }
 
-internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name, History.name)
+internal fun defaultBottomBarSelectionKeys(): Set<String> = linkedSetOf(Home.name, Follow.name, Daily.name)
 
 internal fun normalizeBottomBarSelection(
     selectedKeys: Collection<String>,
@@ -151,9 +149,9 @@ internal fun normalizeBottomBarSelection(
 
     if (enforceMinimumSelection) {
         val fillOrder = if (Home.name in normalized) {
-            listOf(Follow.name, Daily.name, History.name)
+            listOf(Follow.name, Daily.name)
         } else {
-            listOf(Follow.name, Daily.name, History.name, Home.name)
+            listOf(Follow.name, Daily.name, Home.name)
         }
         fillOrder.forEach { key ->
             if (normalized.size < 3) {
@@ -198,10 +196,6 @@ internal fun bottomBarItemOrderFromPreference(
         .filter { it.isNotEmpty() },
     selectedKeys,
 )
-
-internal fun shouldShowAccountHistoryShortcut(
-    selectedKeys: Set<String>,
-): Boolean = History.name !in selectedKeys
 
 /**
  * 外观与阅读体验设置页。
@@ -595,7 +589,6 @@ fun AppearanceSettingsScreen(
                 Home.name to "主页",
                 Follow.name to "关注",
                 Daily.name to "日报",
-                History.name to "历史",
                 Account.name to "账号设置",
             )
             val bottomBarItemLabels = allBottomBarItems.toMap()

@@ -11,6 +11,7 @@ import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
 fun HistoryRoute(
+    onNavigateBack: () -> Unit = {},
     scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
 ) {
@@ -34,6 +35,7 @@ fun HistoryRoute(
     HistoryScreen(
         state = viewModel.uiState,
         onEvent = viewModel::onEvent,
+        onNavigateBack = onNavigateBack,
         scrollToTopTrigger = scrollToTopTrigger,
         isActive = isActive,
     )
