@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -22,17 +21,19 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.feature.notification.NotificationTimelineItem
 import com.zhihuminus.util.formatRelativeTime
-import org.jsoup.Jsoup
 
 @Composable
 fun NotificationItemView(
@@ -89,77 +90,98 @@ fun NotificationItemView(
                 }
 
                 Column(modifier = Modifier.weight(1f)) {
-                    Text(
-                        text = notification.displayTitle(),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 2,
-                        overflow = TextOverflow.Ellipsis,
-                    )
-                    notification.displaySubtitle().takeIf { it.isNotBlank() }?.let { subtitle ->
-                        Spacer(modifier = Modifier.height(3.dp))
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        horizontalArrangement = Arrangement.SpaceBetween,
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
                         Text(
-                            text = subtitle,
+                            text = notification.displayTitle(),
+                            style = MaterialTheme.typography.titleMedium,
+                            maxLines = 1,
+                            overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.weight(1f, fill = false),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = formatRelativeTime(notification.created),
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    notification.content?.subTitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
+                        Spacer(modifier = Modifier.height(4.dp))
+                        Text(
+                            text = "$subtitle：",
                             style = MaterialTheme.typography.bodyMedium,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 1,
                             overflow = TextOverflow.Ellipsis,
                         )
                     }
-                    val isCommentReply = notification.content?.subTitle?.contains("评论了") == true
-                    val isLikedComment = notification.content?.subTitle == "喜欢了你的评论"
+                    val contentText = when {
+                        !notification.content?.abstractText.isNullOrBlank() -> notification.content.abstractText
+                        notification.content?.subTitle == "喜欢了你的评论" -> notification.content.subText
+                        else -> notification.content?.text.orEmpty()
+                    }
 
-                    if (isCommentReply) {
-                        val inlineNodes = remember(notification.content.abstractText) {
-                            val document = Jsoup.parseBodyFragment(notification.content.abstractText)
-                            document.body().childNodes().flatMap { AstParser.parseInline(it) }
-                        }
-                        if (inlineNodes.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            InlineNodes(inlineNodes)
-                        }
-                    } else {
-                        val displayText = if (isLikedComment) {
-                            Jsoup.parse(notification.content.subText).text()
-                        } else {
-                            Jsoup.parse(notification.content?.text.orEmpty()).text()
-                        }
-                        if (displayText.isNotEmpty()) {
-                            Spacer(modifier = Modifier.height(4.dp))
-                            Text(
-                                text = displayText,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 13.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 3,
-                                overflow = TextOverflow.Ellipsis,
-                            )
+                    val inlineNodes = remember(contentText) {
+                        AstParser.parseInline(contentText)
+                    }
+                    if (inlineNodes.isNotEmpty()) {
+                        Spacer(modifier = Modifier.height(2.dp))
+                        InlineNodes(
+                            nodes = inlineNodes,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+
+                    val sourceTitle = notification.targetSource?.text?.takeIf { it.isNotBlank() }
+                    val sourceExcerpt = notification.targetSource?.subText?.takeIf { it.isNotBlank() }
+                    if (sourceTitle != null || sourceExcerpt != null) {
+                        val indicatorColor = MaterialTheme.colorScheme.outlineVariant
+                        Spacer(modifier = Modifier.height(8.dp))
+                        Column(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .drawBehind {
+                                    drawRoundRect(
+                                        color = indicatorColor,
+                                        topLeft = Offset.Zero,
+                                        size = Size(
+                                            width = 3.dp.toPx(),
+                                            height = size.height,
+                                        ),
+                                        cornerRadius = CornerRadius(1.5.dp.toPx()),
+                                    )
+                                }.padding(start = 10.dp),
+                        ) {
+                            if (sourceTitle != null) {
+                                Text(
+                                    text = sourceTitle,
+                                    style = MaterialTheme.typography.bodySmall.copy(fontWeight = FontWeight.Medium),
+                                    color = MaterialTheme.colorScheme.onSurface,
+                                    maxLines = 1,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
+                            if (sourceExcerpt != null) {
+                                if (sourceTitle != null) {
+                                    Spacer(modifier = Modifier.height(2.dp))
+                                }
+                                Text(
+                                    text = sourceExcerpt,
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    maxLines = 2,
+                                    overflow = TextOverflow.Ellipsis,
+                                )
+                            }
                         }
                     }
-                }
-
-                Text(
-                    text = formatRelativeTime(notification.created),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
-
-            notification.sourceText().takeIf { it.isNotBlank() }?.let { sourceText ->
-                Spacer(modifier = Modifier.height(10.dp))
-                Surface(
-                    shape = RoundedCornerShape(8.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f),
-                    modifier = Modifier.fillMaxWidth(),
-                ) {
-                    Text(
-                        text = sourceText,
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 3,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.padding(12.dp),
-                    )
                 }
             }
         }

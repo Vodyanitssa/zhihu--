@@ -82,10 +82,31 @@ class NotificationTest {
         )
 
         assertEquals("张三", item.displayTitle())
-        assertEquals("赞同了你的回答：", item.displaySubtitle())
         assertEquals("原问题标题\n我的回答摘要", item.sourceText())
         assertEquals("https://example.com/avatar.jpg", item.avatarUrl())
         assertEquals("uniq_123", item.stableId)
+
+        val replyCommentItem = NotificationTimelineItem(
+            content = NotificationContent(
+                title = "李四",
+                subTitle = "回复了回答下你的评论",
+                abstractText = "<p>赞同你的观点[微笑]</p>",
+                text = "某个问题标题",
+            ),
+        )
+        assertEquals("李四", replyCommentItem.displayTitle())
+        assertEquals("回复了回答下你的评论", replyCommentItem.content?.subTitle)
+
+        val replyAllItem = NotificationTimelineItem(
+            content = NotificationContent(
+                title = "王五",
+                subTitle = "回复了回答下的所有人",
+                abstractText = "大家分析得都很到位",
+                text = "某个问题标题",
+            ),
+        )
+        assertEquals("王五", replyAllItem.displayTitle())
+        assertEquals("回复了回答下的所有人", replyAllItem.content?.subTitle)
     }
 
     @Test
@@ -129,6 +150,10 @@ class NotificationTest {
         assertEquals(NotificationType.LIKE_ANSWER, matchNotificationType("喜欢了你的回答"))
         assertEquals(NotificationType.LIKE_COMMENT, matchNotificationType("喜欢了你的评论"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了你的评论"))
+        assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了回答下你的评论"))
+        assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了文章下你的评论"))
+        assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了回答下的所有人"))
+        assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了文章下的所有人"))
         assertEquals(NotificationType.INVITE_ANSWER, matchNotificationType("邀请你回答问题"))
         assertNull(matchNotificationType("其他通知"))
     }

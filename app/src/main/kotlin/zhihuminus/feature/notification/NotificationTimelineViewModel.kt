@@ -50,7 +50,7 @@ class NotificationTimelineViewModel(
         if (notification.type == "empty") return true
         if (entryName == "invite") return true
         val content = notification.content ?: return true
-        val verb = listOf(content.title, content.subTitle, content.text)
+        val verb = listOf(content.subTitle, content.title, content.text)
             .firstOrNull { it.isNotBlank() }
             .orEmpty()
         val type = matchNotificationType(verb)

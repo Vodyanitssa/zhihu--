@@ -86,17 +86,6 @@ data class NotificationTimelineItem(
             ?: target?.name?.takeIf { it.isNotBlank() }
             ?: "通知"
 
-    fun displaySubtitle(): String {
-        val subtitle = content?.subTitle?.takeIf { it.isNotBlank() }.orEmpty()
-        if ((!subtitle.endsWith("：") && subtitle.startsWith("评论了")) ||
-            subtitle.startsWith("赞同了") ||
-            subtitle.startsWith("喜欢了")
-        ) {
-            return "$subtitle："
-        }
-        return subtitle
-    }
-
     fun sourceText(): String =
         listOfNotNull(
             targetSource?.text?.takeIf { it.isNotBlank() },
