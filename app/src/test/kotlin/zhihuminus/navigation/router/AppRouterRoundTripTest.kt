@@ -9,7 +9,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
@@ -127,7 +126,6 @@ class AppRouterRoundTripTest {
         mapOf(
             Home to "zhminus://tab/home",
             Follow to "zhminus://tab/follow",
-            HotList to "zhminus://tab/hot",
             Daily to "zhminus://tab/daily",
             History to "zhminus://tab/history",
             MyCollections to "zhminus://tab/collections",

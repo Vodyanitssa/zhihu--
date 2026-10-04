@@ -179,7 +179,6 @@ private val settingsSearchEntries = buildList {
                 "首页",
                 "关注",
                 "日报",
-                "热榜",
                 "历史",
                 "浏览历史",
                 "收藏",

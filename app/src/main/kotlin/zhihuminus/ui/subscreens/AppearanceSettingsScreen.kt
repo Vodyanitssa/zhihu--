@@ -82,7 +82,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.TopLevelDestination
@@ -116,7 +115,6 @@ private val bottomBarSettingItemSpacing = 4.dp
 private val topLevelDestinationsInOrder: List<Pair<String, TopLevelDestination>> = listOf(
     Home.name to Home,
     Follow.name to Follow,
-    HotList.name to HotList,
     Daily.name to Daily,
     History.name to History,
     MyCollections.name to MyCollections,
@@ -156,9 +154,9 @@ internal fun normalizeBottomBarSelection(
 
     if (enforceMinimumSelection) {
         val fillOrder = if (Home.name in normalized) {
-            listOf(Follow.name, Daily.name, HotList.name, History.name)
+            listOf(Follow.name, Daily.name, History.name)
         } else {
-            listOf(Follow.name, Daily.name, HotList.name, History.name, Home.name)
+            listOf(Follow.name, Daily.name, History.name, Home.name)
         }
         fillOrder.forEach { key ->
             if (normalized.size < 3) {
@@ -599,7 +597,6 @@ fun AppearanceSettingsScreen(
             val allBottomBarItems = listOf(
                 Home.name to "主页",
                 Follow.name to "关注",
-                HotList.name to "热榜",
                 Daily.name to "日报",
                 History.name to "历史",
                 MyCollections.name to "收藏夹",

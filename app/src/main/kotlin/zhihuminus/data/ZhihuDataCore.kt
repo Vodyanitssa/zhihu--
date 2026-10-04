@@ -61,7 +61,7 @@ fun List<Feed>.flattenFeeds(): List<Feed> = flatMap {
 }
 
 fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
-    is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is HotListFeed, is TopicFeed -> toTargetDisplayItem()
+    is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is TopicFeed -> toTargetDisplayItem()
 
     is AdvertisementFeed -> FeedDisplayItem(
         title = ad.creatives
@@ -108,10 +108,7 @@ private val Feed.Target.publishTimeSeconds: Long?
 private fun Feed.toTargetDisplayItem(): FeedDisplayItem {
     val currentTarget = target
     val resolvedSourceLabel = sourceLabel
-    val resolvedThumbnail = when (currentTarget) {
-        is Feed.AnswerTarget -> currentTarget.thumbnail
-        else -> (this as? HotListFeed)?.children?.firstOrNull()?.thumbnail
-    }
+    val resolvedThumbnail = (currentTarget as? Feed.AnswerTarget)?.thumbnail
     val resolvedNavDestinationJson = currentTarget?.navDestination?.toFeedDisplayItemNavDestinationJson()
 
     return when (currentTarget) {

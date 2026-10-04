@@ -45,7 +45,6 @@ import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.ManageAccounts
 import androidx.compose.material.icons.filled.Newspaper
-import androidx.compose.material.icons.filled.Whatshot
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -102,7 +101,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.MyCollections
@@ -132,8 +130,6 @@ private sealed class MainTabPage(
     data object HomePage : MainTabPage(Home, "home")
 
     data object FollowPage : MainTabPage(Follow, "follow")
-
-    data object HotListPage : MainTabPage(HotList, "hotlist")
 
     data object DailyPage : MainTabPage(Daily, "daily")
 
@@ -206,7 +202,6 @@ fun ZhihuMain(
     val allBottomBarItems = listOf(
         Triple(Home, "主页", Icons.Filled.Home),
         Triple(Follow, "关注", Icons.Filled.Group),
-        Triple(HotList, "热榜", Icons.Filled.Whatshot),
         Triple(Daily, "日报", Icons.Filled.Newspaper),
         Triple(History, "历史", Icons.Filled.History),
         Triple(MyCollections, "收藏夹", Icons.Filled.Bookmarks),
@@ -221,7 +216,6 @@ fun ZhihuMain(
             when (item.first) {
                 Home -> listOf(MainTabPage.HomePage)
                 Follow -> listOf(MainTabPage.FollowPage)
-                HotList -> listOf(MainTabPage.HotListPage)
                 Daily -> listOf(MainTabPage.DailyPage)
                 History -> listOf(MainTabPage.HistoryPage)
                 MyCollections -> listOf(MainTabPage.MyCollectionsPage)
@@ -413,9 +407,6 @@ fun ZhihuMain(
                     composable<Topic> { navEntry ->
                         TopicRoute(navEntry.toRoute())
                     }
-                    composable<HotList> {
-                        HotListScreen(innerPadding)
-                    }
                     composable<Follow> {
                         FollowScreen(
                             scrollToTopTrigger = scrollToTopTrigger,
@@ -605,11 +596,6 @@ private fun MainTabsContent(
                 MainTabPage.FollowPage -> FollowScreen(
                     scrollToTopTrigger = scrollToTopTrigger,
                     innerPadding = innerPadding,
-                )
-
-                MainTabPage.HotListPage -> HotListScreen(
-                    innerPadding = innerPadding,
-                    scrollToTopTrigger = scrollToTopTrigger,
                 )
 
                 MainTabPage.DailyPage -> DailyRoute(

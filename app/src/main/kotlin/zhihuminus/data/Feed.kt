@@ -324,7 +324,6 @@ val Feed.target: Feed.Target?
         is QuestionFeedCard -> target
         is MomentsFeed -> target
         is FeedItemIndexGroup -> target
-        is HotListFeed -> target
         is TopicFeed -> target
         else -> null
     }
@@ -337,7 +336,6 @@ val Feed.actionText: String?
         is QuestionFeedCard -> null
         is MomentsFeed -> null
         is FeedItemIndexGroup -> actionText
-        is HotListFeed -> detailText
         is TopicFeed -> targetDescription
     }
 
@@ -498,18 +496,3 @@ data class Relationship(
     val isFollowing: Boolean = false,
     val isFollowed: Boolean = false,
 )
-
-@Serializable
-@SerialName("hot_list_feed")
-class HotListFeed(
-    val id: String,
-    val detailText: String,
-    val target: Feed.Target,
-    val children: List<Children> = emptyList(),
-) : Feed {
-    @Serializable
-    class Children(
-        val type: String,
-        val thumbnail: String? = null,
-    )
-}

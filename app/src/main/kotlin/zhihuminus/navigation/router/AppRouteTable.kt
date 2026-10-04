@@ -10,7 +10,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
@@ -348,7 +347,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
 private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "home" to Home,
     "follow" to Follow,
-    "hot" to HotList,
     "daily" to Daily,
     "history" to History,
     "collections" to MyCollections,

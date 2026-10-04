@@ -27,7 +27,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.HotList
 import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
@@ -53,7 +52,7 @@ fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
         androidSettingsStore(context)
     }
     val allBottomBarItemKeys = remember {
-        listOf(Home.name, Follow.name, HotList.name, Daily.name, History.name, MyCollections.name, Account.name)
+        listOf(Home.name, Follow.name, Daily.name, History.name, MyCollections.name, Account.name)
     }
     return rememberZhihuMainPreferenceState {
         val selectedKeys = normalizeBottomBarSelection(

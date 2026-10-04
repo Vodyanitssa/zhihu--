@@ -72,15 +72,6 @@ data object Follow : TopLevelDestination {
  * 主 pager 的历史顶层 tab 目标。
  */
 @Serializable
-data object HotList : TopLevelDestination {
-    override val name: String
-        get() = "HotList"
-}
-
-/**
- * 主 pager 的历史顶层 tab 目标。
- */
-@Serializable
 data object History : TopLevelDestination {
     override val name: String
         get() = "History"
