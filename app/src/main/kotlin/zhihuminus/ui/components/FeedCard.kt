@@ -61,13 +61,9 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.util.formatDateTime
-import com.zhihuminus.data.DataHolder
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.officialBadge
-import com.zhihuminus.data.sourceLabel
-import com.zhihuminus.data.target
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.withReadingQueueSource
@@ -111,10 +107,8 @@ fun FeedCard(
     val showFeedThumbnail = remember {
         settings.getBoolean("showFeedThumbnail", true)
     }
-    val pinImages = (item.feed?.target as? Feed.PinTarget)
-        ?.content
-        ?.filterIsInstance<DataHolder.Pin.ContentImage>()
-        .orEmpty()
+    val effectiveThumbnailUrl = thumbnailUrl ?: item.thumbnailUrl
+    val pinImages = item.pinImages
     val showPinImages = showFeedThumbnail && pinImages.isNotEmpty()
     val performClick: (FeedDisplayItem) -> Unit = { clickedItem ->
         val destination = clickedItem.navDestination?.withReadingQueueSource(readingQueueSourceId)
@@ -145,7 +139,7 @@ fun FeedCard(
                 FeedCardContent(
                     item = item,
                     showFeedThumbnail = showFeedThumbnail,
-                    thumbnailUrl = thumbnailUrl,
+                    thumbnailUrl = effectiveThumbnailUrl,
                     pinImages = pinImages,
                     showSourceLabel = showSourceLabel,
                 )
@@ -189,14 +183,14 @@ private fun FeedCardContent(
     item: FeedDisplayItem,
     showFeedThumbnail: Boolean,
     thumbnailUrl: String?,
-    pinImages: List<DataHolder.Pin.ContentImage>,
+    pinImages: List<String>,
     showSourceLabel: Boolean,
 ) {
     val settings = rememberSettingsStore()
     val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
     val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
     val visiblePinImages = pinImages.takeIf { showFeedThumbnail }.orEmpty()
-    val sourceLabel = item.feed?.sourceLabel
+    val sourceLabel = item.sourceLabel
     val typeLabel = item.contentTypeLabel
     // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要 → 图片 → 统计行 ─────────────────────
     if (showSourceLabel) {
@@ -335,7 +329,7 @@ internal fun pinFeedImageLayout(imageCount: Int): PinFeedImageLayout? = when (im
 
 @Composable
 private fun PinFeedImages(
-    images: List<DataHolder.Pin.ContentImage>,
+    images: List<String>,
     modifier: Modifier = Modifier,
 ) {
     when (pinFeedImageLayout(images.size)) {
@@ -343,7 +337,7 @@ private fun PinFeedImages(
         PinFeedImageLayout.SINGLE -> {
             val image = images.single()
             AsyncImage(
-                model = image.feedThumbnailUrl,
+                model = image,
                 contentDescription = "想法图片 1/1",
                 modifier = modifier
                     .fillMaxWidth(1f / 3f)
@@ -361,7 +355,7 @@ private fun PinFeedImages(
             ) {
                 images.forEachIndexed { index, image ->
                     PinFeedImage(
-                        image = image,
+                        imageUrl = image,
                         index = index,
                         totalCount = images.size,
                         modifier = Modifier
@@ -394,7 +388,7 @@ private fun PinFeedImages(
                         rowImages.forEachIndexed { columnIndex, image ->
                             val index = rowIndex * 3 + columnIndex
                             PinFeedImage(
-                                image = image,
+                                imageUrl = image,
                                 index = index,
                                 totalCount = images.size,
                                 remainingCount = (images.size - 9).takeIf { index == 8 && it > 0 },
@@ -419,7 +413,7 @@ private fun PinFeedImages(
 
 @Composable
 private fun PinFeedImage(
-    image: DataHolder.Pin.ContentImage,
+    imageUrl: String,
     index: Int,
     totalCount: Int,
     remainingCount: Int? = null,
@@ -430,7 +424,7 @@ private fun PinFeedImage(
             .clip(RoundedCornerShape(8.dp)),
     ) {
         AsyncImage(
-            model = image.feedThumbnailUrl,
+            model = imageUrl,
             contentDescription = "想法图片 ${index + 1}/$totalCount",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
@@ -451,9 +445,6 @@ private fun PinFeedImage(
         }
     }
 }
-
-internal val DataHolder.Pin.ContentImage.feedThumbnailUrl: String
-    get() = thumbnail.ifBlank { url }
 
 @Composable
 private fun FeedCardSourceLabel(sourceLabel: String?) {

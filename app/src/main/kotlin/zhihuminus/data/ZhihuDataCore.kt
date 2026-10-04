@@ -25,7 +25,7 @@ data class FeedDisplayItem(
     val title: String,
     val summary: String?,
     val details: String,
-    val feed: Feed?,
+    val feed: Feed? = null,
     val navDestinationJson: String? = null,
     val avatarSrc: String? = null,
     val authorName: String? = null,
@@ -34,12 +34,18 @@ data class FeedDisplayItem(
     var raw: DataHolder.Content? = null,
     val contentTypeLabel: String? = null,
     val publishTimeSeconds: Long? = null,
+    val sourceLabel: String? = null,
+    val thumbnailUrl: String? = null,
+    val pinImages: List<String> = emptyList(),
 ) {
     val stableKey: String
         get() = navDestinationJson
             ?: feed?.target?.stableTargetKey
             ?: "$title|${summary.orEmpty()}|$details"
 }
+
+val DataHolder.Pin.ContentImage.feedThumbnailUrl: String
+    get() = thumbnail.ifBlank { url }
 
 private val Feed.Target.stableTargetKey: String
     get() = when (this) {
@@ -69,6 +75,7 @@ fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
         content = ad.creatives
             .firstOrNull()
             ?.landingUrl,
+        sourceLabel = actionText.takeIf { it.isNotBlank() },
     )
 
     is GroupFeed -> error("GroupFeed should be flattened before creating display items")
@@ -82,6 +89,13 @@ fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
         feed = this,
         contentTypeLabel = target.typeLabel,
         publishTimeSeconds = target.publishTimeSeconds,
+        thumbnailUrl = (target as? Feed.AnswerTarget)?.thumbnail,
+        pinImages = (target as? Feed.PinTarget)
+            ?.content
+            ?.filterIsInstance<DataHolder.Pin.ContentImage>()
+            ?.map { it.feedThumbnailUrl }
+            .orEmpty(),
+        navDestinationJson = target.navDestination?.toFeedDisplayItemNavDestinationJson(),
     )
 }
 
@@ -91,55 +105,78 @@ private val Feed.Target.typeLabel: String
 private val Feed.Target.publishTimeSeconds: Long?
     get() = createdTime.takeIf { it > 0 }
 
-private fun Feed.toTargetDisplayItem(): FeedDisplayItem = when (val target = target) {
-    is Feed.AnswerTarget,
-    is Feed.ArticleTarget,
-    is Feed.QuestionTarget,
-    -> FeedDisplayItem(
-        title = target.title,
-        summary = target.excerpt,
-        details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
-        avatarSrc = target.author?.avatarUrl,
-        authorName = target.author?.name,
-        authorBadgeV2 = target.author?.badgeV2,
-        feed = this,
-        contentTypeLabel = target.typeLabel,
-        publishTimeSeconds = target.publishTimeSeconds,
-    )
+private fun Feed.toTargetDisplayItem(): FeedDisplayItem {
+    val currentTarget = target
+    val resolvedSourceLabel = sourceLabel
+    val resolvedThumbnail = when (currentTarget) {
+        is Feed.AnswerTarget -> currentTarget.thumbnail
+        else -> (this as? HotListFeed)?.children?.firstOrNull()?.thumbnail
+    }
+    val resolvedNavDestinationJson = currentTarget?.navDestination?.toFeedDisplayItemNavDestinationJson()
 
-    is Feed.PinTarget -> {
-        val textContent = target.content
-            .filterIsInstance<DataHolder.Pin.ContentText>()
-            .firstOrNull()
-        val title = textContent?.title.orEmpty()
-        val contentSummary = textContent
-            ?.content
-            ?.let { Jsoup.parse(it).text() }
-            ?.takeIf { it.isNotBlank() }
-        val excerptSummary = target.excerpt
-            ?.let { Jsoup.parse(it).text() }
-            ?.takeIf { it.isNotBlank() }
-        val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
-
-        FeedDisplayItem(
-            title = title,
-            summary = summary,
-            details = target.detailsText,
-            avatarSrc = target.author.avatarUrl,
-            authorName = target.author.name,
-            authorBadgeV2 = target.author.badgeV2,
+    return when (currentTarget) {
+        is Feed.AnswerTarget,
+        is Feed.ArticleTarget,
+        is Feed.QuestionTarget,
+        -> FeedDisplayItem(
+            title = currentTarget.title,
+            summary = currentTarget.excerpt,
+            details = listOfNotNull(currentTarget.detailsText, actionText).joinToString(" · "),
+            avatarSrc = currentTarget.author?.avatarUrl,
+            authorName = currentTarget.author?.name,
+            authorBadgeV2 = currentTarget.author?.badgeV2,
             feed = this,
-            contentTypeLabel = target.typeLabel,
-            publishTimeSeconds = target.publishTimeSeconds,
+            contentTypeLabel = currentTarget.typeLabel,
+            publishTimeSeconds = currentTarget.publishTimeSeconds,
+            sourceLabel = resolvedSourceLabel,
+            thumbnailUrl = resolvedThumbnail,
+            navDestinationJson = resolvedNavDestinationJson,
+        )
+
+        is Feed.PinTarget -> {
+            val textContent = currentTarget.content
+                .filterIsInstance<DataHolder.Pin.ContentText>()
+                .firstOrNull()
+            val title = textContent?.title.orEmpty()
+            val contentSummary = textContent
+                ?.content
+                ?.let { Jsoup.parse(it).text() }
+                ?.takeIf { it.isNotBlank() }
+            val excerptSummary = currentTarget.excerpt
+                ?.let { Jsoup.parse(it).text() }
+                ?.takeIf { it.isNotBlank() }
+            val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
+            val pinImages = currentTarget.content
+                .filterIsInstance<DataHolder.Pin.ContentImage>()
+                .map { it.feedThumbnailUrl }
+
+            FeedDisplayItem(
+                title = title,
+                summary = summary,
+                details = currentTarget.detailsText,
+                avatarSrc = currentTarget.author.avatarUrl,
+                authorName = currentTarget.author.name,
+                authorBadgeV2 = currentTarget.author.badgeV2,
+                feed = this,
+                contentTypeLabel = currentTarget.typeLabel,
+                publishTimeSeconds = currentTarget.publishTimeSeconds,
+                sourceLabel = resolvedSourceLabel,
+                thumbnailUrl = resolvedThumbnail,
+                pinImages = pinImages,
+                navDestinationJson = resolvedNavDestinationJson,
+            )
+        }
+
+        else -> FeedDisplayItem(
+            title = currentTarget?.description() ?: "广告",
+            summary = "Not Implemented",
+            details = currentTarget?.detailsText ?: "广告",
+            feed = this,
+            contentTypeLabel = currentTarget?.typeLabel,
+            publishTimeSeconds = currentTarget?.publishTimeSeconds,
+            sourceLabel = resolvedSourceLabel,
+            thumbnailUrl = resolvedThumbnail,
+            navDestinationJson = resolvedNavDestinationJson,
         )
     }
-
-    else -> FeedDisplayItem(
-        title = target?.description() ?: "广告",
-        summary = "Not Implemented",
-        details = target?.detailsText ?: "广告",
-        feed = this,
-        contentTypeLabel = target?.typeLabel,
-        publishTimeSeconds = target?.publishTimeSeconds,
-    )
 }

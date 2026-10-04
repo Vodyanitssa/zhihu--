@@ -32,7 +32,6 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.ui.PREFERENCE_NAME
 import com.zhihuminus.ui.components.OpenImageDialog
 import com.zhihuminus.util.clipboardManager
 import com.zhihuminus.util.luoTianYiUrlLauncher
@@ -41,6 +40,8 @@ import com.zhihuminus.util.shareImage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
+
+const val PREFERENCE_NAME = "com.zhihuminus_preferences"
 
 enum class UserMessageDuration {
     Short,

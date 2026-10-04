@@ -87,10 +87,12 @@ import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
 import com.zhihuminus.feature.history.HistoryRoute
+import com.zhihuminus.feature.home.HomeRoute
 import com.zhihuminus.feature.notification.NotificationRoute
 import com.zhihuminus.feature.notification.NotificationTimelineRoute
 import com.zhihuminus.feature.notification.PrivateMessageRoute
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.search.SearchRoute
 import com.zhihuminus.feature.topic.TopicRoute
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
@@ -456,7 +458,11 @@ fun ZhihuMain(
                         },
                     ) { navEntry ->
                         val search: Search = navEntry.toRoute()
-                        SearchScreen(search)
+                        val navigator = LocalNavigator.current
+                        SearchRoute(
+                            search = search,
+                            onBack = navigator.onNavigateBack,
+                        )
                     }
                     composable<Collections> { navEntry ->
                         val navigator = LocalNavigator.current
@@ -591,7 +597,7 @@ private fun MainTabsContent(
         val page = pages.getOrNull(tabIndex) ?: return@AnimatedContent
         stateHolder.SaveableStateProvider(page.key) {
             when (page) {
-                MainTabPage.HomePage -> HomeScreen(
+                MainTabPage.HomePage -> HomeRoute(
                     scrollToTopTrigger = scrollToTopTrigger,
                     innerPadding = innerPadding,
                 )
