@@ -1,6 +1,5 @@
 package com.zhihuminus.core.environment
 
-import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.navigation.NavDestination
 import io.ktor.client.HttpClient
 
@@ -12,8 +11,6 @@ interface AccountEnvironment {
     fun clearAccountSession() = Unit
 
     fun currentAccountId(): String = ""
-
-    fun identityClient(): ZhihuIdentityClient? = null
 
     fun restartApplication() = Unit
 

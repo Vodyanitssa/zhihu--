@@ -323,7 +323,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                 when (args.segment(0)) {
                     "appearance" -> Account.AppearanceSettings(setting)
                     "reading" -> Account.ReadingSettings
-                    "identity" -> Account.IdentityManagement
                     "system" -> Account.SystemAndUpdateSettings(setting)
                     "notification" -> Account.NotificationSettings(setting)
                     "search" -> Account.SettingsSearch
@@ -335,7 +334,6 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
                 when (destination) {
                     is Account.AppearanceSettings -> settingsUrl("appearance", destination.setting)
                     is Account.ReadingSettings -> settingsUrl("reading", "")
-                    is Account.IdentityManagement -> settingsUrl("identity", "")
                     is Account.SystemAndUpdateSettings -> settingsUrl("system", destination.setting)
                     is Account.NotificationSettings -> settingsUrl("notification", destination.setting)
                     is Account.SettingsSearch -> settingsUrl("search", "")

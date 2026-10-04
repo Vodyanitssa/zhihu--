@@ -18,7 +18,9 @@
 package com.zhihuminus.ui
 
 import androidx.compose.foundation.border
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -35,11 +37,13 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.Login
 import androidx.compose.material.icons.filled.AccountCircle
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
+import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -61,6 +65,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -334,35 +339,82 @@ fun HomeScreen(
                 }
             }
 
-            FeedPullToRefresh(viewModel, PaddingValues(top = scaffoldPadding.calculateTopPadding())) {
-                PaginatedList(
-                    items = viewModel.displayItems,
-                    listState = listState,
-                    modifier = Modifier,
-                    contentPadding = PaddingValues(
-                        top = scaffoldPadding.calculateTopPadding() + 8.dp,
-                        bottom = innerPadding.calculateBottomPadding(),
-                    ),
-                    onLoadMore = { viewModel.loadMore(paginationEnvironment) },
-                    footer = ProgressIndicatorFooter,
-                    key = { item -> item.stableKey },
-                ) { item ->
-                    FeedCard(
-                        item,
-                        readingQueueSourceId = readingQueueSourceId,
-                        thumbnailUrl = when (val target = item.feed?.target) {
-                            is Feed.AnswerTarget -> target.thumbnail
-                            else -> null
+            if (!account.login) {
+                Column(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(scaffoldPadding)
+                        .padding(horizontal = 32.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.Center,
+                ) {
+                    Icon(
+                        imageVector = Icons.AutoMirrored.Filled.Login,
+                        contentDescription = null,
+                        modifier = Modifier.size(64.dp),
+                        tint = MaterialTheme.colorScheme.primary,
+                    )
+                    Spacer(modifier = Modifier.height(16.dp))
+                    Text(
+                        text = "需要登录知乎账号",
+                        style = MaterialTheme.typography.titleLarge,
+                        color = MaterialTheme.colorScheme.onSurface,
+                    )
+                    Spacer(modifier = Modifier.height(8.dp))
+                    Text(
+                        text = "知乎++ 需要登录以浏览推荐、关注动态与收藏夹",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        textAlign = TextAlign.Center,
+                    )
+                    Spacer(modifier = Modifier.height(24.dp))
+                    Button(
+                        onClick = {
+                            if (!paginationEnvironment.requestLogin()) {
+                                userMessages.showShortMessage("当前平台暂不支持登录")
+                            }
                         },
-                    ) { clickedItem, destination ->
-                        val feed = clickedItem.feed
-                        if (feed != null) {
+                    ) {
+                        Icon(
+                            imageVector = Icons.AutoMirrored.Filled.Login,
+                            contentDescription = null,
+                            modifier = Modifier.size(18.dp),
+                        )
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text("立即登录")
+                    }
+                }
+            } else {
+                FeedPullToRefresh(viewModel, PaddingValues(top = scaffoldPadding.calculateTopPadding())) {
+                    PaginatedList(
+                        items = viewModel.displayItems,
+                        listState = listState,
+                        modifier = Modifier,
+                        contentPadding = PaddingValues(
+                            top = scaffoldPadding.calculateTopPadding() + 8.dp,
+                            bottom = innerPadding.calculateBottomPadding(),
+                        ),
+                        onLoadMore = { viewModel.loadMore(paginationEnvironment) },
+                        footer = ProgressIndicatorFooter,
+                        key = { item -> item.stableKey },
+                    ) { item ->
+                        FeedCard(
+                            item,
+                            readingQueueSourceId = readingQueueSourceId,
+                            thumbnailUrl = when (val target = item.feed?.target) {
+                                is Feed.AnswerTarget -> target.thumbnail
+                                else -> null
+                            },
+                        ) { clickedItem, destination ->
+                            val feed = clickedItem.feed
+                            if (feed != null) {
 //                            DataHolder.putFeed(feed)
-                            (viewModel as? HomeFeedViewModel)
-                                ?.onUiContentClick(paginationEnvironment, feed, clickedItem)
-                        }
-                        if (destination != null) {
-                            navigator.onNavigate(destination)
+                                (viewModel as? HomeFeedViewModel)
+                                    ?.onUiContentClick(paginationEnvironment, feed, clickedItem)
+                            }
+                            if (destination != null) {
+                                navigator.onNavigate(destination)
+                            }
                         }
                     }
                 }

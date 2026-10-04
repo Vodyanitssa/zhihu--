@@ -30,7 +30,6 @@ import com.zhihuminus.account.ZhihuAccountProfileSnapshot
 import com.zhihuminus.account.ZhihuAccountRepository
 import com.zhihuminus.account.ZhihuAccountSession
 import com.zhihuminus.account.ZhihuAccountSessionStore
-import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.account.ZhihuMobileLoginToken
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
@@ -160,16 +159,6 @@ object AccountData {
 
     suspend fun refreshProfile(context: Context) {
         accountClient(context).refreshAndSaveProfile()
-    }
-
-    internal fun identityClient(context: Context): ZhihuIdentityClient {
-        val client = accountClient(context)
-        return ZhihuIdentityClient(
-            currentClient = client::httpClient,
-            temporaryClient = client::temporaryHttpClient,
-            currentSession = client::load,
-            saveSession = client::save,
-        )
     }
 
     private fun accountClient(context: Context): ZhihuAccountClient {

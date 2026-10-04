@@ -4,7 +4,6 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
-import com.zhihuminus.account.ZhihuIdentityClient
 import com.zhihuminus.core.platform.copyPlainText
 import com.zhihuminus.core.platform.hasImageExportPermission
 import com.zhihuminus.core.platform.loadExportAssetText
@@ -60,9 +59,6 @@ open class AndroidPaginationEnvironment(
         AccountData.data.self
             ?.id
             .orEmpty()
-
-    override fun identityClient(): ZhihuIdentityClient? =
-        AccountData.identityClient(context.applicationContext)
 
     override fun restartApplication() {
         context.restartApplication()
@@ -152,9 +148,6 @@ open class AndroidPaginationEnvironment(
 
     override fun loadExportAssetText(fileName: String): String = context.loadExportAssetText(fileName)
 }
-
-fun paginationEnvironment(context: Context): AndroidContextPaginationEnvironment =
-    AndroidPaginationEnvironment(context)
 
 @Composable
 fun rememberPaginationEnvironment(): PaginationEnvironment {

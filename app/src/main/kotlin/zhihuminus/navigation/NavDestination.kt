@@ -112,9 +112,6 @@ data object Account : TopLevelDestination {
     data object ReadingSettings : NavDestination
 
     @Serializable
-    data object IdentityManagement : NavDestination
-
-    @Serializable
     data class SystemAndUpdateSettings(
         val setting: String = "",
     ) : NavDestination

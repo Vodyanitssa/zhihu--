@@ -116,7 +116,6 @@ import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
-import com.zhihuminus.ui.subscreens.IdentityManagementScreen
 import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
@@ -546,9 +545,6 @@ fun ZhihuMain(
                             setting = args.setting,
                             onExit = reloadBottomBarPreferences,
                         )
-                    }
-                    composable<Account.IdentityManagement> {
-                        IdentityManagementScreen()
                     }
                     composable<Account.SettingsSearch> {
                         SettingsSearchScreen()

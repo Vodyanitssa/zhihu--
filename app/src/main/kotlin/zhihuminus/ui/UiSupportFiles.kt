@@ -107,7 +107,6 @@ data class AccountSettingsAccountState(
     val avatarUrl: String? = null,
     val id: String = "",
     val urlToken: String? = null,
-    val identityManagementSupported: Boolean = false,
 )
 
 internal const val PEOPLE_PROFILE_INCLUDE_PATH =
@@ -158,7 +157,6 @@ fun AccountData.Data.toAccountSettingsAccountState(): AccountSettingsAccountStat
     avatarUrl = self?.avatarUrl,
     id = self?.id ?: "",
     urlToken = self?.urlToken,
-    identityManagementSupported = true,
 )
 
 private fun Context.zhihuVersionInfo(): String {

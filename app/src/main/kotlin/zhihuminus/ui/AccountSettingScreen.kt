@@ -47,7 +47,6 @@ import androidx.compose.material.icons.filled.Notifications
 import androidx.compose.material.icons.filled.Palette
 import androidx.compose.material.icons.filled.QrCodeScanner
 import androidx.compose.material.icons.filled.Search
-import androidx.compose.material.icons.filled.SwitchAccount
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Badge
 import androidx.compose.material3.BadgedBox
@@ -387,16 +386,6 @@ fun AccountSettingScreen(
             }
 
             SettingItemGroup {
-                if (data.login && data.identityManagementSupported) {
-                    SettingItem(
-                        title = { Text("身份管理") },
-                        description = { Text("创建马甲号或切换当前账号") },
-                        icon = { Icon(Icons.Default.SwitchAccount, null) },
-                        modifier = Modifier,
-                        onClick = { navigator.onNavigate(Account.IdentityManagement) },
-                    )
-                }
-
                 SettingItem(
                     title = { Text("外观与阅读体验") },
                     description = { Text("主题颜色、字体大小等") },
