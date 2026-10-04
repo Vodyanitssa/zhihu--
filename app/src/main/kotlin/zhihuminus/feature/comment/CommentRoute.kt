@@ -26,8 +26,9 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.ModalBottomSheetProperties
+import androidx.compose.material3.SheetState
+import androidx.compose.material3.SheetValue
 import androidx.compose.material3.Text
-import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -38,7 +39,11 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
+import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
@@ -121,8 +126,35 @@ fun CommentRoute(
         }
     }
 
-    val rootSheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
+    val density = LocalDensity.current
+    val positionalThresholdPx = remember(density) { with(density) { 220.dp.toPx() } }
+    val velocityThresholdPx = remember(density) { with(density) { 1800.dp.toPx() } }
+
+    val rootSheetState = rememberSaveable(
+        saver = SheetState.Saver(
+            skipPartiallyExpanded = true,
+            positionalThreshold = { positionalThresholdPx },
+            velocityThreshold = { velocityThresholdPx },
+            confirmValueChange = { true },
+            skipHiddenState = false,
+        ),
+    ) {
+        SheetState(
+            skipPartiallyExpanded = true,
+            positionalThreshold = { positionalThresholdPx },
+            velocityThreshold = { velocityThresholdPx },
+            initialValue = SheetValue.Hidden,
+        )
+    }
     val rootListState = rememberLazyListState()
+
+    // 隔离列表快速滑动到顶部的向下惯性速度，防止在长列表浏览回顶时因动量穿透误触关闭
+    val listScrollShield = remember {
+        object : NestedScrollConnection {
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
+                if (available.y > 0) available else Velocity.Zero
+        }
+    }
 
     // 评论草稿：sheet 关闭后保留，重开时恢复（按内容维度隔离）
     var commentDraft by rememberSaveable(contentType, contentId) { mutableStateOf("") }
@@ -199,7 +231,11 @@ fun CommentRoute(
                     Spacer(modifier = Modifier.height(4.dp))
 
                     // 评论列表（单 Sheet 内部的内容平滑切换：根评论 <-> 子评论）
-                    Box(modifier = Modifier.weight(1f)) {
+                    Box(
+                        modifier = Modifier
+                            .weight(1f)
+                            .nestedScroll(listScrollShield),
+                    ) {
                         AnimatedContent(
                             targetState = activeParentId,
                             transitionSpec = {
