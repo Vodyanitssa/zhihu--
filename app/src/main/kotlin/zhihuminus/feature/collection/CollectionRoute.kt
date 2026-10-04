@@ -14,7 +14,6 @@ import com.zhihuminus.platform.rememberUserMessageSink
 fun CollectionRoute(
     urlToken: String?,
     onNavigateBack: () -> Unit,
-    onCollectionClick: (Collection) -> Unit,
     showBackButton: Boolean = true,
     scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
@@ -40,7 +39,6 @@ fun CollectionRoute(
     CollectionScreen(
         state = viewModel.uiState,
         onEvent = viewModel::onEvent,
-        onCollectionClick = onCollectionClick,
         onNavigateBack = onNavigateBack,
         showBackButton = showBackButton,
         scrollToTopTrigger = scrollToTopTrigger,

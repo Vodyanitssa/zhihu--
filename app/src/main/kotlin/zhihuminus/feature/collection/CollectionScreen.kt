@@ -26,6 +26,8 @@ import androidx.compose.ui.Modifier
 import com.zhihuminus.feature.collection.components.CollectionCard
 import com.zhihuminus.feature.collection.components.CollectionDeleteDialog
 import com.zhihuminus.feature.collection.components.CreateCollectionDialog
+import com.zhihuminus.navigation.CollectionContent
+import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.ui.TopLevelReselectAction
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -36,13 +38,13 @@ import com.zhihuminus.ui.topLevelReselectAction
 fun CollectionScreen(
     state: CollectionUiState,
     onEvent: (CollectionEvent) -> Unit,
-    onCollectionClick: (Collection) -> Unit,
     onNavigateBack: () -> Unit,
     showBackButton: Boolean = true,
     scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
+    val navigator = LocalNavigator.current
     val listState = rememberLazyListState()
     var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
 
@@ -115,7 +117,7 @@ fun CollectionScreen(
                 ) { collection ->
                     CollectionCard(
                         collection = collection,
-                        onClick = { onCollectionClick(collection) },
+                        onClick = { navigator.onNavigate(CollectionContent(collection.id)) },
                         onDeleteClick = { onEvent(CollectionEvent.RequestDelete(collection)) },
                         canDelete = !state.isDeleting,
                     )

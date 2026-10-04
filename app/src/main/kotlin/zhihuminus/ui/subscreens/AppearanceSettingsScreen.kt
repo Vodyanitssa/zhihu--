@@ -83,7 +83,6 @@ import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -116,7 +115,6 @@ private val topLevelDestinationsInOrder: List<Pair<String, TopLevelDestination>>
     Follow.name to Follow,
     Daily.name to Daily,
     History.name to History,
-    MyCollections.name to MyCollections,
     Account.name to Account,
 )
 
@@ -598,7 +596,6 @@ fun AppearanceSettingsScreen(
                 Follow.name to "关注",
                 Daily.name to "日报",
                 History.name to "历史",
-                MyCollections.name to "收藏夹",
                 Account.name to "账号设置",
             )
             val bottomBarItemLabels = allBottomBarItems.toMap()

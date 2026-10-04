@@ -78,15 +78,6 @@ data object History : TopLevelDestination {
 }
 
 /**
- * 主 pager 的历史顶层 tab 目标。
- */
-@Serializable
-data object MyCollections : TopLevelDestination {
-    override val name: String
-        get() = "MyCollections"
-}
-
-/**
  * Legacy top-level tab target for the main pager.
  */
 @Serializable
@@ -353,6 +344,10 @@ fun resolveContent(url: Url): NavDestination? {
                 segments[0] == "column"
             ) {
                 return Column(columnId = segments[1])
+            } else if (segments.size == 2 &&
+                (segments[0] == "collection" || segments[0] == "collections")
+            ) {
+                return CollectionContent(collectionId = segments[1])
             }
             /*
              * 尚未支持的 destination，等待后续补充对应的 NavDestination：
@@ -361,6 +356,11 @@ fun resolveContent(url: Url): NavDestination? {
              * - https://daily.zhihu.com/story/{storyId}
              * - https://www.zhihu.com/special/{specialId}
              */
+            Log.w("NavDestination", "Cannot resolve content from url: $url")
+        } else if (url.host == "api.zhihu.com") {
+            if (segments.size == 2 && segments[0] == "collections") {
+                return CollectionContent(collectionId = segments[1])
+            }
             Log.w("NavDestination", "Cannot resolve content from url: $url")
         } else if (url.host == "zhuanlan.zhihu.com") {
             if (segments.size == 2 &&

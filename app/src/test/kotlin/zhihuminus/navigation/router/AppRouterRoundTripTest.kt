@@ -10,7 +10,6 @@ import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.MainTabs
-import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
@@ -19,6 +18,7 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.resolveContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -77,6 +77,18 @@ class AppRouterRoundTripTest {
     fun collectionContent() = assertRoundTrip(CollectionContent(collectionId = "9527"), "zhminus://collection/9527")
 
     @Test
+    fun collectionContentFromWebUrl() {
+        assertEquals(
+            CollectionContent(collectionId = "9527"),
+            resolveContent("https://www.zhihu.com/collection/9527"),
+        )
+        assertEquals(
+            CollectionContent(collectionId = "9527"),
+            resolveContent("https://api.zhihu.com/collections/9527"),
+        )
+    }
+
+    @Test
     fun searchWithQueryOnly() {
         val url = Search(query = "kotlin").toAppUrl()
         assertEquals("zhminus://search?q=kotlin", url)
@@ -128,7 +140,6 @@ class AppRouterRoundTripTest {
             Follow to "zhminus://tab/follow",
             Daily to "zhminus://tab/daily",
             History to "zhminus://tab/history",
-            MyCollections to "zhminus://tab/collections",
             Account to "zhminus://tab/account",
         ).forEach { destination, url ->
             assertEquals(RouteResolution.Tab(destination), AppRouter.resolve(url), url)

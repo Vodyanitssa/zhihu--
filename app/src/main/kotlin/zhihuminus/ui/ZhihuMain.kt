@@ -39,7 +39,6 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Bookmarks
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.History
 import androidx.compose.material.icons.filled.Home
@@ -102,7 +101,6 @@ import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.MainTabs
-import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Navigator
 import com.zhihuminus.navigation.Notification
@@ -133,8 +131,6 @@ private sealed class MainTabPage(
     data object DailyPage : MainTabPage(Daily, "daily")
 
     data object HistoryPage : MainTabPage(History, "online_history")
-
-    data object MyCollectionsPage : MainTabPage(MyCollections, "my_collections")
 
     data object AccountPage : MainTabPage(Account, "account")
 }
@@ -202,7 +198,6 @@ fun ZhihuMain(
         Triple(Follow, "关注", Icons.Filled.Group),
         Triple(Daily, "日报", Icons.Filled.Newspaper),
         Triple(History, "历史", Icons.Filled.History),
-        Triple(MyCollections, "收藏夹", Icons.Filled.Bookmarks),
         Triple(Account, "账号", Icons.Filled.ManageAccounts),
     )
     val bottomBarItems = selectedBottomBarItemKeys.mapNotNull { key ->
@@ -216,7 +211,6 @@ fun ZhihuMain(
                 Follow -> listOf(MainTabPage.FollowPage)
                 Daily -> listOf(MainTabPage.DailyPage)
                 History -> listOf(MainTabPage.HistoryPage)
-                MyCollections -> listOf(MainTabPage.MyCollectionsPage)
                 Account -> listOf(MainTabPage.AccountPage)
                 else -> emptyList()
             }
@@ -458,9 +452,6 @@ fun ZhihuMain(
                         CollectionRoute(
                             urlToken = data.userToken,
                             onNavigateBack = navigator.onNavigateBack,
-                            onCollectionClick = { collection ->
-                                navigator.onNavigate(CollectionContent(collection.id))
-                            },
                         )
                     }
                     composable<CollectionContent> { navEntry ->
@@ -602,29 +593,8 @@ private fun MainTabsContent(
                     scrollToTopTrigger = scrollToTopTrigger,
                 )
 
-                MainTabPage.MyCollectionsPage -> MyCollectionsTopLevelPage(
-                    scrollToTopTrigger = scrollToTopTrigger,
-                )
-
                 MainTabPage.AccountPage -> AccountSettingScreen(innerPadding)
             }
         }
     }
-}
-
-@Composable
-private fun MyCollectionsTopLevelPage(
-    scrollToTopTrigger: Int,
-) {
-    val account = rememberAccountSettingsAccountState().value
-    val navigator = LocalNavigator.current
-    CollectionRoute(
-        urlToken = account.urlToken,
-        showBackButton = false,
-        scrollToTopTrigger = scrollToTopTrigger,
-        onNavigateBack = {},
-        onCollectionClick = { collection ->
-            navigator.onNavigate(CollectionContent(collection.id))
-        },
-    )
 }

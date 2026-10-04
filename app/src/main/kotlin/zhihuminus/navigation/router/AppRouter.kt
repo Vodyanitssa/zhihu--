@@ -5,7 +5,6 @@ import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
-import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.util.Log
@@ -80,7 +79,6 @@ fun TopLevelDestination.toAppUrl(): String? = when (this) {
     Follow -> buildAppUrl("tab", "follow")
     Daily -> buildAppUrl("tab", "daily")
     History -> buildAppUrl("tab", "history")
-    MyCollections -> buildAppUrl("tab", "collections")
     Account -> buildAppUrl("tab", "account")
     else -> null
 }

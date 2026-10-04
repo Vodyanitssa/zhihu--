@@ -11,7 +11,6 @@ import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.MainTabs
-import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
@@ -349,7 +348,6 @@ private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "follow" to Follow,
     "daily" to Daily,
     "history" to History,
-    "collections" to MyCollections,
     "account" to Account,
 )
 
