@@ -27,7 +27,6 @@ import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -54,7 +53,6 @@ import androidx.compose.material3.FilledTonalIconButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButtonDefaults
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -85,6 +83,9 @@ import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.util.Log
+import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.withContext
 
 /**
  * 账号与设置入口页。
@@ -119,308 +120,320 @@ fun AccountSettingScreen(
     val liveData by accountState
     val data = testAccountData ?: liveData
 
-    Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        containerColor = MaterialTheme.colorScheme.surfaceContainer,
-    ) { padding ->
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(innerPadding)
-                .verticalScroll(rememberScrollState())
-                .padding(padding),
-        ) {
-            LaunchedEffect(data.login, refreshAccountProfileOnEnter) {
-                if (refreshAccountProfileOnEnter && data.login) {
+    Column(
+        modifier = Modifier
+            .fillMaxSize()
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(innerPadding)
+            .verticalScroll(rememberScrollState()),
+    ) {
+        LaunchedEffect(data.login, refreshAccountProfileOnEnter) {
+            if (refreshAccountProfileOnEnter && data.login) {
+                withContext(Dispatchers.IO) {
                     try {
                         environment.refreshAccountProfile()
                     } catch (e: Exception) {
+                        if (e is CancellationException) throw e
                         Log.e("AccountSettingScreen", "Failed to refresh account profile", e)
-                        userMessages.showShortMessage("获取用户信息失败")
+                        withContext(Dispatchers.Main) {
+                            userMessages.showShortMessage("获取用户信息失败")
+                        }
                     }
                 }
             }
+        }
 
-            if (data.login) {
-                Row(
-                    Modifier
-                        .padding(16.dp, 0.dp, 16.dp, 16.dp)
-                        .clickable {
-                            navigator.onNavigate(
-                                Person(
-                                    id = data.id,
-                                    urlToken = data.urlToken ?: "",
-                                    name = data.username,
-                                ),
-                            )
-                        },
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    AsyncImage(
-                        model = data.avatarUrl,
-                        contentDescription = "头像",
-                        modifier = Modifier
-                            .size(64.dp)
-                            .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
-                            .clip(CircleShape),
-                    )
-                    Spacer(Modifier.width(8.dp))
-                    Text(
-                        text = data.username,
-                        style = MaterialTheme.typography.headlineSmall,
-                        modifier = Modifier,
-                    )
-                    Spacer(Modifier.weight(1f))
-                    FilledTonalIconButton(
-                        onClick = {
-                            requestQrLoginScan()
-                        },
-                        modifier = Modifier.size(40.dp),
-                    ) {
-                        Icon(
-                            imageVector = Icons.Default.QrCodeScanner,
-                            contentDescription = "扫码登录",
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                    Spacer(Modifier.width(16.dp))
-                    FilledTonalIconButton(
-                        onClick = {
-                            showLogoutDialog = true
-                        },
-                        modifier = Modifier.size(40.dp),
-                        colors = IconButtonDefaults.iconButtonColors().copy(
-                            containerColor = MaterialTheme.colorScheme.errorContainer,
-                            contentColor = MaterialTheme.colorScheme.onErrorContainer,
-                        ),
-                    ) {
-                        Icon(
-                            Icons.AutoMirrored.Filled.Logout,
-                            contentDescription = "退出登录",
-                            modifier = Modifier.size(24.dp),
-                        )
-                    }
-                }
-            } else {
-                SettingItemGroup {
-                    SettingItem(
-                        title = { Text("登录知乎") },
-                        icon = { Icon(Icons.AutoMirrored.Filled.Login, null) },
-                        modifier = Modifier,
-                        onClick = {
-                            if (!environment.requestLogin()) {
-                                userMessages.showShortMessage("当前平台暂不支持登录")
-                            }
-                        },
-                    )
-                }
-            }
-
+        if (data.login) {
             Row(
                 Modifier
-                    .padding(horizontal = 16.dp)
-                    .padding(top = 16.dp, bottom = 32.dp)
-                    .clip(RoundedCornerShape(24.dp)),
-                horizontalArrangement = Arrangement.spacedBy(2.dp),
-            ) {
-                if (data.login) {
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable {
-                                data.urlToken?.let { navigator.onNavigate(Collections(it)) }
-                            }.padding(8.dp, 16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Icon(
-                            Icons.Default.Bookmark,
-                            null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    .padding(16.dp, 0.dp, 16.dp, 16.dp)
+                    .clickable {
+                        onDismissRequest()
+                        navigator.onNavigate(
+                            Person(
+                                id = data.id,
+                                urlToken = data.urlToken ?: "",
+                                name = data.username,
+                            ),
                         )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "收藏夹",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable {
-                                onDismissRequest()
-                                navigator.onNavigate(History)
-                            }.padding(8.dp, 16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        Icon(
-                            Icons.Default.History,
-                            null,
-                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "历史",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                    Column(
-                        Modifier
-                            .weight(1f)
-                            .clip(RoundedCornerShape(4.dp))
-                            .background(MaterialTheme.colorScheme.primaryContainer)
-                            .clickable {
-                                onDismissRequest()
-                                navigator.onNavigate(Notification)
-                            }.padding(8.dp, 16.dp),
-                        verticalArrangement = Arrangement.Center,
-                        horizontalAlignment = Alignment.CenterHorizontally,
-                    ) {
-                        BadgedBox(
-                            badge = {
-                                if (showUnreadBadge && unreadCount > 0) {
-                                    Badge { Text(unreadCount.toString()) }
-                                }
-                            },
-                        ) {
-                            Icon(
-                                Icons.Default.Notifications,
-                                null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        }
-                        Spacer(Modifier.height(4.dp))
-                        Text(
-                            "通知",
-                            style = MaterialTheme.typography.labelLarge,
-                            color = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
-                    }
-                }
-            }
-
-            Column(Modifier.padding(horizontal = 16.dp)) {
-                Surface(
-                    modifier = Modifier
-                        .height(36.dp),
-                    shape = RoundedCornerShape(24.dp),
-                    color = MaterialTheme.colorScheme.surfaceVariant,
-                    onClick = {
-                        navigator.onNavigate(Account.SettingsSearch)
                     },
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                AsyncImage(
+                    model = data.avatarUrl,
+                    contentDescription = "头像",
+                    modifier = Modifier
+                        .size(64.dp)
+                        .background(MaterialTheme.colorScheme.primaryContainer, CircleShape)
+                        .clip(CircleShape),
+                )
+                Spacer(Modifier.width(8.dp))
+                Text(
+                    text = data.username,
+                    style = MaterialTheme.typography.headlineSmall,
+                    modifier = Modifier,
+                )
+                Spacer(Modifier.weight(1f))
+                FilledTonalIconButton(
+                    onClick = {
+                        requestQrLoginScan()
+                    },
+                    modifier = Modifier.size(40.dp),
                 ) {
-                    Row(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(horizontal = 16.dp),
-                        verticalAlignment = Alignment.CenterVertically,
-                    ) {
-                        Icon(
-                            Icons.Default.Search,
-                            contentDescription = "搜索",
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                        Spacer(modifier = Modifier.width(12.dp))
-                        Text(
-                            text = "搜索设置项",
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            style = MaterialTheme.typography.bodyLarge,
-                        )
-                    }
+                    Icon(
+                        imageVector = Icons.Default.QrCodeScanner,
+                        contentDescription = "扫码登录",
+                        modifier = Modifier.size(24.dp),
+                    )
                 }
-
-                Spacer(Modifier.height(16.dp))
+                Spacer(Modifier.width(16.dp))
+                FilledTonalIconButton(
+                    onClick = {
+                        showLogoutDialog = true
+                    },
+                    modifier = Modifier.size(40.dp),
+                    colors = IconButtonDefaults.iconButtonColors().copy(
+                        containerColor = MaterialTheme.colorScheme.errorContainer,
+                        contentColor = MaterialTheme.colorScheme.onErrorContainer,
+                    ),
+                ) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Logout,
+                        contentDescription = "退出登录",
+                        modifier = Modifier.size(24.dp),
+                    )
+                }
             }
-
+        } else {
             SettingItemGroup {
                 SettingItem(
-                    title = { Text("外观与阅读体验") },
-                    description = { Text("主题颜色、字体大小等") },
-                    icon = { Icon(Icons.Default.Palette, null) },
+                    title = { Text("登录知乎") },
+                    icon = { Icon(Icons.AutoMirrored.Filled.Login, null) },
                     modifier = Modifier,
-                    onClick = { navigator.onNavigate(Account.AppearanceSettings()) },
-                )
-
-                SettingItem(
-                    title = { Text("通知设置") },
-                    description = { Text("未读红点、系统通知与应用内显示") },
-                    icon = { Icon(Icons.Default.Notifications, null) },
-                    modifier = Modifier,
-                    onClick = { navigator.onNavigate(Account.NotificationSettings()) },
+                    onClick = {
+                        if (!environment.requestLogin()) {
+                            userMessages.showShortMessage("当前平台暂不支持登录")
+                        }
+                    },
                 )
             }
+        }
 
-            SettingItemGroup(
-                title = "关于",
-                footer = { Text("本软件仅供学习交流使用，应用内内容由知乎网站提供，著作权归其对应作者所有。") },
-            ) {
-                SettingItem(
-                    title = { Text("知乎++") },
-                    description = { Text("版本号：$versionInfo") },
-                    icon = {
-                        Image(
-                            painterResource(R.drawable.ic_zhihuminus_launcher_foreground),
-                            contentDescription = null,
-                            modifier = Modifier
-                                .clip(CircleShape)
-                                .size(32.dp),
-                        )
-                    },
-                    modifier = Modifier.combinedClickable(
-                        enabled = true,
-                        onClick = {},
-                        onLongClick = {
-                            copyPlainText("version", versionInfo)
-                            userMessages.showShortMessage("已复制版本号")
+        Row(
+            Modifier
+                .padding(horizontal = 16.dp)
+                .padding(top = 16.dp, bottom = 32.dp)
+                .clip(RoundedCornerShape(24.dp)),
+            horizontalArrangement = Arrangement.spacedBy(2.dp),
+        ) {
+            if (data.login) {
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable {
+                            onDismissRequest()
+                            data.urlToken?.let { navigator.onNavigate(Collections(it)) }
+                        }.padding(8.dp, 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        Icons.Default.Bookmark,
+                        null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "收藏夹",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable {
+                            onDismissRequest()
+                            navigator.onNavigate(History)
+                        }.padding(8.dp, 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Icon(
+                        Icons.Default.History,
+                        null,
+                        tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "历史",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
+                Column(
+                    Modifier
+                        .weight(1f)
+                        .clip(RoundedCornerShape(4.dp))
+                        .background(MaterialTheme.colorScheme.primaryContainer)
+                        .clickable {
+                            onDismissRequest()
+                            navigator.onNavigate(Notification)
+                        }.padding(8.dp, 16.dp),
+                    verticalArrangement = Arrangement.Center,
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    BadgedBox(
+                        badge = {
+                            if (showUnreadBadge && unreadCount > 0) {
+                                Badge { Text(unreadCount.toString()) }
+                            }
                         },
-                    ),
-                )
-                SettingItem(
-                    title = { Text("GitHub 项目地址") },
-                    description = { Text("https://github.com/zly2006/zhihu-plus-plus") },
-                    icon = { Icon(painterResource(R.drawable.ic_github_24dp), null) },
-                    onClick = {
-                        openSystemUrl("https://github.com/zly2006/zhihu-plus-plus")
-                    },
-                    endAction = {
+                    ) {
                         Icon(
-                            Icons.Default.ArrowOutward,
+                            Icons.Default.Notifications,
                             null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            tint = MaterialTheme.colorScheme.onPrimaryContainer,
                         )
-                    },
-                )
-
-                SettingItem(
-                    title = { Text("项目协议") },
-                    description = { Text("AGPL-3.0-only") },
-                    icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
-                    onClick = {
-                        openSystemUrl("https://github.com/zly2006/zhihu-plus-plus/blob/master/LICENSE")
-                    },
-                    endAction = {
-                        Icon(
-                            Icons.Default.ArrowOutward,
-                            null,
-                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    },
-                )
-                SettingItem(
-                    title = { Text("开源许可") },
-                    description = { Text("查看第三方组件许可证") },
-                    icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
-                    modifier = Modifier,
-                    onClick = { navigator.onNavigate(Account.OpenSourceLicenses) },
-                )
+                    }
+                    Spacer(Modifier.height(4.dp))
+                    Text(
+                        "通知",
+                        style = MaterialTheme.typography.labelLarge,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                    )
+                }
             }
+        }
+
+        Column(Modifier.padding(horizontal = 16.dp)) {
+            Surface(
+                modifier = Modifier
+                    .height(36.dp),
+                shape = RoundedCornerShape(24.dp),
+                color = MaterialTheme.colorScheme.surfaceVariant,
+                onClick = {
+                    onDismissRequest()
+                    navigator.onNavigate(Account.SettingsSearch)
+                },
+            ) {
+                Row(
+                    modifier = Modifier
+                        .fillMaxSize()
+                        .padding(horizontal = 16.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Icon(
+                        Icons.Default.Search,
+                        contentDescription = "搜索",
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Text(
+                        text = "搜索设置项",
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        style = MaterialTheme.typography.bodyLarge,
+                    )
+                }
+            }
+
+            Spacer(Modifier.height(16.dp))
+        }
+
+        SettingItemGroup {
+            SettingItem(
+                title = { Text("外观与阅读体验") },
+                description = { Text("主题颜色、字体大小等") },
+                icon = { Icon(Icons.Default.Palette, null) },
+                modifier = Modifier,
+                onClick = {
+                    onDismissRequest()
+                    navigator.onNavigate(Account.AppearanceSettings())
+                },
+            )
+
+            SettingItem(
+                title = { Text("通知设置") },
+                description = { Text("未读红点、系统通知与应用内显示") },
+                icon = { Icon(Icons.Default.Notifications, null) },
+                modifier = Modifier,
+                onClick = {
+                    onDismissRequest()
+                    navigator.onNavigate(Account.NotificationSettings())
+                },
+            )
+        }
+
+        SettingItemGroup(
+            title = "关于",
+            footer = { Text("本软件仅供学习交流使用，应用内内容由知乎网站提供，著作权归其对应作者所有。") },
+        ) {
+            SettingItem(
+                title = { Text("知乎++") },
+                description = { Text("版本号：$versionInfo") },
+                icon = {
+                    Image(
+                        painterResource(R.drawable.ic_zhihuminus_launcher_foreground),
+                        contentDescription = null,
+                        modifier = Modifier
+                            .clip(CircleShape)
+                            .size(32.dp),
+                    )
+                },
+                modifier = Modifier.combinedClickable(
+                    enabled = true,
+                    onClick = {},
+                    onLongClick = {
+                        copyPlainText("version", versionInfo)
+                        userMessages.showShortMessage("已复制版本号")
+                    },
+                ),
+            )
+            SettingItem(
+                title = { Text("GitHub 项目地址") },
+                description = { Text("https://github.com/zly2006/zhihu-plus-plus") },
+                icon = { Icon(painterResource(R.drawable.ic_github_24dp), null) },
+                onClick = {
+                    openSystemUrl("https://github.com/zly2006/zhihu-plus-plus")
+                },
+                endAction = {
+                    Icon(
+                        Icons.Default.ArrowOutward,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
+
+            SettingItem(
+                title = { Text("项目协议") },
+                description = { Text("AGPL-3.0-only") },
+                icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
+                onClick = {
+                    openSystemUrl("https://github.com/zly2006/zhihu-plus-plus/blob/master/LICENSE")
+                },
+                endAction = {
+                    Icon(
+                        Icons.Default.ArrowOutward,
+                        null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                },
+            )
+            SettingItem(
+                title = { Text("开源许可") },
+                description = { Text("查看第三方组件许可证") },
+                icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
+                modifier = Modifier,
+                onClick = {
+                    onDismissRequest()
+                    navigator.onNavigate(Account.OpenSourceLicenses)
+                },
+            )
         }
     }
 

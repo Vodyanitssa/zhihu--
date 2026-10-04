@@ -45,6 +45,7 @@ fun HomeScreen(
                 unreadCount = state.unreadCount,
                 showUnreadBadge = showUnreadBadge,
                 onDismissRequest = { onEvent(HomeEvent.DismissAccountSheet) },
+                refreshAccountProfileOnEnter = false,
             )
         }
     }

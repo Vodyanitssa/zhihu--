@@ -144,7 +144,10 @@ fun rememberAccountQrLoginRequester(): () -> Unit {
 }
 
 @Composable
-fun rememberAppVersionInfo(): String = LocalContext.current.zhihuVersionInfo()
+fun rememberAppVersionInfo(): String {
+    val context = LocalContext.current
+    return remember(context) { context.zhihuVersionInfo() }
+}
 
 fun AccountData.Data.toAccountSettingsAccountState(): AccountSettingsAccountState = AccountSettingsAccountState(
     login = login,

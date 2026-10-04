@@ -21,6 +21,10 @@ import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
 import androidx.compose.animation.ExitTransition
+import androidx.compose.animation.core.FastOutLinearInEasing
+import androidx.compose.animation.core.FastOutSlowInEasing
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.LinearOutSlowInEasing
 import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -70,6 +74,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -341,16 +346,24 @@ fun ZhihuMain(
                     },
                     startDestination = MainTabs,
                     enterTransition = {
-                        slideInHorizontally(tween(300)) { it }
+                        slideInHorizontally(
+                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                        ) { it } + fadeIn(animationSpec = tween(durationMillis = 250))
                     },
                     exitTransition = {
-                        ExitTransition.None
+                        slideOutHorizontally(
+                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                        ) { -it / 4 } + fadeOut(animationSpec = tween(durationMillis = 200, easing = LinearEasing), targetAlpha = 0.5f)
                     },
                     popEnterTransition = {
-                        EnterTransition.None
+                        slideInHorizontally(
+                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                        ) { -it / 4 } + fadeIn(animationSpec = tween(durationMillis = 250))
                     },
                     popExitTransition = {
-                        slideOutHorizontally(tween(300)) { it } + fadeOut(tween(300))
+                        slideOutHorizontally(
+                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                        ) { it } + fadeOut(animationSpec = tween(durationMillis = 250))
                     },
                 ) {
                     composable<MainTabs> {
@@ -535,12 +548,15 @@ private fun MainTabsContent(
         targetState = currentTabIndex,
         modifier = Modifier.fillMaxSize(),
         transitionSpec = {
+            val slideSpec = tween<IntOffset>(durationMillis = 320, easing = FastOutSlowInEasing)
+            val fadeSpec = tween<Float>(durationMillis = 280, easing = LinearOutSlowInEasing)
+            val fadeOutSpec = tween<Float>(durationMillis = 200, easing = FastOutLinearInEasing)
             if (targetState >= initialState) {
-                (fadeIn(tween(200)) + slideInHorizontally(tween(200)) { it / 16 }) togetherWith
-                    (fadeOut(tween(160)) + slideOutHorizontally(tween(200)) { -it / 16 })
+                (fadeIn(fadeSpec) + slideInHorizontally(slideSpec) { it / 4 }) togetherWith
+                    (fadeOut(fadeOutSpec) + slideOutHorizontally(slideSpec) { -it / 4 })
             } else {
-                (fadeIn(tween(200)) + slideInHorizontally(tween(200)) { -it / 16 }) togetherWith
-                    (fadeOut(tween(160)) + slideOutHorizontally(tween(200)) { it / 16 })
+                (fadeIn(fadeSpec) + slideInHorizontally(slideSpec) { -it / 4 }) togetherWith
+                    (fadeOut(fadeOutSpec) + slideOutHorizontally(slideSpec) { it / 4 })
             }
         },
         label = "MainTabs",

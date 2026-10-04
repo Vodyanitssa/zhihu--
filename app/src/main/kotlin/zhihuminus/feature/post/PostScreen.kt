@@ -4,6 +4,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
+import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.systemBarsPadding
@@ -31,6 +32,9 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.feature.collection.Collection
@@ -82,6 +86,16 @@ fun PostScreen(
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
     val scrollState = rememberScrollState()
+    val lifecycleOwner = LocalLifecycleOwner.current
+    var isTransitionFinished by remember {
+        mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
+    }
+
+    LaunchedEffect(lifecycleOwner) {
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            isTransitionFinished = true
+        }
+    }
 
     // 深链锚点仅驱动初始打开一次；此后 showComments 是唯一事实来源，dismiss 后才能真正关闭
     LaunchedEffect(initialCommentId) {
@@ -120,7 +134,7 @@ fun PostScreen(
                 )
             },
             bottomBar = {
-                if (uiState.loadState is PostLoadState.Success) {
+                if (uiState.loadState is PostLoadState.Success && isTransitionFinished) {
                     PostBottomBar(
                         postType = uiState.loadState.post.type,
                         state = uiState.bottomBarState,
@@ -181,13 +195,15 @@ fun PostScreen(
 
                 is PostLoadState.Success -> {
                     val imageViewManager = LocalImageViewManager.current
-                    LaunchedEffect(state.post.content) {
-                        imageViewManager?.submitImages(
-                            state.post.content
-                                .filterIsInstance<ContentNode.Image>()
-                                .filter { it.url.isNotBlank() }
-                                .map { it.url },
-                        )
+                    LaunchedEffect(state.post.content, isTransitionFinished) {
+                        if (isTransitionFinished) {
+                            imageViewManager?.submitImages(
+                                state.post.content
+                                    .filterIsInstance<ContentNode.Image>()
+                                    .filter { it.url.isNotBlank() }
+                                    .map { it.url },
+                            )
+                        }
                     }
                     Column(
                         modifier = Modifier
@@ -206,71 +222,89 @@ fun PostScreen(
                             questionId = state.post.questionId,
                             onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                         )
-                        PostContent(
-                            post = state.post,
-                            onEvent = onEvent,
-                        )
+                        if (isTransitionFinished) {
+                            PostContent(
+                                post = state.post,
+                                onEvent = onEvent,
+                            )
+                        } else {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(vertical = 48.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CircularProgressIndicator(
+                                    modifier = Modifier.size(28.dp),
+                                    strokeWidth = 2.5.dp,
+                                )
+                            }
+                        }
                     }
 
-                    // Collection Dialog
-                    CollectionDialogComponent(
-                        showDialog = uiState.showCollectionDialog,
-                        onDismiss = { onEvent(PostEvent.DismissCollectionDialog) },
-                        collections = uiState.collections,
-                        onLoadCollections = { onEvent(PostEvent.RefreshCollections) },
-                        onToggleFavorite = { collection ->
-                            onEvent(PostEvent.ToggleCollection(collection))
-                        },
-                        onCreateCollection = { title, description, isPublic ->
-                            onEvent(PostEvent.CreateCollection(title, description, isPublic))
-                        },
-                    )
+                    if (isTransitionFinished) {
+                        // Collection Dialog
+                        CollectionDialogComponent(
+                            showDialog = uiState.showCollectionDialog,
+                            onDismiss = { onEvent(PostEvent.DismissCollectionDialog) },
+                            collections = uiState.collections,
+                            onLoadCollections = { onEvent(PostEvent.RefreshCollections) },
+                            onToggleFavorite = { collection ->
+                                onEvent(PostEvent.ToggleCollection(collection))
+                            },
+                            onCreateCollection = { title, description, isPublic ->
+                                onEvent(PostEvent.CreateCollection(title, description, isPublic))
+                            },
+                        )
 
-                    // Actions Menu
-                    PostActionsMenu(
-                        post = state.post,
-                        showMenu = uiState.showActionsMenu,
-                        onDismissRequest = { onEvent(PostEvent.DismissActionsMenu) },
-                        onShare = {
-                            onEvent(PostEvent.Share)
-                        },
-                        onCopyLink = {
-                            onEvent(PostEvent.CopyLink)
-                        },
-                        onExport = {
-                            onEvent(PostEvent.DismissActionsMenu)
-                            showExportDialog = true
-                        },
-                    )
+                        // Actions Menu
+                        PostActionsMenu(
+                            post = state.post,
+                            showMenu = uiState.showActionsMenu,
+                            onDismissRequest = { onEvent(PostEvent.DismissActionsMenu) },
+                            onShare = {
+                                onEvent(PostEvent.Share)
+                            },
+                            onCopyLink = {
+                                onEvent(PostEvent.CopyLink)
+                            },
+                            onExport = {
+                                onEvent(PostEvent.DismissActionsMenu)
+                                showExportDialog = true
+                            },
+                        )
 
-                    // Export Dialog
-                    PostExportDialog(
-                        showDialog = showExportDialog,
-                        isExporting = uiState.isExporting,
-                        onDismiss = { showExportDialog = false },
-                        onExportImage = { onEvent(PostEvent.Export) },
-                    )
+                        // Export Dialog
+                        PostExportDialog(
+                            showDialog = showExportDialog,
+                            isExporting = uiState.isExporting,
+                            onDismiss = { showExportDialog = false },
+                            onExportImage = { onEvent(PostEvent.Export) },
+                        )
 
-                    // Comments
-                    CommentRoute(
-                        showComments = uiState.showComments,
-                        onDismiss = { onEvent(PostEvent.DismissComments) },
-                        contentType = state.post.type.toCommentContentType(),
-                        contentId = state.post.id,
-                        repository = commentRepository,
-                        initialCommentId = initialCommentId,
-                    )
+                        // Comments
+                        CommentRoute(
+                            showComments = uiState.showComments,
+                            onDismiss = { onEvent(PostEvent.DismissComments) },
+                            contentType = state.post.type.toCommentContentType(),
+                            contentId = state.post.id,
+                            repository = commentRepository,
+                            initialCommentId = initialCommentId,
+                        )
+                    }
                 }
             }
         }
 
-        VerticalReadingProgressBar(
-            scrollState = scrollState,
-            modifier = Modifier
-                .align(Alignment.TopEnd)
-                .systemBarsPadding(),
-            thumbColor = MaterialTheme.colorScheme.primary,
-        )
+        if (isTransitionFinished) {
+            VerticalReadingProgressBar(
+                scrollState = scrollState,
+                modifier = Modifier
+                    .align(Alignment.TopEnd)
+                    .systemBarsPadding(),
+                thumbColor = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 

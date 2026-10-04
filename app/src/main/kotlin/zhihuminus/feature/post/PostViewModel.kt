@@ -19,6 +19,7 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.coroutines.yield
 
 class PostViewModel(
     application: Application,
@@ -193,6 +194,7 @@ class PostViewModel(
                 }
             }
             val post = if (cached != null) {
+                yield()
                 applyPost(cached)
                 cached
             } else {
