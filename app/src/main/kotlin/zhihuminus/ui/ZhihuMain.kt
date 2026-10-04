@@ -81,7 +81,6 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
-import com.zhihuminus.feature.collection.CollectionBrowseRoute
 import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
@@ -168,7 +167,6 @@ fun ZhihuMain(
     val bottomPadding = ScaffoldDefaults.contentWindowInsets.asPaddingValues().calculateBottomPadding()
     val tapToScrollToTopEnabled = preferenceState.tapToScrollToTopEnabled
     val autoHideBottomBar = preferenceState.autoHideBottomBar
-    val collectionDirectBrowseEnabled = preferenceState.collectionDirectBrowseEnabled
     val selectedBottomBarItemKeys = preferenceState.selectedBottomBarItemKeys
     val startDestination = preferenceState.startDestination
     val reloadBottomBarPreferences = preferenceState::reload
@@ -397,7 +395,6 @@ fun ZhihuMain(
                             pages = mainTabPages,
                             scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
-                            collectionDirectBrowseEnabled = collectionDirectBrowseEnabled,
                         )
                     }
                     composable<Question> { navEntry ->
@@ -568,7 +565,6 @@ private fun MainTabsContent(
     pages: List<MainTabPage>,
     scrollToTopTrigger: Int,
     innerPadding: PaddingValues,
-    collectionDirectBrowseEnabled: Boolean,
 ) {
     val stateHolder = rememberSaveableStateHolder()
     AnimatedContent(
@@ -608,7 +604,6 @@ private fun MainTabsContent(
 
                 MainTabPage.MyCollectionsPage -> MyCollectionsTopLevelPage(
                     scrollToTopTrigger = scrollToTopTrigger,
-                    collectionDirectBrowseEnabled = collectionDirectBrowseEnabled,
                 )
 
                 MainTabPage.AccountPage -> AccountSettingScreen(innerPadding)
@@ -620,28 +615,16 @@ private fun MainTabsContent(
 @Composable
 private fun MyCollectionsTopLevelPage(
     scrollToTopTrigger: Int,
-    collectionDirectBrowseEnabled: Boolean,
 ) {
     val account = rememberAccountSettingsAccountState().value
     val navigator = LocalNavigator.current
-    if (collectionDirectBrowseEnabled) {
-        CollectionBrowseRoute(
-            urlToken = account.urlToken,
-            showBackButton = false,
-            scrollToTopTrigger = scrollToTopTrigger,
-            onDestinationClick = { destination ->
-                destination?.let(navigator.onNavigate)
-            },
-        )
-    } else {
-        CollectionRoute(
-            urlToken = account.urlToken,
-            showBackButton = false,
-            scrollToTopTrigger = scrollToTopTrigger,
-            onNavigateBack = {},
-            onCollectionClick = { collection ->
-                navigator.onNavigate(CollectionContent(collection.id))
-            },
-        )
-    }
+    CollectionRoute(
+        urlToken = account.urlToken,
+        showBackButton = false,
+        scrollToTopTrigger = scrollToTopTrigger,
+        onNavigateBack = {},
+        onCollectionClick = { collection ->
+            navigator.onNavigate(CollectionContent(collection.id))
+        },
+    )
 }

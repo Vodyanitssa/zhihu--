@@ -68,7 +68,6 @@ interface ArticleHost {
 data class ZhihuMainPreferenceSnapshot(
     val tapToScrollToTopEnabled: Boolean,
     val autoHideBottomBar: Boolean,
-    val collectionDirectBrowseEnabled: Boolean,
     val selectedBottomBarItemKeys: List<String>,
     val startDestination: TopLevelDestination,
 )
@@ -86,7 +85,6 @@ class ZhihuMainPreferenceState(
 
     val tapToScrollToTopEnabled: Boolean get() = snapshot.tapToScrollToTopEnabled
     val autoHideBottomBar: Boolean get() = snapshot.autoHideBottomBar
-    val collectionDirectBrowseEnabled: Boolean get() = snapshot.collectionDirectBrowseEnabled
     val selectedBottomBarItemKeys: List<String> get() = snapshot.selectedBottomBarItemKeys
     val startDestination: TopLevelDestination get() = snapshot.startDestination
 

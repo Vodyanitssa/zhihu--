@@ -31,7 +31,6 @@ import com.zhihuminus.navigation.MyCollections
 import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEMS_PREFERENCE_KEY
 import com.zhihuminus.ui.subscreens.BOTTOM_BAR_ITEM_ORDER_PREFERENCE_KEY
-import com.zhihuminus.ui.subscreens.COLLECTION_DIRECT_BROWSE_PREFERENCE_KEY
 import com.zhihuminus.ui.subscreens.START_DESTINATION_PREFERENCE_KEY
 import com.zhihuminus.ui.subscreens.bottomBarItemOrderFromPreference
 import com.zhihuminus.ui.subscreens.defaultBottomBarSelectionKeys
@@ -69,7 +68,6 @@ fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
         ZhihuMainPreferenceSnapshot(
             tapToScrollToTopEnabled = settings.getBoolean("bottomBarTapScrollToTop", true),
             autoHideBottomBar = settings.getBoolean("autoHideBottomBar", false),
-            collectionDirectBrowseEnabled = settings.getBoolean(COLLECTION_DIRECT_BROWSE_PREFERENCE_KEY, false),
             selectedBottomBarItemKeys = orderedSelectedKeys,
             startDestination = navDestinationFromName(
                 resolveValidStartDestinationKey(
