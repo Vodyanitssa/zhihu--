@@ -25,7 +25,7 @@ import com.zhihuminus.feature.comment.CommentItemUiState
 
 /**
  * 带子评论预览的评论条目。
- * 根评论默认展示最多2条子评论预览，超过则显示"查看子评论"按钮。
+ * 根评论默认展示最多2条子评论预览，未展示完则显示"查看子评论"按钮。
  */
 @Composable
 fun CommentItemWithPreview(
@@ -40,19 +40,25 @@ fun CommentItemWithPreview(
 
         // 子评论预览（与子评论 sheet 共用 UI 树 children，同一数据源）
         val previews = item.children.orEmpty()
-        if (previews.isNotEmpty() || item.comment.childCommentCount > 2) {
+        val displayedPreviews = previews.take(2)
+        val totalCount = item.comment.childCommentCount
+
+        val hasContentToShow = displayedPreviews.isNotEmpty() || totalCount > 0
+        val hasMoreChildren = totalCount > displayedPreviews.size
+
+        if (hasContentToShow) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
                     .padding(start = 40.dp, top = 8.dp),
             ) {
-                previews.take(2).forEach { child ->
+                displayedPreviews.forEach { child ->
                     CommentItem(
                         comment = child.comment,
                         onEvent = onEvent,
                     )
                 }
-                if (item.comment.childCommentCount > 2) {
+                if (hasMoreChildren) {
                     Button(
                         onClick = { onEvent(CommentEvent.OpenChildComments(item.comment)) },
                         modifier = Modifier.height(28.dp),
@@ -61,18 +67,19 @@ fun CommentItemWithPreview(
                             containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
                             contentColor = MaterialTheme.colorScheme.onSurface,
                         ),
-                        contentPadding = PaddingValues(horizontal = 16.dp, vertical = 0.dp),
+                        contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                     ) {
                         Icon(
                             Icons.AutoMirrored.Outlined.Comment,
-                            contentDescription = "查看子评论",
+                            contentDescription = "查看回复",
                             modifier = Modifier.size(16.dp),
                             tint = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            "查看 ${item.comment.childCommentCount} 条子评论",
+                            text = "查看 $totalCount 条回复",
                             fontSize = 12.sp,
+                            lineHeight = 12.sp,
                         )
                     }
                 }
