@@ -91,6 +91,7 @@ import com.zhihuminus.feature.home.HomeRoute
 import com.zhihuminus.feature.notification.NotificationRoute
 import com.zhihuminus.feature.notification.NotificationTimelineRoute
 import com.zhihuminus.feature.notification.PrivateMessageRoute
+import com.zhihuminus.feature.people.PeopleRoute
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.search.SearchRoute
 import com.zhihuminus.feature.topic.TopicRoute
@@ -456,7 +457,12 @@ fun ZhihuMain(
                     }
                     composable<Person> { navEntry ->
                         val person: Person = navEntry.toRoute()
-                        PeopleScreen(person)
+                        val navigator = LocalNavigator.current
+                        PeopleRoute(
+                            person = person,
+                            onNavigate = navigator.onNavigate,
+                            onNavigateBack = navigator.onNavigateBack,
+                        )
                     }
                     composable<Column> { navEntry ->
                         val column: Column = navEntry.toRoute()

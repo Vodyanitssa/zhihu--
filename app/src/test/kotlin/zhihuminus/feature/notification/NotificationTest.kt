@@ -3,6 +3,7 @@ package com.zhihuminus.feature.notification
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.zhihu.ZhihuApi
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
@@ -14,6 +15,8 @@ import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
+import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
@@ -26,6 +29,7 @@ import com.zhihuminus.data.zhihu.dto.NotificationLabelDto
 import com.zhihuminus.data.zhihu.dto.NotificationOverviewDto
 import com.zhihuminus.data.zhihu.dto.NotificationTargetDto
 import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
+import com.zhihuminus.data.zhihu.dto.PeoplePageDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePageDto
@@ -445,9 +449,13 @@ private open class FakeZhihuApi : ZhihuApi {
 
     override suspend fun fetchVoters(url: String): JsonObject = TODO()
 
-    override suspend fun followMember(urlToken: String) = TODO()
+    override suspend fun followMember(urlToken: String): Int? = TODO()
 
-    override suspend fun unfollowMember(urlToken: String) = TODO()
+    override suspend fun unfollowMember(urlToken: String): Int? = TODO()
+
+    override suspend fun blockMember(urlToken: String) = TODO()
+
+    override suspend fun unblockMember(urlToken: String) = TODO()
 
     override suspend fun voteAnswer(answerId: Long, vote: String): Int = TODO()
 
@@ -531,4 +539,34 @@ private open class FakeZhihuApi : ZhihuApi {
     override suspend fun sendPrivateMessage(peerId: String, content: String): PrivateMessageDto = TODO()
 
     override suspend fun getMeNotifications(): ZhihuMeNotificationsDto = TODO()
+
+    override suspend fun fetchMemberProfile(userTokenOrId: String): DataHolder.People = TODO()
+
+    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): DataHolder.People? = TODO()
+
+    override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage = TODO()
+
+    override suspend fun fetchMemberAnswers(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<DataHolder.Answer> = TODO()
+
+    override suspend fun fetchMemberArticles(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<DataHolder.Article> = TODO()
+
+    override suspend fun fetchMemberPins(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Pin> = TODO()
+
+    override suspend fun fetchMemberQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Question> = TODO()
+
+    override suspend fun fetchMemberCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Collection> = TODO()
+
+    override suspend fun fetchMemberColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Column> = TODO()
+
+    override suspend fun fetchMemberFollowers(memberId: String, nextUrl: String?): PeoplePageDto<DataHolder.People> = TODO()
+
+    override suspend fun fetchMemberFollowing(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.People> = TODO()
+
+    override suspend fun fetchMemberFollowingColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Column> = TODO()
+
+    override suspend fun fetchMemberFollowingTopics(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedTopicDto> = TODO()
+
+    override suspend fun fetchMemberFollowingQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedQuestionDto> = TODO()
+
+    override suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Collection> = TODO()
 }

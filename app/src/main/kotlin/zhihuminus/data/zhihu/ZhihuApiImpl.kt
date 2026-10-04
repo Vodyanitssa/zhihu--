@@ -3,6 +3,7 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
+import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
@@ -17,6 +18,8 @@ import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
+import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
+import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
@@ -25,6 +28,7 @@ import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
 import com.zhihuminus.data.zhihu.dto.NotificationHeadEntryDto
 import com.zhihuminus.data.zhihu.dto.NotificationOverviewDto
 import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
+import com.zhihuminus.data.zhihu.dto.PeoplePageDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePageDto
@@ -175,12 +179,24 @@ class ZhihuApiImpl(
     override suspend fun fetchVoters(url: String): JsonObject = environment.fetchJson(url.replace("http://", "https://"), "")
         ?: error("赞同者信息为空")
 
-    override suspend fun followMember(urlToken: String) {
-        environment.postSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+    override suspend fun followMember(urlToken: String): Int? {
+        val response = environment.postSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+        val json = response.raiseForStatus().body<JsonObject>()
+        return json["follower_count"]?.jsonPrimitive?.intOrNull
     }
 
-    override suspend fun unfollowMember(urlToken: String) {
-        environment.deleteSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+    override suspend fun unfollowMember(urlToken: String): Int? {
+        val response = environment.deleteSigned("https://www.zhihu.com/api/v4/members/$urlToken/followers")
+        val json = response.raiseForStatus().body<JsonObject>()
+        return json["follower_count"]?.jsonPrimitive?.intOrNull
+    }
+
+    override suspend fun blockMember(urlToken: String) {
+        environment.postSigned("https://www.zhihu.com/api/v4/members/$urlToken/actions/block").raiseForStatus()
+    }
+
+    override suspend fun unblockMember(urlToken: String) {
+        environment.deleteSigned("https://www.zhihu.com/api/v4/members/$urlToken/actions/block").raiseForStatus()
     }
 
     override suspend fun voteAnswer(answerId: Long, vote: String): Int {
@@ -618,7 +634,186 @@ class ZhihuApiImpl(
             ?: throw IllegalStateException("获取个人通知信息失败")
         return decodeJson<ZhihuMeNotificationsDto>(json)
     }
+
+    private suspend inline fun <reified T> fetchPaged(
+        url: String,
+        include: String = "",
+    ): PeoplePageDto<T> {
+        val json = environment.fetchJson(url.replace("http://", "https://"), include)
+            ?: throw IllegalStateException("获取数据失败")
+        val rawData = json["data"] as? JsonArray ?: JsonArray(emptyList())
+        val items = rawData.mapNotNull { element ->
+            try {
+                ZhihuJson.decodeJson<T>(element)
+            } catch (e: Exception) {
+                Log.e("ZhihuApiImpl", "Failed to decode ${T::class.simpleName}: $element", e)
+                null
+            }
+        }
+        val paging = json["paging"]?.let {
+            runCatching { ZhihuJson.decodeJson<ZhihuPaging>(it) }.getOrNull()
+        }
+        val isEnd = paging?.isEnd ?: true
+        val nextUrl = paging?.next?.takeIf { it.isNotEmpty() && !isEnd }
+        return PeoplePageDto(
+            items = items,
+            nextUrl = nextUrl,
+            isEnd = isEnd,
+        )
+    }
+
+    override suspend fun fetchMemberProfile(userTokenOrId: String): DataHolder.People {
+        val json = environment.fetchJson(
+            "https://api.zhihu.com/people/$userTokenOrId",
+            PEOPLE_PROFILE_INCLUDE,
+        ) ?: error("用户资料为空")
+        return ZhihuJson.decodeJson<DataHolder.People>(json)
+    }
+
+    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): DataHolder.People? {
+        val json = environment.fetchJson("https://api.zhihu.com/people/$userTokenOrId/profile/detail", "")
+            ?: return null
+        return ZhihuJson.decodeJson<DataHolder.People>(json)
+    }
+
+    override suspend fun fetchMemberActivities(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): FeedPage =
+        fetchFeedPage(
+            url = nextUrl ?: "https://www.zhihu.com/api/v3/moments/$userTokenOrId/activities",
+            include = "",
+        )
+
+    override suspend fun fetchMemberAnswers(
+        userTokenOrId: String,
+        sortBy: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Answer> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/answers?sort_by=$sortBy",
+            include = MEMBER_ANSWERS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberArticles(
+        userTokenOrId: String,
+        sortBy: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Article> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/articles?sort_by=$sortBy",
+            include = MEMBER_ARTICLES_INCLUDE,
+        )
+
+    override suspend fun fetchMemberPins(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Pin> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/v2/pins/$userTokenOrId/moments",
+            include = MEMBER_PINS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberQuestions(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Question> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/questions",
+            include = MEMBER_QUESTIONS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberCollections(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Collection> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/favlists",
+            include = MEMBER_COLLECTIONS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberColumns(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Column> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/column-contributions",
+            include = MEMBER_COLUMNS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberFollowers(
+        memberId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.People> =
+        fetchPaged(
+            url = nextUrl ?: "https://api.zhihu.com/people/$memberId/followers",
+            include = MEMBER_FOLLOWERS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberFollowing(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.People> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/followees",
+            include = MEMBER_FOLLOWING_INCLUDE,
+        )
+
+    override suspend fun fetchMemberFollowingColumns(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Column> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-columns",
+            include = MEMBER_COLUMNS_INCLUDE,
+        )
+
+    override suspend fun fetchMemberFollowingTopics(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<FollowedTopicDto> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-topic-contributions",
+            include = "",
+        )
+
+    override suspend fun fetchMemberFollowingQuestions(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<FollowedQuestionDto> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-questions",
+            include = "",
+        )
+
+    override suspend fun fetchMemberFollowingCollections(
+        userTokenOrId: String,
+        nextUrl: String?,
+    ): PeoplePageDto<DataHolder.Collection> =
+        fetchPaged(
+            url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-favlists",
+            include = MEMBER_COLLECTIONS_INCLUDE,
+        )
 }
+
+private const val PEOPLE_PROFILE_INCLUDE =
+    "allow_message,is_followed,is_following,is_org,is_blocking,badge_v2,answer_count,follower_count,following_count,articles_count,question_count,pins_count"
+private const val MEMBER_ANSWERS_INCLUDE =
+    "data[*].is_normal,admin_closed_comment,reward_info,is_collapsed,annotation_action,annotation_detail,collapse_reason,collapsed_by,suggest_edit,comment_count,thanks_count,can_comment,content,editable_content,attachment,voteup_count,reshipment_settings,comment_permission,created_time,updated_time,review_info,excerpt,paid_info,reaction_instruction,is_labeled,label_info,relationship.is_authorized,voting,is_author,is_thanked,is_nothelp,author.badge_v2"
+private const val MEMBER_ARTICLES_INCLUDE =
+    "data[*].comment_count,suggest_edit,is_normal,thumbnail_extra_info,thumbnail,can_comment,comment_permission,admin_closed_comment,content,voteup_count,created,updated,upvoted_followees,voting,review_info,reaction_instruction,is_labeled,label_info,author.badge_v2;data[*].vessay_info;data[*].author.badge[?(type=best_answerer)].topics;"
+private const val MEMBER_PINS_INCLUDE =
+    "data[*].like_count,comment_count,created,updated,content"
+private const val MEMBER_QUESTIONS_INCLUDE =
+    "data[*].created,answer_count,follower_count,author,visit_count,comment_count,detail,relationship,topics,voteup_count"
+private const val MEMBER_COLLECTIONS_INCLUDE =
+    "data[*].updated_time,answer_count,follower_count,creator"
+private const val MEMBER_COLUMNS_INCLUDE =
+    "data[*].articles_count,followers,author"
+private const val MEMBER_FOLLOWERS_INCLUDE =
+    "data[*].answer_count,articles_count,gender,follower_count,is_followed,is_following,badge_v2,badge[?(type=best_answerer)].topics"
+private const val MEMBER_FOLLOWING_INCLUDE =
+    "data[*].answer_count,articles_count,gender,follower_count,is_followed,is_following,badge_v2,badge[?(type=best_answerer)].topics"
 
 private const val MOBILE_NOTIFICATION_MESSAGE_URL = "https://api.zhihu.com/notifications/v3/message/v3"
 private const val MOBILE_NOTIFICATION_TIMELINE_URL = "https://api.zhihu.com/notifications/v3/timeline/entry"

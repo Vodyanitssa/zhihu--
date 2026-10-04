@@ -252,6 +252,9 @@ object ZhihuJson {
     inline fun <reified T> decodeJson(json: JsonElement): T =
         this.json.decodeFromJsonElement(snakeCaseToCamelCase(json))
 
+    inline fun <reified T> decodeFromString(string: String): T =
+        decodeJson(this.json.parseToJsonElement(string))
+
     fun <T> decodeJson(serializer: KSerializer<T>, json: JsonElement): T =
         this.json.decodeFromJsonElement(serializer, snakeCaseToCamelCase(json))
 }

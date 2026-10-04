@@ -105,9 +105,6 @@ data class AccountSettingsAccountState(
     val urlToken: String? = null,
 )
 
-internal const val PEOPLE_PROFILE_INCLUDE_PATH =
-    "allow_message,is_followed,is_following,is_org,is_blocking,badge_v2,answer_count,follower_count,following_count,articles_count,question_count,pins_count"
-
 private const val QR_CODE_SCAN_ACTIVITY_CLASS = "com.zhihuminus.QRCodeScanActivity"
 private const val WEBVIEW_ACTIVITY_CLASS = "com.zhihuminus.WebviewActivity"
 private const val QR_SCAN_RESULT_EXTRA = "scan_result"

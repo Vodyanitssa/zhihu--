@@ -136,14 +136,14 @@ object DataHolder {
 
     @Serializable
     data class AnswerModelQuestion(
-        val created: Long,
+        val created: Long = 0,
         val id: Long,
-        val questionType: String,
+        val questionType: String = "",
         val relationship: Relationship? = null,
         val title: String,
-        val type: String,
-        val updatedTime: Long,
-        val url: String,
+        val type: String = "question",
+        val updatedTime: Long = 0,
+        val url: String = "",
         val topics: List<Topic> = emptyList(),
         val author: Author? = null,
     )
@@ -496,8 +496,8 @@ object DataHolder {
 
     @Serializable
     data class CanComment(
-        val status: Boolean,
-        val reason: String,
+        val status: Boolean = true,
+        val reason: String = "",
     )
 
     @Serializable
