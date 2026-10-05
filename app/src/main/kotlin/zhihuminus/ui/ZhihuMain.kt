@@ -86,6 +86,7 @@ import androidx.navigation.toRoute
 import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
+import com.zhihuminus.feature.follow.FollowRoute
 import com.zhihuminus.feature.history.HistoryRoute
 import com.zhihuminus.feature.home.HomeRoute
 import com.zhihuminus.feature.notification.NotificationRoute
@@ -383,7 +384,7 @@ fun ZhihuMain(
                         TopicRoute(navEntry.toRoute())
                     }
                     composable<Follow> {
-                        FollowScreen(
+                        FollowRoute(
                             scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
                         )
@@ -578,7 +579,7 @@ private fun MainTabsContent(
                     innerPadding = innerPadding,
                 )
 
-                MainTabPage.FollowPage -> FollowScreen(
+                MainTabPage.FollowPage -> FollowRoute(
                     scrollToTopTrigger = scrollToTopTrigger,
                     innerPadding = innerPadding,
                 )

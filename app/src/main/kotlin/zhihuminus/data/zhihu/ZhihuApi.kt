@@ -11,6 +11,7 @@ import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
+import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
@@ -40,6 +41,11 @@ interface ZhihuApi {
         url: String,
         include: String = FEED_INCLUDE,
     ): FeedPage
+
+    /**
+     * 获取最近有动态的已关注用户列表。
+     */
+    suspend fun getRecentFollowingUsers(): List<FollowingUserItemDto>
 
     /**
      * 关注/取消关注问题

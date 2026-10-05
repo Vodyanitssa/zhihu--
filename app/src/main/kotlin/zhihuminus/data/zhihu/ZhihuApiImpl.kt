@@ -20,6 +20,7 @@ import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
+import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
@@ -119,6 +120,20 @@ class ZhihuApiImpl(
             nextUrl = paging?.next?.takeIf { it.isNotEmpty() },
             isEnd = paging?.isEnd == true,
         )
+    }
+
+    override suspend fun getRecentFollowingUsers(): List<FollowingUserItemDto> {
+        val json = environment.fetchJson(RECENT_MOMENTS_USERS_URL, "")
+            ?: return emptyList()
+        val dataArray = json["data"]?.jsonArray ?: return emptyList()
+        return dataArray.mapNotNull { item ->
+            try {
+                ZhihuJson.decodeJson<FollowingUserItemDto>(item)
+            } catch (e: Exception) {
+                environment.logDecodeFailure("ZhihuApiImpl", item, e)
+                null
+            }
+        }
     }
 
     override suspend fun followQuestion(questionId: Long, follow: Boolean) {
@@ -829,6 +844,8 @@ internal const val RECOMMEND_FEED_URL =
 /** 桌面 Web v3 关注流（动态）首页 URL；续页用响应里的 paging.next。 */
 internal const val MOMENTS_FEED_URL =
     "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true"
+
+private const val RECENT_MOMENTS_USERS_URL = "https://api.zhihu.com/moments/recent?type=raw"
 
 /** 已知无法作为独立 feed 条目展示的响应类型与广告类型，解码前直接跳过。 */
 private val SKIPPED_FEED_TYPES = setOf(

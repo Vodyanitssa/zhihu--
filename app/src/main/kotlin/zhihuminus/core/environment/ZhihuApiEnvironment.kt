@@ -75,7 +75,7 @@ interface ZhihuApiEnvironment {
         item: JsonElement,
         error: Exception,
     ) {
-        Log.e(tag ?: "PaginationViewModel", "Failed to decode item: $item", error)
+        Log.e(tag ?: "ZhihuApiEnvironment", "Failed to decode item: $item", error)
     }
 }
 
