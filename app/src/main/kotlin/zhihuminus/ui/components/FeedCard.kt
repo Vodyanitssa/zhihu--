@@ -198,7 +198,7 @@ private fun FeedCardContent(
     if (!item.title.isEmpty()) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Text(
-                text = parseEmphasizedHtmlTextWithTheme(item.title),
+                text = searchHighlightedText(item.title),
                 style = MaterialTheme.typography.titleLarge,
                 maxLines = 2,
                 color = MaterialTheme.colorScheme.onSurface,

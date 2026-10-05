@@ -17,7 +17,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.data.PeopleSearchResult
-import com.zhihuminus.ui.components.parseEmphasizedHtmlTextWithTheme
+import com.zhihuminus.ui.components.searchHighlightedText
 
 @Composable
 fun SearchPeopleItem(
@@ -46,7 +46,7 @@ fun SearchPeopleItem(
                 .padding(start = 12.dp),
         ) {
             Text(
-                text = parseEmphasizedHtmlTextWithTheme(result.highlightedName),
+                text = searchHighlightedText(result.highlightedName),
                 style = MaterialTheme.typography.titleMedium,
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
