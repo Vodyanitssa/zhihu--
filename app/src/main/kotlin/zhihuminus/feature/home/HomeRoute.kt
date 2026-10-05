@@ -17,6 +17,8 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.state.UnreadNotificationState
+import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHomeRepository
 import com.zhihuminus.navigation.LocalNavigator
@@ -97,8 +99,14 @@ fun HomeRoute(
     LaunchedEffect(lifecycleOwner, repository) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             val count = repository.fetchUnreadNotificationCount()
+            UnreadNotificationState.update(count)
             viewModel.onEvent(HomeEvent.UpdateUnreadCount(count))
         }
+    }
+
+    val sharedUnreadCount by rememberUnreadNotificationCount()
+    LaunchedEffect(sharedUnreadCount) {
+        viewModel.onEvent(HomeEvent.UpdateUnreadCount(sharedUnreadCount))
     }
 
     LaunchedEffect(viewModel) {

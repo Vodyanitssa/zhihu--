@@ -3,6 +3,8 @@ package com.zhihuminus.feature.notification
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.core.state.UnreadNotificationState
+import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.data.FakeZhihuApi
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
@@ -18,6 +20,7 @@ import com.zhihuminus.data.zhihu.dto.NotificationTargetDto
 import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePluginDto
+import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.data.zhihu.toDomain
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
@@ -405,5 +408,47 @@ class NotificationTest {
         assertEquals(0, result.unreadCounts[NotificationCategory.Favorite])
         assertEquals(1, result.unreadCounts[NotificationCategory.Follow])
         assertEquals(2, result.invitation?.unreadCount)
+    }
+
+    @Test
+    fun testZhihuMeNotificationsDtoWithMessagesCount() {
+        val json = ZhihuJson.json.parseToJsonElement(
+            """
+            {
+                "default_notifications_count": 2,
+                "follow_notifications_count": 3,
+                "vote_thank_notifications_count": 4,
+                "messages_count": 5
+            }
+            """.trimIndent(),
+        )
+        val dto = ZhihuJson.decodeJson<ZhihuMeNotificationsDto>(json)
+        assertEquals(2, dto.defaultNotificationsCount)
+        assertEquals(3, dto.followNotificationsCount)
+        assertEquals(4, dto.voteThankNotificationsCount)
+        assertEquals(5, dto.messagesCount)
+        assertEquals(14, dto.totalCount)
+    }
+
+    @Test
+    fun testUnreadNotificationStateAndUpdate() {
+        UnreadNotificationState.update(0)
+        assertEquals(0, UnreadNotificationState.currentCount)
+
+        UnreadNotificationState.update(42)
+        assertEquals(42, UnreadNotificationState.currentCount)
+        assertEquals(42, UnreadNotificationState.count.value)
+
+        UnreadNotificationState.update(-5)
+        assertEquals(0, UnreadNotificationState.currentCount)
+    }
+
+    @Test
+    fun testFormatUnreadCount() {
+        assertEquals("0", formatUnreadCount(0))
+        assertEquals("1", formatUnreadCount(1))
+        assertEquals("99", formatUnreadCount(99))
+        assertEquals("99+", formatUnreadCount(100))
+        assertEquals("99+", formatUnreadCount(999))
     }
 }

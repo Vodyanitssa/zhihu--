@@ -63,6 +63,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -73,9 +74,16 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LocalLifecycleOwner
+import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.state.UnreadNotificationState
+import com.zhihuminus.core.state.formatUnreadCount
+import com.zhihuminus.core.state.rememberUnreadNotificationCount
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.History
@@ -101,7 +109,7 @@ import com.zhihuminus.ui.components.SettingItemGroup
 fun AccountSettingScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
-    unreadCount: Int = 0,
+    unreadCount: Int? = null,
     showUnreadBadge: Boolean = rememberNotificationSettingsStore().getUnreadBadgeEnabled(),
 ) {
     val navigator = LocalNavigator.current
@@ -112,8 +120,23 @@ fun AccountSettingScreen(
     val openSystemUrl = rememberSystemUrlOpener()
     val userMessages = rememberUserMessageSink()
     val versionInfo = rememberAppVersionInfo()
+    val sharedUnreadCount by rememberUnreadNotificationCount()
+    val effectiveUnreadCount = unreadCount ?: sharedUnreadCount
     var showLogoutDialog by remember { mutableStateOf(false) }
     val data by accountState
+
+    val lifecycleOwner = LocalLifecycleOwner.current
+    LaunchedEffect(lifecycleOwner, environment, data.login) {
+        if (!data.login) {
+            UnreadNotificationState.update(0)
+            return@LaunchedEffect
+        }
+        lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
+            val api = ZhihuApiImpl(environment)
+            val count = runCatching { api.getMeNotifications().totalCount }.getOrDefault(0)
+            UnreadNotificationState.update(count)
+        }
+    }
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -240,11 +263,11 @@ fun AccountSettingScreen(
                     )
                     AccountQuickActionItem(
                         icon = Icons.Default.Notifications,
-                        label = "通知",
+                        label = "消息",
                         modifier = Modifier.weight(1f),
                         badge = {
-                            if (showUnreadBadge && unreadCount > 0) {
-                                Badge { Text(unreadCount.toString()) }
+                            if (showUnreadBadge && effectiveUnreadCount > 0) {
+                                Badge { Text(formatUnreadCount(effectiveUnreadCount)) }
                             }
                         },
                         onClick = {

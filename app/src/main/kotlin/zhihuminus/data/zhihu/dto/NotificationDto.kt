@@ -145,6 +145,8 @@ data class ZhihuMeNotificationsDto(
     val defaultNotificationsCount: Int = 0,
     val followNotificationsCount: Int = 0,
     val voteThankNotificationsCount: Int = 0,
+    val messagesCount: Int = 0,
 ) {
-    val totalCount: Int get() = defaultNotificationsCount + followNotificationsCount + voteThankNotificationsCount
+    val totalCount: Int
+        get() = defaultNotificationsCount + followNotificationsCount + voteThankNotificationsCount + messagesCount
 }

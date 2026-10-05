@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.navigation.NavDestination
@@ -46,6 +47,10 @@ fun NotificationRoute(
                 is NotificationEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
             }
         }
+    }
+
+    LaunchedEffect(viewModel.uiState.unreadCount) {
+        UnreadNotificationState.update(viewModel.uiState.unreadCount)
     }
 
     NotificationScreen(
