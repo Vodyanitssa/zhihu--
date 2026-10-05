@@ -60,8 +60,13 @@ import androidx.lifecycle.lifecycleScope
 import androidx.webkit.WebResourceErrorCompat
 import androidx.webkit.WebViewAssetLoader
 import androidx.webkit.WebViewClientCompat
+import com.zhihuminus.core.content.extractImageUrl
+import com.zhihuminus.core.platform.luoTianYiUrlLauncher
+import com.zhihuminus.core.platform.saveImageToGallery
+import com.zhihuminus.core.platform.shareImage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.fetchHighestQualityZhihuVideoUrl
+import com.zhihuminus.data.zhihu.crypto.signFetchRequest
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
@@ -69,11 +74,6 @@ import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.theme.ThemeManager
 import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
 import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
-import com.zhihuminus.util.extractImageUrl
-import com.zhihuminus.util.luoTianYiUrlLauncher
-import com.zhihuminus.util.saveImageToGallery
-import com.zhihuminus.util.shareImage
-import com.zhihuminus.util.signFetchRequest
 import io.ktor.client.HttpClient
 import io.ktor.http.Url
 import kotlinx.coroutines.DelicateCoroutinesApi

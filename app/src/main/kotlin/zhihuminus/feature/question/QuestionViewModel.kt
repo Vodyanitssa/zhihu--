@@ -8,9 +8,9 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.util.Log
-import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

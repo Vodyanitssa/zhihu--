@@ -17,9 +17,9 @@
 
 package com.zhihuminus.ui
 
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.util.Log
 
 const val AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY = "autoRefreshHomeOnStartup"
 const val HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"

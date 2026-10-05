@@ -57,12 +57,11 @@ import com.zhihuminus.account.ZHIHU_HOME_URL
 import com.zhihuminus.account.ZHIHU_SIGNIN_URL
 import com.zhihuminus.account.ZhihuMobileLoginToken
 import com.zhihuminus.account.parseCookieAssignments
+import com.zhihuminus.core.platform.luoTianYiUrlLauncher
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.components.WebviewComp
 import com.zhihuminus.ui.components.setupUpWebviewClient
-import com.zhihuminus.util.enableEdgeToEdgeCompat
-import com.zhihuminus.util.luoTianYiUrlLauncher
 import kotlinx.coroutines.launch
 
 private const val LOGIN_MODE_WEB = 0
@@ -74,7 +73,6 @@ class LoginActivity : ComponentActivity() {
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdgeCompat()
 
         setContent {
             ZhihuTheme {

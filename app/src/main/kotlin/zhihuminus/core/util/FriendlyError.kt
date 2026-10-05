@@ -1,4 +1,4 @@
-package com.zhihuminus.util
+package com.zhihuminus.core.util
 
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException

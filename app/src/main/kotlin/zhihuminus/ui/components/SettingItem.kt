@@ -59,7 +59,6 @@ import androidx.compose.ui.layout.Layout
 import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.layout.positionInRoot
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.util.ProvideContentColorTextStyle
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 

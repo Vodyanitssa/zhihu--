@@ -22,12 +22,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
-import com.zhihuminus.util.formatCompactCount
 
 @Composable
 fun PostHeader(
@@ -162,7 +162,7 @@ fun PostHeader(
         if (voteCount > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${formatCompactCount(voteCount)} 人赞同",
+                text = "${formatCount(voteCount.toLong())} 人赞同",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

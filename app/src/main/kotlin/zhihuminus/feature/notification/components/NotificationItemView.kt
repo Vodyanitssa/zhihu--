@@ -32,8 +32,8 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
+import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.feature.notification.NotificationTimelineItem
-import com.zhihuminus.util.formatRelativeTime
 
 @Composable
 fun NotificationItemView(

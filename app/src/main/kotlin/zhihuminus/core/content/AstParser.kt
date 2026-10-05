@@ -2,7 +2,6 @@ package com.zhihuminus.core.content
 
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
-import com.zhihuminus.util.extractImageUrl
 import org.jsoup.Jsoup
 import org.jsoup.nodes.Element
 import org.jsoup.nodes.Node
@@ -365,3 +364,13 @@ object AstParser {
         )
     }
 }
+
+fun extractImageUrl(attribute: (String) -> String): String? =
+    attribute("data-original-token")
+        .takeIf { it.startsWith("v2-") }
+        ?.let { "https://pic1.zhimg.com/$it" }
+        ?: attribute("data-original").takeIf { it.isNotBlank() }
+        ?: attribute("data-default-watermark-src").takeIf { it.isNotBlank() }
+        ?: attribute("data-actualsrc").takeIf { it.isNotBlank() }
+        ?: attribute("data-thumbnail").takeIf { it.isNotBlank() }
+        ?: attribute("src").takeIf { it.isNotBlank() }

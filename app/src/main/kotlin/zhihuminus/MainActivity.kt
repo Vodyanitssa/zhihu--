@@ -44,9 +44,14 @@ import coil3.disk.directory
 import coil3.memory.MemoryCache
 import coil3.request.crossfade
 import coil3.svg.SvgDecoder
+import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.platform.clearShareImageCache
+import com.zhihuminus.core.platform.clipboardManager
+import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.HistoryStorage
+import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.Home
@@ -66,12 +71,6 @@ import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain
 import com.zhihuminus.ui.ArticleHost
 import com.zhihuminus.ui.components.getHighestQualityVideoUrl
-import com.zhihuminus.util.ZHIHU_WEB_ZSE93
-import com.zhihuminus.util.ZhihuCredentialRefresher
-import com.zhihuminus.util.clearShareImageCache
-import com.zhihuminus.util.clipboardManager
-import com.zhihuminus.util.enableEdgeToEdgeCompat
-import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -129,7 +128,6 @@ class MainActivity :
             startActivity(intent)
             finish()
         }
-        enableEdgeToEdgeCompat()
         super.onCreate(savedInstanceState)
         clearShareImageCache(this)
         history = HistoryStorage(this)

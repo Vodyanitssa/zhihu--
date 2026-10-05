@@ -4,7 +4,9 @@ import android.content.ClipData
 import android.content.Context
 import androidx.compose.ui.platform.ClipEntry
 import androidx.compose.ui.platform.Clipboard
-import com.zhihuminus.util.clipboardManager
+
+val Context.clipboardManager: android.content.ClipboardManager
+    get() = getSystemService(Context.CLIPBOARD_SERVICE) as android.content.ClipboardManager
 
 suspend fun Clipboard.copyText(text: String) {
     setClipEntry(

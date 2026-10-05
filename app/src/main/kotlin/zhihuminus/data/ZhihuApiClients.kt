@@ -17,8 +17,8 @@
 
 package com.zhihuminus.data
 
-import com.zhihuminus.util.ZhihuCredentialRefresher
-import com.zhihuminus.util.raiseForStatus
+import com.zhihuminus.account.ZhihuCredentialRefresher
+import com.zhihuminus.core.util.raiseForStatus
 import io.ktor.client.HttpClient
 import io.ktor.client.call.body
 import io.ktor.client.plugins.cookies.CookiesStorage

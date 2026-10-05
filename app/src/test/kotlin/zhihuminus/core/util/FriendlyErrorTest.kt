@@ -1,4 +1,4 @@
-package com.zhihuminus.util
+package com.zhihuminus.core.util
 
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
@@ -15,7 +15,7 @@ import kotlin.test.assertTrue
 
 class FriendlyErrorTest {
     @Test
-    fun handlesNull() {
+    fun handlesNullError() {
         assertEquals("未知错误", friendlyErrorMessage(null))
     }
 
@@ -54,20 +54,18 @@ class FriendlyErrorTest {
     @Test
     fun handlesHttpStatusExceptions() {
         val notFound = HttpStatusException(HttpStatusCode.NotFound, Url("https://www.zhihu.com"), "not found")
-        assertEquals("内容不存在或已被删除", friendlyErrorMessage(notFound))
-
         val unauthorized = HttpStatusException(HttpStatusCode.Unauthorized, Url("https://www.zhihu.com"), "unauthorized")
-        assertEquals("登录已过期，请重新登录", friendlyErrorMessage(unauthorized))
-
         val serverError = HttpStatusException(HttpStatusCode.InternalServerError, Url("https://www.zhihu.com"), "server error")
-        assertEquals("知乎服务器开小差了，请稍后重试 (500)", friendlyErrorMessage(serverError))
-
         val gatewayTimeout = HttpStatusException(HttpStatusCode.GatewayTimeout, Url("https://www.zhihu.com"), "gateway timeout")
+
+        assertEquals("内容不存在或已被删除", friendlyErrorMessage(notFound))
+        assertEquals("登录已过期，请重新登录", friendlyErrorMessage(unauthorized))
+        assertEquals("知乎服务器开小差了，请稍后重试 (500)", friendlyErrorMessage(serverError))
         assertEquals("知乎服务器开小差了，请稍后重试 (504)", friendlyErrorMessage(gatewayTimeout))
     }
 
     @Test
-    fun handlesSerializationException() {
+    fun handlesSerializationExceptions() {
         assertEquals(
             "数据解析失败，可能知乎接口已变更",
             friendlyErrorMessage(SerializationException("Missing field")),
@@ -75,9 +73,9 @@ class FriendlyErrorTest {
     }
 
     @Test
-    fun handlesWrappedExceptions() {
-        val root = java.net.SocketTimeoutException("timeout")
-        val wrapped = RuntimeException("Failed to execute request", IOException(root))
+    fun unwrapsNestedExceptions() {
+        val root = SocketTimeoutException("deep timeout")
+        val wrapped = RuntimeException("Outer wrapper", IOException("Middle wrapper", root))
         assertEquals(
             "网络连接超时，请检查网络后重试",
             friendlyErrorMessage(wrapped),
@@ -85,8 +83,8 @@ class FriendlyErrorTest {
     }
 
     @Test
-    fun handlesGeneralIOException() {
-        val brokenPipe = IOException("write failed: EPIPE (Broken pipe)")
+    fun handlesGenericIoExceptions() {
+        val brokenPipe = IOException("write failed: Broken pipe")
         assertTrue(friendlyErrorMessage(brokenPipe).contains("中断"))
     }
 }

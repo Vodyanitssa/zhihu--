@@ -65,15 +65,13 @@ import com.journeyapps.barcodescanner.ScanContract
 import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import com.zhihuminus.QRCodeScanActivity.Companion.LOGIN_PREFIX
+import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.theme.ZhihuTheme
-import com.zhihuminus.util.clipboardManager
-import com.zhihuminus.util.enableEdgeToEdgeCompat
 
 class QRCodeScanActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        enableEdgeToEdgeCompat()
 
         setContent {
             ZhihuTheme {

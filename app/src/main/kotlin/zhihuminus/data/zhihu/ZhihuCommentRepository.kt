@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu
 
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.CommentDto
@@ -9,7 +10,6 @@ import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentPage
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentSortOrder
-import com.zhihuminus.util.Log
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject

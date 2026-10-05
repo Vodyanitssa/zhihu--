@@ -17,8 +17,8 @@
 
 package com.zhihuminus.navigation
 
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.util.Log
 import io.ktor.http.Url
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable

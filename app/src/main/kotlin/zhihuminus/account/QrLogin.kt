@@ -49,10 +49,10 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
+import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.ZHIHU_ME_URL
 import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.util.ZHIHU_WEB_ZSE93
-import com.zhihuminus.util.friendlyErrorMessage
+import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.request.header

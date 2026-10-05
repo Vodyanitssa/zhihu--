@@ -3,6 +3,7 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.environment.PaginationEnvironment
 import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
+import com.zhihuminus.core.util.raiseForStatus
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.PeopleSearchResult
@@ -21,7 +22,6 @@ import com.zhihuminus.feature.search.SearchTimeRange
 import com.zhihuminus.feature.search.TopicSearchResult
 import com.zhihuminus.feature.search.ZHIHU_HOT_SEARCH_URL
 import com.zhihuminus.platform.SettingsStore
-import com.zhihuminus.util.raiseForStatus
 import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray

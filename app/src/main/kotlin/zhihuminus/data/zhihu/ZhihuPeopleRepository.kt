@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu
 
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
@@ -15,7 +16,6 @@ import com.zhihuminus.feature.people.githubSocialUiState
 import com.zhihuminus.feature.people.toPeopleAnswerDisplayItem
 import com.zhihuminus.feature.people.toPeopleArticleDisplayItem
 import com.zhihuminus.feature.people.toPeoplePinDisplayItem
-import com.zhihuminus.util.Log
 
 class ZhihuPeopleRepository(
     private val api: ZhihuApi,

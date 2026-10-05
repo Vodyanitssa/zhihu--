@@ -26,6 +26,8 @@ import androidx.compose.foundation.pager.HorizontalPager
 import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
+import androidx.compose.material3.LocalContentColor
+import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -43,6 +45,7 @@ import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.DpOffset
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
@@ -181,4 +184,18 @@ private object NoopHapticFeedback : HapticFeedback {
     override fun performHapticFeedback(hapticFeedbackType: HapticFeedbackType) {
         // 无操作。
     }
+}
+
+@Composable
+fun ProvideContentColorTextStyle(
+    contentColor: Color,
+    textStyle: TextStyle,
+    content: @Composable () -> Unit,
+) {
+    val mergedStyle = LocalTextStyle.current.merge(textStyle)
+    CompositionLocalProvider(
+        LocalContentColor provides contentColor,
+        LocalTextStyle provides mergedStyle,
+        content = content,
+    )
 }

@@ -72,7 +72,6 @@ import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
 import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
-import com.zhihuminus.util.parseEmphasizedHtmlTextWithTheme
 import org.jsoup.Jsoup
 
 /**

@@ -5,12 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.PeopleSearchResult
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.util.Log
-import com.zhihuminus.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

@@ -5,10 +5,10 @@ import android.app.AlertDialog
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
+import com.zhihuminus.core.util.HttpStatusException
 import com.zhihuminus.data.ZhihuJson.json
 import com.zhihuminus.platform.UserMessageSink
 import com.zhihuminus.platform.androidUserMessageSink
-import com.zhihuminus.util.HttpStatusException
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive

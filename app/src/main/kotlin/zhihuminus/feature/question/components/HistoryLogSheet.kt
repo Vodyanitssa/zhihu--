@@ -34,8 +34,8 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
 import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.util.Log
 
 private const val TAG = "HistoryLogSheet"
 

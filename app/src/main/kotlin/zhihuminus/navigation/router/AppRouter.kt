@@ -1,11 +1,11 @@
 package com.zhihuminus.navigation.router
 
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.TopLevelDestination
-import com.zhihuminus.util.Log
 import io.ktor.http.Url
 
 /**
