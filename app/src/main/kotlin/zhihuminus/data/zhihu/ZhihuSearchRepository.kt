@@ -172,6 +172,15 @@ class ZhihuSearchRepository(
         response.raiseForStatus()
     }
 
+    override suspend fun setMemberFollowing(
+        urlToken: String,
+        following: Boolean,
+    ): Result<Unit> = runCatching {
+        val endpoint = "https://www.zhihu.com/api/v4/members/$urlToken/followers"
+        val response = if (following) environment.postSigned(endpoint) else environment.deleteSigned(endpoint)
+        response.raiseForStatus()
+    }
+
     override fun getSearchHistory(): List<String> =
         settings
             .getStringOrNull(SEARCH_HISTORY_KEY)

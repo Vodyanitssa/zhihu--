@@ -46,6 +46,7 @@ data class PeopleUiState(
     val followingTopicsState: PaginatedTabState<FollowedTopic> = PaginatedTabState(),
     val followingQuestionsState: PaginatedTabState<FollowedQuestion> = PaginatedTabState(),
     val followingCollectionsState: PaginatedTabState<DataHolder.Collection> = PaginatedTabState(),
+    val changingItemFollowIds: Set<String> = emptySet(),
 )
 
 fun peopleScreenInitialPage(person: Person): Int {
@@ -93,6 +94,7 @@ class PeopleViewModel(
         when (event) {
             is PeopleEvent.RefreshProfile -> loadProfile()
             is PeopleEvent.ToggleFollow -> toggleFollow()
+            is PeopleEvent.ToggleItemFollow -> toggleItemFollow(event.people)
             is PeopleEvent.ToggleBlock -> toggleBlock()
             is PeopleEvent.TabSelected -> loadTabIfNeeded(event.index)
             is PeopleEvent.LoadMore -> loadTab(event.tabIndex, reset = false)
@@ -160,6 +162,53 @@ class PeopleViewModel(
                 if (e is CancellationException) throw e
                 Log.e("PeopleViewModel", "Failed to toggle follow", e)
                 _effect.send(PeopleEffect.ShowMessage("操作失败: ${friendlyErrorMessage(e)}"))
+            }
+        }
+    }
+
+    fun toggleItemFollow(people: DataHolder.People) {
+        val targetId = people.id
+        val token = people.urlToken.takeIf { !it.isNullOrBlank() } ?: targetId
+        if (token.isBlank() || targetId in uiState.changingItemFollowIds) return
+        val willFollow = !people.isFollowing
+
+        fun updateList(list: List<DataHolder.People>): List<DataHolder.People> = list.map { item ->
+            if (item.id == targetId || (item.urlToken != null && item.urlToken == people.urlToken)) {
+                item.copy(
+                    isFollowing = willFollow,
+                    followerCount = (item.followerCount + if (willFollow) 1 else -1).coerceAtLeast(0),
+                )
+            } else {
+                item
+            }
+        }
+
+        val prevFollowers = uiState.followersState.items
+        val prevFollowing = uiState.followingState.items
+
+        uiState = uiState.copy(
+            changingItemFollowIds = uiState.changingItemFollowIds + targetId,
+            followersState = uiState.followersState.copy(items = updateList(prevFollowers)),
+            followingState = uiState.followingState.copy(items = updateList(prevFollowing)),
+        )
+
+        viewModelScope.launch {
+            try {
+                if (willFollow) {
+                    repository.follow(token)
+                } else {
+                    repository.unfollow(token)
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("PeopleViewModel", "Failed to toggle item follow", e)
+                uiState = uiState.copy(
+                    followersState = uiState.followersState.copy(items = prevFollowers),
+                    followingState = uiState.followingState.copy(items = prevFollowing),
+                )
+                _effect.send(PeopleEffect.ShowMessage(if (willFollow) "关注失败" else "取消关注失败"))
+            } finally {
+                uiState = uiState.copy(changingItemFollowIds = uiState.changingItemFollowIds - targetId)
             }
         }
     }

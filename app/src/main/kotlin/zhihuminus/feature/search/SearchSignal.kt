@@ -49,6 +49,12 @@ sealed interface SearchEvent {
         val following: Boolean,
     ) : SearchEvent
 
+    data class TogglePeopleFollowing(
+        val peopleId: String,
+        val urlToken: String,
+        val following: Boolean,
+    ) : SearchEvent
+
     data class ContentClick(
         val item: FeedDisplayItem,
         val destination: NavDestination?,

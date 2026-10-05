@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.people
 
+import com.zhihuminus.data.DataHolder
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
 
@@ -7,6 +8,10 @@ sealed interface PeopleEvent {
     data object RefreshProfile : PeopleEvent
 
     data object ToggleFollow : PeopleEvent
+
+    data class ToggleItemFollow(
+        val people: DataHolder.People,
+    ) : PeopleEvent
 
     data object ToggleBlock : PeopleEvent
 

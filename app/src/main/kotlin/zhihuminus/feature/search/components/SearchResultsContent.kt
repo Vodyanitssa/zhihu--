@@ -27,6 +27,7 @@ import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
+import com.zhihuminus.ui.components.PeopleListItem
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 
 @Composable
@@ -104,8 +105,11 @@ fun SearchResultsContent(
                     ) {
                         items(state.peopleItems, key = { it.people.id }) { result ->
                             val people = result.people
-                            SearchPeopleItem(
-                                result = result,
+                            PeopleListItem(
+                                people = people,
+                                highlightedName = result.highlightedName,
+                                isFollowing = people.isFollowing,
+                                isChangingFollowing = people.id in state.changingPeopleIds,
                                 onClick = {
                                     onEvent(
                                         SearchEvent.ContentClick(
@@ -119,6 +123,15 @@ fun SearchResultsContent(
                                                 urlToken = people.urlToken.orEmpty(),
                                                 name = people.name,
                                             ),
+                                        ),
+                                    )
+                                },
+                                onToggleFollow = {
+                                    onEvent(
+                                        SearchEvent.TogglePeopleFollowing(
+                                            peopleId = people.id,
+                                            urlToken = people.urlToken.orEmpty(),
+                                            following = !people.isFollowing,
                                         ),
                                     )
                                 },

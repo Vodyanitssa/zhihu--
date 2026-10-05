@@ -29,7 +29,6 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.people.components.PeopleCollectionListItem
 import com.zhihuminus.feature.people.components.PeopleColumnListItem
 import com.zhihuminus.feature.people.components.PeopleFollowingSubscriptionsTab
-import com.zhihuminus.feature.people.components.PeopleListItem
 import com.zhihuminus.feature.people.components.PeopleQuestionListItem
 import com.zhihuminus.feature.people.components.PeopleSortBar
 import com.zhihuminus.feature.people.components.PeopleUserInfoHeader
@@ -39,6 +38,7 @@ import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
+import com.zhihuminus.ui.components.PeopleListItem
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import kotlinx.coroutines.launch
 import com.zhihuminus.navigation.Search as SearchDestination
@@ -314,7 +314,20 @@ fun PeopleScreen(
                         ) { people ->
                             PeopleListItem(
                                 people = people,
-                                onNavigate = onNavigate,
+                                isFollowing = people.isFollowing,
+                                isChangingFollowing = people.id in state.changingItemFollowIds,
+                                onClick = {
+                                    onNavigate(
+                                        Person(
+                                            id = people.id,
+                                            name = people.name,
+                                            urlToken = people.urlToken ?: "",
+                                        ),
+                                    )
+                                },
+                                onToggleFollow = {
+                                    onEvent(PeopleEvent.ToggleItemFollow(people))
+                                },
                             )
                         }
                     }
@@ -331,7 +344,20 @@ fun PeopleScreen(
                         ) { people ->
                             PeopleListItem(
                                 people = people,
-                                onNavigate = onNavigate,
+                                isFollowing = people.isFollowing,
+                                isChangingFollowing = people.id in state.changingItemFollowIds,
+                                onClick = {
+                                    onNavigate(
+                                        Person(
+                                            id = people.id,
+                                            name = people.name,
+                                            urlToken = people.urlToken ?: "",
+                                        ),
+                                    )
+                                },
+                                onToggleFollow = {
+                                    onEvent(PeopleEvent.ToggleItemFollow(people))
+                                },
                             )
                         }
                     }

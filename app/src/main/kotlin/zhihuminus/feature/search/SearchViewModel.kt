@@ -39,6 +39,7 @@ data class SearchUiState(
     val isEnd: Boolean = false,
     val errorMessage: String? = null,
     val changingTopicIds: Set<String> = emptySet(),
+    val changingPeopleIds: Set<String> = emptySet(),
 ) {
     val isMemberSearch: Boolean
         get() = restrictedMemberHashId.isNotBlank()
@@ -175,6 +176,10 @@ class SearchViewModel(
 
             is SearchEvent.ToggleTopicFollowing -> {
                 toggleTopicFollowing(event.topicId, event.following)
+            }
+
+            is SearchEvent.TogglePeopleFollowing -> {
+                togglePeopleFollowing(event.peopleId, event.urlToken, event.following)
             }
 
             is SearchEvent.ContentClick -> {
@@ -326,6 +331,37 @@ class SearchViewModel(
                 _effect.send(SearchEffect.ShowMessage(if (following) "关注话题失败" else "取消关注话题失败"))
             }
             uiState = uiState.copy(changingTopicIds = uiState.changingTopicIds - topicId)
+        }
+    }
+
+    private fun togglePeopleFollowing(peopleId: String, urlToken: String, following: Boolean) {
+        val index = uiState.peopleItems.indexOfFirst { it.people.id == peopleId }
+        if (index < 0 || peopleId in uiState.changingPeopleIds) return
+        val previous = uiState.peopleItems[index]
+        val updatedPeople = previous.people.copy(
+            isFollowing = following,
+            followerCount = (previous.people.followerCount + if (following) 1 else -1).coerceAtLeast(0),
+        )
+        uiState = uiState.copy(
+            changingPeopleIds = uiState.changingPeopleIds + peopleId,
+            peopleItems = uiState.peopleItems.toMutableList().apply {
+                this[index] = previous.copy(people = updatedPeople)
+            },
+        )
+
+        viewModelScope.launch {
+            val token = urlToken.ifBlank { peopleId }
+            repository.setMemberFollowing(token, following).onFailure { error ->
+                Log.w("SearchViewModel", "Toggle people follow failed", error)
+                uiState = uiState.copy(
+                    peopleItems = uiState.peopleItems.toMutableList().apply {
+                        val curIdx = indexOfFirst { it.people.id == peopleId }
+                        if (curIdx >= 0) this[curIdx] = previous
+                    },
+                )
+                _effect.send(SearchEffect.ShowMessage(if (following) "关注失败" else "取消关注失败"))
+            }
+            uiState = uiState.copy(changingPeopleIds = uiState.changingPeopleIds - peopleId)
         }
     }
 }

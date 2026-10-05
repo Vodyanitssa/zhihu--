@@ -51,12 +51,19 @@ class SearchTest {
         var hotSearchEnabled: Boolean = true
         var searchHistoryEnabled: Boolean = true
 
+        val followingMemberTokens = mutableSetOf<String>()
+
         override fun isHotSearchEnabled(): Boolean = hotSearchEnabled
 
         override fun isSearchHistoryEnabled(): Boolean = searchHistoryEnabled
 
         override suspend fun setTopicFollowing(topicId: String, following: Boolean): Result<Unit> {
             if (following) followingTopicIds.add(topicId) else followingTopicIds.remove(topicId)
+            return Result.success(Unit)
+        }
+
+        override suspend fun setMemberFollowing(urlToken: String, following: Boolean): Result<Unit> {
+            if (following) followingMemberTokens.add(urlToken) else followingMemberTokens.remove(urlToken)
             return Result.success(Unit)
         }
 
@@ -111,6 +118,18 @@ class SearchTest {
             assertTrue(repo.followingTopicIds.contains("123"))
             repo.setTopicFollowing("123", false)
             assertFalse(repo.followingTopicIds.contains("123"))
+        }
+    }
+
+    @Test
+    fun testMemberFollowToggle() {
+        val repo = FakeSearchRepository()
+        runBlocking {
+            assertFalse(repo.followingMemberTokens.contains("user-token"))
+            repo.setMemberFollowing("user-token", true)
+            assertTrue(repo.followingMemberTokens.contains("user-token"))
+            repo.setMemberFollowing("user-token", false)
+            assertFalse(repo.followingMemberTokens.contains("user-token"))
         }
     }
 

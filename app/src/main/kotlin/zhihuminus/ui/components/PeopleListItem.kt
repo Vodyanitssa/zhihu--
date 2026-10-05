@@ -1,8 +1,9 @@
-package com.zhihuminus.feature.people.components
+package com.zhihuminus.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -15,105 +16,103 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.officialBadge
-import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.router.AppRouter
-import com.zhihuminus.navigation.router.RouteResolution
-import com.zhihuminus.ui.components.AuthorBadge
 
 @Composable
 fun PeopleListItem(
     people: DataHolder.People,
-    onNavigate: (NavDestination) -> Unit,
+    onClick: () -> Unit,
+    onToggleFollow: () -> Unit,
     modifier: Modifier = Modifier,
+    highlightedName: String? = null,
+    isFollowing: Boolean = people.isFollowing,
+    isChangingFollowing: Boolean = false,
+    showBadge: Boolean = true,
 ) {
-    val token = people.urlToken ?: people.id
     Row(
         modifier = modifier
             .fillMaxWidth()
-            .clickable {
-                val url = "zhminus://people/$token"
-                when (val resolution = AppRouter.resolve(url)) {
-                    is RouteResolution.Screen -> onNavigate(resolution.destination)
-                    else -> {}
-                }
-            }.padding(vertical = 8.dp, horizontal = 4.dp),
+            .clickable(onClick = onClick)
+            .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
         AsyncImage(
             model = people.avatarUrl,
-            contentDescription = "用户头像",
+            contentDescription = "${people.name}的头像",
             modifier = Modifier
-                .padding(end = 12.dp)
                 .size(48.dp)
                 .clip(CircleShape),
         )
-        Column(modifier = Modifier.weight(1f)) {
+        Column(
+            modifier = Modifier
+                .weight(1f)
+                .padding(horizontal = 12.dp),
+        ) {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(
-                    text = people.name,
+                    text = if (!highlightedName.isNullOrEmpty()) {
+                        searchHighlightedText(highlightedName)
+                    } else {
+                        AnnotatedString(people.name)
+                    },
                     style = MaterialTheme.typography.titleMedium,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                     modifier = Modifier.weight(1f, fill = false),
                 )
-                val officialBadge = people.badgeV2.officialBadge()
-                if (officialBadge?.isUsefulInList == true) {
-                    AuthorBadge(
-                        badge = officialBadge,
-                        compact = true,
-                        modifier = Modifier.padding(start = 6.dp),
-                    )
+                if (showBadge) {
+                    val officialBadge = people.badgeV2.officialBadge()
+                    if (officialBadge?.isUsefulInList == true) {
+                        AuthorBadge(
+                            badge = officialBadge,
+                            compact = true,
+                            modifier = Modifier.padding(start = 6.dp),
+                        )
+                    }
                 }
             }
-            if (people.headline.isNotEmpty()) {
+            if (people.headline.isNotBlank()) {
                 Text(
                     text = people.headline,
                     style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
             Row(
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                modifier = Modifier.padding(top = 4.dp),
+                horizontalArrangement = Arrangement.spacedBy(12.dp),
+                modifier = Modifier.padding(top = 2.dp),
             ) {
                 Text(
-                    text = "${people.answerCount} 回答",
+                    text = "${formatCount(people.answerCount.toLong())} 回答",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${people.articlesCount} 文章",
+                    text = "${formatCount(people.articlesCount.toLong())} 文章",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${people.followerCount} 粉丝",
+                    text = "${formatCount(people.followerCount.toLong())} 粉丝",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
             }
         }
         OutlinedButton(
-            onClick = {
-                onNavigate(
-                    Person(
-                        id = people.id,
-                        name = people.name,
-                        urlToken = people.urlToken ?: "",
-                    ),
-                )
-            },
-            modifier = Modifier,
+            onClick = onToggleFollow,
+            enabled = !isChangingFollowing,
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
         ) {
-            Text("查看")
+            Text(if (isFollowing) "取消关注" else "关注")
         }
     }
 }

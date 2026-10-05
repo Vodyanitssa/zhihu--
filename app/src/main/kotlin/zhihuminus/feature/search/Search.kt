@@ -106,6 +106,11 @@ interface SearchRepository {
         following: Boolean,
     ): Result<Unit>
 
+    suspend fun setMemberFollowing(
+        urlToken: String,
+        following: Boolean,
+    ): Result<Unit>
+
     fun getSearchHistory(): List<String>
 
     fun saveSearchHistory(history: List<String>)
