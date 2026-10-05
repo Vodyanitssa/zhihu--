@@ -46,10 +46,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.feature.notification.NotificationType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.notification.NotificationType
 import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup

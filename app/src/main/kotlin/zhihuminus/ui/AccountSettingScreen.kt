@@ -84,13 +84,13 @@ import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberSystemUrlOpener
 import com.zhihuminus.platform.rememberUserMessageSink

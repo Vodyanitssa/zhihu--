@@ -11,7 +11,6 @@ import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.resolveContent
-import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable

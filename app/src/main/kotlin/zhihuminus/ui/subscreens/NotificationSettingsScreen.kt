@@ -41,16 +41,12 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.feature.notification.NotificationSettingsStore
+import com.zhihuminus.feature.notification.NotificationType
+import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.notification.NotificationType
-import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.ui.components.SettingItemWithSwitch
-import com.zhihuminus.notification.matchNotificationType as sharedMatchNotificationType
-
-object NotificationPreferences {
-    fun matchNotificationType(verb: String): NotificationType? = sharedMatchNotificationType(verb)
-}
 
 /**
  * 通知设置页。

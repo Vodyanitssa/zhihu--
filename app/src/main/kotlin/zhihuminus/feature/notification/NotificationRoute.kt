@@ -13,7 +13,6 @@ import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable

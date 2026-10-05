@@ -21,8 +21,8 @@ import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHomeRepository
+import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.notification.rememberNotificationSettingsStore
 import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberAppPrivateDirectory
 import com.zhihuminus.platform.rememberSettingsStore

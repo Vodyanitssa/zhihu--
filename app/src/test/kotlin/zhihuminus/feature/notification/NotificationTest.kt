@@ -24,8 +24,6 @@ import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.data.zhihu.toDomain
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.notification.NotificationType
-import com.zhihuminus.notification.matchNotificationType
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
