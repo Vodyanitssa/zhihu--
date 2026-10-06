@@ -20,8 +20,8 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.feature.people.PaginatedTabState
+import com.zhihuminus.feature.people.PeopleMemberItem
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.PeopleListItem
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -30,11 +30,11 @@ import com.zhihuminus.ui.components.ProgressIndicatorFooter
 @Composable
 fun PeopleUserListSheet(
     title: String,
-    state: PaginatedTabState<DataHolder.People>,
+    state: PaginatedTabState<PeopleMemberItem>,
     changingItemFollowIds: Set<String>,
     onLoadMore: () -> Unit,
-    onToggleFollow: (DataHolder.People) -> Unit,
-    onPersonClick: (DataHolder.People) -> Unit,
+    onToggleFollow: (PeopleMemberItem) -> Unit,
+    onPersonClick: (PeopleMemberItem) -> Unit,
     onDismiss: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -75,7 +75,7 @@ fun PeopleUserListSheet(
                 isEnd = { state.isEnd },
                 footer = ProgressIndicatorFooter,
                 modifier = Modifier.fillMaxSize(),
-                key = { it.urlToken ?: it.id },
+                key = { it.urlToken.ifBlank { it.id } },
             ) { people ->
                 PeopleListItem(
                     people = people,

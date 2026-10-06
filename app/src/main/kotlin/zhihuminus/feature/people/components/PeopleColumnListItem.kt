@@ -12,11 +12,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.DataHolder
+import com.zhihuminus.feature.people.PeopleColumnItem
 
 @Composable
 fun PeopleColumnListItem(
-    column: DataHolder.Column,
+    column: PeopleColumnItem,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -43,7 +43,7 @@ fun PeopleColumnListItem(
                 )
             }
             Text(
-                text = "${column.articlesCount} 文章 · ${column.followerCount.coerceAtLeast(column.followers)} 关注",
+                text = "${column.articleCount} 文章 · ${column.followerCount} 关注",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

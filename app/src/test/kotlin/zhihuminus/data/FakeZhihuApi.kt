@@ -14,6 +14,9 @@ import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.MemberColumnItemDto
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.MemberProfileDto
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationOverviewDto
 import com.zhihuminus.data.zhihu.dto.PeoplePageDto
@@ -139,33 +142,33 @@ open class FakeZhihuApi : ZhihuApi {
 
     override suspend fun getMeNotifications(): ZhihuMeNotificationsDto = TODO()
 
-    override suspend fun fetchMemberProfile(userTokenOrId: String): DataHolder.People = TODO()
+    override suspend fun fetchMemberProfile(userTokenOrId: String): MemberProfileDto = TODO()
 
-    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): DataHolder.People? = TODO()
+    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): MemberProfileDto? = TODO()
 
     override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage = TODO()
 
-    override suspend fun fetchMemberAnswers(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<DataHolder.Answer> = TODO()
+    override suspend fun fetchMemberAnswers(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<AnswerDto> = TODO()
 
-    override suspend fun fetchMemberArticles(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<DataHolder.Article> = TODO()
+    override suspend fun fetchMemberArticles(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePageDto<ArticleDto> = TODO()
 
-    override suspend fun fetchMemberPins(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Pin> = TODO()
+    override suspend fun fetchMemberPins(userTokenOrId: String, nextUrl: String?): PeoplePageDto<PinDto> = TODO()
 
-    override suspend fun fetchMemberQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Question> = TODO()
+    override suspend fun fetchMemberQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedQuestionDto> = TODO()
 
-    override suspend fun fetchMemberCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Collection> = TODO()
+    override suspend fun fetchMemberCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<CollectionDto> = TODO()
 
-    override suspend fun fetchMemberColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Column> = TODO()
+    override suspend fun fetchMemberColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<MemberColumnItemDto> = TODO()
 
-    override suspend fun fetchMemberFollowers(memberId: String, nextUrl: String?): PeoplePageDto<DataHolder.People> = TODO()
+    override suspend fun fetchMemberFollowers(memberId: String, nextUrl: String?): PeoplePageDto<MemberItemDto> = TODO()
 
-    override suspend fun fetchMemberFollowing(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.People> = TODO()
+    override suspend fun fetchMemberFollowing(userTokenOrId: String, nextUrl: String?): PeoplePageDto<MemberItemDto> = TODO()
 
-    override suspend fun fetchMemberFollowingColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Column> = TODO()
+    override suspend fun fetchMemberFollowingColumns(userTokenOrId: String, nextUrl: String?): PeoplePageDto<MemberColumnItemDto> = TODO()
 
     override suspend fun fetchMemberFollowingTopics(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedTopicDto> = TODO()
 
     override suspend fun fetchMemberFollowingQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedQuestionDto> = TODO()
 
-    override suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<DataHolder.Collection> = TODO()
+    override suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<CollectionDto> = TODO()
 }

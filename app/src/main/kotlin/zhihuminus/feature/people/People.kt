@@ -1,13 +1,10 @@
 package com.zhihuminus.feature.people
 
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
-import com.zhihuminus.data.feedThumbnailUrl
-import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.PostDestination
-import org.jsoup.Jsoup
 
 data class PeopleProfile(
     val id: String = "",
@@ -56,7 +53,62 @@ data class FollowedQuestion(
     val questionType: String = "",
     val created: Long = 0L,
     val updatedTime: Long = 0L,
+    val answerCount: Int = 0,
+    val followerCount: Int = 0,
 )
+
+data class PeopleCreationItem(
+    val id: Long,
+    val type: PostType,
+    val title: String,
+    val summary: String,
+    val details: String,
+    val authorName: String = "",
+    val authorBio: String = "",
+    val avatarUrl: String = "",
+    val publishTimeSeconds: Long? = null,
+    val pinImages: List<String> = emptyList(),
+) {
+    fun toDestination(): PostDestination = PostDestination(
+        type = type,
+        id = id,
+        title = title,
+        authorName = authorName,
+        authorBio = authorBio,
+        avatarSrc = avatarUrl,
+        excerpt = summary,
+    )
+}
+
+data class PeopleMemberItem(
+    val id: String,
+    val urlToken: String = "",
+    val name: String,
+    val avatarUrl: String = "",
+    val headline: String = "",
+    val officialBadge: OfficialBadge? = null,
+    val answerCount: Int = 0,
+    val articleCount: Int = 0,
+    val followerCount: Int = 0,
+    val isFollowing: Boolean = false,
+)
+
+data class PeopleColumnItem(
+    val id: String,
+    val title: String,
+    val description: String = "",
+    val articleCount: Int = 0,
+    val followerCount: Int = 0,
+    val url: String = "",
+) {
+    val webUrl: String
+        get() = when {
+            url.contains("/api/v4/columns/") ->
+                url.replace("http://", "https://").replace("/api/v4/columns/", "/column/")
+            url.startsWith("http") && !url.contains("/api/") -> url.replace("http://", "https://")
+            else -> "https://www.zhihu.com/column/$id"
+        }
+}
 
 enum class PeoplePrimaryTab(
     val title: String,
@@ -155,6 +207,12 @@ enum class PeopleSubscriptionTab(
     }
 }
 
+val OfficialBadge.peopleDetailTitle: String
+    get() = when {
+        title == "认证" || title == "已认证的个人" -> "认证信息"
+        else -> title
+    }
+
 interface PeopleRepository {
     suspend fun getProfile(userTokenOrId: String): PeopleProfile
 
@@ -166,146 +224,29 @@ interface PeopleRepository {
 
     suspend fun unblock(urlToken: String)
 
-    suspend fun getAnswers(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<FeedDisplayItem>
+    suspend fun getAnswers(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<PeopleCreationItem>
 
-    suspend fun getArticles(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<FeedDisplayItem>
+    suspend fun getArticles(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<PeopleCreationItem>
 
     suspend fun getActivities(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FeedDisplayItem>
 
-    suspend fun getPins(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FeedDisplayItem>
+    suspend fun getPins(userTokenOrId: String, nextUrl: String? = null): PeoplePage<PeopleCreationItem>
 
-    suspend fun getCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.Collection>
+    suspend fun getCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePage<Collection>
 
-    suspend fun getQuestions(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.Question>
+    suspend fun getQuestions(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FollowedQuestion>
 
-    suspend fun getColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.Column>
+    suspend fun getColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePage<PeopleColumnItem>
 
-    suspend fun getFollowers(memberId: String, nextUrl: String? = null): PeoplePage<DataHolder.People>
+    suspend fun getFollowers(memberId: String, nextUrl: String? = null): PeoplePage<PeopleMemberItem>
 
-    suspend fun getFollowing(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.People>
+    suspend fun getFollowing(userTokenOrId: String, nextUrl: String? = null): PeoplePage<PeopleMemberItem>
 
-    suspend fun getFollowingColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.Column>
+    suspend fun getFollowingColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePage<PeopleColumnItem>
 
     suspend fun getFollowingTopics(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FollowedTopic>
 
     suspend fun getFollowingQuestions(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FollowedQuestion>
 
-    suspend fun getFollowingCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePage<DataHolder.Collection>
+    suspend fun getFollowingCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePage<Collection>
 }
-
-fun DataHolder.Answer.toPeopleAnswerDisplayItem(): FeedDisplayItem {
-    val destination = PostDestination(
-        type = PostType.Answer,
-        id = id,
-        title = question.title,
-        authorName = author.name,
-        authorBio = author.headline,
-        avatarSrc = author.avatarUrl,
-        excerpt = excerpt,
-    )
-    return FeedDisplayItem(
-        title = question.title,
-        summary = excerpt,
-        details = "回答 · $voteupCount 赞同 · $commentCount 评论",
-        feed = null,
-        navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
-        raw = this,
-        contentTypeLabel = "回答",
-        publishTimeSeconds = createdTime.takeIf { it > 0 },
-    )
-}
-
-fun DataHolder.Article.toPeopleArticleDisplayItem(): FeedDisplayItem {
-    val destination = PostDestination(
-        type = PostType.Article,
-        id = id,
-        title = title,
-        authorName = author.name,
-        authorBio = author.headline,
-        avatarSrc = author.avatarUrl,
-        excerpt = excerpt,
-    )
-    return FeedDisplayItem(
-        title = title,
-        summary = excerpt,
-        details = "文章 · $voteupCount 赞同 · $commentCount 评论",
-        feed = null,
-        navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
-        raw = this,
-        contentTypeLabel = "文章",
-        publishTimeSeconds = created.takeIf { it > 0 },
-    )
-}
-
-fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem {
-    val text = excerptTitle.takeIf { it.isNotBlank() }?.let { Jsoup.parse(it).text() }
-        ?: contentHtml.takeIf { it.isNotBlank() }?.let { Jsoup.parse(it).text() }
-        ?: ""
-    val destination = PostDestination(
-        type = PostType.Pin,
-        id = id.toLongOrNull() ?: 0L,
-        authorName = author.name,
-        authorBio = author.headline,
-        avatarSrc = author.avatarUrl,
-        excerpt = text,
-    )
-    val pinImages = content.filterIsInstance<DataHolder.Pin.ContentImage>().map { it.feedThumbnailUrl }
-    return FeedDisplayItem(
-        title = "",
-        summary = text,
-        details = "想法 · $likeCount 赞 · $commentCount 评论",
-        feed = null,
-        navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
-        raw = this,
-        contentTypeLabel = "想法",
-        publishTimeSeconds = created.takeIf { it > 0 },
-        pinImages = pinImages,
-    )
-}
-
-fun DataHolder.Column.webUrl(): String = when {
-    url.contains("/api/v4/columns/") ->
-        url
-            .replace("http://", "https://")
-            .replace("/api/v4/columns/", "/column/")
-
-    url.startsWith("http") && !url.contains("/api/") -> url.replace("http://", "https://")
-    else -> "https://www.zhihu.com/column/$id"
-}
-
-val OfficialBadge.peopleDetailTitle: String
-    get() = when {
-        title == "认证" || title == "已认证的个人" -> "认证信息"
-        else -> title
-    }
-
-fun DataHolder.People.githubSocialUiState(): GithubSocialUiState? =
-    socialMedias.firstNotNullOfOrNull { media ->
-        if (!media.title.startsWith("GitHub", ignoreCase = true)) {
-            return@firstNotNullOfOrNull null
-        }
-        val starCount = media.modules
-            .firstOrNull { it.title.equals("stars", ignoreCase = true) }
-            ?.value
-            ?.takeIf { it.isNotBlank() }
-            ?: return@firstNotNullOfOrNull null
-        val profileLink = media.link.takeIf { it.isNotBlank() }
-            ?: return@firstNotNullOfOrNull null
-        val profileUrl = if (profileLink.startsWith("zhihu://", ignoreCase = true)) {
-            val username = media.title
-                .substringAfter('·', missingDelimiterValue = "")
-                .trim()
-                .takeIf { it.isNotBlank() }
-                ?: return@firstNotNullOfOrNull null
-            "https://github.com/$username"
-        } else {
-            profileLink
-        }
-
-        GithubSocialUiState(
-            title = media.title,
-            starCount = starCount,
-            profileUrl = profileUrl,
-            iconUrl = media.icon.takeIf { it.isNotBlank() },
-        )
-    }

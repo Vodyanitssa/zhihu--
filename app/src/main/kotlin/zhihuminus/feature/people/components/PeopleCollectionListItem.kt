@@ -9,11 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.DataHolder
+import com.zhihuminus.feature.collection.Collection
 
 @Composable
 fun PeopleCollectionListItem(
-    collection: DataHolder.Collection,
+    collection: Collection,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

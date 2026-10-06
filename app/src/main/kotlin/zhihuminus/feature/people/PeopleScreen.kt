@@ -40,7 +40,6 @@ import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
-import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -82,17 +81,6 @@ fun PeopleScreen(
 
     LaunchedEffect(activeUserListType) {
         activeUserListType?.let { onEvent(PeopleEvent.LoadUserListIfNeeded(it)) }
-    }
-
-    val readingQueueSourceId = when (PeoplePrimaryTab.entries[primaryPagerState.currentPage]) {
-        PeoplePrimaryTab.Creations -> when (PeopleCreationTab.entries[creationPagerState.currentPage]) {
-            PeopleCreationTab.Answers -> "people:${state.profile.userTokenOrId}:answers:${state.answersSort}"
-            PeopleCreationTab.Articles -> "people:${state.profile.userTokenOrId}:articles:${state.articlesSort}"
-            PeopleCreationTab.Pins -> "people:${state.profile.userTokenOrId}:pins"
-            else -> null
-        }
-        PeoplePrimaryTab.Activities -> "people:${state.profile.userTokenOrId}:activities:created"
-        else -> null
     }
 
     val scrollBehavior = TopAppBarDefaults.enterAlwaysScrollBehavior()
@@ -182,7 +170,6 @@ fun PeopleScreen(
                         PeopleCreationsTab(
                             state = state,
                             pagerState = creationPagerState,
-                            readingQueueSourceId = readingQueueSourceId,
                             onEvent = onEvent,
                             onNavigate = onNavigate,
                             onLinkClick = onLinkClick,
@@ -204,7 +191,7 @@ fun PeopleScreen(
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
                                 onClick = {
-                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                    item.navDestination?.let(onNavigate)
                                 },
                             )
                         }
@@ -237,7 +224,7 @@ fun PeopleScreen(
                             topicsState = state.followingTopicsState,
                             questionsState = state.followingQuestionsState,
                             collectionsState = state.followingCollectionsState,
-                            onColumnClick = { onLinkClick(it.webUrl()) },
+                            onColumnClick = { onLinkClick(it.webUrl) },
                             onTopicClick = { onNavigate(com.zhihuminus.navigation.Topic(it.id, it.name)) },
                             onQuestionClick = {
                                 it.id.toLongOrNull()?.let { qId ->
@@ -273,7 +260,7 @@ fun PeopleScreen(
                     Person(
                         id = it.id,
                         name = it.name,
-                        urlToken = it.urlToken ?: "",
+                        urlToken = it.urlToken,
                     ),
                 )
             },

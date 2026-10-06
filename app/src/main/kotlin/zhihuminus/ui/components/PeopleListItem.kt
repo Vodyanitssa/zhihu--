@@ -23,10 +23,11 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.officialBadge
+import com.zhihuminus.feature.people.PeopleMemberItem
 
 @Composable
 fun PeopleListItem(
-    people: DataHolder.People,
+    people: PeopleMemberItem,
     onClick: () -> Unit,
     onToggleFollow: () -> Unit,
     modifier: Modifier = Modifier,
@@ -67,7 +68,7 @@ fun PeopleListItem(
                     modifier = Modifier.weight(1f, fill = false),
                 )
                 if (showBadge) {
-                    val officialBadge = people.badgeV2.officialBadge()
+                    val officialBadge = people.officialBadge
                     if (officialBadge?.isUsefulInList == true) {
                         AuthorBadge(
                             badge = officialBadge,
@@ -96,7 +97,7 @@ fun PeopleListItem(
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${formatCount(people.articlesCount.toLong())} 文章",
+                    text = "${formatCount(people.articleCount.toLong())} 文章",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
@@ -115,4 +116,39 @@ fun PeopleListItem(
             Text(if (isFollowing) "取消关注" else "关注")
         }
     }
+}
+
+@Deprecated("Use PeopleMemberItem overload instead")
+@Composable
+fun PeopleListItem(
+    people: DataHolder.People,
+    onClick: () -> Unit,
+    onToggleFollow: () -> Unit,
+    modifier: Modifier = Modifier,
+    highlightedName: String? = null,
+    isFollowing: Boolean = people.isFollowing,
+    isChangingFollowing: Boolean = false,
+    showBadge: Boolean = true,
+) {
+    PeopleListItem(
+        people = PeopleMemberItem(
+            id = people.id,
+            urlToken = people.urlToken ?: "",
+            name = people.name,
+            avatarUrl = people.avatarUrl,
+            headline = people.headline,
+            officialBadge = people.badgeV2.officialBadge(),
+            answerCount = people.answerCount,
+            articleCount = people.articlesCount,
+            followerCount = people.followerCount,
+            isFollowing = isFollowing,
+        ),
+        onClick = onClick,
+        onToggleFollow = onToggleFollow,
+        modifier = modifier,
+        highlightedName = highlightedName,
+        isFollowing = isFollowing,
+        isChangingFollowing = isChangingFollowing,
+        showBadge = showBadge,
+    )
 }

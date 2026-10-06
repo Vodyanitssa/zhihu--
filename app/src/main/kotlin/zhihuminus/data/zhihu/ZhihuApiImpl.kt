@@ -5,7 +5,6 @@ import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.raiseForStatus
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
@@ -27,6 +26,9 @@ import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.MemberColumnItemDto
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.MemberProfileDto
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
 import com.zhihuminus.data.zhihu.dto.NotificationHeadEntryDto
@@ -677,18 +679,18 @@ class ZhihuApiImpl(
         )
     }
 
-    override suspend fun fetchMemberProfile(userTokenOrId: String): DataHolder.People {
+    override suspend fun fetchMemberProfile(userTokenOrId: String): MemberProfileDto {
         val json = environment.fetchJson(
             "https://api.zhihu.com/people/$userTokenOrId",
             PEOPLE_PROFILE_INCLUDE,
         ) ?: error("用户资料为空")
-        return ZhihuJson.decodeJson<DataHolder.People>(json)
+        return ZhihuJson.decodeJson<MemberProfileDto>(json)
     }
 
-    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): DataHolder.People? {
+    override suspend fun fetchMemberProfileDetail(userTokenOrId: String): MemberProfileDto? {
         val json = environment.fetchJson("https://api.zhihu.com/people/$userTokenOrId/profile/detail", "")
             ?: return null
-        return ZhihuJson.decodeJson<DataHolder.People>(json)
+        return ZhihuJson.decodeJson<MemberProfileDto>(json)
     }
 
     override suspend fun fetchMemberActivities(
@@ -704,7 +706,7 @@ class ZhihuApiImpl(
         userTokenOrId: String,
         sortBy: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Answer> =
+    ): PeoplePageDto<AnswerDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/answers?sort_by=$sortBy",
             include = MEMBER_ANSWERS_INCLUDE,
@@ -714,7 +716,7 @@ class ZhihuApiImpl(
         userTokenOrId: String,
         sortBy: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Article> =
+    ): PeoplePageDto<ArticleDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/articles?sort_by=$sortBy",
             include = MEMBER_ARTICLES_INCLUDE,
@@ -723,7 +725,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberPins(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Pin> =
+    ): PeoplePageDto<PinDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/v2/pins/$userTokenOrId/moments",
             include = MEMBER_PINS_INCLUDE,
@@ -732,7 +734,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberQuestions(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Question> =
+    ): PeoplePageDto<FollowedQuestionDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/questions",
             include = MEMBER_QUESTIONS_INCLUDE,
@@ -741,7 +743,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberCollections(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Collection> =
+    ): PeoplePageDto<CollectionDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/favlists",
             include = MEMBER_COLLECTIONS_INCLUDE,
@@ -750,7 +752,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberColumns(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Column> =
+    ): PeoplePageDto<MemberColumnItemDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/column-contributions",
             include = MEMBER_COLUMNS_INCLUDE,
@@ -759,7 +761,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberFollowers(
         memberId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.People> =
+    ): PeoplePageDto<MemberItemDto> =
         fetchPaged(
             url = nextUrl ?: "https://api.zhihu.com/people/$memberId/followers",
             include = MEMBER_FOLLOWERS_INCLUDE,
@@ -768,7 +770,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberFollowing(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.People> =
+    ): PeoplePageDto<MemberItemDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/followees",
             include = MEMBER_FOLLOWING_INCLUDE,
@@ -777,7 +779,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberFollowingColumns(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Column> =
+    ): PeoplePageDto<MemberColumnItemDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-columns",
             include = MEMBER_COLUMNS_INCLUDE,
@@ -804,7 +806,7 @@ class ZhihuApiImpl(
     override suspend fun fetchMemberFollowingCollections(
         userTokenOrId: String,
         nextUrl: String?,
-    ): PeoplePageDto<DataHolder.Collection> =
+    ): PeoplePageDto<CollectionDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-favlists",
             include = MEMBER_COLLECTIONS_INCLUDE,

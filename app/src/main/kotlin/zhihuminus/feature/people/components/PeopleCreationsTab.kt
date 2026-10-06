@@ -12,14 +12,14 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.feature.people.PeopleCreationItem
 import com.zhihuminus.feature.people.PeopleCreationTab
 import com.zhihuminus.feature.people.PeopleEvent
 import com.zhihuminus.feature.people.PeopleUiState
-import com.zhihuminus.feature.people.webUrl
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
-import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -30,7 +30,6 @@ import kotlinx.coroutines.launch
 fun PeopleCreationsTab(
     state: PeopleUiState,
     pagerState: PagerState,
-    readingQueueSourceId: String?,
     onEvent: (PeopleEvent) -> Unit,
     onNavigate: (NavDestination) -> Unit,
     onLinkClick: (String) -> Unit,
@@ -75,14 +74,14 @@ fun PeopleCreationsTab(
                             isEnd = { state.answersState.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
-                            key = { it.stableKey },
+                            key = { it.id },
                         ) { item ->
                             FeedCard(
-                                item = item,
+                                item = item.toFeedDisplayItem(),
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
                                 onClick = {
-                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                    onNavigate(item.toDestination())
                                 },
                             )
                         }
@@ -102,14 +101,14 @@ fun PeopleCreationsTab(
                             isEnd = { state.articlesState.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
-                            key = { it.stableKey },
+                            key = { it.id },
                         ) { item ->
                             FeedCard(
-                                item = item,
+                                item = item.toFeedDisplayItem(),
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
                                 onClick = {
-                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                    onNavigate(item.toDestination())
                                 },
                             )
                         }
@@ -124,14 +123,14 @@ fun PeopleCreationsTab(
                         isEnd = { state.pinsState.isEnd },
                         footer = ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
-                        key = { it.stableKey },
+                        key = { it.id },
                     ) { item ->
                         FeedCard(
-                            item = item,
+                            item = item.toFeedDisplayItem(),
                             modifier = Modifier,
                             horizontalPadding = 4.dp,
                             onClick = {
-                                item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                onNavigate(item.toDestination())
                             },
                         )
                     }
@@ -149,7 +148,7 @@ fun PeopleCreationsTab(
                     ) { column ->
                         PeopleColumnListItem(
                             column = column,
-                            onClick = { onLinkClick(column.webUrl()) },
+                            onClick = { onLinkClick(column.webUrl) },
                         )
                     }
                 }
@@ -166,7 +165,11 @@ fun PeopleCreationsTab(
                     ) { question ->
                         PeopleQuestionListItem(
                             question = question,
-                            onClick = { onNavigate(Question(question.id, question.title)) },
+                            onClick = {
+                                question.id.toLongOrNull()?.let { qId ->
+                                    onNavigate(Question(qId, question.title))
+                                }
+                            },
                         )
                     }
                 }
@@ -174,3 +177,18 @@ fun PeopleCreationsTab(
         }
     }
 }
+
+private fun PeopleCreationItem.toFeedDisplayItem(): FeedDisplayItem = FeedDisplayItem(
+    title = title,
+    summary = summary,
+    details = details,
+    avatarSrc = avatarUrl.takeIf { it.isNotBlank() },
+    authorName = authorName.takeIf { it.isNotBlank() },
+    contentTypeLabel = when (type) {
+        PostType.Answer -> "回答"
+        PostType.Article -> "文章"
+        PostType.Pin -> "想法"
+    },
+    publishTimeSeconds = publishTimeSeconds,
+    pinImages = pinImages,
+)

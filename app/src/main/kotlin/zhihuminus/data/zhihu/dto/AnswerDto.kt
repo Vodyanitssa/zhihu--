@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class AnswerDto(
     val id: Long,
-    val content: String,
+    val content: String = "",
     val excerpt: String = "",
     val voteupCount: Int = 0,
     val commentCount: Int = 0,

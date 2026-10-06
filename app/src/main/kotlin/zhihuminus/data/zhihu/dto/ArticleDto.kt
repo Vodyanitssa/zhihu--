@@ -6,7 +6,7 @@ import kotlinx.serialization.Serializable
 data class ArticleDto(
     val id: Long,
     val title: String,
-    val content: String,
+    val content: String = "",
     val excerpt: String = "",
     val voteupCount: Int = 0,
     val commentCount: Int = 0,

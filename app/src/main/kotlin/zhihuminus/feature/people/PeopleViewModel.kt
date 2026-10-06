@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.navigation.Person
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -32,21 +32,21 @@ data class PeopleUiState(
     val profileErrorMessage: String? = null,
     val answersSort: String = "voteups",
     val articlesSort: String = "created",
-    val answersState: PaginatedTabState<FeedDisplayItem> = PaginatedTabState(),
-    val articlesState: PaginatedTabState<FeedDisplayItem> = PaginatedTabState(),
+    val answersState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
+    val articlesState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
     val activitiesState: PaginatedTabState<FeedDisplayItem> = PaginatedTabState(),
-    val collectionsState: PaginatedTabState<DataHolder.Collection> = PaginatedTabState(),
-    val questionsState: PaginatedTabState<DataHolder.Question> = PaginatedTabState(),
-    val pinsState: PaginatedTabState<FeedDisplayItem> = PaginatedTabState(),
-    val columnsState: PaginatedTabState<DataHolder.Column> = PaginatedTabState(),
-    val followersState: PaginatedTabState<DataHolder.People> = PaginatedTabState(),
-    val followingState: PaginatedTabState<DataHolder.People> = PaginatedTabState(),
+    val collectionsState: PaginatedTabState<Collection> = PaginatedTabState(),
+    val questionsState: PaginatedTabState<FollowedQuestion> = PaginatedTabState(),
+    val pinsState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
+    val columnsState: PaginatedTabState<PeopleColumnItem> = PaginatedTabState(),
+    val followersState: PaginatedTabState<PeopleMemberItem> = PaginatedTabState(),
+    val followingState: PaginatedTabState<PeopleMemberItem> = PaginatedTabState(),
     val selectedSubscriptionTab: Int = 0,
     val selectedCreationTab: PeopleCreationTab = PeopleCreationTab.Answers,
-    val followingColumnsState: PaginatedTabState<DataHolder.Column> = PaginatedTabState(),
+    val followingColumnsState: PaginatedTabState<PeopleColumnItem> = PaginatedTabState(),
     val followingTopicsState: PaginatedTabState<FollowedTopic> = PaginatedTabState(),
     val followingQuestionsState: PaginatedTabState<FollowedQuestion> = PaginatedTabState(),
-    val followingCollectionsState: PaginatedTabState<DataHolder.Collection> = PaginatedTabState(),
+    val followingCollectionsState: PaginatedTabState<Collection> = PaginatedTabState(),
     val changingItemFollowIds: Set<String> = emptySet(),
 )
 
@@ -184,14 +184,14 @@ class PeopleViewModel(
         }
     }
 
-    fun toggleItemFollow(people: DataHolder.People) {
+    fun toggleItemFollow(people: PeopleMemberItem) {
         val targetId = people.id
-        val token = people.urlToken.takeIf { !it.isNullOrBlank() } ?: targetId
+        val token = people.urlToken.takeIf { it.isNotBlank() } ?: targetId
         if (token.isBlank() || targetId in uiState.changingItemFollowIds) return
         val willFollow = !people.isFollowing
 
-        fun updateList(list: List<DataHolder.People>): List<DataHolder.People> = list.map { item ->
-            if (item.id == targetId || (item.urlToken != null && item.urlToken == people.urlToken)) {
+        fun updateList(list: List<PeopleMemberItem>): List<PeopleMemberItem> = list.map { item ->
+            if (item.id == targetId || (item.urlToken.isNotBlank() && item.urlToken == people.urlToken)) {
                 item.copy(
                     isFollowing = willFollow,
                     followerCount = (item.followerCount + if (willFollow) 1 else -1).coerceAtLeast(0),

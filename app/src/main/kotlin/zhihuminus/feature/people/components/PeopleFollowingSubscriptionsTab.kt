@@ -15,10 +15,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.DataHolder
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
 import com.zhihuminus.feature.people.FollowedTopic
 import com.zhihuminus.feature.people.PaginatedTabState
+import com.zhihuminus.feature.people.PeopleColumnItem
 import com.zhihuminus.feature.people.PeopleSubscriptionTab
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -29,14 +30,14 @@ fun PeopleFollowingSubscriptionsTab(
     selectedIndex: Int,
     onTabSelect: (Int) -> Unit,
     onLoadMore: (Int) -> Unit,
-    columnsState: PaginatedTabState<DataHolder.Column>,
+    columnsState: PaginatedTabState<PeopleColumnItem>,
     topicsState: PaginatedTabState<FollowedTopic>,
     questionsState: PaginatedTabState<FollowedQuestion>,
-    collectionsState: PaginatedTabState<DataHolder.Collection>,
-    onColumnClick: (DataHolder.Column) -> Unit,
+    collectionsState: PaginatedTabState<Collection>,
+    onColumnClick: (PeopleColumnItem) -> Unit,
     onTopicClick: (FollowedTopic) -> Unit,
     onQuestionClick: (FollowedQuestion) -> Unit,
-    onCollectionClick: (DataHolder.Collection) -> Unit,
+    onCollectionClick: (Collection) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(

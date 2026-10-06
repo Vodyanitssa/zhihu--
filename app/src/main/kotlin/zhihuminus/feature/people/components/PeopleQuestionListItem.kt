@@ -9,11 +9,11 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.data.DataHolder
+import com.zhihuminus.feature.people.FollowedQuestion
 
 @Composable
 fun PeopleQuestionListItem(
-    question: DataHolder.Question,
+    question: FollowedQuestion,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
 ) {

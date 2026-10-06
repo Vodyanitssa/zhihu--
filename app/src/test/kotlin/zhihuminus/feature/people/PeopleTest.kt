@@ -1,12 +1,14 @@
 package com.zhihuminus.feature.people
 
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.OfficialBadge
+import com.zhihuminus.data.zhihu.dto.MemberBadgeItemDto
+import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
+import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
+import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
+import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.navigation.PostDestination
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -56,12 +58,14 @@ class PeopleTest {
             userTokenOrId: String,
             sortBy: String,
             nextUrl: String?,
-        ): PeoplePage<FeedDisplayItem> = PeoplePage(
+        ): PeoplePage<PeopleCreationItem> = PeoplePage(
             items = listOf(
-                FeedDisplayItem(
+                PeopleCreationItem(
+                    id = 1001L,
+                    type = PostType.Answer,
                     title = "Test Answer",
                     summary = "Answer excerpt",
-                    details = "details",
+                    details = "回答 · 42 赞同 · 5 评论",
                 ),
             ),
             nextUrl = if (nextUrl == null) "https://api.zhihu.com/next" else null,
@@ -72,12 +76,14 @@ class PeopleTest {
             userTokenOrId: String,
             sortBy: String,
             nextUrl: String?,
-        ): PeoplePage<FeedDisplayItem> = PeoplePage(
+        ): PeoplePage<PeopleCreationItem> = PeoplePage(
             items = listOf(
-                FeedDisplayItem(
+                PeopleCreationItem(
+                    id = 3001L,
+                    type = PostType.Article,
                     title = "Test Article",
                     summary = "Article excerpt",
-                    details = "details",
+                    details = "文章 · 88 赞同 · 12 评论",
                 ),
             ),
             nextUrl = null,
@@ -102,9 +108,11 @@ class PeopleTest {
         override suspend fun getPins(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<FeedDisplayItem> = PeoplePage(
+        ): PeoplePage<PeopleCreationItem> = PeoplePage(
             items = listOf(
-                FeedDisplayItem(
+                PeopleCreationItem(
+                    id = 4001L,
+                    type = PostType.Pin,
                     title = "",
                     summary = "Pin excerpt",
                     details = "想法 · 10 赞",
@@ -117,9 +125,9 @@ class PeopleTest {
         override suspend fun getCollections(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.Collection> = PeoplePage(
+        ): PeoplePage<Collection> = PeoplePage(
             items = listOf(
-                DataHolder.Collection(id = "c1", title = "Favorite Things"),
+                Collection(id = "c1", title = "Favorite Things"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -128,7 +136,7 @@ class PeopleTest {
         override suspend fun getQuestions(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.Question> = PeoplePage(
+        ): PeoplePage<FollowedQuestion> = PeoplePage(
             items = emptyList(),
             nextUrl = null,
             isEnd = true,
@@ -137,9 +145,9 @@ class PeopleTest {
         override suspend fun getColumns(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.Column> = PeoplePage(
+        ): PeoplePage<PeopleColumnItem> = PeoplePage(
             items = listOf(
-                DataHolder.Column(id = "col1", title = "Compose Mastery"),
+                PeopleColumnItem(id = "col1", title = "Compose Mastery"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -148,11 +156,9 @@ class PeopleTest {
         override suspend fun getFollowers(
             memberId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.People> = PeoplePage(
+        ): PeoplePage<PeopleMemberItem> = PeoplePage(
             items = listOf(
-                ZhihuJson.decodeFromString<DataHolder.People>(
-                    """{"id": "f1", "name": "Follower 1", "avatar_url": "", "url": "", "headline": "", "gender": 0}""",
-                ),
+                PeopleMemberItem(id = "f1", name = "Follower 1"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -161,11 +167,9 @@ class PeopleTest {
         override suspend fun getFollowing(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.People> = PeoplePage(
+        ): PeoplePage<PeopleMemberItem> = PeoplePage(
             items = listOf(
-                ZhihuJson.decodeFromString<DataHolder.People>(
-                    """{"id": "f2", "name": "Following 1", "avatar_url": "", "url": "", "headline": "", "gender": 0}""",
-                ),
+                PeopleMemberItem(id = "f2", name = "Following 1"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -174,9 +178,9 @@ class PeopleTest {
         override suspend fun getFollowingColumns(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.Column> = PeoplePage(
+        ): PeoplePage<PeopleColumnItem> = PeoplePage(
             items = listOf(
-                DataHolder.Column(id = "subcol1", title = "Subscribed Column"),
+                PeopleColumnItem(id = "subcol1", title = "Subscribed Column"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -207,9 +211,9 @@ class PeopleTest {
         override suspend fun getFollowingCollections(
             userTokenOrId: String,
             nextUrl: String?,
-        ): PeoplePage<DataHolder.Collection> = PeoplePage(
+        ): PeoplePage<Collection> = PeoplePage(
             items = listOf(
-                DataHolder.Collection(id = "sc1", title = "Followed Favlist"),
+                Collection(id = "sc1", title = "Followed Favlist"),
             ),
             nextUrl = null,
             isEnd = true,
@@ -332,90 +336,124 @@ class PeopleTest {
 
     @Test
     fun testColumnWebUrl() {
-        val apiCol = DataHolder.Column(id = "test", url = "http://www.zhihu.com/api/v4/columns/test")
-        assertEquals("https://www.zhihu.com/column/test", apiCol.webUrl())
+        val apiCol = PeopleColumnItem(id = "test", title = "test", url = "http://www.zhihu.com/api/v4/columns/test")
+        assertEquals("https://www.zhihu.com/column/test", apiCol.webUrl)
 
-        val webCol = DataHolder.Column(id = "test", url = "http://zhuanlan.zhihu.com/test")
-        assertEquals("https://zhuanlan.zhihu.com/test", webCol.webUrl())
+        val webCol = PeopleColumnItem(id = "test", title = "test", url = "http://zhuanlan.zhihu.com/test")
+        assertEquals("https://zhuanlan.zhihu.com/test", webCol.webUrl)
 
-        val rawCol = DataHolder.Column(id = "my-column", url = "")
-        assertEquals("https://www.zhihu.com/column/my-column", rawCol.webUrl())
+        val rawCol = PeopleColumnItem(id = "my-column", title = "test", url = "")
+        assertEquals("https://www.zhihu.com/column/my-column", rawCol.webUrl)
     }
 
     @Test
-    fun testPostConversionToFeedDisplayItem() {
-        val answer = ZhihuJson.decodeFromString<DataHolder.Answer>(
-            """{
-                "id": 1001,
-                "type": "answer",
-                "answer_type": "normal",
-                "url": "",
-                "created_time": 1000,
-                "updated_time": 1000,
-                "thanks_count": 0,
-                "voteup_count": 42,
-                "comment_count": 5,
-                "content": "content",
-                "excerpt": "Sample answer excerpt",
-                "can_comment": {"status": true, "reason": ""},
-                "question": {"id": 2001, "title": "Question Title", "type": "question", "created": 0, "question_type": "normal", "updated_time": 0, "url": ""},
-                "author": {"id": "a1", "name": "Author 1", "avatar_url": "", "headline": "", "url": "", "url_token": "", "user_type": "people", "type": "people", "gender": 0, "is_org": false, "is_advertiser": false}
-            }""",
+    fun testPeopleCreationItemToDestination() {
+        val answerItem = PeopleCreationItem(
+            id = 1001L,
+            type = PostType.Answer,
+            title = "Question Title",
+            summary = "Sample answer excerpt",
+            details = "回答 · 42 赞同 · 5 评论",
+            authorName = "Author 1",
+            authorBio = "Bio",
+            avatarUrl = "https://example.com/avatar.jpg",
         )
-        val answerItem = answer.toPeopleAnswerDisplayItem()
-        assertEquals("Question Title", answerItem.title)
-        assertEquals("Sample answer excerpt", answerItem.summary)
-        assertEquals("回答", answerItem.contentTypeLabel)
-        assertNotNull(answerItem.navDestinationJson)
-        val answerDest = answerItem.navDestination as? PostDestination
-        assertNotNull(answerDest)
+        val answerDest = answerItem.toDestination()
         assertEquals(PostType.Answer, answerDest.type)
         assertEquals(1001L, answerDest.id)
+        assertEquals("Question Title", answerDest.title)
+        assertEquals("Author 1", answerDest.authorName)
+        assertEquals("Bio", answerDest.authorBio)
+        assertEquals("Sample answer excerpt", answerDest.excerpt)
 
-        val article = ZhihuJson.decodeFromString<DataHolder.Article>(
-            """{
-                "id": 3001,
-                "type": "article",
-                "url": "",
-                "title": "Article Title",
-                "excerpt": "Sample article excerpt",
-                "content": "content",
-                "created": 1000,
-                "updated": 1000,
-                "voteup_count": 88,
-                "comment_count": 12,
-                "can_comment": {"status": true, "reason": ""},
-                "author": {"id": "a2", "name": "Author 2", "avatar_url": "", "headline": "", "url": "", "url_token": "", "user_type": "people", "type": "people", "gender": 0, "is_org": false, "is_advertiser": false}
-            }""",
+        val articleItem = PeopleCreationItem(
+            id = 3001L,
+            type = PostType.Article,
+            title = "Article Title",
+            summary = "Sample article excerpt",
+            details = "文章 · 88 赞同 · 12 评论",
+            authorName = "Author 2",
+            authorBio = "Bio",
+            avatarUrl = "https://example.com/avatar2.jpg",
         )
-        val articleItem = article.toPeopleArticleDisplayItem()
-        assertEquals("Article Title", articleItem.title)
-        assertEquals("Sample article excerpt", articleItem.summary)
-        assertEquals("文章", articleItem.contentTypeLabel)
-        val articleDest = articleItem.navDestination as? PostDestination
-        assertNotNull(articleDest)
+        val articleDest = articleItem.toDestination()
         assertEquals(PostType.Article, articleDest.type)
         assertEquals(3001L, articleDest.id)
+        assertEquals("Article Title", articleDest.title)
 
-        val pin = ZhihuJson.decodeFromString<DataHolder.Pin>(
-            """{
-                "id": "4001",
-                "excerpt_title": "Pin HTML &amp; Excerpt",
-                "like_count": 15,
-                "comment_count": 3,
-                "created": 1000,
-                "author": {"id": "a3", "name": "Author 3", "avatar_url": "", "headline": "", "url": "", "url_token": "", "user_type": "people", "type": "people", "gender": 0, "is_org": false, "is_advertiser": false}
-            }""",
+        val pinItem = PeopleCreationItem(
+            id = 4001L,
+            type = PostType.Pin,
+            title = "",
+            summary = "Pin HTML & Excerpt",
+            details = "想法 · 15 赞 · 3 评论",
+            authorName = "Author 3",
         )
-        val pinItem = pin.toPeoplePinDisplayItem()
-        assertEquals("Pin HTML & Excerpt", pinItem.summary)
-        assertEquals("想法", pinItem.contentTypeLabel)
-        assertNull(pinItem.authorName)
-        assertNull(pinItem.avatarSrc)
-        val pinDest = pinItem.navDestination as? PostDestination
-        assertNotNull(pinDest)
+        val pinDest = pinItem.toDestination()
         assertEquals(PostType.Pin, pinDest.type)
         assertEquals(4001L, pinDest.id)
+        assertEquals("Author 3", pinDest.authorName)
+    }
+
+    @Test
+    fun testMemberBadgeDtoMapping() {
+        val badgeDto = MemberBadgeV2Dto(
+            title = "优秀答主",
+            icon = "https://example.com/icon.png",
+            detailBadges = listOf(
+                MemberBadgeItemDto(
+                    title = "优秀答主",
+                    description = "科技领域优秀答主",
+                    icon = "https://example.com/detail.png",
+                    type = "best_answerer",
+                ),
+            ),
+        )
+        val badge = badgeDto.toOfficialBadge()
+        assertNotNull(badge)
+        assertEquals("优秀答主", badge.title)
+        assertEquals("科技领域优秀答主", badge.description)
+        assertEquals("https://example.com/icon.png", badge.iconUrl)
+
+        val details = badgeDto.toOfficialBadgeDetails()
+        assertEquals(1, details.size)
+        assertEquals("科技领域优秀答主", details.first().description)
+    }
+
+    @Test
+    fun testMemberSocialMediaDtoMapping() {
+        val githubMedia = MemberSocialMediaDto(
+            type = "github",
+            title = "GitHub · alex",
+            link = "zhihu://user/alex",
+            modules = listOf(
+                MemberSocialMediaModuleDto(title = "stars", value = "1200"),
+            ),
+        )
+        val githubState = githubMedia.toGithubSocialUiState()
+        assertNotNull(githubState)
+        assertEquals("GitHub · alex", githubState.title)
+        assertEquals("1200", githubState.starCount)
+        assertEquals("https://github.com/alex", githubState.profileUrl)
+
+        val otherMedia = MemberSocialMediaDto(
+            type = "weibo",
+            title = "Weibo",
+            link = "https://weibo.com",
+        )
+        assertNull(otherMedia.toGithubSocialUiState())
+    }
+
+    @Test
+    fun testOfficialBadgeDetailTitle() {
+        val certBadge = OfficialBadge(title = "认证", description = "个人认证")
+        assertEquals("认证信息", certBadge.peopleDetailTitle)
+
+        val passedBadge = OfficialBadge(title = "已认证的个人", description = "个人认证")
+        assertEquals("认证信息", passedBadge.peopleDetailTitle)
+
+        val customBadge = OfficialBadge(title = "优秀答主", description = "答主")
+        assertEquals("优秀答主", customBadge.peopleDetailTitle)
     }
 
     @Test
@@ -465,5 +503,13 @@ class PeopleTest {
         val subTopics = repo.getFollowingTopics("alex")
         assertEquals(1, subTopics.items.size)
         assertEquals("Kotlin", subTopics.items.first().name)
+
+        val columns = repo.getColumns("alex")
+        assertEquals(1, columns.items.size)
+        assertEquals("Compose Mastery", columns.items.first().title)
+
+        val followers = repo.getFollowers("alex")
+        assertEquals(1, followers.items.size)
+        assertEquals("Follower 1", followers.items.first().name)
     }
 }

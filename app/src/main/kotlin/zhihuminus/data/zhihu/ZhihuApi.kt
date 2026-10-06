@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.CollectionDto
@@ -14,6 +13,9 @@ import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.MemberColumnItemDto
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.MemberProfileDto
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationOverviewDto
 import com.zhihuminus.data.zhihu.dto.PeoplePageDto
@@ -377,12 +379,12 @@ interface ZhihuApi {
     /**
      * 获取用户基本资料
      */
-    suspend fun fetchMemberProfile(userTokenOrId: String): DataHolder.People
+    suspend fun fetchMemberProfile(userTokenOrId: String): MemberProfileDto
 
     /**
      * 获取用户详细资料（用于提取 GitHub 等社交媒体信息）
      */
-    suspend fun fetchMemberProfileDetail(userTokenOrId: String): DataHolder.People?
+    suspend fun fetchMemberProfileDetail(userTokenOrId: String): MemberProfileDto?
 
     /**
      * 获取用户的动态列表（活动流）
@@ -392,47 +394,47 @@ interface ZhihuApi {
     /**
      * 获取用户的回答列表
      */
-    suspend fun fetchMemberAnswers(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Answer>
+    suspend fun fetchMemberAnswers(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePageDto<AnswerDto>
 
     /**
      * 获取用户的文章列表
      */
-    suspend fun fetchMemberArticles(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Article>
+    suspend fun fetchMemberArticles(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePageDto<ArticleDto>
 
     /**
      * 获取用户的想法列表
      */
-    suspend fun fetchMemberPins(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Pin>
+    suspend fun fetchMemberPins(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<PinDto>
 
     /**
      * 获取用户的提问列表
      */
-    suspend fun fetchMemberQuestions(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Question>
+    suspend fun fetchMemberQuestions(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<FollowedQuestionDto>
 
     /**
      * 获取用户创建的收藏夹列表
      */
-    suspend fun fetchMemberCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Collection>
+    suspend fun fetchMemberCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<CollectionDto>
 
     /**
      * 获取用户的专栏列表
      */
-    suspend fun fetchMemberColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Column>
+    suspend fun fetchMemberColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<MemberColumnItemDto>
 
     /**
      * 获取用户的粉丝列表
      */
-    suspend fun fetchMemberFollowers(memberId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.People>
+    suspend fun fetchMemberFollowers(memberId: String, nextUrl: String? = null): PeoplePageDto<MemberItemDto>
 
     /**
      * 获取用户关注的人列表
      */
-    suspend fun fetchMemberFollowing(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.People>
+    suspend fun fetchMemberFollowing(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<MemberItemDto>
 
     /**
      * 获取用户订阅的专栏列表
      */
-    suspend fun fetchMemberFollowingColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Column>
+    suspend fun fetchMemberFollowingColumns(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<MemberColumnItemDto>
 
     /**
      * 获取用户关注的话题列表
@@ -447,5 +449,5 @@ interface ZhihuApi {
     /**
      * 获取用户关注的收藏夹列表
      */
-    suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<DataHolder.Collection>
+    suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String? = null): PeoplePageDto<CollectionDto>
 }
