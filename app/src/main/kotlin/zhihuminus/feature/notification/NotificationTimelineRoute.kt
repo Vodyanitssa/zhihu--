@@ -4,8 +4,10 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.navigation.NavDestination
@@ -21,8 +23,9 @@ fun NotificationTimelineRoute(
     onDestinationClick: (NavDestination) -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val context = LocalContext.current
     val environment = rememberPaginationEnvironment()
-    val settingsStore = rememberNotificationSettingsStore()
+    val settingsRepository = remember(context) { AndroidAppSettingsRepository.getInstance(context) }
     val repository = remember(environment) {
         ZhihuNotificationRepository(ZhihuApiImpl(environment))
     }
@@ -31,7 +34,7 @@ fun NotificationTimelineRoute(
             entryName = entryName,
             title = title,
             repository = repository,
-            settingsStore = settingsStore,
+            settingsRepository = settingsRepository,
         )
     }
     val userMessages = rememberUserMessageSink()

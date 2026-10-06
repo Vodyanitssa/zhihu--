@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
@@ -17,7 +18,7 @@ class NotificationTimelineViewModel(
     val entryName: String,
     val title: String,
     private val repository: NotificationRepository,
-    private val settingsStore: NotificationSettingsStore,
+    private val settingsRepository: AppSettingsRepository,
 ) : ViewModel() {
     var uiState by mutableStateOf(NotificationTimelineUiState(entryName = entryName, title = title))
         private set
@@ -52,7 +53,7 @@ class NotificationTimelineViewModel(
             .firstOrNull { it.isNotBlank() }
             .orEmpty()
         val type = matchNotificationType(verb)
-        return type == null || settingsStore.getDisplayInAppEnabled(type)
+        return type == null || settingsRepository.current.notification.isDisplayInAppEnabled(type)
     }
 
     private fun loadData(reset: Boolean) {
@@ -95,7 +96,7 @@ class NotificationTimelineViewModel(
                     errorMessage = null,
                 )
 
-                if (!markedAsRead && settingsStore.getAutoMarkAsReadEnabled()) {
+                if (!markedAsRead && settingsRepository.current.notification.autoMarkAsRead) {
                     val success = repository.markCategoryRead(entryName)
                     if (success) {
                         markedAsRead = true

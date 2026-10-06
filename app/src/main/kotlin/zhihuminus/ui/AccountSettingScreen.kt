@@ -80,11 +80,11 @@ import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.History
@@ -110,7 +110,7 @@ fun AccountSettingScreen(
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
     unreadCount: Int? = null,
-    showUnreadBadge: Boolean = rememberNotificationSettingsStore().getUnreadBadgeEnabled(),
+    showUnreadBadge: Boolean = LocalAppSettings.current.notification.showUnreadBadge,
 ) {
     val navigator = LocalNavigator.current
     val environment = rememberPaginationEnvironment()

@@ -3,10 +3,12 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.environment.PaginationEnvironment
 import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
+import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.raiseForStatus
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.PeopleSearchResult
+import com.zhihuminus.data.SearchHistoryStorage
 import com.zhihuminus.data.SearchResult
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
@@ -21,21 +23,19 @@ import com.zhihuminus.feature.search.SearchTab
 import com.zhihuminus.feature.search.SearchTimeRange
 import com.zhihuminus.feature.search.TopicSearchResult
 import com.zhihuminus.feature.search.ZHIHU_HOT_SEARCH_URL
-import com.zhihuminus.platform.SettingsStore
 import io.ktor.http.encodeURLParameter
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 
-private const val SEARCH_HISTORY_KEY = "searchHistoryQueries"
-private const val SEARCH_HISTORY_MAX_SIZE = 20
 private const val SEARCH_INCLUDE = "data[*].highlight,object,type"
 private const val SEARCH_VERTICAL_INFO = "0,0,0,0,0,0,0,0,0,0,0,0"
 
 class ZhihuSearchRepository(
     private val environment: PaginationEnvironment,
-    private val settings: SettingsStore,
+    private val settingsRepository: AppSettingsRepository,
+    private val historyStorage: SearchHistoryStorage,
 ) : SearchRepository {
     override suspend fun searchGeneral(
         query: String,
@@ -158,10 +158,10 @@ class ZhihuSearchRepository(
     }
 
     override fun isHotSearchEnabled(): Boolean =
-        settings.getBoolean("showSearchHotSearch", true)
+        settingsRepository.current.interaction.showSearchHotSearch
 
     override fun isSearchHistoryEnabled(): Boolean =
-        settings.getBoolean("showSearchHistory", true)
+        settingsRepository.current.interaction.showSearchHistory
 
     override suspend fun setTopicFollowing(
         topicId: String,
@@ -182,19 +182,14 @@ class ZhihuSearchRepository(
     }
 
     override fun getSearchHistory(): List<String> =
-        settings
-            .getStringOrNull(SEARCH_HISTORY_KEY)
-            ?.let { json ->
-                runCatching { ZhihuJson.json.decodeFromString<List<String>>(json) }.getOrNull()
-            }.orEmpty()
+        historyStorage.history
 
     override fun saveSearchHistory(history: List<String>) {
-        val limited = history.take(SEARCH_HISTORY_MAX_SIZE)
-        settings.putString(SEARCH_HISTORY_KEY, ZhihuJson.json.encodeToString(limited))
+        historyStorage.saveHistory(history)
     }
 
     override fun clearSearchHistory() {
-        settings.putString(SEARCH_HISTORY_KEY, "[]")
+        historyStorage.clear()
     }
 
     private fun buildSearchUrl(

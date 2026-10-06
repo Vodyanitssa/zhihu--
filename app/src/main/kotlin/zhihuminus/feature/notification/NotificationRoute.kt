@@ -24,7 +24,6 @@ fun NotificationRoute(
     modifier: Modifier = Modifier,
 ) {
     val environment = rememberPaginationEnvironment()
-    val settingsStore = rememberNotificationSettingsStore()
     val repository = remember(environment) {
         ZhihuNotificationRepository(ZhihuApiImpl(environment))
     }
@@ -62,7 +61,7 @@ fun NotificationRoute(
             notification.navDestination()?.let(onConversationClick)
                 ?: userMessages.showShortMessage("暂不支持打开此消息")
         },
-        showUnreadBadges = settingsStore.getUnreadBadgeEnabled(),
+        showUnreadBadges = com.zhihuminus.core.settings.LocalAppSettings.current.notification.showUnreadBadge,
         modifier = modifier,
     )
 }

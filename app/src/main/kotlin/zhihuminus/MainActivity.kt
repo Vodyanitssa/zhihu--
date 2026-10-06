@@ -28,8 +28,11 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.viewModels
 import androidx.compose.foundation.layout.Box
+import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.ViewModel
@@ -48,8 +51,12 @@ import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.platform.clearShareImageCache
 import com.zhihuminus.core.platform.clipboardManager
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
+import com.zhihuminus.core.settings.LocalAppSettings
+import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
+import com.zhihuminus.data.AppRuntimeStorage
 import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import com.zhihuminus.feature.post.PostType
@@ -64,7 +71,6 @@ import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
-import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.theme.AndroidThemeSettings
 import com.zhihuminus.theme.ZhihuTheme
@@ -134,8 +140,8 @@ class MainActivity :
         AccountData.loadData(this)
         AndroidThemeSettings.initialize(this)
 
-        val settings = androidSettingsStore(this)
-        val lastLaunchTimestamp = settings.getLong(KEY_LAST_LAUNCH_TIMESTAMP, 0L)
+        val runtimeStorage = AppRuntimeStorage(this)
+        val lastLaunchTimestamp = runtimeStorage.lastLaunchTimestamp
         val now = System.currentTimeMillis()
         if (now - lastLaunchTimestamp >= TimeUnit.DAYS.toMillis(1)) {
             val client = httpClient
@@ -153,7 +159,7 @@ class MainActivity :
                 }
             }
         }
-        settings.putLong(KEY_LAST_LAUNCH_TIMESTAMP, now)
+        runtimeStorage.lastLaunchTimestamp = now
 
         // 初始化emoji管理器
         lifecycleScope.launch {
@@ -167,10 +173,18 @@ class MainActivity :
         }
 
         setContent {
-            navController = rememberNavController()
-            ZhihuTheme {
-                Box(Modifier) {
-                    AndroidZhihuMain(navController = navController)
+            val settingsRepository = remember { AndroidAppSettingsRepository.getInstance(applicationContext) }
+            val appSettings by settingsRepository.settingsFlow.collectAsState()
+
+            CompositionLocalProvider(
+                LocalAppSettings provides appSettings,
+                LocalAppSettingsRepository provides settingsRepository,
+            ) {
+                navController = rememberNavController()
+                ZhihuTheme(themeSettings = appSettings.theme) {
+                    Box(Modifier) {
+                        AndroidZhihuMain(navController = navController)
+                    }
                 }
             }
         }
@@ -411,7 +425,6 @@ class MainActivity :
 
     @Suppress("unused")
     companion object {
-        private const val KEY_LAST_LAUNCH_TIMESTAMP = "last_main_launch_timestamp"
         const val IOS = "5_2.0"
         const val ANDROID = "4_2.0"
         const val WEB = "3_2.0"

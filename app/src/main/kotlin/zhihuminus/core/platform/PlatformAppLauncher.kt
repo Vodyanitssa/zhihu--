@@ -7,7 +7,7 @@ import android.net.Uri
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
 import androidx.core.net.toUri
-import com.zhihuminus.platform.androidSettingsStore
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import io.ktor.http.Url
 
 fun Context.startLoginActivity() {
@@ -36,7 +36,9 @@ fun luoTianYiUrlLauncher(context: Context, uri: Uri) {
             return
         }
     }
-    val color = androidSettingsStore(context).getInt("luotianyi_color", 0xff_66CCFF.toInt())
+    val color = AndroidAppSettingsRepository
+        .getInstance(context)
+        .current.theme.browserToolbarColor
     val intent = CustomTabsIntent
         .Builder()
         .setDefaultColorSchemeParams(

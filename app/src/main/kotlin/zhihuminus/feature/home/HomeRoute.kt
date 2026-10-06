@@ -17,17 +17,15 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHomeRepository
-import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberAppPrivateDirectory
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY
 import com.zhihuminus.ui.TopLevelReselectAction
 import com.zhihuminus.ui.homeFeedStartupCacheFileName
 import com.zhihuminus.ui.rememberAccountSettingsAccountState
@@ -42,13 +40,12 @@ fun HomeRoute(
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
     val userMessages = rememberUserMessageSink()
-    val settings = rememberSettingsStore()
-    val notificationSettings = rememberNotificationSettingsStore()
+    val appSettings = LocalAppSettings.current
     val paginationEnvironment = rememberPaginationEnvironment()
     val appPrivateDirectory = rememberAppPrivateDirectory()
 
-    val autoRefreshOnStartup = settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true)
-    val showUnreadBadge = notificationSettings.getUnreadBadgeEnabled()
+    val autoRefreshOnStartup = appSettings.interaction.autoRefreshHomeOnStartup
+    val showUnreadBadge = appSettings.notification.showUnreadBadge
 
     val repository = remember(appPrivateDirectory, paginationEnvironment) {
         val cacheFile = Path(appPrivateDirectory, homeFeedStartupCacheFileName())

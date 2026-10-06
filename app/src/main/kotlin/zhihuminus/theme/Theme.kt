@@ -30,12 +30,13 @@ import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalView
 import androidx.core.view.WindowCompat
 import com.materialkolor.dynamicColorScheme
-import com.zhihuminus.platform.androidSettingsStore
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
+import com.zhihuminus.core.settings.LocalAppSettings
+import com.zhihuminus.core.settings.model.ThemeSettings
 
 private val DarkColorScheme = darkColorScheme(
     primary = Purple80,
@@ -58,18 +59,27 @@ private val LightColorScheme = lightColorScheme(
 
 @Composable
 fun ZhihuTheme(
+    themeSettings: ThemeSettings = LocalAppSettings.current.theme,
     content: @Composable () -> Unit,
 ) {
-    val useDynamicColor = ThemeManager.getUseDynamicColor()
-    val customBackgroundColor = ThemeManager.getBackgroundColor()
-    val darkTheme = ThemeManager.isDarkTheme()
+    SideEffect {
+        ThemeManager.sync(themeSettings)
+    }
+    val useDynamicColor = themeSettings.useDynamicColor
+    val darkTheme = resolveDarkTheme(themeSettings.mode, currentSystemInDarkTheme())
+    ThemeManager.isDarkTheme = darkTheme
+    val customBackgroundColor = if (darkTheme) {
+        Color(themeSettings.backgroundColorDark)
+    } else {
+        Color(themeSettings.backgroundColorLight)
+    }
     val platformDynamicColorScheme = platformDynamicColorScheme(darkTheme)
 
     val baseColorScheme = when {
         useDynamicColor && platformDynamicColorScheme != null -> platformDynamicColorScheme
         !useDynamicColor -> {
             dynamicColorScheme(
-                seedColor = ThemeManager.getCustomColor(),
+                seedColor = Color(themeSettings.customColor),
                 isDark = darkTheme,
                 isAmoled = false,
             )
@@ -96,49 +106,9 @@ fun ZhihuTheme(
 
 object AndroidThemeSettings {
     fun initialize(context: Context) {
-        ThemeManager.load(readSnapshot(context))
+        val theme = AndroidAppSettingsRepository.getInstance(context).current.theme
+        ThemeManager.sync(theme)
     }
-
-    fun setUseDynamicColor(context: Context, useDynamic: Boolean) {
-        ThemeManager.setUseDynamicColor(useDynamic)
-        context.settings.putBoolean("useDynamicColor", useDynamic)
-    }
-
-    fun setCustomColor(context: Context, color: Color) {
-        ThemeManager.setCustomColor(color)
-        context.settings.putInt("customThemeColor", color.toArgb())
-    }
-
-    fun setBackgroundColor(context: Context, color: Color, isDark: Boolean) {
-        ThemeManager.setBackgroundColor(color, isDark)
-        val key = if (isDark) "backgroundColorDark" else "backgroundColorLight"
-        context.settings.putInt(key, color.toArgb())
-    }
-
-    fun setThemeMode(context: Context, mode: ThemeMode) {
-        ThemeManager.setThemeMode(mode)
-        context.settings.putString("themeMode", mode.name)
-    }
-
-    private fun readSnapshot(context: Context): ThemeSnapshot {
-        val settings = context.settings
-        val themeModeValue = settings.getString("themeMode", ThemeMode.SYSTEM.name)
-        val themeMode = try {
-            ThemeMode.valueOf(themeModeValue)
-        } catch (_: IllegalArgumentException) {
-            ThemeMode.SYSTEM
-        }
-        return ThemeSnapshot(
-            useDynamicColor = settings.getBoolean("useDynamicColor", true),
-            customColor = settings.getInt("customThemeColor", 0xFF2196F3.toInt()),
-            backgroundColorLight = settings.getInt("backgroundColorLight", 0xFFFFFFFF.toInt()),
-            backgroundColorDark = settings.getInt("backgroundColorDark", 0xFF121212.toInt()),
-            themeMode = themeMode,
-        )
-    }
-
-    private val Context.settings
-        get() = androidSettingsStore(this)
 }
 
 @Composable

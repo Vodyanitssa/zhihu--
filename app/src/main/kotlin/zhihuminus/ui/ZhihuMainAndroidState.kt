@@ -18,31 +18,28 @@
 package com.zhihuminus.ui
 
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalContext
-import com.zhihuminus.navigation.Home
-import com.zhihuminus.platform.androidSettingsStore
-import com.zhihuminus.ui.subscreens.START_DESTINATION_PREFERENCE_KEY
-import com.zhihuminus.ui.subscreens.navDestinationFromName
+import androidx.compose.runtime.LaunchedEffect
+import com.zhihuminus.core.settings.LocalAppSettings
+import com.zhihuminus.core.settings.model.NavigationSettings
 
 /**
- * 读取 Android SharedPreferences 中会影响主壳的设置快照。
+ * 读取当前设置中会影响主壳的设置快照。
  *
- * 这些设置决定启动页和自动隐藏行为。设置页退出后会重新读取这份快照。
+ * 这些设置决定启动页和自动隐藏行为。
  */
 @Composable
-fun rememberAndroidZhihuMainPreferenceState(): ZhihuMainPreferenceState {
-    val context = LocalContext.current
-    val settings = remember(context) {
-        androidSettingsStore(context)
-    }
-    return rememberZhihuMainPreferenceState {
+fun rememberAndroidZhihuMainPreferenceState(
+    navigation: NavigationSettings = LocalAppSettings.current.navigation,
+): ZhihuMainPreferenceState {
+    val state = rememberZhihuMainPreferenceState {
         ZhihuMainPreferenceSnapshot(
-            tapToScrollToTopEnabled = settings.getBoolean("bottomBarTapScrollToTop", true),
-            autoHideBottomBar = settings.getBoolean("autoHideBottomBar", false),
-            startDestination = navDestinationFromName(
-                settings.getString(START_DESTINATION_PREFERENCE_KEY, Home.name),
-            ),
+            tapToScrollToTopEnabled = navigation.tapToScrollToTop,
+            autoHideBottomBar = navigation.autoHideBottomBar,
+            startDestination = navigation.startDestination.toTopLevelDestination(),
         )
     }
+    LaunchedEffect(navigation) {
+        state.reload()
+    }
+    return state
 }

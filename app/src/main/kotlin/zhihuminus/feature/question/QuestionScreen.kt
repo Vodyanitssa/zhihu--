@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.comment.CommentContentType
@@ -38,7 +39,6 @@ import com.zhihuminus.feature.question.components.QuestionHeaderSection
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.withReadingQueueSource
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -65,7 +65,7 @@ fun QuestionScreen(
     onAnswerClick: (item: FeedDisplayItem, destination: NavDestination?) -> Unit,
     onBack: () -> Unit,
 ) {
-    val settings = rememberSettingsStore()
+    val appSettings = LocalAppSettings.current
     val executeShareAction = rememberShareActionExecutor()
     val listState = rememberLazyListState()
     val pullToRefreshState = rememberPullToRefreshState()
@@ -87,7 +87,7 @@ fun QuestionScreen(
                 onOpenLog = { onEvent(QuestionEvent.OpenHistoryLog) },
                 onShare = {
                     if (shareText != null) {
-                        handleShareAction(destination, settings, executeShareAction) { showShareDialog = true }
+                        handleShareAction(destination, appSettings.interaction.shareAction, executeShareAction) { showShareDialog = true }
                     }
                 },
                 canShare = shareText != null,

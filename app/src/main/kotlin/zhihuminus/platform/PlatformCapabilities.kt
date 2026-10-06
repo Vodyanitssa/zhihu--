@@ -29,7 +29,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.platform.LocalContext
-import androidx.core.content.edit
 import androidx.core.net.toUri
 import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.core.platform.luoTianYiUrlLauncher
@@ -40,8 +39,6 @@ import com.zhihuminus.ui.components.OpenImageDialog
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.launch
 import kotlinx.io.files.Path
-
-const val PREFERENCE_NAME = "com.zhihuminus_preferences"
 
 enum class UserMessageDuration {
     Short,
@@ -62,24 +59,6 @@ data class UserMessageSink(
         }
     }
 }
-
-data class SettingsStore(
-    val getBoolean: (String, Boolean) -> Boolean,
-    val putBoolean: (String, Boolean) -> Unit,
-    val getString: (String, String) -> String,
-    val putString: (String, String) -> Unit,
-    val getStringOrNull: (String) -> String?,
-    val putStringSet: (String, Set<String>) -> Unit,
-    val getStringSet: (String, Set<String>) -> Set<String>,
-    val getInt: (String, Int) -> Int,
-    val putInt: (String, Int) -> Unit,
-    val getLong: (String, Long) -> Long,
-    val putLong: (String, Long) -> Unit,
-    val getFloat: (String, Float) -> Float,
-    val putFloat: (String, Float) -> Unit,
-    val remove: (String) -> Unit,
-    val observeKeyChanges: (onChanged: (String) -> Unit) -> () -> Unit = { {} },
-)
 
 @Composable
 fun rememberExternalUrlOpener(): (String) -> Unit {
@@ -167,47 +146,9 @@ fun rememberShareText(): (String) -> Unit {
 }
 
 @Composable
-fun rememberSettingsStore(): SettingsStore {
-    val context = LocalContext.current.applicationContext
-    return remember(context) { androidSettingsStore(context) }
-}
-
-@Composable
 fun rememberAppPrivateDirectory(): Path {
     val context = LocalContext.current.applicationContext
     return remember(context) { Path(context.filesDir.absolutePath) }
-}
-
-fun androidSettingsStore(context: Context): SettingsStore {
-    val preferences = context.applicationContext.getSharedPreferences(PREFERENCE_NAME, Context.MODE_PRIVATE)
-    return SettingsStore(
-        getBoolean = { key, defaultValue -> preferences.getBoolean(key, defaultValue) },
-        putBoolean = { key, value -> preferences.edit { putBoolean(key, value) } },
-        getString = { key, defaultValue -> preferences.getString(key, defaultValue) ?: defaultValue },
-        putString = { key, value -> preferences.edit { putString(key, value) } },
-        getStringOrNull = { key -> preferences.getString(key, null) },
-        putStringSet = { key, value -> preferences.edit { putStringSet(key, value) } },
-        getStringSet = { key, defaultValue -> preferences.getStringSet(key, defaultValue)?.toSet() ?: defaultValue },
-        getInt = { key, defaultValue -> preferences.getInt(key, defaultValue) },
-        putInt = { key, value -> preferences.edit { putInt(key, value) } },
-        getLong = { key, defaultValue -> preferences.getLong(key, defaultValue) },
-        putLong = { key, value -> preferences.edit { putLong(key, value) } },
-        getFloat = { key, defaultValue -> preferences.getFloat(key, defaultValue) },
-        putFloat = { key, value -> preferences.edit { putFloat(key, value) } },
-        remove = { key -> preferences.edit { remove(key) } },
-        observeKeyChanges = { onChanged ->
-            val listener = android.content.SharedPreferences.OnSharedPreferenceChangeListener { _, key ->
-                if (key != null) {
-                    onChanged(key)
-                }
-            }
-            preferences.registerOnSharedPreferenceChangeListener(listener)
-            val unregister = {
-                preferences.unregisterOnSharedPreferenceChangeListener(listener)
-            }
-            unregister
-        },
-    )
 }
 
 fun androidUserMessageSink(context: Context): UserMessageSink {

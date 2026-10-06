@@ -34,16 +34,12 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
-import com.zhihuminus.feature.notification.NotificationSettingsStore
+import com.zhihuminus.core.settings.LocalAppSettings
+import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.feature.notification.NotificationType
-import com.zhihuminus.feature.notification.rememberNotificationSettingsStore
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.ui.components.SettingItemWithSwitch
@@ -52,8 +48,8 @@ import com.zhihuminus.ui.components.SettingItemWithSwitch
  * 通知设置页。
  *
  * 页面分为阅读行为、系统通知和应用内显示三组：自动已读控制进入通知页后的处理方式，未读红点控制入口 badge，
- * 系统通知控制是否向 OS 发通知，应用内显示控制通知中心是否展示某类消息。这里使用 [NotificationSettingsStore]，
- * 不要和普通偏好设置 key 混用。
+ * 系统通知控制是否向 OS 发通知，应用内显示控制通知中心是否展示某类消息。
+ * 统一使用 [LocalAppSettings] 和 [LocalAppSettingsRepository] 响应式管理。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -61,27 +57,11 @@ fun NotificationSettingsScreen(
     setting: String? = null,
 ) {
     val navigator = LocalNavigator.current
-    val settingsStore = rememberNotificationSettingsStore()
+    val appSettings = LocalAppSettings.current
+    val repository = LocalAppSettingsRepository.current
+    val notificationSettings = appSettings.notification
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val highlightedSetting = setting.orEmpty()
-
-    var systemNotificationSettings by remember {
-        mutableStateOf(
-            NotificationType.entries.associateWith {
-                settingsStore.getSystemNotificationEnabled(it)
-            },
-        )
-    }
-
-    var displayInAppSettings by remember {
-        mutableStateOf(
-            NotificationType.entries.associateWith {
-                settingsStore.getDisplayInAppEnabled(it)
-            },
-        )
-    }
-    var autoMarkAsRead by remember { mutableStateOf(settingsStore.getAutoMarkAsReadEnabled()) }
-    var unreadBadgeEnabled by remember { mutableStateOf(settingsStore.getUnreadBadgeEnabled()) }
 
     Scaffold(
         modifier = Modifier.fillMaxSize().nestedScroll(scrollBehavior.nestedScrollConnection),
@@ -119,20 +99,18 @@ fun NotificationSettingsScreen(
                 SettingItemWithSwitch(
                     title = { Text("打开通知自动已读") },
                     description = { Text("进入通知板块后，自动把当前查看的板块标记为已读") },
-                    checked = autoMarkAsRead,
+                    checked = notificationSettings.autoMarkAsRead,
                     onCheckedChange = { checked ->
-                        autoMarkAsRead = checked
-                        settingsStore.setAutoMarkAsReadEnabled(checked)
+                        repository.updateNotification { it.copy(autoMarkAsRead = checked) }
                     },
                     settingKey = "autoMarkAsRead",
                     highlightedKey = highlightedSetting,
                 )
                 SettingItemWithSwitch(
                     title = { Text("显示未读红点") },
-                    checked = unreadBadgeEnabled,
+                    checked = notificationSettings.showUnreadBadge,
                     onCheckedChange = { checked ->
-                        unreadBadgeEnabled = checked
-                        settingsStore.setUnreadBadgeEnabled(checked)
+                        repository.updateNotification { it.copy(showUnreadBadge = checked) }
                     },
                     settingKey = "unreadBadge",
                     highlightedKey = highlightedSetting,
@@ -147,12 +125,13 @@ fun NotificationSettingsScreen(
                 NotificationType.entries.forEach { type ->
                     SettingItemWithSwitch(
                         title = { Text(type.displayName) },
-                        checked = systemNotificationSettings[type] ?: false,
+                        checked = notificationSettings.isSystemNotificationEnabled(type),
                         onCheckedChange = { checked ->
-                            systemNotificationSettings = systemNotificationSettings.toMutableMap().apply {
-                                put(type, checked)
+                            repository.updateNotification { current ->
+                                current.copy(
+                                    systemNotifications = current.systemNotifications + (type to checked),
+                                )
                             }
-                            settingsStore.setSystemNotificationEnabled(type, checked)
                         },
                     )
                 }
@@ -167,12 +146,13 @@ fun NotificationSettingsScreen(
                 NotificationType.entries.forEach { type ->
                     SettingItemWithSwitch(
                         title = { Text(type.displayName) },
-                        checked = displayInAppSettings[type] ?: true,
+                        checked = notificationSettings.isDisplayInAppEnabled(type),
                         onCheckedChange = { checked ->
-                            displayInAppSettings = displayInAppSettings.toMutableMap().apply {
-                                put(type, checked)
+                            repository.updateNotification { current ->
+                                current.copy(
+                                    displayInApp = current.displayInApp + (type to checked),
+                                )
                             }
-                            settingsStore.setDisplayInAppEnabled(type, checked)
                         },
                     )
                 }

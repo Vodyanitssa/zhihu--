@@ -64,6 +64,7 @@ import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
 import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.core.platform.luoTianYiUrlLauncher
+import com.zhihuminus.core.settings.model.ShareActionOption
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
@@ -71,7 +72,6 @@ import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.platform.SettingsStore
 import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.articleHost
 import kotlinx.coroutines.launch
@@ -228,15 +228,15 @@ fun ShareDialog(
  */
 fun handleShareAction(
     content: NavDestination,
-    settings: SettingsStore,
+    shareAction: ShareActionOption,
     executeShareAction: ShareActionExecutor,
     onShowDialog: () -> Unit,
 ) {
     val shareText = getShareText(content) ?: return
-    when (settings.getString("shareActionMode", "ask")) {
-        "copy" -> executeShareAction(ShareAction.CopyLink, content, shareText)
-        "share" -> executeShareAction(ShareAction.DirectShare, content, shareText)
-        else -> onShowDialog()
+    when (shareAction) {
+        ShareActionOption.CopyLink -> executeShareAction(ShareAction.CopyLink, content, shareText)
+        ShareActionOption.SystemShare -> executeShareAction(ShareAction.DirectShare, content, shareText)
+        ShareActionOption.Ask -> onShowDialog()
     }
 }
 

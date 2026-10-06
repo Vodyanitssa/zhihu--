@@ -42,9 +42,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.zhihuminus.platform.androidSettingsStore
+import com.zhihuminus.data.VideoProgressStorage
 
 class VideoPlayerActivity : ComponentActivity() {
+    private val progressStorage by lazy { VideoProgressStorage(this) }
     private var player: ExoPlayer? = null
     private var videoId: Long = 0L
 
@@ -123,8 +124,7 @@ class VideoPlayerActivity : ComponentActivity() {
             return 0L
         }
 
-        return androidSettingsStore(this)
-            .getLong("video_progress_$videoId", 0L)
+        return progressStorage.getProgress(videoId)
     }
 
     private fun saveCurrentProgress() {
@@ -142,12 +142,10 @@ class VideoPlayerActivity : ComponentActivity() {
                 return
             }
 
-            val store = androidSettingsStore(this)
-
             if (duration - position <= 3000L) {
-                store.remove("video_progress_$videoId")
+                progressStorage.removeProgress(videoId)
             } else {
-                store.putLong("video_progress_$videoId", position)
+                progressStorage.saveProgress(videoId, position)
             }
         } catch (_: IllegalStateException) {
             // Player 已经释放，忽略。

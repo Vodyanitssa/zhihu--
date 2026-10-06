@@ -55,13 +55,21 @@ object ThemeManager {
     fun getThemeMode(): ThemeMode = themeMode.value
 
     var isDarkTheme: Boolean = false
-        private set
+        internal set
 
     @Composable
     fun isDarkTheme(): Boolean {
         val isDark = resolveDarkTheme(themeMode.value, currentSystemInDarkTheme())
         isDarkTheme = isDark
         return isDark
+    }
+
+    fun sync(settings: com.zhihuminus.core.settings.model.ThemeSettings) {
+        useDynamicColor.value = settings.useDynamicColor
+        customColorInt.intValue = settings.customColor
+        backgroundColorLight.intValue = settings.backgroundColorLight
+        backgroundColorDark.intValue = settings.backgroundColorDark
+        themeMode.value = settings.mode
     }
 
     fun load(snapshot: ThemeSnapshot) {

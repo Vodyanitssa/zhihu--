@@ -5,15 +5,17 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
+import com.zhihuminus.data.SearchHistoryStorage
 import com.zhihuminus.data.zhihu.ZhihuSearchRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Search
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
@@ -21,9 +23,11 @@ fun SearchRoute(
     search: Search,
     onBack: () -> Unit,
 ) {
+    val context = LocalContext.current
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
-    val settings = rememberSettingsStore()
+    val settingsRepository = remember(context) { AndroidAppSettingsRepository.getInstance(context) }
+    val historyStorage = remember(context) { SearchHistoryStorage(context) }
     val paginationEnvironment = rememberPaginationEnvironment()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
@@ -34,10 +38,11 @@ fun SearchRoute(
     val peopleListState = rememberLazyListState()
     val topicListState = rememberLazyListState()
 
-    val repository = remember(paginationEnvironment, settings) {
+    val repository = remember(paginationEnvironment, settingsRepository, historyStorage) {
         ZhihuSearchRepository(
             environment = paginationEnvironment,
-            settings = settings,
+            settingsRepository = settingsRepository,
+            historyStorage = historyStorage,
         )
     }
 

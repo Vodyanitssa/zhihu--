@@ -64,16 +64,14 @@ import com.zhihuminus.core.content.extractImageUrl
 import com.zhihuminus.core.platform.luoTianYiUrlLauncher
 import com.zhihuminus.core.platform.saveImageToGallery
 import com.zhihuminus.core.platform.shareImage
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.fetchHighestQualityZhihuVideoUrl
 import com.zhihuminus.data.zhihu.crypto.signFetchRequest
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
-import com.zhihuminus.platform.androidSettingsStore
 import com.zhihuminus.theme.ThemeManager
-import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
-import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
 import io.ktor.client.HttpClient
 import io.ktor.http.Url
 import kotlinx.coroutines.DelicateCoroutinesApi
@@ -312,11 +310,11 @@ class CustomWebView : WebView {
             return
         }
         Log.i("CustomWebView", "Loading content for URL: $url with document title: ${document.title()}")
-        val settings = androidSettingsStore(context)
-        val fontSize = settings.getInt(PREF_FONT_SIZE, 100)
-        val lineHeight = settings.getInt(PREF_LINE_HEIGHT, 160)
+        val appSettings = AndroidAppSettingsRepository.getInstance(context).current
+        val fontSize = appSettings.reading.fontSizePercent
+        val lineHeight = appSettings.reading.lineHeightPercent
         val customFontFile = java.io.File(context.filesDir, "custom_font")
-        val customFontName = settings.getStringOrNull("webviewCustomFontName")
+        val customFontName: String? = null
         val customFontCss = if (customFontName != null && customFontFile.exists()) {
             val fontName = customFontName
             val format = if (fontName.endsWith(".otf", ignoreCase = true)) "opentype" else "truetype"
@@ -427,7 +425,7 @@ fun WebviewComp(
 ) {
     val coroutineScope = rememberCoroutineScope()
     val context = LocalContext.current
-    val useHardwareAcceleration = androidSettingsStore(context).getBoolean("webviewHardwareAcceleration", true)
+    val useHardwareAcceleration = true
     // JS 上报的内容高度（CSS 像素 = dp，WebView viewport 默认 1 CSS px = 1 dp）；
     // 0 表示尚未收到上报（等待 onPageFinished），此时用 wrapContentSize 避免撑满未知高度
     var contentHeightDp by remember { mutableIntStateOf(0) }
@@ -488,13 +486,8 @@ private class UserFilesPathHandler(
     override fun handle(path: String): WebResourceResponse? {
         val file = java.io.File(context.filesDir, path)
         if (!file.exists() || !file.isFile) return null
-        val settings = androidSettingsStore(context)
         val mimeType = when {
-            path == "custom_font" -> {
-                val fontName = settings.getString("webviewCustomFontName", "")
-                if (fontName.endsWith(".otf", ignoreCase = true)) "font/otf" else "font/ttf"
-            }
-
+            path == "custom_font" -> "font/ttf"
             else -> "application/octet-stream"
         }
         return WebResourceResponse(

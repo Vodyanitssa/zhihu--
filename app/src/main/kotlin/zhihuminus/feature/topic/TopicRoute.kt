@@ -8,11 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuTopicRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.ShareDialog
 import com.zhihuminus.ui.components.getShareText
@@ -34,7 +34,7 @@ fun TopicRoute(topic: Topic) {
     }
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
-    val settings = rememberSettingsStore()
+    val appSettings = LocalAppSettings.current
     val executeShareAction = rememberShareActionExecutor()
     var showShareDialog by remember { mutableStateOf(false) }
 
@@ -59,7 +59,7 @@ fun TopicRoute(topic: Topic) {
         onEvent = viewModel::onEvent,
         onBack = navigator.onNavigateBack,
         onShare = {
-            handleShareAction(loadedTopic, settings, executeShareAction) { showShareDialog = true }
+            handleShareAction(loadedTopic, appSettings.interaction.shareAction, executeShareAction) { showShareDialog = true }
         },
     )
 

@@ -61,12 +61,10 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
+import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.officialBadge
-import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
-import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
 import org.jsoup.Jsoup
 
 /**
@@ -86,17 +84,15 @@ data class FeedCardConfig(
 val LocalFeedCardConfig = staticCompositionLocalOf { FeedCardConfig() }
 
 /**
- * 从平台偏好设置中读取并监听 [FeedCardConfig]，供上层容器注入给 [LocalFeedCardConfig]。
+ * 从全局设置中响应式读取并计算 [FeedCardConfig]，供上层容器注入给 [LocalFeedCardConfig]。
  */
 @Composable
 fun rememberFeedCardConfig(): FeedCardConfig {
-    val settings = rememberSettingsStore()
-    val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
-    val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
-    return remember(fontSizePercent, lineHeightPercent) {
+    val reading = LocalAppSettings.current.reading
+    return remember(reading.fontSizePercent, reading.lineHeightPercent) {
         FeedCardConfig(
-            fontSizePercent = fontSizePercent,
-            lineHeightPercent = lineHeightPercent,
+            fontSizePercent = reading.fontSizePercent,
+            lineHeightPercent = reading.lineHeightPercent,
         )
     }
 }
