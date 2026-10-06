@@ -29,7 +29,8 @@ fun PeopleUserInfoHeader(
     profile: PeopleProfile,
     onFollowToggle: () -> Unit,
     onBlockToggle: () -> Unit,
-    onStatClick: (Int) -> Unit,
+    onFollowingClick: () -> Unit,
+    onFollowersClick: () -> Unit,
     onAvatarClick: (String) -> Unit,
     onExternalUrlClick: (String) -> Unit,
     modifier: Modifier = Modifier,
@@ -118,12 +119,10 @@ fun PeopleUserInfoHeader(
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(top = 16.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
+            horizontalArrangement = Arrangement.spacedBy(48.dp, Alignment.CenterHorizontally),
         ) {
-            PeopleStatItem("回答", profile.answerCount, onClick = { onStatClick(0) })
-            PeopleStatItem("文章", profile.articleCount, onClick = { onStatClick(1) })
-            PeopleStatItem("粉丝", profile.followerCount, onClick = { onStatClick(7) })
-            PeopleStatItem("关注", profile.followingCount, onClick = { onStatClick(8) })
+            PeopleStatItem("关注", profile.followingCount, onClick = onFollowingClick)
+            PeopleStatItem("粉丝", profile.followerCount, onClick = onFollowersClick)
         }
         FlowRow(
             modifier = Modifier

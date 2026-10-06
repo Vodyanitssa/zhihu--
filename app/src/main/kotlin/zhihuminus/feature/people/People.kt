@@ -58,6 +58,69 @@ data class FollowedQuestion(
     val updatedTime: Long = 0L,
 )
 
+enum class PeoplePrimaryTab(
+    val title: String,
+) {
+    Creations("创作"),
+    Activities("动态"),
+    Collections("收藏"),
+    FollowingSubscriptions("关注订阅"),
+    ;
+
+    companion object {
+        val TITLES = entries.map { it.title }
+    }
+}
+
+enum class PeopleCreationTab(
+    val title: String,
+) {
+    Answers("回答"),
+    Articles("文章"),
+    Pins("想法"),
+    Columns("专栏"),
+    Questions("提问"),
+    ;
+
+    companion object {
+        val TITLES = entries.map { it.title }
+    }
+}
+
+enum class PeopleUserListType(
+    val title: String,
+) {
+    Following("关注"),
+    Followers("粉丝"),
+    ;
+
+    companion object {
+        val TITLES = entries.map { it.title }
+    }
+}
+
+data class PeopleInitialSelection(
+    val primaryTab: PeoplePrimaryTab = PeoplePrimaryTab.Activities,
+    val creationTab: PeopleCreationTab = PeopleCreationTab.Answers,
+    val initialUserListType: PeopleUserListType? = null,
+)
+
+fun resolvePeopleInitialSelection(jumpTo: String): PeopleInitialSelection = when (jumpTo) {
+    "回答" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Answers)
+    "文章" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Articles)
+    "想法" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Pins)
+    "专栏" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Columns)
+    "提问" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Questions)
+    "创作" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Answers)
+    "动态" -> PeopleInitialSelection(PeoplePrimaryTab.Activities)
+    "收藏" -> PeopleInitialSelection(PeoplePrimaryTab.Collections)
+    "关注订阅" -> PeopleInitialSelection(PeoplePrimaryTab.FollowingSubscriptions)
+    "关注" -> PeopleInitialSelection(PeoplePrimaryTab.Activities, initialUserListType = PeopleUserListType.Following)
+    "粉丝" -> PeopleInitialSelection(PeoplePrimaryTab.Activities, initialUserListType = PeopleUserListType.Followers)
+    else -> PeopleInitialSelection(PeoplePrimaryTab.Activities)
+}
+
+@Deprecated("Use PeoplePrimaryTab and PeopleCreationTab instead")
 enum class PeopleTab(
     val title: String,
 ) {

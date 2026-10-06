@@ -42,6 +42,7 @@ data class PeopleUiState(
     val followersState: PaginatedTabState<DataHolder.People> = PaginatedTabState(),
     val followingState: PaginatedTabState<DataHolder.People> = PaginatedTabState(),
     val selectedSubscriptionTab: Int = 0,
+    val selectedCreationTab: PeopleCreationTab = PeopleCreationTab.Answers,
     val followingColumnsState: PaginatedTabState<DataHolder.Column> = PaginatedTabState(),
     val followingTopicsState: PaginatedTabState<FollowedTopic> = PaginatedTabState(),
     val followingQuestionsState: PaginatedTabState<FollowedQuestion> = PaginatedTabState(),
@@ -50,8 +51,8 @@ data class PeopleUiState(
 )
 
 fun peopleScreenInitialPage(person: Person): Int {
-    val jumpToIndex = PeopleTab.TITLES.indexOf(person.jumpTo)
-    return if (jumpToIndex >= 0) jumpToIndex else 2
+    val selection = resolvePeopleInitialSelection(person.jumpTo)
+    return selection.primaryTab.ordinal
 }
 
 class PeopleViewModel(
@@ -87,7 +88,15 @@ class PeopleViewModel(
 
     init {
         loadProfile()
-        loadTabIfNeeded(peopleScreenInitialPage(person))
+        val initial = resolvePeopleInitialSelection(person.jumpTo)
+        loadPrimaryTabIfNeeded(initial.primaryTab)
+        if (initial.primaryTab == PeoplePrimaryTab.Creations) {
+            uiState = uiState.copy(selectedCreationTab = initial.creationTab)
+            loadCreationTabIfNeeded(initial.creationTab)
+        }
+        initial.initialUserListType?.let {
+            loadUserListIfNeeded(it)
+        }
     }
 
     fun onEvent(event: PeopleEvent) {
@@ -96,11 +105,20 @@ class PeopleViewModel(
             is PeopleEvent.ToggleFollow -> toggleFollow()
             is PeopleEvent.ToggleItemFollow -> toggleItemFollow(event.people)
             is PeopleEvent.ToggleBlock -> toggleBlock()
-            is PeopleEvent.TabSelected -> loadTabIfNeeded(event.index)
-            is PeopleEvent.LoadMore -> loadTab(event.tabIndex, reset = false)
-            is PeopleEvent.RefreshTab -> loadTab(event.tabIndex, reset = true)
+            is PeopleEvent.PrimaryTabSelected -> loadPrimaryTabIfNeeded(event.tab)
+            is PeopleEvent.CreationTabSelected -> {
+                uiState = uiState.copy(selectedCreationTab = event.tab)
+                loadCreationTabIfNeeded(event.tab)
+            }
+            is PeopleEvent.LoadMoreCreation -> loadCreationTab(event.tab, reset = false)
+            is PeopleEvent.RefreshCreation -> loadCreationTab(event.tab, reset = true)
             is PeopleEvent.ChangeAnswersSort -> changeAnswersSort(event.sortBy)
             is PeopleEvent.ChangeArticlesSort -> changeArticlesSort(event.sortBy)
+            is PeopleEvent.LoadMorePrimary -> loadPrimaryTab(event.tab, reset = false)
+            is PeopleEvent.RefreshPrimary -> loadPrimaryTab(event.tab, reset = true)
+            is PeopleEvent.LoadUserListIfNeeded -> loadUserListIfNeeded(event.type)
+            is PeopleEvent.LoadMoreUserList -> loadUserList(event.type, reset = false)
+            is PeopleEvent.RefreshUserList -> loadUserList(event.type, reset = true)
             is PeopleEvent.SubscriptionTabSelected -> selectSubscriptionTab(event.index)
             is PeopleEvent.LoadMoreSubscription -> loadSubscriptionTab(event.index, reset = false)
             is PeopleEvent.RefreshSubscription -> loadSubscriptionTab(event.index, reset = true)
@@ -237,33 +255,73 @@ class PeopleViewModel(
         }
     }
 
-    fun loadTabIfNeeded(index: Int) {
-        when (index) {
-            0 -> if (!uiState.answersState.hasLoaded && !uiState.answersState.isLoading) loadAnswers(reset = true)
-            1 -> if (!uiState.articlesState.hasLoaded && !uiState.articlesState.isLoading) loadArticles(reset = true)
-            2 -> if (!uiState.activitiesState.hasLoaded && !uiState.activitiesState.isLoading) loadActivities(reset = true)
-            3 -> if (!uiState.collectionsState.hasLoaded && !uiState.collectionsState.isLoading) loadCollections(reset = true)
-            4 -> if (!uiState.questionsState.hasLoaded && !uiState.questionsState.isLoading) loadQuestions(reset = true)
-            5 -> if (!uiState.pinsState.hasLoaded && !uiState.pinsState.isLoading) loadPins(reset = true)
-            6 -> if (!uiState.columnsState.hasLoaded && !uiState.columnsState.isLoading) loadColumns(reset = true)
-            7 -> if (!uiState.followersState.hasLoaded && !uiState.followersState.isLoading) loadFollowers(reset = true)
-            8 -> if (!uiState.followingState.hasLoaded && !uiState.followingState.isLoading) loadFollowing(reset = true)
-            9 -> loadSubscriptionTabIfNeeded(uiState.selectedSubscriptionTab)
+    fun loadPrimaryTabIfNeeded(tab: PeoplePrimaryTab) {
+        when (tab) {
+            PeoplePrimaryTab.Creations -> loadCreationTabIfNeeded(uiState.selectedCreationTab)
+            PeoplePrimaryTab.Activities -> if (!uiState.activitiesState.hasLoaded && !uiState.activitiesState.isLoading) {
+                loadActivities(reset = true)
+            }
+            PeoplePrimaryTab.Collections -> if (!uiState.collectionsState.hasLoaded && !uiState.collectionsState.isLoading) {
+                loadCollections(reset = true)
+            }
+            PeoplePrimaryTab.FollowingSubscriptions -> loadSubscriptionTabIfNeeded(uiState.selectedSubscriptionTab)
         }
     }
 
-    private fun loadTab(index: Int, reset: Boolean) {
-        when (index) {
-            0 -> loadAnswers(reset)
-            1 -> loadArticles(reset)
-            2 -> loadActivities(reset)
-            3 -> loadCollections(reset)
-            4 -> loadQuestions(reset)
-            5 -> loadPins(reset)
-            6 -> loadColumns(reset)
-            7 -> loadFollowers(reset)
-            8 -> loadFollowing(reset)
-            9 -> loadSubscriptionTab(uiState.selectedSubscriptionTab, reset)
+    private fun loadPrimaryTab(tab: PeoplePrimaryTab, reset: Boolean) {
+        when (tab) {
+            PeoplePrimaryTab.Creations -> loadCreationTab(uiState.selectedCreationTab, reset)
+            PeoplePrimaryTab.Activities -> loadActivities(reset)
+            PeoplePrimaryTab.Collections -> loadCollections(reset)
+            PeoplePrimaryTab.FollowingSubscriptions -> loadSubscriptionTab(uiState.selectedSubscriptionTab, reset)
+        }
+    }
+
+    fun loadCreationTabIfNeeded(tab: PeopleCreationTab) {
+        when (tab) {
+            PeopleCreationTab.Answers -> if (!uiState.answersState.hasLoaded && !uiState.answersState.isLoading) {
+                loadAnswers(reset = true)
+            }
+            PeopleCreationTab.Articles -> if (!uiState.articlesState.hasLoaded && !uiState.articlesState.isLoading) {
+                loadArticles(reset = true)
+            }
+            PeopleCreationTab.Pins -> if (!uiState.pinsState.hasLoaded && !uiState.pinsState.isLoading) {
+                loadPins(reset = true)
+            }
+            PeopleCreationTab.Columns -> if (!uiState.columnsState.hasLoaded && !uiState.columnsState.isLoading) {
+                loadColumns(reset = true)
+            }
+            PeopleCreationTab.Questions -> if (!uiState.questionsState.hasLoaded && !uiState.questionsState.isLoading) {
+                loadQuestions(reset = true)
+            }
+        }
+    }
+
+    private fun loadCreationTab(tab: PeopleCreationTab, reset: Boolean) {
+        when (tab) {
+            PeopleCreationTab.Answers -> loadAnswers(reset)
+            PeopleCreationTab.Articles -> loadArticles(reset)
+            PeopleCreationTab.Pins -> loadPins(reset)
+            PeopleCreationTab.Columns -> loadColumns(reset)
+            PeopleCreationTab.Questions -> loadQuestions(reset)
+        }
+    }
+
+    fun loadUserListIfNeeded(type: PeopleUserListType) {
+        when (type) {
+            PeopleUserListType.Following -> if (!uiState.followingState.hasLoaded && !uiState.followingState.isLoading) {
+                loadFollowing(reset = true)
+            }
+            PeopleUserListType.Followers -> if (!uiState.followersState.hasLoaded && !uiState.followersState.isLoading) {
+                loadFollowers(reset = true)
+            }
+        }
+    }
+
+    private fun loadUserList(type: PeopleUserListType, reset: Boolean) {
+        when (type) {
+            PeopleUserListType.Following -> loadFollowing(reset)
+            PeopleUserListType.Followers -> loadFollowers(reset)
         }
     }
 

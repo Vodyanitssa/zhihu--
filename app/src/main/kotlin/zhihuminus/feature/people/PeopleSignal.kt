@@ -15,16 +15,20 @@ sealed interface PeopleEvent {
 
     data object ToggleBlock : PeopleEvent
 
-    data class TabSelected(
-        val index: Int,
+    data class PrimaryTabSelected(
+        val tab: PeoplePrimaryTab,
     ) : PeopleEvent
 
-    data class LoadMore(
-        val tabIndex: Int,
+    data class CreationTabSelected(
+        val tab: PeopleCreationTab,
     ) : PeopleEvent
 
-    data class RefreshTab(
-        val tabIndex: Int,
+    data class LoadMoreCreation(
+        val tab: PeopleCreationTab,
+    ) : PeopleEvent
+
+    data class RefreshCreation(
+        val tab: PeopleCreationTab,
     ) : PeopleEvent
 
     data class ChangeAnswersSort(
@@ -33,6 +37,26 @@ sealed interface PeopleEvent {
 
     data class ChangeArticlesSort(
         val sortBy: String,
+    ) : PeopleEvent
+
+    data class LoadMorePrimary(
+        val tab: PeoplePrimaryTab,
+    ) : PeopleEvent
+
+    data class RefreshPrimary(
+        val tab: PeoplePrimaryTab,
+    ) : PeopleEvent
+
+    data class LoadUserListIfNeeded(
+        val type: PeopleUserListType,
+    ) : PeopleEvent
+
+    data class LoadMoreUserList(
+        val type: PeopleUserListType,
+    ) : PeopleEvent
+
+    data class RefreshUserList(
+        val type: PeopleUserListType,
     ) : PeopleEvent
 
     data class SubscriptionTabSelected(

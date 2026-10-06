@@ -20,7 +20,11 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
@@ -28,11 +32,10 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.people.components.PeopleCollectionListItem
-import com.zhihuminus.feature.people.components.PeopleColumnListItem
+import com.zhihuminus.feature.people.components.PeopleCreationsTab
 import com.zhihuminus.feature.people.components.PeopleFollowingSubscriptionsTab
-import com.zhihuminus.feature.people.components.PeopleQuestionListItem
-import com.zhihuminus.feature.people.components.PeopleSortBar
 import com.zhihuminus.feature.people.components.PeopleUserInfoHeader
+import com.zhihuminus.feature.people.components.PeopleUserListSheet
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
@@ -40,7 +43,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
-import com.zhihuminus.ui.components.PeopleListItem
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 import kotlinx.coroutines.launch
 import com.zhihuminus.navigation.Search as SearchDestination
@@ -54,24 +56,42 @@ fun PeopleScreen(
     onLinkClick: (String) -> Unit,
     onImagePreview: (String) -> Unit,
     onExternalUrl: (String) -> Unit,
-    initialPage: Int = 2,
+    initialSelection: PeopleInitialSelection = PeopleInitialSelection(),
     modifier: Modifier = Modifier,
 ) {
     val coroutineScope = rememberCoroutineScope()
-    val pagerState = rememberPagerState(
-        initialPage = initialPage,
-        pageCount = { PeopleTab.entries.size },
+    val primaryPagerState = rememberPagerState(
+        initialPage = initialSelection.primaryTab.ordinal,
+        pageCount = { PeoplePrimaryTab.entries.size },
     )
+    val creationPagerState = rememberPagerState(
+        initialPage = initialSelection.creationTab.ordinal,
+        pageCount = { PeopleCreationTab.entries.size },
+    )
+    var activeUserListType by remember { mutableStateOf(initialSelection.initialUserListType) }
 
-    LaunchedEffect(pagerState.currentPage) {
-        onEvent(PeopleEvent.TabSelected(pagerState.currentPage))
+    LaunchedEffect(primaryPagerState.currentPage) {
+        val tab = PeoplePrimaryTab.entries[primaryPagerState.currentPage]
+        onEvent(PeopleEvent.PrimaryTabSelected(tab))
     }
 
-    val readingQueueSourceId = when (pagerState.currentPage) {
-        0 -> "people:${state.profile.userTokenOrId}:answers:${state.answersSort}"
-        1 -> "people:${state.profile.userTokenOrId}:articles:${state.articlesSort}"
-        2 -> "people:${state.profile.userTokenOrId}:activities:created"
-        5 -> "people:${state.profile.userTokenOrId}:pins"
+    LaunchedEffect(creationPagerState.currentPage) {
+        val tab = PeopleCreationTab.entries[creationPagerState.currentPage]
+        onEvent(PeopleEvent.CreationTabSelected(tab))
+    }
+
+    LaunchedEffect(activeUserListType) {
+        activeUserListType?.let { onEvent(PeopleEvent.LoadUserListIfNeeded(it)) }
+    }
+
+    val readingQueueSourceId = when (PeoplePrimaryTab.entries[primaryPagerState.currentPage]) {
+        PeoplePrimaryTab.Creations -> when (PeopleCreationTab.entries[creationPagerState.currentPage]) {
+            PeopleCreationTab.Answers -> "people:${state.profile.userTokenOrId}:answers:${state.answersSort}"
+            PeopleCreationTab.Articles -> "people:${state.profile.userTokenOrId}:articles:${state.articlesSort}"
+            PeopleCreationTab.Pins -> "people:${state.profile.userTokenOrId}:pins"
+            else -> null
+        }
+        PeoplePrimaryTab.Activities -> "people:${state.profile.userTokenOrId}:activities:created"
         else -> null
     }
 
@@ -89,11 +109,8 @@ fun PeopleScreen(
                             profile = state.profile,
                             onFollowToggle = { onEvent(PeopleEvent.ToggleFollow) },
                             onBlockToggle = { onEvent(PeopleEvent.ToggleBlock) },
-                            onStatClick = { page ->
-                                coroutineScope.launch {
-                                    pagerState.animateScrollToPage(page)
-                                }
-                            },
+                            onFollowingClick = { activeUserListType = PeopleUserListType.Following },
+                            onFollowersClick = { activeUserListType = PeopleUserListType.Followers },
                             onAvatarClick = onImagePreview,
                             onExternalUrlClick = onExternalUrl,
                             modifier = Modifier.padding(horizontal = 8.dp),
@@ -131,15 +148,16 @@ fun PeopleScreen(
                 .padding(horizontal = 8.dp),
         ) {
             PrimaryScrollableTabRow(
-                selectedTabIndex = pagerState.currentPage,
+                selectedTabIndex = primaryPagerState.currentPage,
+                edgePadding = 8.dp,
                 modifier = Modifier,
             ) {
-                PeopleTab.entries.forEachIndexed { index, tab ->
+                PeoplePrimaryTab.entries.forEachIndexed { index, tab ->
                     Tab(
-                        selected = pagerState.currentPage == index,
+                        selected = primaryPagerState.currentPage == index,
                         onClick = {
                             coroutineScope.launch {
-                                pagerState.animateScrollToPage(index)
+                                primaryPagerState.animateScrollToPage(index)
                             }
                         },
                         modifier = Modifier,
@@ -155,69 +173,27 @@ fun PeopleScreen(
             }
 
             HorizontalPager(
-                state = pagerState,
+                state = primaryPagerState,
                 modifier = Modifier.weight(1f),
             ) { page ->
                 when (page) {
                     0 -> {
-                        // 回答
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            PeopleSortBar(
-                                currentSort = state.answersSort,
-                                onSortChange = { onEvent(PeopleEvent.ChangeAnswersSort(it)) },
-                            )
-                            PaginatedList(
-                                items = state.answersState.items,
-                                onLoadMore = { onEvent(PeopleEvent.LoadMore(0)) },
-                                isEnd = { state.answersState.isEnd },
-                                footer = ProgressIndicatorFooter,
-                                modifier = Modifier.fillMaxSize(),
-                                key = { it.stableKey },
-                            ) { item ->
-                                FeedCard(
-                                    item = item,
-                                    modifier = Modifier,
-                                    horizontalPadding = 4.dp,
-                                    onClick = {
-                                        item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
-                                    },
-                                )
-                            }
-                        }
+                        // 创作 (包含二级导航: 回答、文章、想法、专栏、提问)
+                        PeopleCreationsTab(
+                            state = state,
+                            pagerState = creationPagerState,
+                            readingQueueSourceId = readingQueueSourceId,
+                            onEvent = onEvent,
+                            onNavigate = onNavigate,
+                            onLinkClick = onLinkClick,
+                        )
                     }
 
                     1 -> {
-                        // 文章
-                        Column(modifier = Modifier.fillMaxSize()) {
-                            PeopleSortBar(
-                                currentSort = state.articlesSort,
-                                onSortChange = { onEvent(PeopleEvent.ChangeArticlesSort(it)) },
-                            )
-                            PaginatedList(
-                                items = state.articlesState.items,
-                                onLoadMore = { onEvent(PeopleEvent.LoadMore(1)) },
-                                isEnd = { state.articlesState.isEnd },
-                                footer = ProgressIndicatorFooter,
-                                modifier = Modifier.fillMaxSize(),
-                                key = { it.stableKey },
-                            ) { item ->
-                                FeedCard(
-                                    item = item,
-                                    modifier = Modifier,
-                                    horizontalPadding = 4.dp,
-                                    onClick = {
-                                        item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
-                                    },
-                                )
-                            }
-                        }
-                    }
-
-                    2 -> {
                         // 动态
                         PaginatedList(
                             items = state.activitiesState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(2)) },
+                            onLoadMore = { onEvent(PeopleEvent.LoadMorePrimary(PeoplePrimaryTab.Activities)) },
                             isEnd = { state.activitiesState.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
@@ -234,11 +210,11 @@ fun PeopleScreen(
                         }
                     }
 
-                    3 -> {
+                    2 -> {
                         // 收藏
                         PaginatedList(
                             items = state.collectionsState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(3)) },
+                            onLoadMore = { onEvent(PeopleEvent.LoadMorePrimary(PeoplePrimaryTab.Collections)) },
                             isEnd = { state.collectionsState.isEnd },
                             footer = ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
@@ -251,122 +227,7 @@ fun PeopleScreen(
                         }
                     }
 
-                    4 -> {
-                        // 提问
-                        PaginatedList(
-                            items = state.questionsState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(4)) },
-                            isEnd = { state.questionsState.isEnd },
-                            footer = ProgressIndicatorFooter,
-                            modifier = Modifier.fillMaxSize(),
-                            key = { it.id },
-                        ) { question ->
-                            PeopleQuestionListItem(
-                                question = question,
-                                onClick = { onNavigate(Question(question.id, question.title)) },
-                            )
-                        }
-                    }
-
-                    5 -> {
-                        // 想法（已与回答、文章统一为 Post 流，复用 FeedCard）
-                        PaginatedList(
-                            items = state.pinsState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(5)) },
-                            isEnd = { state.pinsState.isEnd },
-                            footer = ProgressIndicatorFooter,
-                            modifier = Modifier.fillMaxSize(),
-                            key = { it.stableKey },
-                        ) { item ->
-                            FeedCard(
-                                item = item,
-                                modifier = Modifier,
-                                horizontalPadding = 4.dp,
-                                onClick = {
-                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
-                                },
-                            )
-                        }
-                    }
-
-                    6 -> {
-                        // 专栏
-                        PaginatedList(
-                            items = state.columnsState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(6)) },
-                            isEnd = { state.columnsState.isEnd },
-                            footer = ProgressIndicatorFooter,
-                            modifier = Modifier.fillMaxSize(),
-                            key = { it.id },
-                        ) { column ->
-                            PeopleColumnListItem(
-                                column = column,
-                                onClick = { onLinkClick(column.webUrl()) },
-                            )
-                        }
-                    }
-
-                    7 -> {
-                        // 粉丝
-                        PaginatedList(
-                            items = state.followersState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(7)) },
-                            isEnd = { state.followersState.isEnd },
-                            footer = ProgressIndicatorFooter,
-                            modifier = Modifier.fillMaxSize(),
-                            key = { it.urlToken ?: it.id },
-                        ) { people ->
-                            PeopleListItem(
-                                people = people,
-                                isFollowing = people.isFollowing,
-                                isChangingFollowing = people.id in state.changingItemFollowIds,
-                                onClick = {
-                                    onNavigate(
-                                        Person(
-                                            id = people.id,
-                                            name = people.name,
-                                            urlToken = people.urlToken ?: "",
-                                        ),
-                                    )
-                                },
-                                onToggleFollow = {
-                                    onEvent(PeopleEvent.ToggleItemFollow(people))
-                                },
-                            )
-                        }
-                    }
-
-                    8 -> {
-                        // 关注
-                        PaginatedList(
-                            items = state.followingState.items,
-                            onLoadMore = { onEvent(PeopleEvent.LoadMore(8)) },
-                            isEnd = { state.followingState.isEnd },
-                            footer = ProgressIndicatorFooter,
-                            modifier = Modifier.fillMaxSize(),
-                            key = { it.urlToken ?: it.id },
-                        ) { people ->
-                            PeopleListItem(
-                                people = people,
-                                isFollowing = people.isFollowing,
-                                isChangingFollowing = people.id in state.changingItemFollowIds,
-                                onClick = {
-                                    onNavigate(
-                                        Person(
-                                            id = people.id,
-                                            name = people.name,
-                                            urlToken = people.urlToken ?: "",
-                                        ),
-                                    )
-                                },
-                                onToggleFollow = {
-                                    onEvent(PeopleEvent.ToggleItemFollow(people))
-                                },
-                            )
-                        }
-                    }
-
-                    9 -> {
+                    3 -> {
                         // 关注订阅
                         PeopleFollowingSubscriptionsTab(
                             selectedIndex = state.selectedSubscriptionTab,
@@ -390,5 +251,33 @@ fun PeopleScreen(
                 }
             }
         }
+    }
+
+    activeUserListType?.let { type ->
+        val title = when (type) {
+            PeopleUserListType.Following -> "关注 (${state.profile.followingCount})"
+            PeopleUserListType.Followers -> "粉丝 (${state.profile.followerCount})"
+        }
+        val listState = when (type) {
+            PeopleUserListType.Following -> state.followingState
+            PeopleUserListType.Followers -> state.followersState
+        }
+        PeopleUserListSheet(
+            title = title,
+            state = listState,
+            changingItemFollowIds = state.changingItemFollowIds,
+            onLoadMore = { onEvent(PeopleEvent.LoadMoreUserList(type)) },
+            onToggleFollow = { onEvent(PeopleEvent.ToggleItemFollow(it)) },
+            onPersonClick = {
+                onNavigate(
+                    Person(
+                        id = it.id,
+                        name = it.name,
+                        urlToken = it.urlToken ?: "",
+                    ),
+                )
+            },
+            onDismiss = { activeUserListType = null },
+        )
     }
 }

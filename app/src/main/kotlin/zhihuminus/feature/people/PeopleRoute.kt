@@ -46,6 +46,10 @@ fun PeopleRoute(
         }
     }
 
+    val initialSelection = remember(person.jumpTo) {
+        resolvePeopleInitialSelection(person.jumpTo)
+    }
+
     PeopleScreen(
         state = viewModel.uiState,
         onEvent = viewModel::onEvent,
@@ -53,7 +57,7 @@ fun PeopleRoute(
         onLinkClick = { inAppLinkOpener(it) },
         onImagePreview = { imagePreviewOpener(it) },
         onExternalUrl = { externalUrlOpener(it) },
-        initialPage = peopleScreenInitialPage(person),
+        initialSelection = initialSelection,
         modifier = modifier,
     )
 }

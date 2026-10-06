@@ -216,6 +216,83 @@ class PeopleTest {
     }
 
     @Test
+    fun testPeoplePrimaryTabTitles() {
+        assertEquals(4, PeoplePrimaryTab.TITLES.size)
+        assertEquals("创作", PeoplePrimaryTab.TITLES[0])
+        assertEquals("动态", PeoplePrimaryTab.TITLES[1])
+        assertEquals("收藏", PeoplePrimaryTab.TITLES[2])
+        assertEquals("关注订阅", PeoplePrimaryTab.TITLES[3])
+    }
+
+    @Test
+    fun testPeopleCreationTabTitles() {
+        assertEquals(5, PeopleCreationTab.TITLES.size)
+        assertEquals("回答", PeopleCreationTab.TITLES[0])
+        assertEquals("文章", PeopleCreationTab.TITLES[1])
+        assertEquals("想法", PeopleCreationTab.TITLES[2])
+        assertEquals("专栏", PeopleCreationTab.TITLES[3])
+        assertEquals("提问", PeopleCreationTab.TITLES[4])
+    }
+
+    @Test
+    fun testPeopleUserListTypeTitles() {
+        assertEquals(2, PeopleUserListType.TITLES.size)
+        assertEquals("关注", PeopleUserListType.TITLES[0])
+        assertEquals("粉丝", PeopleUserListType.TITLES[1])
+    }
+
+    @Test
+    fun testResolvePeopleInitialSelection() {
+        val defaultSelection = resolvePeopleInitialSelection("")
+        assertEquals(PeoplePrimaryTab.Activities, defaultSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Answers, defaultSelection.creationTab)
+        assertEquals(null, defaultSelection.initialUserListType)
+
+        val answerSelection = resolvePeopleInitialSelection("回答")
+        assertEquals(PeoplePrimaryTab.Creations, answerSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Answers, answerSelection.creationTab)
+
+        val articleSelection = resolvePeopleInitialSelection("文章")
+        assertEquals(PeoplePrimaryTab.Creations, articleSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Articles, articleSelection.creationTab)
+
+        val pinSelection = resolvePeopleInitialSelection("想法")
+        assertEquals(PeoplePrimaryTab.Creations, pinSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Pins, pinSelection.creationTab)
+
+        val colSelection = resolvePeopleInitialSelection("专栏")
+        assertEquals(PeoplePrimaryTab.Creations, colSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Columns, colSelection.creationTab)
+
+        val questionSelection = resolvePeopleInitialSelection("提问")
+        assertEquals(PeoplePrimaryTab.Creations, questionSelection.primaryTab)
+        assertEquals(PeopleCreationTab.Questions, questionSelection.creationTab)
+
+        val creationSelection = resolvePeopleInitialSelection("创作")
+        assertEquals(PeoplePrimaryTab.Creations, creationSelection.primaryTab)
+
+        val actSelection = resolvePeopleInitialSelection("动态")
+        assertEquals(PeoplePrimaryTab.Activities, actSelection.primaryTab)
+
+        val favSelection = resolvePeopleInitialSelection("收藏")
+        assertEquals(PeoplePrimaryTab.Collections, favSelection.primaryTab)
+
+        val subSelection = resolvePeopleInitialSelection("关注订阅")
+        assertEquals(PeoplePrimaryTab.FollowingSubscriptions, subSelection.primaryTab)
+
+        val followingSelection = resolvePeopleInitialSelection("关注")
+        assertEquals(PeoplePrimaryTab.Activities, followingSelection.primaryTab)
+        assertEquals(PeopleUserListType.Following, followingSelection.initialUserListType)
+
+        val followerSelection = resolvePeopleInitialSelection("粉丝")
+        assertEquals(PeoplePrimaryTab.Activities, followerSelection.primaryTab)
+        assertEquals(PeopleUserListType.Followers, followerSelection.initialUserListType)
+
+        val unknownSelection = resolvePeopleInitialSelection("unknown")
+        assertEquals(PeoplePrimaryTab.Activities, unknownSelection.primaryTab)
+    }
+
+    @Test
     fun testPeopleTabTitles() {
         assertEquals(10, PeopleTab.TITLES.size)
         assertEquals("回答", PeopleTab.TITLES[0])
@@ -241,11 +318,15 @@ class PeopleTest {
 
     @Test
     fun testPeopleScreenInitialPage() {
-        assertEquals(2, peopleScreenInitialPage(Person(id = "1", urlToken = "u1")))
+        assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1")))
         assertEquals(0, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "回答")))
-        assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "文章")))
-        assertEquals(6, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "专栏")))
-        assertEquals(2, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "nonexistent")))
+        assertEquals(0, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "文章")))
+        assertEquals(0, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "专栏")))
+        assertEquals(0, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "提问")))
+        assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "动态")))
+        assertEquals(2, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "收藏")))
+        assertEquals(3, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "关注订阅")))
+        assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "nonexistent")))
     }
 
     @Test
