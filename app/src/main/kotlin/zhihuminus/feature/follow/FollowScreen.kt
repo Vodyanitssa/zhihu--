@@ -21,8 +21,6 @@ fun FollowScreen(
     onEvent: (FollowEvent) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val readingQueueSourceId = "follow:dynamic"
-
     Box(
         modifier = modifier
             .fillMaxSize()
@@ -56,11 +54,10 @@ fun FollowScreen(
             ) { item ->
                 FeedCard(
                     item = item,
-                    readingQueueSourceId = readingQueueSourceId,
                     modifier = Modifier,
                     showSourceLabel = true,
-                    onClick = { clickedItem, destination ->
-                        onEvent(FollowEvent.ContentClick(clickedItem, destination))
+                    onClick = {
+                        onEvent(FollowEvent.ContentClick(item))
                     },
                 )
             }

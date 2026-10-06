@@ -7,6 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
+import com.zhihuminus.navigation.resolveContent
+import com.zhihuminus.navigation.withReadingQueueSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -44,6 +46,14 @@ class HistoryViewModel(
             is HistoryEvent.LoadMore -> loadHistory(reset = false)
             is HistoryEvent.DeleteItem -> deleteItem(event.item)
             is HistoryEvent.ClearAll -> clearAll()
+            is HistoryEvent.ContentClick -> {
+                val destination = resolveContent(event.item.actionUrl)?.withReadingQueueSource("history:online")
+                if (destination != null) {
+                    viewModelScope.launch {
+                        _effect.send(HistoryEffect.Navigate(destination))
+                    }
+                }
+            }
         }
     }
 

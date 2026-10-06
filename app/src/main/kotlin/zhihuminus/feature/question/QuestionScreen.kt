@@ -29,6 +29,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentRoute
@@ -36,6 +37,7 @@ import com.zhihuminus.feature.question.components.QuestionBodyHeader
 import com.zhihuminus.feature.question.components.QuestionHeaderSection
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.platform.rememberSettingsStore
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
@@ -153,10 +155,11 @@ fun QuestionScreen(
             ) { item ->
                 FeedCard(
                     item = item,
-                    readingQueueSourceId = readingQueueSourceId,
-                ) { clickedItem, itemDestination ->
-                    onAnswerClick(clickedItem, itemDestination)
-                }
+                    onClick = {
+                        val destination = item.navDestination?.withReadingQueueSource(readingQueueSourceId)
+                        onAnswerClick(item, destination)
+                    },
+                )
             }
         }
     }

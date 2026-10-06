@@ -146,7 +146,13 @@ fun TopicScreen(
                 }
             },
         ) { item ->
-            FeedCard(item = item, modifier = Modifier)
+            FeedCard(
+                item = item,
+                modifier = Modifier,
+                onClick = {
+                    onEvent(TopicEvent.ContentClick(item))
+                },
+            )
         }
     }
 }

@@ -7,7 +7,9 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Person
+import com.zhihuminus.navigation.withReadingQueueSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -67,9 +69,10 @@ class FollowViewModel(
             }
 
             is FollowEvent.ContentClick -> {
-                if (event.destination != null) {
+                val destination = event.item.navDestination?.withReadingQueueSource("follow:dynamic")
+                if (destination != null) {
                     viewModelScope.launch {
-                        _effect.send(FollowEffect.Navigate(event.destination))
+                        _effect.send(FollowEffect.Navigate(destination))
                     }
                 } else if (event.item.content?.startsWith("http") == true) {
                     viewModelScope.launch {

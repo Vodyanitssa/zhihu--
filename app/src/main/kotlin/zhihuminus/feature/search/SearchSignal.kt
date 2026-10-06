@@ -57,7 +57,7 @@ sealed interface SearchEvent {
 
     data class ContentClick(
         val item: FeedDisplayItem,
-        val destination: NavDestination?,
+        val destination: NavDestination? = null,
     ) : SearchEvent
 
     data object Back : SearchEvent

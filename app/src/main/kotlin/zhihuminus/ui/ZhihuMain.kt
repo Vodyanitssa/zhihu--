@@ -117,6 +117,8 @@ import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
+import com.zhihuminus.ui.components.LocalFeedCardConfig
+import com.zhihuminus.ui.components.rememberFeedCardConfig
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
@@ -322,6 +324,7 @@ fun ZhihuMain(
                     onNavigateBack = navController::popBackStack,
                     onNavigateTopLevel = ::navigateTopLevel,
                 ),
+                LocalFeedCardConfig provides rememberFeedCardConfig(),
             ) {
                 NavHost(
                     navController,

@@ -43,16 +43,17 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
@@ -62,85 +63,94 @@ import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.officialBadge
-import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.navigation.withReadingQueueSource
-import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberSettingsStore
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.subscreens.PREF_FONT_SIZE
 import com.zhihuminus.ui.subscreens.PREF_LINE_HEIGHT
 import org.jsoup.Jsoup
 
 /**
- * 信息流卡片的 Material 3 实现。
+ * 信息流卡片的纯 UI 渲染配置。
+ *
+ * 封装字体与行高缩放比例，解耦底层持久化存储，方便 Compose 树统一向下传递及 Preview/测试。
+ */
+@Immutable
+data class FeedCardConfig(
+    val fontSizePercent: Int = 100,
+    val lineHeightPercent: Int = 160,
+)
+
+/**
+ * 信息流卡片配置的 CompositionLocal，默认为常规标准配置。
+ */
+val LocalFeedCardConfig = staticCompositionLocalOf { FeedCardConfig() }
+
+/**
+ * 从平台偏好设置中读取并监听 [FeedCardConfig]，供上层容器注入给 [LocalFeedCardConfig]。
+ */
+@Composable
+fun rememberFeedCardConfig(): FeedCardConfig {
+    val settings = rememberSettingsStore()
+    val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
+    val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
+    return remember(fontSizePercent, lineHeightPercent) {
+        FeedCardConfig(
+            fontSizePercent = fontSizePercent,
+            lineHeightPercent = lineHeightPercent,
+        )
+    }
+}
+
+/**
+ * 信息流卡片的 Material 3 纯 UI 实现。
  *
  * 卡片自上而下展示来源标签、标题、作者（头像、名称、徽章）、摘要、缩略图和统计数据，始终使用 Duo3 排版。
- * 默认点击会解析 [FeedDisplayItem] 的导航目标并进入详情页；页面可以通过 [menuItems] 直接声明自己的业务菜单项，长按卡片弹出。
- *
- * 修改这个组件时要同步复核 `showFeedThumbnail` 设置对各信息流入口的影响。
+ * 卡片作为无副作用的纯展示组件，不直接依赖导航器。点击事件通过 [onClick]/[onAuthorClick] 上报，
+ * 显示与排版样式通过 [LocalFeedCardConfig] 或显式参数传入；页面可以通过 [menuItems] 声明业务长按菜单。
  */
 @OptIn(ExperimentalFoundationApi::class, ExperimentalSharedTransitionApi::class)
 @Composable
 fun FeedCard(
     item: FeedDisplayItem,
+    onClick: () -> Unit,
     modifier: Modifier = Modifier,
-    readingQueueSourceId: String? = null,
+    onLongClick: (() -> Unit)? = null,
+    onAuthorClick: (() -> Unit)? = null,
     maxHeight: Dp = 240.dp,
     thumbnailUrl: String? = null,
     horizontalPadding: Dp = 16.dp,
-    menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit = { _ -> },
     showSourceLabel: Boolean = false,
-    /**
-     * 默认点击行为：优先跳转到信息流条目的详情页；如果只能识别为外链则打开外链，否则提示暂不支持。
-     */
-    onClick: ((item: FeedDisplayItem, destination: NavDestination?) -> Unit)? = null,
+    fontSizePercent: Int = LocalFeedCardConfig.current.fontSizePercent,
+    lineHeightPercent: Int = LocalFeedCardConfig.current.lineHeightPercent,
+    menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit = { _ -> },
 ) {
-    val navigator = LocalNavigator.current
-    val uriHandler = LocalUriHandler.current
-    val userMessages = rememberUserMessageSink()
-    val settings = rememberSettingsStore()
     var showMenu by remember { mutableStateOf(false) }
-    val showFeedThumbnail = remember {
-        settings.getBoolean("showFeedThumbnail", true)
-    }
     val effectiveThumbnailUrl = thumbnailUrl ?: item.thumbnailUrl
     val pinImages = item.pinImages
-    val showPinImages = showFeedThumbnail && pinImages.isNotEmpty()
-    val performClick: (FeedDisplayItem) -> Unit = { clickedItem ->
-        val destination = clickedItem.navDestination?.withReadingQueueSource(readingQueueSourceId)
-        if (onClick != null) {
-            onClick(clickedItem, destination)
-        } else {
-            destination?.let(navigator.onNavigate) ?: run {
-                if (clickedItem.content?.startsWith("http") == true) {
-                    uriHandler.openUri(clickedItem.content)
-                } else {
-                    userMessages.showMessage("暂不支持打开该内容", UserMessageDuration.Short)
-                }
-            }
-        }
-    }
+    val hasPinImages = pinImages.isNotEmpty()
+
     Box(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (showPinImages) Modifier else Modifier.heightIn(max = maxHeight)),
+                .then(if (hasPinImages) Modifier else Modifier.heightIn(max = maxHeight)),
         ) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .combinedClickable(onClick = { performClick(item) }, onLongClick = { showMenu = true })
-                    .padding(horizontal = horizontalPadding, vertical = 12.dp),
+                    .combinedClickable(
+                        onClick = onClick,
+                        onLongClick = onLongClick ?: { showMenu = true },
+                    ).padding(horizontal = horizontalPadding, vertical = 12.dp),
             ) {
                 FeedCardContent(
                     item = item,
-                    showFeedThumbnail = showFeedThumbnail,
                     thumbnailUrl = effectiveThumbnailUrl,
                     pinImages = pinImages,
                     showSourceLabel = showSourceLabel,
+                    fontSizePercent = fontSizePercent,
+                    lineHeightPercent = lineHeightPercent,
+                    onAuthorClick = onAuthorClick,
                 )
             }
             HorizontalDivider(thickness = 0.3.dp)
@@ -180,15 +190,13 @@ private fun FeedCardMenu(
 @Composable
 private fun FeedCardContent(
     item: FeedDisplayItem,
-    showFeedThumbnail: Boolean,
     thumbnailUrl: String?,
     pinImages: List<String>,
     showSourceLabel: Boolean,
+    fontSizePercent: Int,
+    lineHeightPercent: Int,
+    onAuthorClick: (() -> Unit)?,
 ) {
-    val settings = rememberSettingsStore()
-    val fontSizePercent = remember { settings.getInt(PREF_FONT_SIZE, 100) }
-    val lineHeightPercent = remember { settings.getInt(PREF_LINE_HEIGHT, 160) }
-    val visiblePinImages = pinImages.takeIf { showFeedThumbnail }.orEmpty()
     val sourceLabel = item.sourceLabel
     val typeLabel = item.contentTypeLabel
     // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要 → 图片 → 统计行 ─────────────────────
@@ -212,7 +220,13 @@ private fun FeedCardContent(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier
                 .padding(bottom = 8.dp)
-                .clickable {},
+                .then(
+                    if (onAuthorClick != null) {
+                        Modifier.clickable(onClick = onAuthorClick)
+                    } else {
+                        Modifier
+                    },
+                ),
         ) {
             AsyncImage(
                 model = item.avatarSrc,
@@ -257,7 +271,7 @@ private fun FeedCardContent(
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.weight(1f),
             )
-            if (!thumbnailUrl.isNullOrEmpty() && showFeedThumbnail) {
+            if (!thumbnailUrl.isNullOrEmpty()) {
                 Spacer(modifier = Modifier.width(8.dp))
                 AsyncImage(
                     model = thumbnailUrl,
@@ -271,7 +285,7 @@ private fun FeedCardContent(
             }
         }
         PinFeedImages(
-            images = visiblePinImages,
+            images = pinImages,
             modifier = Modifier.padding(top = 8.dp),
         )
         val statsText = typeLabel

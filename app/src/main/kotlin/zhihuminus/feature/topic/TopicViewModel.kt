@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.navDestination
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -57,6 +58,14 @@ class TopicViewModel(
             is TopicEvent.LoadMore -> loadMore()
             is TopicEvent.Retry -> retry()
             is TopicEvent.Follow -> follow(event.following)
+            is TopicEvent.ContentClick -> {
+                val destination = event.item.navDestination
+                if (destination != null) {
+                    viewModelScope.launch {
+                        _effect.send(TopicEffect.Navigate(destination))
+                    }
+                }
+            }
         }
     }
 

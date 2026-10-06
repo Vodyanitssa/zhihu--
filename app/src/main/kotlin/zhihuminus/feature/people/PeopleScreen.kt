@@ -26,6 +26,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.people.components.PeopleCollectionListItem
 import com.zhihuminus.feature.people.components.PeopleColumnListItem
 import com.zhihuminus.feature.people.components.PeopleFollowingSubscriptionsTab
@@ -36,6 +37,7 @@ import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.PeopleListItem
@@ -174,12 +176,12 @@ fun PeopleScreen(
                             ) { item ->
                                 FeedCard(
                                     item = item,
-                                    readingQueueSourceId = readingQueueSourceId,
                                     modifier = Modifier,
                                     horizontalPadding = 4.dp,
-                                ) { _, destination ->
-                                    destination?.let(onNavigate)
-                                }
+                                    onClick = {
+                                        item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                    },
+                                )
                             }
                         }
                     }
@@ -201,12 +203,12 @@ fun PeopleScreen(
                             ) { item ->
                                 FeedCard(
                                     item = item,
-                                    readingQueueSourceId = readingQueueSourceId,
                                     modifier = Modifier,
                                     horizontalPadding = 4.dp,
-                                ) { _, destination ->
-                                    destination?.let(onNavigate)
-                                }
+                                    onClick = {
+                                        item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                    },
+                                )
                             }
                         }
                     }
@@ -223,9 +225,11 @@ fun PeopleScreen(
                         ) { item ->
                             FeedCard(
                                 item = item,
-                                readingQueueSourceId = readingQueueSourceId,
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
+                                onClick = {
+                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                },
                             )
                         }
                     }
@@ -276,12 +280,12 @@ fun PeopleScreen(
                         ) { item ->
                             FeedCard(
                                 item = item,
-                                readingQueueSourceId = readingQueueSourceId,
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
-                            ) { _, destination ->
-                                destination?.let(onNavigate)
-                            }
+                                onClick = {
+                                    item.navDestination?.withReadingQueueSource(readingQueueSourceId)?.let(onNavigate)
+                                },
+                            )
                         }
                     }
 

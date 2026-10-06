@@ -8,6 +8,7 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.navDestination
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -43,6 +44,14 @@ class ColumnViewModel(
         when (event) {
             is ColumnEvent.Refresh -> loadArticles(reset = true)
             is ColumnEvent.LoadMore -> loadArticles(reset = false)
+            is ColumnEvent.ContentClick -> {
+                val destination = event.item.navDestination
+                if (destination != null) {
+                    viewModelScope.launch {
+                        _effect.send(ColumnEffect.Navigate(destination))
+                    }
+                }
+            }
         }
     }
 

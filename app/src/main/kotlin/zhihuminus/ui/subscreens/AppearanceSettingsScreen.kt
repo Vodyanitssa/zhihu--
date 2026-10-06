@@ -452,19 +452,6 @@ fun AppearanceSettingsScreen(
             SettingItemGroup(
                 title = "信息流",
             ) {
-                val showFeedThumbnail = remember { mutableStateOf(settings.getBoolean("showFeedThumbnail", true)) }
-                SettingItemWithSwitch(
-                    title = { Text("显示 Feed 卡片缩略图") },
-                    description = { Text("在信息流卡片中显示文章缩略图。") },
-                    checked = showFeedThumbnail.value,
-                    onCheckedChange = {
-                        showFeedThumbnail.value = it
-                        settings.putBoolean("showFeedThumbnail", it)
-                    },
-                    settingKey = "showFeedThumbnail",
-                    highlightedKey = settingKey,
-                    bringIntoViewRequester = requesterFor("showFeedThumbnail"),
-                )
                 val autoRefreshHomeOnStartup = remember {
                     mutableStateOf(settings.getBoolean(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY, true))
                 }

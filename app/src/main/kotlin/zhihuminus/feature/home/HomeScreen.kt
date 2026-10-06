@@ -89,9 +89,8 @@ fun HomeScreen(
                     ) { item ->
                         FeedCard(
                             item = item,
-                            readingQueueSourceId = "home:WEB",
-                            onClick = { clickedItem, destination ->
-                                onEvent(HomeEvent.ContentClick(clickedItem, destination))
+                            onClick = {
+                                onEvent(HomeEvent.ContentClick(item))
                             },
                         )
                     }

@@ -72,7 +72,12 @@ fun ColumnScreen(
                 modifier = Modifier.padding(innerPadding),
                 footer = if (state.isRefreshing) null else ProgressIndicatorFooter,
             ) { item ->
-                FeedCard(item = item)
+                FeedCard(
+                    item = item,
+                    onClick = {
+                        onEvent(ColumnEvent.ContentClick(item))
+                    },
+                )
             }
         }
     }

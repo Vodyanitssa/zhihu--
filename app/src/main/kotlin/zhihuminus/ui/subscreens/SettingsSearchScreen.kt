@@ -159,15 +159,6 @@ private val settingsSearchEntries = buildList {
     )
     add(
         appearanceEntry(
-            "appearance.showFeedThumbnail",
-            "显示 Feed 卡片缩略图",
-            "控制信息流卡片图片显示。",
-            "showFeedThumbnail",
-            listOf("图片", "封面"),
-        ),
-    )
-    add(
-        appearanceEntry(
             "appearance.bottomBar",
             "底部导航栏",
             "启动页与底栏行为。",

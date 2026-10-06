@@ -195,6 +195,7 @@ fun HistoryScreen(
                     ) { item ->
                         HistoryCard(
                             item = item,
+                            onClick = { onEvent(HistoryEvent.ContentClick(item)) },
                             onDelete = { onEvent(HistoryEvent.DeleteItem(it)) },
                             isActive = isActive,
                         )

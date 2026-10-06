@@ -7,6 +7,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
+import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
@@ -23,11 +24,13 @@ fun HistoryRoute(
         HistoryViewModel(repository)
     }
     val userMessages = rememberUserMessageSink()
+    val navigator = LocalNavigator.current
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
                 is HistoryEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is HistoryEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }
     }

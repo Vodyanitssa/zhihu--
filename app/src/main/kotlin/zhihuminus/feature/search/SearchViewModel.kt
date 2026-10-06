@@ -9,6 +9,7 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.PeopleSearchResult
+import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.NavDestination
 import kotlinx.coroutines.CancellationException
@@ -202,9 +203,10 @@ class SearchViewModel(
     }
 
     private fun handleContentClick(item: FeedDisplayItem, destination: NavDestination?) {
+        val resolvedDestination = destination ?: item.navDestination
         viewModelScope.launch {
-            if (destination != null) {
-                _effect.send(SearchEffect.Navigate(destination))
+            if (resolvedDestination != null) {
+                _effect.send(SearchEffect.Navigate(resolvedDestination))
             } else if (item.content?.startsWith("http") == true) {
                 _effect.send(SearchEffect.OpenExternalUrl(item.content))
             } else {

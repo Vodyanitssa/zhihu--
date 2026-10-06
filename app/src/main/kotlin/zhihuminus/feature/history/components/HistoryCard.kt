@@ -13,6 +13,7 @@ import com.zhihuminus.ui.components.FeedCard
 @Composable
 fun HistoryCard(
     item: HistoryItem,
+    onClick: () -> Unit,
     onDelete: (HistoryItem) -> Unit,
     isActive: Boolean = true,
 ) {
@@ -33,7 +34,7 @@ fun HistoryCard(
 
     FeedCard(
         item = displayItem,
-        readingQueueSourceId = "history:online".takeIf { isActive },
+        onClick = onClick,
         menuItems = { dismissMenu ->
             DropdownMenuItem(
                 text = { Text("删除该条历史记录") },

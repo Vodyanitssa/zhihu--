@@ -10,7 +10,6 @@ sealed interface HomeEvent {
 
     data class ContentClick(
         val item: FeedDisplayItem,
-        val destination: NavDestination?,
     ) : HomeEvent
 
     data object SearchClick : HomeEvent

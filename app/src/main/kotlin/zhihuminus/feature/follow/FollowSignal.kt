@@ -14,7 +14,6 @@ sealed interface FollowEvent {
 
     data class ContentClick(
         val item: FeedDisplayItem,
-        val destination: NavDestination?,
     ) : FollowEvent
 
     data class ReselectTop(

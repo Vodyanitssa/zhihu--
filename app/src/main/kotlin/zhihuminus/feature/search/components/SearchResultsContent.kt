@@ -82,8 +82,8 @@ fun SearchResultsContent(
                     ) { item ->
                         FeedCard(
                             item = item,
-                            onClick = { clickedItem, destination ->
-                                onEvent(SearchEvent.ContentClick(clickedItem, destination))
+                            onClick = {
+                                onEvent(SearchEvent.ContentClick(item))
                             },
                         )
                     }

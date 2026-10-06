@@ -13,9 +13,9 @@ import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.target
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
-import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
+import com.zhihuminus.navigation.withReadingQueueSource
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -66,7 +66,7 @@ class HomeViewModel(
         when (event) {
             is HomeEvent.Refresh -> loadFeeds(reset = true)
             is HomeEvent.LoadMore -> loadFeeds(reset = false)
-            is HomeEvent.ContentClick -> handleContentClick(event.item, event.destination)
+            is HomeEvent.ContentClick -> handleContentClick(event.item)
             is HomeEvent.SearchClick -> {
                 viewModelScope.launch {
                     _effect.send(HomeEffect.Navigate(Search(query = "")))
@@ -93,12 +93,13 @@ class HomeViewModel(
         }
     }
 
-    private fun handleContentClick(item: FeedDisplayItem, destination: NavDestination?) {
+    private fun handleContentClick(item: FeedDisplayItem) {
         resolveContentPayload(item)?.let { (type, id) ->
             viewModelScope.launch {
                 repository.reportContentRead(type, id)
             }
         }
+        val destination = item.navDestination?.withReadingQueueSource("home:WEB")
         viewModelScope.launch {
             if (destination != null) {
                 _effect.send(HomeEffect.Navigate(destination))

@@ -12,8 +12,10 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastJoinToString
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.withReadingQueueSource
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -60,12 +62,12 @@ fun CollectionContentBody(
     ) { item ->
         FeedCard(
             item = item,
-            readingQueueSourceId = readingQueueSourceId,
             modifier = Modifier
                 .fillMaxWidth()
                 .padding(vertical = 8.dp),
-            onClick = onDestinationClick?.let { callback ->
-                { _, destination -> callback(destination) }
+            onClick = {
+                val destination = item.navDestination?.withReadingQueueSource(readingQueueSourceId)
+                onDestinationClick?.invoke(destination)
             },
         )
     }
