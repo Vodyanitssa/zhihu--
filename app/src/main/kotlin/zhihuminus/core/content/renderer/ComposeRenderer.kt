@@ -533,6 +533,8 @@ private fun Video(node: ContentNode.Video) {
         node.caption?.let { caption ->
             Text(
                 text = caption,
+                modifier = Modifier.fillMaxWidth(),
+                textAlign = TextAlign.Center,
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
