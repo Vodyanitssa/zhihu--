@@ -18,10 +18,6 @@ sealed interface HomeEvent {
 
     data object RequestLogin : HomeEvent
 
-    data class ReselectTop(
-        val isAtTop: Boolean,
-    ) : HomeEvent
-
     data class UpdateUnreadCount(
         val count: Int,
     ) : HomeEvent
@@ -35,8 +31,6 @@ sealed interface HomeEffect {
     data class ShowMessage(
         val message: String,
     ) : HomeEffect
-
-    data object ScrollToTop : HomeEffect
 
     data class OpenExternalUrl(
         val url: String,

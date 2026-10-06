@@ -13,7 +13,6 @@ import com.zhihuminus.platform.rememberUserMessageSink
 @Composable
 fun HistoryRoute(
     onNavigateBack: () -> Unit = {},
-    scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
 ) {
     val environment = rememberPaginationEnvironment()
@@ -39,7 +38,6 @@ fun HistoryRoute(
         state = viewModel.uiState,
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
-        scrollToTopTrigger = scrollToTopTrigger,
         isActive = isActive,
     )
 }

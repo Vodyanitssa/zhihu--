@@ -22,9 +22,7 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
@@ -34,9 +32,7 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.history.components.HistoryCard
 import com.zhihuminus.feature.history.components.HistoryClearDialog
 import com.zhihuminus.platform.PlatformBackHandler
-import com.zhihuminus.ui.TopLevelReselectAction
 import com.zhihuminus.ui.components.PaginatedList
-import com.zhihuminus.ui.topLevelReselectAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -44,27 +40,10 @@ fun HistoryScreen(
     state: HistoryUiState,
     onEvent: (HistoryEvent) -> Unit,
     onNavigateBack: () -> Unit = {},
-    scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
 ) {
     val listState = rememberLazyListState()
-    var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
     var showClearHistoryDialog by remember { mutableStateOf(false) }
-
-    LaunchedEffect(scrollToTopTrigger, isActive) {
-        val action = topLevelReselectAction(
-            triggerDelta = scrollToTopTrigger - cachedScrollToTopTrigger,
-            isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0,
-        )
-        if (isActive) {
-            when (action) {
-                TopLevelReselectAction.Refresh -> onEvent(HistoryEvent.Refresh)
-                TopLevelReselectAction.ScrollToTop -> listState.animateScrollToItem(0)
-                null -> {}
-            }
-        }
-        cachedScrollToTopTrigger = scrollToTopTrigger
-    }
 
     PlatformBackHandler(enabled = showClearHistoryDialog) {
         showClearHistoryDialog = false

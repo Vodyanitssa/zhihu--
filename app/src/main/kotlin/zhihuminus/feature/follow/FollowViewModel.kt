@@ -80,17 +80,6 @@ class FollowViewModel(
                     }
                 }
             }
-
-            is FollowEvent.ReselectTop -> {
-                if (event.isAtTop) {
-                    loadUsers()
-                    loadFeeds(reset = true)
-                } else {
-                    viewModelScope.launch {
-                        _effect.send(FollowEffect.ScrollToTop)
-                    }
-                }
-            }
         }
     }
 

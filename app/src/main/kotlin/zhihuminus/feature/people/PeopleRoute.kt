@@ -22,7 +22,6 @@ fun PeopleRoute(
     onNavigate: (NavDestination) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
-    scrollToTopTrigger: Int = 0,
 ) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {

@@ -78,15 +78,6 @@ class HomeViewModel(
                 }
             }
             is HomeEvent.RequestLogin -> {}
-            is HomeEvent.ReselectTop -> {
-                if (event.isAtTop) {
-                    loadFeeds(reset = true)
-                } else {
-                    viewModelScope.launch {
-                        _effect.send(HomeEffect.ScrollToTop)
-                    }
-                }
-            }
             is HomeEvent.UpdateUnreadCount -> {
                 uiState = uiState.copy(unreadCount = event.count)
             }

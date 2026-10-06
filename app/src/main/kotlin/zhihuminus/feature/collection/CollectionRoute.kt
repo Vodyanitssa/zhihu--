@@ -15,7 +15,6 @@ fun CollectionRoute(
     urlToken: String?,
     onNavigateBack: () -> Unit,
     showBackButton: Boolean = true,
-    scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
@@ -41,7 +40,6 @@ fun CollectionRoute(
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         showBackButton = showBackButton,
-        scrollToTopTrigger = scrollToTopTrigger,
         isActive = isActive,
         modifier = modifier,
     )

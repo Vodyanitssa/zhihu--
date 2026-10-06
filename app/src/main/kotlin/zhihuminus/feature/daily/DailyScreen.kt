@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.DateRange
@@ -31,7 +32,6 @@ import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,8 +46,6 @@ import com.zhihuminus.core.util.formatDailyDate
 import com.zhihuminus.core.util.twoDigitString
 import com.zhihuminus.feature.daily.components.DailyDateHeader
 import com.zhihuminus.feature.daily.components.DailyStoryCard
-import com.zhihuminus.ui.TopLevelReselectAction
-import com.zhihuminus.ui.topLevelReselectAction
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -61,7 +59,7 @@ fun DailyScreen(
     state: DailyUiState,
     onEvent: (DailyEvent) -> Unit,
     onStoryClick: (String) -> Unit,
-    scrollToTopTrigger: Int = 0,
+    listState: LazyListState = rememberLazyListState(),
     isActive: Boolean = true,
 ) {
     var isRefreshing by remember { mutableStateOf(false) }
@@ -69,8 +67,6 @@ fun DailyScreen(
     var showDatePicker by remember { mutableStateOf(false) }
     var pendingDateSelection by remember { mutableStateOf<String?>(null) }
     val scope = rememberCoroutineScope()
-    val listState = rememberLazyListState()
-    var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
 
     LaunchedEffect(listState, state.sections) {
         currentViewingDate = resolveViewingDate(
@@ -121,21 +117,6 @@ fun DailyScreen(
             listState.scrollToItem(0)
             isRefreshing = false
         }
-    }
-
-    LaunchedEffect(scrollToTopTrigger, isActive) {
-        val action = topLevelReselectAction(
-            triggerDelta = scrollToTopTrigger - cachedScrollToTopTrigger,
-            isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0,
-        )
-        if (isActive) {
-            when (action) {
-                TopLevelReselectAction.Refresh -> doRefresh()
-                TopLevelReselectAction.ScrollToTop -> listState.animateScrollToItem(0)
-                null -> {}
-            }
-        }
-        cachedScrollToTopTrigger = scrollToTopTrigger
     }
 
     if (showDatePicker) {

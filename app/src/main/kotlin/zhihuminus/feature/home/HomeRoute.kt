@@ -8,7 +8,6 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
@@ -22,20 +21,19 @@ import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
 import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuHomeRepository
+import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberAppPrivateDirectory
 import com.zhihuminus.platform.rememberUserMessageSink
-import com.zhihuminus.ui.TopLevelReselectAction
+import com.zhihuminus.ui.components.HandleTopLevelReselect
 import com.zhihuminus.ui.homeFeedStartupCacheFileName
 import com.zhihuminus.ui.rememberAccountSettingsAccountState
-import com.zhihuminus.ui.topLevelReselectAction
 import kotlinx.io.files.Path
 
 @Composable
 fun HomeRoute(
     innerPadding: PaddingValues,
-    scrollToTopTrigger: Int = 0,
 ) {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
@@ -78,19 +76,11 @@ fun HomeRoute(
     }
 
     val listState = rememberLazyListState()
-    var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
-    LaunchedEffect(scrollToTopTrigger) {
-        val action = topLevelReselectAction(
-            triggerDelta = scrollToTopTrigger - cachedScrollToTopTrigger,
-            isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0,
-        )
-        when (action) {
-            TopLevelReselectAction.Refresh -> viewModel.onEvent(HomeEvent.ReselectTop(isAtTop = true))
-            TopLevelReselectAction.ScrollToTop -> viewModel.onEvent(HomeEvent.ReselectTop(isAtTop = false))
-            null -> {}
-        }
-        cachedScrollToTopTrigger = scrollToTopTrigger
-    }
+    HandleTopLevelReselect(
+        destination = Home,
+        listState = listState,
+        onRefresh = { viewModel.onEvent(HomeEvent.Refresh) },
+    )
 
     val lifecycleOwner = LocalLifecycleOwner.current
     LaunchedEffect(lifecycleOwner, repository) {
@@ -111,7 +101,6 @@ fun HomeRoute(
             when (effect) {
                 is HomeEffect.Navigate -> navigator.onNavigate(effect.destination)
                 is HomeEffect.ShowMessage -> userMessages.showMessage(effect.message, UserMessageDuration.Short)
-                is HomeEffect.ScrollToTop -> listState.animateScrollToItem(0)
                 is HomeEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
             }
         }

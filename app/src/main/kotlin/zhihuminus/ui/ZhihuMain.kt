@@ -118,12 +118,14 @@ import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.components.LocalFeedCardConfig
+import com.zhihuminus.ui.components.LocalTopLevelReselectFlow
 import com.zhihuminus.ui.components.rememberFeedCardConfig
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -179,7 +181,7 @@ fun ZhihuMain(
         isReadingPlayerExpandedByUser && !isOnReadingDetail,
     )
 
-    var scrollToTopTrigger by remember { mutableIntStateOf(0) }
+    val reselectFlow = remember { MutableSharedFlow<TopLevelDestination>(extraBufferCapacity = 64) }
     // 滚动时自动隐藏底部导航栏
     var isBottomBarVisible by remember { mutableStateOf(true) }
     val bottomBarScrollConnection = remember {
@@ -286,7 +288,7 @@ fun ZhihuMain(
                                         if (currentBottomDestination != destination) {
                                             navigateTopLevel(destination)
                                         } else if (tapToScrollToTopEnabled) {
-                                            scrollToTopTrigger++
+                                            reselectFlow.tryEmit(destination)
                                         }
                                     },
                                     label = { Text(label) },
@@ -325,6 +327,7 @@ fun ZhihuMain(
                     onNavigateTopLevel = ::navigateTopLevel,
                 ),
                 LocalFeedCardConfig provides rememberFeedCardConfig(),
+                LocalTopLevelReselectFlow provides reselectFlow,
             ) {
                 NavHost(
                     navController,
@@ -375,7 +378,6 @@ fun ZhihuMain(
                         MainTabsContent(
                             currentTabIndex = currentTabIndex,
                             pages = mainTabPages,
-                            scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
                         )
                     }
@@ -388,7 +390,6 @@ fun ZhihuMain(
                     }
                     composable<Follow> {
                         FollowRoute(
-                            scrollToTopTrigger = scrollToTopTrigger,
                             innerPadding = innerPadding,
                         )
                     }
@@ -553,7 +554,6 @@ fun ZhihuMain(
 private fun MainTabsContent(
     currentTabIndex: Int,
     pages: List<MainTabPage>,
-    scrollToTopTrigger: Int,
     innerPadding: PaddingValues,
 ) {
     val stateHolder = rememberSaveableStateHolder()
@@ -578,18 +578,14 @@ private fun MainTabsContent(
         stateHolder.SaveableStateProvider(page.key) {
             when (page) {
                 MainTabPage.HomePage -> HomeRoute(
-                    scrollToTopTrigger = scrollToTopTrigger,
                     innerPadding = innerPadding,
                 )
 
                 MainTabPage.FollowPage -> FollowRoute(
-                    scrollToTopTrigger = scrollToTopTrigger,
                     innerPadding = innerPadding,
                 )
 
-                MainTabPage.DailyPage -> DailyRoute(
-                    scrollToTopTrigger = scrollToTopTrigger,
-                )
+                MainTabPage.DailyPage -> DailyRoute()
             }
         }
     }

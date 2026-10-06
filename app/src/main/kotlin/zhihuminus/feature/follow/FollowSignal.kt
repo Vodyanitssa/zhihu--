@@ -15,10 +15,6 @@ sealed interface FollowEvent {
     data class ContentClick(
         val item: FeedDisplayItem,
     ) : FollowEvent
-
-    data class ReselectTop(
-        val isAtTop: Boolean,
-    ) : FollowEvent
 }
 
 sealed interface FollowEffect {
@@ -29,8 +25,6 @@ sealed interface FollowEffect {
     data class ShowMessage(
         val message: String,
     ) : FollowEffect
-
-    data object ScrollToTop : FollowEffect
 
     data class OpenExternalUrl(
         val url: String,

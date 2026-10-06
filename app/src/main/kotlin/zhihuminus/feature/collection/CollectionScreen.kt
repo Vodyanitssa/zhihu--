@@ -17,10 +17,6 @@ import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import com.zhihuminus.feature.collection.components.CollectionCard
@@ -28,10 +24,8 @@ import com.zhihuminus.feature.collection.components.CollectionDeleteDialog
 import com.zhihuminus.feature.collection.components.CreateCollectionDialog
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.ui.TopLevelReselectAction
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
-import com.zhihuminus.ui.topLevelReselectAction
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -40,27 +34,11 @@ fun CollectionScreen(
     onEvent: (CollectionEvent) -> Unit,
     onNavigateBack: () -> Unit,
     showBackButton: Boolean = true,
-    scrollToTopTrigger: Int = 0,
     isActive: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val navigator = LocalNavigator.current
     val listState = rememberLazyListState()
-    var cachedScrollToTopTrigger by remember { mutableIntStateOf(scrollToTopTrigger) }
-
-    LaunchedEffect(scrollToTopTrigger) {
-        when (
-            topLevelReselectAction(
-                triggerDelta = scrollToTopTrigger - cachedScrollToTopTrigger,
-                isAtTop = listState.firstVisibleItemIndex == 0 && listState.firstVisibleItemScrollOffset == 0,
-            )
-        ) {
-            TopLevelReselectAction.Refresh -> onEvent(CollectionEvent.Refresh)
-            TopLevelReselectAction.ScrollToTop -> listState.animateScrollToItem(0)
-            null -> Unit
-        }
-        cachedScrollToTopTrigger = scrollToTopTrigger
-    }
 
     LaunchedEffect(isActive) {
         if (isActive && state.collections.isEmpty()) {
