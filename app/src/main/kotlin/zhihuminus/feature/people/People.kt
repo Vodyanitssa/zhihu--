@@ -254,8 +254,6 @@ fun DataHolder.Pin.toPeoplePinDisplayItem(): FeedDisplayItem {
         title = "",
         summary = text,
         details = "想法 · $likeCount 赞 · $commentCount 评论",
-        avatarSrc = author.avatarUrl,
-        authorName = author.name,
         feed = null,
         navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
         raw = this,

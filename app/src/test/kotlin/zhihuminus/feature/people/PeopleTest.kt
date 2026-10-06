@@ -12,6 +12,7 @@ import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 class PeopleTest {
@@ -409,6 +410,8 @@ class PeopleTest {
         val pinItem = pin.toPeoplePinDisplayItem()
         assertEquals("Pin HTML & Excerpt", pinItem.summary)
         assertEquals("想法", pinItem.contentTypeLabel)
+        assertNull(pinItem.authorName)
+        assertNull(pinItem.avatarSrc)
         val pinDest = pinItem.navDestination as? PostDestination
         assertNotNull(pinDest)
         assertEquals(PostType.Pin, pinDest.type)
