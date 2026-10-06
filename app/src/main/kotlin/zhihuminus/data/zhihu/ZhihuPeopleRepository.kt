@@ -217,20 +217,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleMemberItem> {
         val dto = api.fetchMemberFollowers(memberId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                PeopleMemberItem(
-                    id = it.id,
-                    urlToken = it.urlToken ?: "",
-                    name = it.name,
-                    avatarUrl = it.avatarUrl,
-                    headline = it.headline,
-                    officialBadge = it.badgeV2?.toOfficialBadge(),
-                    answerCount = it.answerCount,
-                    articleCount = it.articlesCount,
-                    followerCount = it.followerCount,
-                    isFollowing = it.isFollowing,
-                )
-            },
+            items = dto.items.map { it.toPeopleMemberItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -242,20 +229,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleMemberItem> {
         val dto = api.fetchMemberFollowing(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                PeopleMemberItem(
-                    id = it.id,
-                    urlToken = it.urlToken ?: "",
-                    name = it.name,
-                    avatarUrl = it.avatarUrl,
-                    headline = it.headline,
-                    officialBadge = it.badgeV2?.toOfficialBadge(),
-                    answerCount = it.answerCount,
-                    articleCount = it.articlesCount,
-                    followerCount = it.followerCount,
-                    isFollowing = it.isFollowing,
-                )
-            },
+            items = dto.items.map { it.toPeopleMemberItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )

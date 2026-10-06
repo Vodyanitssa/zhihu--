@@ -120,7 +120,7 @@ fun SearchResultsContent(
                                             ),
                                             destination = Person(
                                                 id = people.id,
-                                                urlToken = people.urlToken.orEmpty(),
+                                                urlToken = people.urlToken,
                                                 name = people.name,
                                             ),
                                         ),
@@ -130,7 +130,7 @@ fun SearchResultsContent(
                                     onEvent(
                                         SearchEvent.TogglePeopleFollowing(
                                             peopleId = people.id,
-                                            urlToken = people.urlToken.orEmpty(),
+                                            urlToken = people.urlToken,
                                             following = !people.isFollowing,
                                         ),
                                     )

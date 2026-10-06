@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu.dto
 
 import com.zhihuminus.data.OfficialBadge
 import com.zhihuminus.feature.people.GithubSocialUiState
+import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -118,7 +119,20 @@ data class MemberItemDto(
     val articlesCount: Int = 0,
     val followerCount: Int = 0,
     val isFollowing: Boolean = false,
-)
+) {
+    fun toPeopleMemberItem(): PeopleMemberItem = PeopleMemberItem(
+        id = id,
+        urlToken = urlToken ?: "",
+        name = name,
+        avatarUrl = avatarUrl,
+        headline = headline,
+        officialBadge = badgeV2?.toOfficialBadge(),
+        answerCount = answerCount,
+        articleCount = articlesCount,
+        followerCount = followerCount,
+        isFollowing = isFollowing,
+    )
+}
 
 @Serializable
 data class MemberColumnItemDto(

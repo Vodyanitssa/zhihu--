@@ -17,6 +17,8 @@
 
 package com.zhihuminus.data
 
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName
@@ -52,14 +54,13 @@ data class SearchResult(
     val hitLabels: String? = null,
 ) {
     val people: PeopleSearchResult?
-        get() = (obj as? SearchObjectPeople)?.people?.let { people ->
+        get() = (obj as? SearchObjectPeople)?.people?.let { member ->
+            val cleanName = member.name
+                .replace("<em>", "")
+                .replace("</em>", "")
             PeopleSearchResult(
-                people = people.copy(
-                    name = people.name
-                        .replace("<em>", "")
-                        .replace("</em>", ""),
-                ),
-                highlightedName = people.name,
+                people = member.toPeopleMemberItem().copy(name = cleanName),
+                highlightedName = member.name,
             )
         }
 
@@ -86,7 +87,7 @@ data class SearchResult(
 }
 
 data class PeopleSearchResult(
-    val people: DataHolder.People,
+    val people: PeopleMemberItem,
     val highlightedName: String,
 )
 
@@ -137,7 +138,7 @@ object SearchResultSerializer : KSerializer<SearchResult> {
                                 val element = decodeSerializableElement(descriptor, 2, JsonElement.serializer())
                                 if (element.jsonObject["type"]?.jsonPrimitive?.content == "people") {
                                     SearchObjectPeople(
-                                        decoder.json.decodeFromJsonElement(DataHolder.People.serializer(), element),
+                                        decoder.json.decodeFromJsonElement(MemberItemDto.serializer(), element),
                                     )
                                 } else {
                                     SearchObjectResult(
@@ -192,7 +193,7 @@ data class SearchObjectResult(
 @Serializable
 @SerialName("search_people")
 data class SearchObjectPeople(
-    val people: DataHolder.People,
+    val people: MemberItemDto,
 ) : SearchObject
 
 /**

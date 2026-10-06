@@ -2,10 +2,14 @@ package com.zhihuminus.feature.search
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.PeopleSearchResult
+import com.zhihuminus.data.SearchResult
+import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
+import kotlin.test.assertNotNull
 import kotlin.test.assertTrue
 
 class SearchTest {
@@ -33,7 +37,25 @@ class SearchTest {
             timeRange: SearchTimeRange,
             restrictedMemberHashId: String,
             nextUrl: String?,
-        ): SearchPage<PeopleSearchResult> = SearchPage(items = emptyList(), nextUrl = null, isEnd = true)
+        ): SearchPage<PeopleSearchResult> = SearchPage(
+            items = listOf(
+                PeopleSearchResult(
+                    people = PeopleMemberItem(
+                        id = "user1",
+                        urlToken = "token1",
+                        name = "User One",
+                        headline = "Android dev",
+                        answerCount = 10,
+                        articleCount = 5,
+                        followerCount = 100,
+                        isFollowing = false,
+                    ),
+                    highlightedName = "<em>User</em> One",
+                ),
+            ),
+            nextUrl = null,
+            isEnd = true,
+        )
 
         override suspend fun searchTopics(
             query: String,
@@ -143,5 +165,84 @@ class SearchTest {
             assertEquals(2, hotSearches.size)
             assertEquals("Hot 1", hotSearches[0].query)
         }
+    }
+
+    @Test
+    fun testSearchPeoplePage() {
+        val repo = FakeSearchRepository()
+        runBlocking {
+            val page = repo.searchPeople(
+                query = "User",
+                sort = SearchSortOption.Default,
+                timeRange = SearchTimeRange.All,
+                restrictedMemberHashId = "",
+                nextUrl = null,
+            )
+            assertEquals(1, page.items.size)
+            val result = page.items.first()
+            assertEquals("user1", result.people.id)
+            assertEquals("User One", result.people.name)
+            assertEquals("<em>User</em> One", result.highlightedName)
+            assertEquals(10, result.people.answerCount)
+            assertEquals(5, result.people.articleCount)
+            assertEquals(100, result.people.followerCount)
+            assertFalse(result.people.isFollowing)
+            assertTrue(page.isEnd)
+        }
+    }
+
+    @Test
+    fun testSearchResultPeopleDecoding() {
+        val json =
+            """
+            {
+                "type": "search_result",
+                "id": "123",
+                "object": {
+                    "type": "people",
+                    "id": "user123",
+                    "url_token": "zhang-san",
+                    "name": "<em>张三</em>",
+                    "avatar_url": "https://pic.zhihu.com/avatar.jpg",
+                    "headline": "全栈工程师",
+                    "badge_v2": {
+                        "title": "优秀答主",
+                        "icon": "https://pic.zhihu.com/badge.jpg",
+                        "detail_badges": [
+                            {
+                                "title": "优秀答主",
+                                "type": "best_answerer",
+                                "icon": "https://pic.zhihu.com/badge.jpg"
+                            }
+                        ]
+                    },
+                    "answer_count": 42,
+                    "articles_count": 10,
+                    "follower_count": 999,
+                    "is_following": true
+                }
+            }
+            """.trimIndent()
+
+        val parsedElement = ZhihuJson.json.parseToJsonElement(json)
+        val searchResult = ZhihuJson.decodeJson<SearchResult>(parsedElement)
+        assertEquals("search_result", searchResult.type)
+        assertEquals("123", searchResult.id)
+
+        val peopleResult = searchResult.people
+        assertNotNull(peopleResult)
+        assertEquals("<em>张三</em>", peopleResult.highlightedName)
+
+        val member = peopleResult.people
+        assertEquals("user123", member.id)
+        assertEquals("zhang-san", member.urlToken)
+        assertEquals("张三", member.name)
+        assertEquals("https://pic.zhihu.com/avatar.jpg", member.avatarUrl)
+        assertEquals("全栈工程师", member.headline)
+        assertEquals(42, member.answerCount)
+        assertEquals(10, member.articleCount)
+        assertEquals(999, member.followerCount)
+        assertTrue(member.isFollowing)
+        assertEquals("优秀答主", member.officialBadge?.title)
     }
 }
