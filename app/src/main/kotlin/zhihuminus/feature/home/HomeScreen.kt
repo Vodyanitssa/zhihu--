@@ -6,9 +6,13 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
+import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
+import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.home.components.HomeLoginPrompt
@@ -29,6 +33,8 @@ fun HomeScreen(
     onEvent: (HomeEvent) -> Unit,
     onRequestLogin: () -> Unit,
 ) {
+    val pullToRefreshState = rememberPullToRefreshState()
+
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(
             modifier = Modifier.fillMaxSize(),
@@ -54,6 +60,18 @@ fun HomeScreen(
                 PullToRefreshBox(
                     isRefreshing = state.isRefreshing,
                     onRefresh = { onEvent(HomeEvent.Refresh) },
+                    state = pullToRefreshState,
+                    indicator = {
+                        PullToRefreshDefaults.Indicator(
+                            modifier = Modifier
+                                .align(Alignment.TopCenter)
+                                .padding(top = scaffoldPadding.calculateTopPadding()),
+                            isRefreshing = state.isRefreshing,
+                            containerColor = MaterialTheme.colorScheme.primaryContainer,
+                            color = MaterialTheme.colorScheme.onPrimaryContainer,
+                            state = pullToRefreshState,
+                        )
+                    },
                     modifier = Modifier.fillMaxSize(),
                 ) {
                     PaginatedList(
