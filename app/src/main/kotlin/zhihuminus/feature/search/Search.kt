@@ -2,7 +2,7 @@ package com.zhihuminus.feature.search
 
 import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.PeopleSearchResult
+import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.serialization.Serializable
 
 const val ZHIHU_HOT_SEARCH_URL = "https://www.zhihu.com/api/v4/search/hot_search"
@@ -53,6 +53,11 @@ data class TopicSearchResult(
     val visitCount: Long,
     val discussCount: Long,
     val isFollowing: Boolean,
+)
+
+data class PeopleSearchResult(
+    val people: PeopleMemberItem,
+    val highlightedName: String,
 )
 
 @Serializable

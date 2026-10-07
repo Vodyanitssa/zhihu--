@@ -1,11 +1,13 @@
 package com.zhihuminus.feature.search
 
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.PeopleSearchResult
-import com.zhihuminus.data.SearchResult
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.SearchItemDto
 import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
@@ -225,12 +227,20 @@ class SearchTest {
             """.trimIndent()
 
         val parsedElement = ZhihuJson.json.parseToJsonElement(json)
-        val searchResult = ZhihuJson.decodeJson<SearchResult>(parsedElement)
-        assertEquals("search_result", searchResult.type)
-        assertEquals("123", searchResult.id)
+        val searchItem = ZhihuJson.decodeJson<SearchItemDto>(parsedElement)
+        assertEquals("search_result", searchItem.type)
+        assertEquals("123", searchItem.id)
 
-        val peopleResult = searchResult.people
-        assertNotNull(peopleResult)
+        val objectJson = searchItem.obj?.jsonObject
+        assertNotNull(objectJson)
+        assertEquals("people", objectJson["type"]?.jsonPrimitive?.content)
+
+        val memberDto = ZhihuJson.decodeJson<MemberItemDto>(objectJson)
+        val cleanName = memberDto.name.replace("<em>", "").replace("</em>", "")
+        val peopleResult = PeopleSearchResult(
+            people = memberDto.toPeopleMemberItem().copy(name = cleanName),
+            highlightedName = memberDto.name,
+        )
         assertEquals("<em>张三</em>", peopleResult.highlightedName)
 
         val member = peopleResult.people

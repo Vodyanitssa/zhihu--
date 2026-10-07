@@ -5,16 +5,20 @@ import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.raiseForStatus
+import com.zhihuminus.data.CommonFeed
 import com.zhihuminus.data.DataHolder
+import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.PeopleSearchResult
 import com.zhihuminus.data.SearchHistoryStorage
-import com.zhihuminus.data.SearchResult
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.SearchItemDto
+import com.zhihuminus.data.zhihu.dto.TopicSearchDto
 import com.zhihuminus.feature.search.HotSearchItem
+import com.zhihuminus.feature.search.PeopleSearchResult
 import com.zhihuminus.feature.search.SearchContentType
 import com.zhihuminus.feature.search.SearchPage
 import com.zhihuminus.feature.search.SearchRepository
@@ -24,10 +28,11 @@ import com.zhihuminus.feature.search.SearchTimeRange
 import com.zhihuminus.feature.search.TopicSearchResult
 import com.zhihuminus.feature.search.ZHIHU_HOT_SEARCH_URL
 import io.ktor.http.encodeURLParameter
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 
 private const val SEARCH_INCLUDE = "data[*].highlight,object,type"
 private const val SEARCH_VERTICAL_INFO = "0,0,0,0,0,0,0,0,0,0,0,0"
@@ -52,13 +57,29 @@ class ZhihuSearchRepository(
 
         val results = jsonArray.mapNotNull { element ->
             try {
-                ZhihuJson.decodeJson<SearchResult>(element)
+                ZhihuJson.decodeJson<SearchItemDto>(element)
             } catch (e: Exception) {
                 environment.logDecodeFailure("ZhihuSearchRepository", element, e)
                 null
             }
         }
-        val feeds = results.mapNotNull(SearchResult::toFeed)
+        val feeds = results.mapNotNull { item ->
+            if (item.type != "search_result") return@mapNotNull null
+            val obj = item.obj ?: return@mapNotNull null
+            val type = (obj as? JsonObject)?.get("type")?.jsonPrimitive?.contentOrNull
+            if (type == "people" || type == "topic") return@mapNotNull null
+            try {
+                val target = ZhihuJson.decodeJson<Feed.Target>(obj)
+                CommonFeed(
+                    id = item.id,
+                    verb = "SEARCH_RESULT",
+                    target = target,
+                )
+            } catch (e: Exception) {
+                environment.logDecodeFailure("ZhihuSearchRepository", obj, e)
+                null
+            }
+        }
         val displayItems = feeds.flattenFeeds().map { it.toDisplayItem() }
         val paging = (json["paging"] as? JsonObject)?.let {
             runCatching { ZhihuJson.decodeJson<ZhihuPaging>(it) }.getOrNull()
@@ -91,13 +112,31 @@ class ZhihuSearchRepository(
 
         val results = jsonArray.mapNotNull { element ->
             try {
-                ZhihuJson.decodeJson<SearchResult>(element)
+                ZhihuJson.decodeJson<SearchItemDto>(element)
             } catch (e: Exception) {
                 environment.logDecodeFailure("ZhihuSearchRepository", element, e)
                 null
             }
         }
-        val people = results.mapNotNull(SearchResult::people)
+        val people = results.mapNotNull { item ->
+            if (item.type != "search_result") return@mapNotNull null
+            val obj = item.obj ?: return@mapNotNull null
+            val type = (obj as? JsonObject)?.get("type")?.jsonPrimitive?.contentOrNull
+            if (type != "people") return@mapNotNull null
+            try {
+                val member = ZhihuJson.decodeJson<MemberItemDto>(obj)
+                val cleanName = member.name
+                    .replace("<em>", "")
+                    .replace("</em>", "")
+                PeopleSearchResult(
+                    people = member.toPeopleMemberItem().copy(name = cleanName),
+                    highlightedName = member.name,
+                )
+            } catch (e: Exception) {
+                environment.logDecodeFailure("ZhihuSearchRepository", obj, e)
+                null
+            }
+        }
         val paging = (json["paging"] as? JsonObject)?.let {
             runCatching { ZhihuJson.decodeJson<ZhihuPaging>(it) }.getOrNull()
         }
@@ -241,24 +280,10 @@ class ZhihuSearchRepository(
         return "https://www.zhihu.com/api/v4/search_v3?$params"
     }
 
-    @Serializable
-    private data class TopicSearchObject(
-        val id: String,
-        val type: String,
-        val url: String,
-        val name: String,
-        val avatarUrl: String? = null,
-        val topicType: String? = null,
-        val excerpt: String = "",
-        val visitCount: Long = 0,
-        val topAnswerCount: Long = 0,
-        val isFollowing: Boolean = false,
-    )
-
     private fun decodeTopicSearchResult(element: JsonElement): TopicSearchResult? {
         val entry = element as? JsonObject ?: return null
         val objectJson = entry["object"] as? JsonObject ?: return null
-        val decoded = runCatching { ZhihuJson.decodeJson<TopicSearchObject>(objectJson) }.getOrNull() ?: return null
+        val decoded = runCatching { ZhihuJson.decodeJson<TopicSearchDto>(objectJson) }.getOrNull() ?: return null
         if (decoded.type != "topic") return null
         return TopicSearchResult(
             topic = DataHolder.Topic(

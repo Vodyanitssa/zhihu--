@@ -8,7 +8,6 @@ import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.PeopleSearchResult
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.NavDestination
