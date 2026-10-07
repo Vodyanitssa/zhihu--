@@ -150,11 +150,19 @@ fun CommentRoute(
     }
     val rootListState = rememberLazyListState()
 
-    // 隔离列表快速滑动到顶部的向下惯性速度，防止在长列表浏览回顶时因动量穿透误触关闭
-    val listScrollShield = remember {
+    // 隔离列表滑动惯性速度与越界位移：
+    // 1. 列表快速回顶时的向下惯性动量，若 Sheet 尚未被拉下则吸收，防止长列表回顶时误触关闭 (available.y > 0)
+    // 2. 列表快速触底时的向上惯性动量，完全吸收，防止动量穿透至 ModalBottomSheet 导致整个 Sheet 向上冲出并回弹 (available.y < 0)
+    val listScrollShield = remember(rootSheetState) {
         object : NestedScrollConnection {
-            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity =
-                if (available.y > 0) available else Velocity.Zero
+            override suspend fun onPostFling(consumed: Velocity, available: Velocity): Velocity {
+                val currentOffset = runCatching { rootSheetState.requireOffset() }.getOrDefault(0f)
+                return when {
+                    available.y < 0 -> Velocity(0f, available.y)
+                    available.y > 0 && currentOffset <= 1f -> Velocity(0f, available.y)
+                    else -> Velocity.Zero
+                }
+            }
         }
     }
 
