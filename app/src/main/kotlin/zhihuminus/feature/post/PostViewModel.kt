@@ -14,6 +14,7 @@ import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -26,6 +27,7 @@ class PostViewModel(
     private val postId: Long,
     private val postType: PostType,
     private val repository: PostRepository,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AndroidViewModel(application) {
     var uiState: PostUiState by mutableStateOf(PostUiState(postType = postType))
         private set
@@ -159,7 +161,7 @@ class PostViewModel(
             var result: PictureRenderer.RenderResult? = null
             try {
                 val context = getApplication<Application>()
-                result = withContext(Dispatchers.Default) {
+                result = withContext(defaultDispatcher) {
                     PictureRenderer.render(context, post)
                 }
                 withContext(Dispatchers.IO) {
@@ -184,7 +186,7 @@ class PostViewModel(
                 null
             } else {
                 try {
-                    withContext(Dispatchers.Default) {
+                    withContext(defaultDispatcher) {
                         repository.getCachedPost(postType, postId)
                     }
                 } catch (e: Exception) {
@@ -203,7 +205,7 @@ class PostViewModel(
                     uiState = uiState.copy(loadState = PostLoadState.Loading)
                 }
                 try {
-                    val fresh = withContext(Dispatchers.Default) {
+                    val fresh = withContext(defaultDispatcher) {
                         repository.getPost(postType, postId)
                     }
                     applyPost(fresh)
@@ -223,7 +225,7 @@ class PostViewModel(
             }
             applyCollectedState(post)
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.recordHistory(postType, postId)
                 }
             } catch (e: Exception) {
@@ -263,7 +265,7 @@ class PostViewModel(
     fun loadCollections() {
         viewModelScope.launch {
             try {
-                val result = withContext(Dispatchers.Default) {
+                val result = withContext(defaultDispatcher) {
                     repository.getCollections(postType, postId)
                 }
                 val collected = result.any { it.isFavorited }
@@ -282,14 +284,20 @@ class PostViewModel(
     private fun toggleCollection(collection: Collection) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
-                    if (collection.isFavorited) {
+                val isFavorited = collection.isFavorited
+                withContext(defaultDispatcher) {
+                    if (isFavorited) {
                         repository.removeFromCollection(postType, postId, collection.id)
                     } else {
                         repository.addToCollection(postType, postId, collection.id)
                     }
                 }
                 loadCollections()
+                sendEffect(
+                    PostEffect.ShowMessage(
+                        if (isFavorited) "已从「${collection.title}」移除" else "已收藏到「${collection.title}」",
+                    ),
+                )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Failed to toggle collection", e)
@@ -301,10 +309,11 @@ class PostViewModel(
     private fun createCollection(title: String, description: String, isPublic: Boolean) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.createCollection(title, description, isPublic)
                 }
                 loadCollections()
+                sendEffect(PostEffect.ShowMessage("收藏夹已创建"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Failed to create collection", e)
@@ -313,7 +322,10 @@ class PostViewModel(
         }
     }
 
-    private fun handleVote(newState: VoteUpState) {
+    private fun handleVote(
+        newState: VoteUpState,
+        showFeedback: Boolean = true,
+    ) {
         val voteKey = when (newState) {
             VoteUpState.Up -> "up"
             VoteUpState.Down -> "down"
@@ -341,10 +353,24 @@ class PostViewModel(
 
         viewModelScope.launch {
             try {
-                val newCount = withContext(Dispatchers.Default) {
+                val newCount = withContext(defaultDispatcher) {
                     repository.vote(postType, postId, voteKey)
                 }
                 uiState = uiState.copy(bottomBarState = uiState.bottomBarState.copy(voteUpCount = newCount))
+                if (showFeedback) {
+                    val message = when (newState) {
+                        VoteUpState.Up -> if (postType == PostType.Pin) "已点赞" else "已赞同"
+                        VoteUpState.Down -> "已反对"
+                        VoteUpState.Neutral -> {
+                            when (previousState) {
+                                VoteUpState.Up -> if (postType == PostType.Pin) "已取消点赞" else "已取消赞同"
+                                VoteUpState.Down -> "已取消反对"
+                                VoteUpState.Neutral -> null
+                            }
+                        }
+                    }
+                    message?.let { sendEffect(PostEffect.ShowMessage(it)) }
+                }
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Vote failed", e)
@@ -381,11 +407,12 @@ class PostViewModel(
 
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.submitPinPollVote(pollId, optionId)
                 }
-                // Auto-like after voting
-                handleVote(VoteUpState.Up)
+                sendEffect(PostEffect.ShowMessage("投票成功"))
+                // Auto-like after voting (silent so we don't display a duplicate like toast)
+                handleVote(VoteUpState.Up, showFeedback = false)
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Poll vote failed", e)
@@ -406,9 +433,10 @@ class PostViewModel(
 
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.followMember(author.urlToken, newFollowing)
                 }
+                sendEffect(PostEffect.ShowMessage(if (newFollowing) "已关注" else "已取消关注"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PostViewModel", "Follow failed", e)

@@ -1,6 +1,5 @@
 package com.zhihuminus.feature.post
 
-import android.widget.Toast
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
@@ -19,6 +18,7 @@ import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
 import com.zhihuminus.platform.rememberPlainTextClipboard
 import com.zhihuminus.platform.rememberShareText
+import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
 fun PostRoute(
@@ -34,6 +34,7 @@ fun PostRoute(
     val openExternalUrl = rememberExternalUrlOpener()
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
+    val userMessages = rememberUserMessageSink()
 
     val imageViewManager = remember { ImageViewManager() }
 
@@ -54,11 +55,11 @@ fun PostRoute(
                 is PostEffect.ShareText -> shareText(effect.text)
                 is PostEffect.CopyLink -> {
                     copyToClipboard("链接", effect.link)
-                    Toast.makeText(context, "链接已复制", Toast.LENGTH_SHORT).show()
+                    userMessages.showShortMessage("链接已复制")
                 }
 
                 is PostEffect.ShowMessage -> {
-                    Toast.makeText(context, effect.message, Toast.LENGTH_SHORT).show()
+                    userMessages.showShortMessage(effect.message)
                 }
 
                 is PostEffect.OpenExternalUrl -> openExternalUrl(effect.url)

@@ -59,6 +59,7 @@ import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.platform.rememberExternalUrlOpener
 import com.zhihuminus.platform.rememberImageSaver
 import com.zhihuminus.platform.rememberImageSharer
+import com.zhihuminus.platform.rememberUserMessageSink
 
 /**
  * 评论路由组件，负责创建 ViewModel、处理副作用、展示单 Sheet 评论系统。
@@ -98,6 +99,7 @@ fun CommentRoute(
     val openExternalUrl = rememberExternalUrlOpener()
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
+    val userMessages = rememberUserMessageSink()
 
     val imageViewManager = remember {
         object : ImageViewManager() {
@@ -115,7 +117,7 @@ fun CommentRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is CommentEffect.ShowMessage -> {
-                    // TODO: 显示 Toast 或 Snackbar
+                    userMessages.showShortMessage(effect.message)
                 }
 
                 is CommentEffect.OpenExternalUrl -> openExternalUrl(effect.url)

@@ -218,6 +218,7 @@ class TopicViewModel(
                         ),
                         isFollowingChanging = false,
                     )
+                    _effect.send(TopicEffect.ShowMessage(if (following) "已关注话题" else "已取消关注话题"))
                 }.onFailure {
                     uiState = uiState.copy(isFollowingChanging = false)
                     _effect.send(TopicEffect.ShowMessage("${if (following) "关注" else "取消关注"}失败：${friendlyErrorMessage(it)}"))

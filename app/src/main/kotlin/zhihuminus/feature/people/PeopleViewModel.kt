@@ -176,6 +176,7 @@ class PeopleViewModel(
                         followerCount = newCount,
                     ),
                 )
+                _effect.send(PeopleEffect.ShowMessage(if (!currentFollowing) "已关注" else "已取消关注"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PeopleViewModel", "Failed to toggle follow", e)
@@ -217,6 +218,7 @@ class PeopleViewModel(
                 } else {
                     repository.unfollow(token)
                 }
+                _effect.send(PeopleEffect.ShowMessage(if (willFollow) "已关注" else "已取消关注"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PeopleViewModel", "Failed to toggle item follow", e)
@@ -247,6 +249,7 @@ class PeopleViewModel(
                         isBlocking = !currentBlocking,
                     ),
                 )
+                _effect.send(PeopleEffect.ShowMessage(if (!currentBlocking) "已加入黑名单" else "已移出黑名单"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 Log.e("PeopleViewModel", "Failed to toggle block", e)

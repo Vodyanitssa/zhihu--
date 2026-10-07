@@ -195,6 +195,7 @@ class CommentViewModel(
                 items.add(0, newComment.toUiState())
                 emitState()
                 sendEffect(CommentEffect.ScrollToTop)
+                sendEffect(CommentEffect.ShowMessage("评论已发送"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 sendEffect(CommentEffect.ShowMessage("评论发送失败: ${friendlyErrorMessage(e)}"))
@@ -209,6 +210,7 @@ class CommentViewModel(
                 withContext(Dispatchers.Default) {
                     repository.likeComment(commentId)
                 }
+                sendEffect(CommentEffect.ShowMessage("已点赞"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 updateCommentLike(commentId, liked = false)
@@ -224,6 +226,7 @@ class CommentViewModel(
                 withContext(Dispatchers.Default) {
                     repository.unlikeComment(commentId)
                 }
+                sendEffect(CommentEffect.ShowMessage("已取消点赞"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 updateCommentLike(commentId, liked = true)
@@ -250,6 +253,7 @@ class CommentViewModel(
                 }
                 removeFromTree(items, commentId)
                 emitState()
+                sendEffect(CommentEffect.ShowMessage("评论已删除"))
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 sendEffect(CommentEffect.ShowMessage("删除评论失败: ${friendlyErrorMessage(e)}"))
