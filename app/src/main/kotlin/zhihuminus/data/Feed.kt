@@ -154,7 +154,9 @@ sealed interface Feed {
         val voteupCount: Int = 0,
         val commentCount: Int = 0,
         override val title: String,
-        override val excerpt: String = "",
+        @SerialName("excerpt")
+        val rawExcerpt: String = "",
+        val excerptTitle: String = "",
         /**
          * 老API不支持
          */
@@ -174,6 +176,41 @@ sealed interface Feed {
         @Serializable(with = BooleanCompatSerializer::class)
         val allowSegmentInteraction: Boolean = false,
     ) : Target {
+        constructor(
+            id: Long,
+            url: String,
+            author: Person,
+            voteupCount: Int = 0,
+            commentCount: Int = 0,
+            title: String,
+            excerpt: String = "",
+            content: String = "",
+            created: Long = 0,
+            updated: Long = 0,
+            isLabeled: Boolean = false,
+            visitedCount: Int = 0,
+            favoriteCount: Int = 0,
+            segmentInfos: List<SegmentInfoParagraph> = emptyList(),
+            allowSegmentInteraction: Boolean = false,
+        ) : this(
+            id = id,
+            url = url,
+            author = author,
+            voteupCount = voteupCount,
+            commentCount = commentCount,
+            title = title,
+            rawExcerpt = excerpt,
+            excerptTitle = "",
+            content = content,
+            created = created,
+            updated = updated,
+            isLabeled = isLabeled,
+            visitedCount = visitedCount,
+            favoriteCount = favoriteCount,
+            segmentInfos = segmentInfos,
+            allowSegmentInteraction = allowSegmentInteraction,
+        )
+
         override fun filterReason(): String? =
             if ((author.followersCount < 50 || voteupCount < 20) && !author.isFollowing) {
                 "规则：文章；作者粉丝数 < 50 或 文章赞数 < 20，未关注作者"
@@ -182,6 +219,9 @@ sealed interface Feed {
             }
 
         override val detailsText = "文章 · $voteupCount 赞 · $commentCount 评论"
+
+        override val excerpt: String
+            get() = rawExcerpt.ifEmpty { excerptTitle }
 
         override val updatedTime: Long
             get() = updated

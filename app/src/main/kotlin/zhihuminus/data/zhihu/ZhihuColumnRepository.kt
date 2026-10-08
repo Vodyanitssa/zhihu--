@@ -53,7 +53,8 @@ class ZhihuColumnRepository(
             voteupCount = this.voteupCount,
             commentCount = this.commentCount,
             title = this.title,
-            excerpt = this.excerpt.orEmpty(),
+            rawExcerpt = this.excerpt.orEmpty(),
+            excerptTitle = this.excerptTitle.orEmpty(),
             created = this.created,
             updated = this.updated,
         )

@@ -8,6 +8,7 @@ data class ArticleDto(
     val title: String,
     val content: String = "",
     val excerpt: String = "",
+    val excerptTitle: String = "",
     val voteupCount: Int = 0,
     val commentCount: Int = 0,
     val created: Long = 0,

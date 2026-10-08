@@ -24,6 +24,7 @@ data class ColumnArticleDto(
     val titleImage: String? = null,
     val url: String,
     val excerpt: String? = null,
+    val excerptTitle: String? = null,
     val content: String? = null,
     val author: AuthorDto? = null,
     val created: Long = 0,

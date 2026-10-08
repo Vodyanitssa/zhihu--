@@ -181,7 +181,7 @@ class ZhihuPostRepository(
             createdAt = dto.created,
             updatedAt = dto.updated,
             ipInfo = dto.ipInfo,
-            excerpt = dto.excerpt,
+            excerpt = dto.excerpt.ifEmpty { dto.excerptTitle },
             topics = dto.topics.map { PostTopic(id = it.id, name = it.name) },
         )
     }
