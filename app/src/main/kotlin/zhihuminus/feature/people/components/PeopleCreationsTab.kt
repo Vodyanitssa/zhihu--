@@ -163,8 +163,13 @@ fun PeopleCreationsTab(
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { question ->
-                        PeopleQuestionListItem(
-                            question = question,
+                        FeedCard(
+                            item = question.toFeedDisplayItem(
+                                fallbackAuthorName = state.profile.name,
+                                fallbackAvatarUrl = state.profile.avatarUrl,
+                            ),
+                            modifier = Modifier,
+                            horizontalPadding = 4.dp,
                             onClick = {
                                 question.id.toLongOrNull()?.let { qId ->
                                     onNavigate(Question(qId, question.title))

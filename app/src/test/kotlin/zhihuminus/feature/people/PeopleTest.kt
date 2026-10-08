@@ -2,6 +2,9 @@ package com.zhihuminus.feature.people
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
+import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeItemDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
@@ -9,6 +12,7 @@ import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person
+import com.zhihuminus.navigation.Question
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -511,5 +515,89 @@ class PeopleTest {
         val followers = repo.getFollowers("alex")
         assertEquals(1, followers.items.size)
         assertEquals("Follower 1", followers.items.first().name)
+    }
+
+    @Test
+    fun testFollowedQuestionToFeedDisplayItem() {
+        val questionWithAuthor = FollowedQuestion(
+            id = "123456",
+            title = "如何评价 Kotlin 2.0？",
+            created = 1712345678L,
+            answerCount = 50,
+            followerCount = 120,
+            authorName = "提问者小张",
+            avatarUrl = "https://example.com/zhang.jpg",
+            excerpt = "Kotlin 2.0 编译器 K2 正式发布，性能和体验有何提升？",
+        )
+        val item = questionWithAuthor.toFeedDisplayItem(
+            fallbackAuthorName = "主页主人",
+            fallbackAvatarUrl = "https://example.com/host.jpg",
+        )
+        assertEquals("如何评价 Kotlin 2.0？", item.title)
+        assertEquals("Kotlin 2.0 编译器 K2 正式发布，性能和体验有何提升？", item.summary)
+        assertEquals("问题", item.contentTypeLabel)
+        assertEquals("问题 · 120 关注 · 50 回答", item.details)
+        assertEquals("提问者小张", item.authorName)
+        assertEquals("https://example.com/zhang.jpg", item.avatarSrc)
+        assertEquals(1712345678L, item.publishTimeSeconds)
+        val dest = item.navDestination as? Question
+        assertNotNull(dest)
+        assertEquals(123456L, dest.questionId)
+        assertEquals("如何评价 Kotlin 2.0？", dest.title)
+
+        // Test fallback author and empty excerpt
+        val questionWithoutAuthor = FollowedQuestion(
+            id = "654321",
+            title = "怎样学习 Jetpack Compose？",
+            answerCount = 10,
+            followerCount = 30,
+        )
+        val itemWithFallback = questionWithoutAuthor.toFeedDisplayItem(
+            fallbackAuthorName = "主页主人",
+            fallbackAvatarUrl = "https://example.com/host.jpg",
+        )
+        assertEquals("主页主人", itemWithFallback.authorName)
+        assertEquals("https://example.com/host.jpg", itemWithFallback.avatarSrc)
+        assertNull(itemWithFallback.summary)
+        assertNull(itemWithFallback.publishTimeSeconds)
+
+        // Test without any author
+        val itemWithoutAuthor = questionWithoutAuthor.toFeedDisplayItem()
+        assertNull(itemWithoutAuthor.authorName)
+        assertNull(itemWithoutAuthor.avatarSrc)
+        assertNull(itemWithoutAuthor.summary)
+    }
+
+    @Test
+    fun testFollowedQuestionDtoDeserializationWithAuthor() {
+        val json =
+            """
+            {
+                "id": "199999",
+                "type": "question",
+                "title": "测试问题标题",
+                "excerpt": "这是问题摘要",
+                "detail": "<p>这是问题详情</p>",
+                "created": 1700000000,
+                "answer_count": 8,
+                "follower_count": 25,
+                "author": {
+                    "id": "author-id-1",
+                    "name": "作者名",
+                    "avatar_url": "https://example.com/avatar.png"
+                }
+            }
+            """.trimIndent()
+        val dto = ZhihuJson.decodeFromString<FollowedQuestionDto>(json)
+        assertEquals("199999", dto.id)
+        assertEquals("测试问题标题", dto.title)
+        assertEquals("这是问题摘要", dto.excerpt)
+        assertEquals("<p>这是问题详情</p>", dto.detail)
+        assertEquals(8, dto.answerCount)
+        assertEquals(25, dto.followerCount)
+        val author = dto.author
+        assertNotNull(author)
+        assertEquals("作者名", author.name)
+        assertEquals("https://example.com/avatar.png", author.avatarUrl)
     }
 }

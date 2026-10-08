@@ -2,9 +2,11 @@ package com.zhihuminus.feature.people
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
+import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.Question
 
 data class PeopleProfile(
     val id: String = "",
@@ -55,7 +57,26 @@ data class FollowedQuestion(
     val updatedTime: Long = 0L,
     val answerCount: Int = 0,
     val followerCount: Int = 0,
-)
+    val authorName: String = "",
+    val avatarUrl: String = "",
+    val excerpt: String = "",
+) {
+    fun toFeedDisplayItem(
+        fallbackAuthorName: String? = null,
+        fallbackAvatarUrl: String? = null,
+    ): FeedDisplayItem = FeedDisplayItem(
+        title = title,
+        summary = excerpt.takeIf { it.isNotBlank() },
+        details = "问题 · $followerCount 关注 · $answerCount 回答",
+        avatarSrc = avatarUrl.ifEmpty { fallbackAvatarUrl.orEmpty() }.takeIf { it.isNotBlank() },
+        authorName = authorName.ifEmpty { fallbackAuthorName.orEmpty() }.takeIf { it.isNotBlank() },
+        contentTypeLabel = "问题",
+        publishTimeSeconds = created.takeIf { it > 0 },
+        navDestinationJson = id.toLongOrNull()?.let { qId ->
+            Question(questionId = qId, title = title).toFeedDisplayItemNavDestinationJson()
+        },
+    )
+}
 
 data class PeopleCreationItem(
     val id: Long,

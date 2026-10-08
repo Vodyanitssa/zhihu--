@@ -800,7 +800,7 @@ class ZhihuApiImpl(
     ): PeoplePageDto<FollowedQuestionDto> =
         fetchPaged(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-questions",
-            include = "",
+            include = MEMBER_QUESTIONS_INCLUDE,
         )
 
     override suspend fun fetchMemberFollowingCollections(
@@ -822,7 +822,7 @@ private const val MEMBER_ARTICLES_INCLUDE =
 private const val MEMBER_PINS_INCLUDE =
     "data[*].like_count,comment_count,created,updated,content"
 private const val MEMBER_QUESTIONS_INCLUDE =
-    "data[*].created,answer_count,follower_count,author,visit_count,comment_count,detail,relationship,topics,voteup_count"
+    "data[*].created,answer_count,follower_count,author,visit_count,comment_count,detail,excerpt,relationship,topics,voteup_count"
 private const val MEMBER_COLLECTIONS_INCLUDE =
     "data[*].updated_time,answer_count,follower_count,creator"
 private const val MEMBER_COLUMNS_INCLUDE =

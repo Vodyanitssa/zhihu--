@@ -156,6 +156,9 @@ data class FollowedQuestionDto(
     val updatedTime: Long = 0L,
     val answerCount: Int = 0,
     val followerCount: Int = 0,
+    val author: AuthorDto? = null,
+    val excerpt: String = "",
+    val detail: String = "",
 )
 
 @Serializable

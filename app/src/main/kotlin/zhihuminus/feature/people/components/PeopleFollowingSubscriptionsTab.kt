@@ -21,6 +21,7 @@ import com.zhihuminus.feature.people.FollowedTopic
 import com.zhihuminus.feature.people.PaginatedTabState
 import com.zhihuminus.feature.people.PeopleColumnItem
 import com.zhihuminus.feature.people.PeopleSubscriptionTab
+import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 
@@ -106,8 +107,10 @@ fun PeopleFollowingSubscriptionsTab(
                 modifier = Modifier.fillMaxSize(),
                 key = { it.id },
             ) { question ->
-                PeopleFollowedQuestionListItem(
-                    question = question,
+                FeedCard(
+                    item = question.toFeedDisplayItem(),
+                    modifier = Modifier,
+                    horizontalPadding = 4.dp,
                     onClick = { onQuestionClick(question) },
                 )
             }

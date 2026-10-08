@@ -183,6 +183,14 @@ class ZhihuPeopleRepository(
                     updatedTime = it.updatedTime,
                     answerCount = it.answerCount,
                     followerCount = it.followerCount,
+                    authorName = it.author?.name.orEmpty(),
+                    avatarUrl = it.author?.avatarUrl.orEmpty(),
+                    excerpt = it.excerpt.ifEmpty {
+                        it.detail
+                            .takeIf { d -> d.isNotBlank() }
+                            ?.let { d -> Jsoup.parse(d).text() }
+                            .orEmpty()
+                    },
                 )
             },
             nextUrl = dto.nextUrl,
@@ -291,6 +299,14 @@ class ZhihuPeopleRepository(
                     updatedTime = it.updatedTime,
                     answerCount = it.answerCount,
                     followerCount = it.followerCount,
+                    authorName = it.author?.name.orEmpty(),
+                    avatarUrl = it.author?.avatarUrl.orEmpty(),
+                    excerpt = it.excerpt.ifEmpty {
+                        it.detail
+                            .takeIf { d -> d.isNotBlank() }
+                            ?.let { d -> Jsoup.parse(d).text() }
+                            .orEmpty()
+                    },
                 )
             },
             nextUrl = dto.nextUrl,
