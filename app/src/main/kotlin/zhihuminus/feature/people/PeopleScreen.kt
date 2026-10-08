@@ -190,6 +190,7 @@ fun PeopleScreen(
                                 item = item,
                                 modifier = Modifier,
                                 horizontalPadding = 4.dp,
+                                showSourceLabel = true,
                                 onClick = {
                                     item.navDestination?.let(onNavigate)
                                 },

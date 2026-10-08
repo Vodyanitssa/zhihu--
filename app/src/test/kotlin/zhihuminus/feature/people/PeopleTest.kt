@@ -1,9 +1,14 @@
 package com.zhihuminus.feature.people
 
+import com.zhihuminus.data.CommonFeed
+import com.zhihuminus.data.FakeZhihuApi
+import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.zhihu.ZhihuPeopleRepository
+import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeItemDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
@@ -599,5 +604,82 @@ class PeopleTest {
         assertNotNull(author)
         assertEquals("作者名", author.name)
         assertEquals("https://example.com/avatar.png", author.avatarUrl)
+    }
+
+    @Test
+    fun testZhihuPeopleRepositoryActivitiesWithActionText() = runBlocking {
+        val question = Feed.QuestionTarget(
+            id = 123L,
+            _title = "测试问题",
+            url = "https://www.zhihu.com/question/123",
+            type = "question",
+        )
+        val answer = Feed.AnswerTarget(
+            id = 456L,
+            url = "https://www.zhihu.com/question/123/answer/456",
+            question = question,
+            voteupCount = 10,
+            commentCount = 2,
+        )
+        val fakeApi = object : FakeZhihuApi() {
+            override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
+                FeedPage(
+                    items = listOf(
+                        CommonFeed(
+                            id = "feed-1",
+                            target = answer,
+                            actionText = "赞同了回答",
+                        ),
+                    ),
+                    nextUrl = "next_url",
+                    isEnd = false,
+                )
+        }
+        val repository = ZhihuPeopleRepository(fakeApi)
+        val page = repository.getActivities("user-token")
+        assertEquals(1, page.items.size)
+        val item = page.items.first()
+        assertEquals("赞同了回答", item.sourceLabel)
+        assertEquals("回答 · 10 赞同 · 2 评论", item.details)
+        assertEquals("next_url", page.nextUrl)
+        assertFalse(page.isEnd)
+    }
+
+    @Test
+    fun testZhihuPeopleRepositoryActivitiesWithoutActionText() = runBlocking {
+        val question = Feed.QuestionTarget(
+            id = 123L,
+            _title = "测试问题",
+            url = "https://www.zhihu.com/question/123",
+            type = "question",
+        )
+        val answer = Feed.AnswerTarget(
+            id = 456L,
+            url = "https://www.zhihu.com/question/123/answer/456",
+            question = question,
+            voteupCount = 10,
+            commentCount = 2,
+        )
+        val fakeApi = object : FakeZhihuApi() {
+            override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
+                FeedPage(
+                    items = listOf(
+                        CommonFeed(
+                            id = "feed-1",
+                            target = answer,
+                            actionText = null,
+                        ),
+                    ),
+                    nextUrl = null,
+                    isEnd = true,
+                )
+        }
+        val repository = ZhihuPeopleRepository(fakeApi)
+        val page = repository.getActivities("user-token")
+        assertEquals(1, page.items.size)
+        val item = page.items.first()
+        assertNull(item.sourceLabel)
+        assertEquals("回答 · 10 赞同 · 2 评论", item.details)
+        assertTrue(page.isEnd)
     }
 }

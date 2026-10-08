@@ -3,6 +3,8 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
+import com.zhihuminus.data.sourceLabel
+import com.zhihuminus.data.target
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
@@ -117,7 +119,15 @@ class ZhihuPeopleRepository(
         nextUrl: String?,
     ): PeoplePage<FeedDisplayItem> {
         val feedPage = api.fetchMemberActivities(userTokenOrId, nextUrl)
-        val items = feedPage.items.flattenFeeds().map { it.toDisplayItem() }
+        val items = feedPage.items.flattenFeeds().map { feed ->
+            val item = feed.toDisplayItem()
+            val target = feed.target
+            if (feed.sourceLabel != null && target?.detailsText != null) {
+                item.copy(details = target.detailsText)
+            } else {
+                item
+            }
+        }
         return PeoplePage(
             items = items,
             nextUrl = feedPage.nextUrl,
