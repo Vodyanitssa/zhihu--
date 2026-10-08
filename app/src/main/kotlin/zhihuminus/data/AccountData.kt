@@ -63,12 +63,15 @@ object AccountData {
         val username: String = "",
         val cookies: MutableMap<String, String> = mutableMapOf(),
         val userAgent: String = DEFAULT_ZHIHU_USER_AGENT,
-        val self: Person? = null,
+        val profile: ZhihuAccountProfileSnapshot? = null,
         val mobileAccessToken: String? = null,
         val mobileRefreshToken: String? = null,
         val mobileTokenType: String? = null,
         val mobileTokenExpiresAt: Long? = null,
-    )
+    ) {
+        val self: ZhihuAccountProfileSnapshot?
+            get() = profile
+    }
 
     fun loadData(context: Context): Data {
         dataState.value = accountClient(context).load().toAndroidData()
@@ -189,16 +192,8 @@ object AccountData {
         username = username,
         cookies = cookies.toMutableMap(),
         userAgent = userAgent,
-        profile = self?.let {
-            ZhihuAccountProfileSnapshot(
-                id = it.id,
-                name = it.name,
-                urlToken = it.urlToken,
-                userType = it.userType,
-                avatarUrl = it.avatarUrl,
-            )
-        },
-        self = self?.let { json.encodeToJsonElement(it) },
+        profile = profile,
+        self = profile?.let { json.encodeToJsonElement(it) },
         mobileAccessToken = mobileAccessToken,
         mobileRefreshToken = mobileRefreshToken,
         mobileTokenType = mobileTokenType,
@@ -210,11 +205,7 @@ object AccountData {
         username = username,
         cookies = cookies.toMutableMap(),
         userAgent = userAgent,
-        self = self?.let {
-            runCatching {
-                ZhihuJson.decodeJson<Person>(it)
-            }.getOrNull()
-        },
+        profile = profile,
         mobileAccessToken = mobileAccessToken,
         mobileRefreshToken = mobileRefreshToken,
         mobileTokenType = mobileTokenType,

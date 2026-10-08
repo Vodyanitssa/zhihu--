@@ -7,10 +7,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
-import com.zhihuminus.data.target
+import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
+import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
+import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
@@ -172,9 +173,9 @@ class HomeViewModel(
             return type to dest.id.toString()
         }
         return when (val target = item.feed?.target) {
-            is Feed.AnswerTarget -> "answer" to target.id.toString()
-            is Feed.ArticleTarget -> "article" to target.id.toString()
-            is Feed.PinTarget -> "pin" to target.id.toString()
+            is AnswerTargetDto -> "answer" to target.id.toString()
+            is ArticleTargetDto -> "article" to target.id.toString()
+            is PinTargetDto -> "pin" to target.id.toString()
             else -> null
         }
     }

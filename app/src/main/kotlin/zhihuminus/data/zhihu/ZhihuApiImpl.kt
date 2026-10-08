@@ -5,7 +5,6 @@ import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.raiseForStatus
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.ZhihuPaging
@@ -19,6 +18,7 @@ import com.zhihuminus.data.zhihu.dto.CollectionItemsPageDto
 import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
+import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
@@ -110,7 +110,7 @@ class ZhihuApiImpl(
                 return@mapNotNull null
             }
             try {
-                ZhihuJson.decodeJson<Feed>(element)
+                ZhihuJson.decodeJson<FeedDto>(element)
             } catch (e: Exception) {
                 Log.e("ZhihuApiImpl", "Failed to decode feed item: $element", e)
                 null

@@ -1,11 +1,11 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.TopicDetailDto
 import com.zhihuminus.data.zhihu.dto.TopicPagingDto
 import com.zhihuminus.data.zhihu.dto.TopicPinFeedDto
@@ -54,7 +54,7 @@ class ZhihuTopicRepository(
             decodeTopicPinFeeds(json)
         } else {
             val feeds = responseItems.mapNotNull { element ->
-                runCatching { ZhihuJson.decodeJson<Feed>(element) }.getOrNull()
+                runCatching { ZhihuJson.decodeJson<FeedDto>(element) }.getOrNull()
             }
             feeds.flattenFeeds().map { it.toDisplayItem() }
         }

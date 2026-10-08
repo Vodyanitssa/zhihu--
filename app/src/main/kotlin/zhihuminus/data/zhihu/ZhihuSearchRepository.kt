@@ -5,15 +5,14 @@ import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.raiseForStatus
-import com.zhihuminus.data.CommonFeed
-import com.zhihuminus.data.DataHolder
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.SearchHistoryStorage
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.dto.CommonFeedDto
+import com.zhihuminus.data.zhihu.dto.FeedTargetDto
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.SearchItemDto
 import com.zhihuminus.data.zhihu.dto.TopicSearchDto
@@ -25,6 +24,7 @@ import com.zhihuminus.feature.search.SearchRepository
 import com.zhihuminus.feature.search.SearchSortOption
 import com.zhihuminus.feature.search.SearchTab
 import com.zhihuminus.feature.search.SearchTimeRange
+import com.zhihuminus.feature.search.SearchTopicItem
 import com.zhihuminus.feature.search.TopicSearchResult
 import com.zhihuminus.feature.search.ZHIHU_HOT_SEARCH_URL
 import io.ktor.http.encodeURLParameter
@@ -69,8 +69,8 @@ class ZhihuSearchRepository(
             val type = (obj as? JsonObject)?.get("type")?.jsonPrimitive?.contentOrNull
             if (type == "people" || type == "topic") return@mapNotNull null
             try {
-                val target = ZhihuJson.decodeJson<Feed.Target>(obj)
-                CommonFeed(
+                val target = ZhihuJson.decodeJson<FeedTargetDto>(obj)
+                CommonFeedDto(
                     id = item.id,
                     verb = "SEARCH_RESULT",
                     target = target,
@@ -286,13 +286,12 @@ class ZhihuSearchRepository(
         val decoded = runCatching { ZhihuJson.decodeJson<TopicSearchDto>(objectJson) }.getOrNull() ?: return null
         if (decoded.type != "topic") return null
         return TopicSearchResult(
-            topic = DataHolder.Topic(
+            topic = SearchTopicItem(
                 id = decoded.id,
-                type = decoded.type,
-                url = decoded.url,
                 name = decoded.name.replace("<em>", "").replace("</em>", ""),
                 avatarUrl = decoded.avatarUrl,
                 topicType = decoded.topicType,
+                url = decoded.url,
             ),
             excerpt = decoded.excerpt.replace("<em>", "").replace("</em>", ""),
             visitCount = decoded.visitCount,

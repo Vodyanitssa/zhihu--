@@ -1,19 +1,20 @@
 package com.zhihuminus.feature.people
 
-import com.zhihuminus.data.CommonFeed
 import com.zhihuminus.data.FakeZhihuApi
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.zhihu.ZhihuPeopleRepository
+import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
+import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeItemDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
+import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person
@@ -608,13 +609,13 @@ class PeopleTest {
 
     @Test
     fun testZhihuPeopleRepositoryActivitiesWithActionText() = runBlocking {
-        val question = Feed.QuestionTarget(
+        val question = QuestionTargetDto(
             id = 123L,
             _title = "测试问题",
             url = "https://www.zhihu.com/question/123",
             type = "question",
         )
-        val answer = Feed.AnswerTarget(
+        val answer = AnswerTargetDto(
             id = 456L,
             url = "https://www.zhihu.com/question/123/answer/456",
             question = question,
@@ -625,7 +626,7 @@ class PeopleTest {
             override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
                 FeedPage(
                     items = listOf(
-                        CommonFeed(
+                        CommonFeedDto(
                             id = "feed-1",
                             target = answer,
                             actionText = "赞同了回答",
@@ -647,13 +648,13 @@ class PeopleTest {
 
     @Test
     fun testZhihuPeopleRepositoryActivitiesWithoutActionText() = runBlocking {
-        val question = Feed.QuestionTarget(
+        val question = QuestionTargetDto(
             id = 123L,
             _title = "测试问题",
             url = "https://www.zhihu.com/question/123",
             type = "question",
         )
-        val answer = Feed.AnswerTarget(
+        val answer = AnswerTargetDto(
             id = 456L,
             url = "https://www.zhihu.com/question/123/answer/456",
             question = question,
@@ -664,7 +665,7 @@ class PeopleTest {
             override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
                 FeedPage(
                     items = listOf(
-                        CommonFeed(
+                        CommonFeedDto(
                             id = "feed-1",
                             target = answer,
                             actionText = null,

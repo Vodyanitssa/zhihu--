@@ -1,7 +1,5 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.Feed
-import com.zhihuminus.data.Person
 import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 
@@ -24,7 +22,7 @@ data class CollectionDto(
     val isLiking: Boolean = false,
     val createdTime: Long = 0L,
     val updatedTime: Long = 0L,
-    val creator: Person? = null,
+    val creator: AuthorDto? = null,
     val isDefault: Boolean = false,
 )
 
@@ -37,7 +35,7 @@ data class CollectionResponseDto(
 @Serializable
 data class CollectionItemDto(
     val created: String = "",
-    val content: Feed.Target,
+    val content: FeedTargetDto,
 )
 
 @Serializable

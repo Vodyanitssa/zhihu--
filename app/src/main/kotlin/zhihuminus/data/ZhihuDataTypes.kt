@@ -20,6 +20,7 @@ package com.zhihuminus.data
 import com.zhihuminus.account.DEFAULT_ZHIHU_USER_AGENT
 import com.zhihuminus.account.ZhihuAccountProfileSnapshot
 import com.zhihuminus.account.ZhihuAccountSession
+import com.zhihuminus.data.zhihu.dto.FeedTargetDto
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
@@ -130,9 +131,9 @@ val FeedDisplayItem.navDestination: NavDestination?
 fun NavDestination.toFeedDisplayItemNavDestinationJson(): String =
     feedNavigationJson.encodeToString<NavDestination>(this)
 
-val Feed.Target.navDestination: NavDestination?
+val FeedTargetDto.navDestination: NavDestination?
     get() = when (this) {
-        is Feed.AnswerTarget -> PostDestination(
+        is com.zhihuminus.data.zhihu.dto.AnswerTargetDto -> PostDestination(
             title = question.title,
             type = PostType.Answer,
             id = id,
@@ -142,24 +143,24 @@ val Feed.Target.navDestination: NavDestination?
             excerpt = excerpt,
         )
 
-        is Feed.ArticleTarget -> PostDestination(
+        is com.zhihuminus.data.zhihu.dto.ArticleTargetDto -> PostDestination(
             title = title,
             type = PostType.Article,
             id = id,
-            authorName = author.name,
-            authorBio = author.headline,
-            avatarSrc = author.avatarUrl,
+            authorName = author?.name ?: "loading...",
+            authorBio = author?.headline ?: "",
+            avatarSrc = author?.avatarUrl,
             excerpt = excerpt,
         )
 
-        is Feed.PinTarget -> PostDestination(type = PostType.Pin, id = id, authorName = author.name)
+        is com.zhihuminus.data.zhihu.dto.PinTargetDto -> PostDestination(type = PostType.Pin, id = id, authorName = author?.name ?: "loading...")
 
-        is Feed.QuestionTarget -> Question(
+        is com.zhihuminus.data.zhihu.dto.QuestionTargetDto -> Question(
             questionId = id,
             title = title,
         )
 
-        is Feed.VideoTarget -> null
+        is com.zhihuminus.data.zhihu.dto.VideoTargetDto -> null
     }
 
 suspend fun fetchHighestQualityZhihuVideoUrl(

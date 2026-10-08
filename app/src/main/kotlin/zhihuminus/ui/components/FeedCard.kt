@@ -64,7 +64,6 @@ import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.officialBadge
 import org.jsoup.Jsoup
 
 /**
@@ -239,7 +238,7 @@ private fun FeedCardContent(
                 maxLines = 1,
                 overflow = TextOverflow.Ellipsis,
             )
-            val authorBadge = item.authorBadgeV2.officialBadge()
+            val authorBadge = item.authorBadge
             if (authorBadge?.isUsefulInList == true) {
                 Spacer(Modifier.width(4.dp))
                 AuthorBadge(authorBadge, compact = true)

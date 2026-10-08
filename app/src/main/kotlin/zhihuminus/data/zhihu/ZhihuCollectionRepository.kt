@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
@@ -8,6 +7,7 @@ import com.zhihuminus.data.zhihu.dto.CollectionDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemDto
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.collection.CollectionContentPageResult
+import com.zhihuminus.feature.collection.CollectionCreator
 import com.zhihuminus.feature.collection.CollectionRepository
 import com.zhihuminus.feature.collection.CollectionsPageResult
 
@@ -72,7 +72,14 @@ fun CollectionDto.toDomain(): Collection = Collection(
     isLiking = isLiking,
     createdTime = createdTime,
     updatedTime = updatedTime,
-    creator = creator,
+    creator = creator?.let {
+        CollectionCreator(
+            id = it.id,
+            name = it.name,
+            avatarUrl = it.avatarUrl,
+            headline = it.headline,
+        )
+    },
     isDefault = isDefault,
 )
 
@@ -83,12 +90,7 @@ fun CollectionItemDto.toFeedDisplayItem(): FeedDisplayItem = FeedDisplayItem(
     navDestinationJson = content.navDestination?.toFeedDisplayItemNavDestinationJson(),
     feed = null,
     authorName = content.author?.name,
-    avatarSrc = when (content) {
-        is Feed.AnswerTarget -> content.author?.avatarUrl
-        is Feed.ArticleTarget -> content.author.avatarUrl
-        is Feed.QuestionTarget -> content.author?.avatarUrl
-        else -> null
-    },
+    avatarSrc = content.author?.avatarUrl,
     contentTypeLabel = content.description(),
     publishTimeSeconds = content.createdTime.takeIf { it > 0 },
 )

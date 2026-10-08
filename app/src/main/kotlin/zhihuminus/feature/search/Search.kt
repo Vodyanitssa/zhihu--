@@ -1,6 +1,5 @@
 package com.zhihuminus.feature.search
 
-import com.zhihuminus.data.DataHolder
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.serialization.Serializable
@@ -47,8 +46,16 @@ enum class SearchTimeRange(
     Year("一年内", "a_year"),
 }
 
+data class SearchTopicItem(
+    val id: String,
+    val name: String,
+    val avatarUrl: String? = null,
+    val topicType: String? = null,
+    val url: String = "",
+)
+
 data class TopicSearchResult(
-    val topic: DataHolder.Topic,
+    val topic: SearchTopicItem,
     val excerpt: String,
     val visitCount: Long,
     val discussCount: Long,

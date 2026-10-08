@@ -17,6 +17,21 @@
 
 package com.zhihuminus.data
 
+import com.zhihuminus.data.zhihu.dto.AdvertisementFeedDto
+import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
+import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
+import com.zhihuminus.data.zhihu.dto.CommonFeedDto
+import com.zhihuminus.data.zhihu.dto.FeedDto
+import com.zhihuminus.data.zhihu.dto.FeedItemIndexGroupDto
+import com.zhihuminus.data.zhihu.dto.FeedTargetDto
+import com.zhihuminus.data.zhihu.dto.GroupFeedDto
+import com.zhihuminus.data.zhihu.dto.MomentsFeedDto
+import com.zhihuminus.data.zhihu.dto.PinContentItemDto
+import com.zhihuminus.data.zhihu.dto.PinTargetDto
+import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
+import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.dto.TopicFeedDto
+import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import kotlinx.serialization.Serializable
 import org.jsoup.Jsoup
 
@@ -25,13 +40,12 @@ data class FeedDisplayItem(
     val title: String,
     val summary: String?,
     val details: String,
-    val feed: Feed? = null,
+    val feed: FeedDto? = null,
     val navDestinationJson: String? = null,
     val avatarSrc: String? = null,
     val authorName: String? = null,
-    val authorBadgeV2: DataHolder.BadgeV2? = null,
+    val authorBadge: OfficialBadge? = null,
     val content: String? = null,
-    var raw: DataHolder.Content? = null,
     val contentTypeLabel: String? = null,
     val publishTimeSeconds: Long? = null,
     val sourceLabel: String? = null,
@@ -44,26 +58,26 @@ data class FeedDisplayItem(
             ?: "$title|${summary.orEmpty()}|$details"
 }
 
-val DataHolder.Pin.ContentImage.feedThumbnailUrl: String
-    get() = thumbnail.ifBlank { url }
+val PinContentItemDto.feedThumbnailUrl: String
+    get() = thumbnail?.takeIf { it.isNotBlank() } ?: url.orEmpty()
 
-private val Feed.Target.stableTargetKey: String
+private val FeedTargetDto.stableTargetKey: String
     get() = when (this) {
-        is Feed.AnswerTarget -> "answer:$id"
-        is Feed.ArticleTarget -> "article:$id"
-        is Feed.QuestionTarget -> "question:$id"
-        is Feed.PinTarget -> "pin:$id"
-        is Feed.VideoTarget -> "video:$id"
+        is AnswerTargetDto -> "answer:$id"
+        is ArticleTargetDto -> "article:$id"
+        is QuestionTargetDto -> "question:$id"
+        is PinTargetDto -> "pin:$id"
+        is VideoTargetDto -> "video:$id"
     }
 
-fun List<Feed>.flattenFeeds(): List<Feed> = flatMap {
-    (it as? GroupFeed)?.list ?: listOf(it)
+fun List<FeedDto>.flattenFeeds(): List<FeedDto> = flatMap {
+    (it as? GroupFeedDto)?.list ?: listOf(it)
 }
 
-fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
-    is CommonFeed, is FeedItemIndexGroup, is MomentsFeed, is TopicFeed -> toTargetDisplayItem()
+fun FeedDto.toDisplayItem(): FeedDisplayItem = when (this) {
+    is CommonFeedDto, is FeedItemIndexGroupDto, is MomentsFeedDto, is TopicFeedDto -> toTargetDisplayItem()
 
-    is AdvertisementFeed -> FeedDisplayItem(
+    is AdvertisementFeedDto -> FeedDisplayItem(
         title = ad.creatives
             .firstOrNull()
             ?.title ?: "",
@@ -78,50 +92,50 @@ fun Feed.toDisplayItem(): FeedDisplayItem = when (this) {
         sourceLabel = actionText.takeIf { it.isNotBlank() },
     )
 
-    is GroupFeed -> error("GroupFeed should be flattened before creating display items")
-    is QuestionFeedCard -> FeedDisplayItem(
+    is GroupFeedDto -> error("GroupFeed should be flattened before creating display items")
+    is QuestionFeedCardDto -> FeedDisplayItem(
         title = target.title,
         summary = target.excerpt,
         details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
         avatarSrc = target.author?.avatarUrl,
         authorName = target.author?.name,
-        authorBadgeV2 = target.author?.badgeV2,
+        authorBadge = target.author?.badgeV2?.toOfficialBadge(),
         feed = this,
         contentTypeLabel = target.typeLabel,
         publishTimeSeconds = target.publishTimeSeconds,
-        thumbnailUrl = (target as? Feed.AnswerTarget)?.thumbnail,
-        pinImages = (target as? Feed.PinTarget)
+        thumbnailUrl = (target as? AnswerTargetDto)?.thumbnail,
+        pinImages = (target as? PinTargetDto)
             ?.content
-            ?.filterIsInstance<DataHolder.Pin.ContentImage>()
+            ?.filter { it.type == "image" }
             ?.map { it.feedThumbnailUrl }
             .orEmpty(),
         navDestinationJson = target.navDestination?.toFeedDisplayItemNavDestinationJson(),
     )
 }
 
-private val Feed.Target.typeLabel: String
+private val FeedTargetDto.typeLabel: String
     get() = description()
 
-private val Feed.Target.publishTimeSeconds: Long?
+private val FeedTargetDto.publishTimeSeconds: Long?
     get() = createdTime.takeIf { it > 0 }
 
-private fun Feed.toTargetDisplayItem(): FeedDisplayItem {
+private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
     val currentTarget = target
     val resolvedSourceLabel = sourceLabel
-    val resolvedThumbnail = (currentTarget as? Feed.AnswerTarget)?.thumbnail
+    val resolvedThumbnail = (currentTarget as? AnswerTargetDto)?.thumbnail
     val resolvedNavDestinationJson = currentTarget?.navDestination?.toFeedDisplayItemNavDestinationJson()
 
     return when (currentTarget) {
-        is Feed.AnswerTarget,
-        is Feed.ArticleTarget,
-        is Feed.QuestionTarget,
+        is AnswerTargetDto,
+        is ArticleTargetDto,
+        is QuestionTargetDto,
         -> FeedDisplayItem(
             title = currentTarget.title,
             summary = currentTarget.excerpt,
             details = listOfNotNull(currentTarget.detailsText, actionText).joinToString(" · "),
             avatarSrc = currentTarget.author?.avatarUrl,
             authorName = currentTarget.author?.name,
-            authorBadgeV2 = currentTarget.author?.badgeV2,
+            authorBadge = currentTarget.author?.badgeV2?.toOfficialBadge(),
             feed = this,
             contentTypeLabel = currentTarget.typeLabel,
             publishTimeSeconds = currentTarget.publishTimeSeconds,
@@ -130,10 +144,9 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem {
             navDestinationJson = resolvedNavDestinationJson,
         )
 
-        is Feed.PinTarget -> {
+        is PinTargetDto -> {
             val textContent = currentTarget.content
-                .filterIsInstance<DataHolder.Pin.ContentText>()
-                .firstOrNull()
+                .firstOrNull { it.type == "text" }
             val title = textContent?.title.orEmpty()
             val contentSummary = textContent
                 ?.content
@@ -144,16 +157,16 @@ private fun Feed.toTargetDisplayItem(): FeedDisplayItem {
                 ?.takeIf { it.isNotBlank() }
             val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
             val pinImages = currentTarget.content
-                .filterIsInstance<DataHolder.Pin.ContentImage>()
+                .filter { it.type == "image" }
                 .map { it.feedThumbnailUrl }
 
             FeedDisplayItem(
                 title = title,
                 summary = summary,
                 details = currentTarget.detailsText,
-                avatarSrc = currentTarget.author.avatarUrl,
-                authorName = currentTarget.author.name,
-                authorBadgeV2 = currentTarget.author.badgeV2,
+                avatarSrc = currentTarget.author?.avatarUrl,
+                authorName = currentTarget.author?.name,
+                authorBadge = currentTarget.author?.badgeV2?.toOfficialBadge(),
                 feed = this,
                 contentTypeLabel = currentTarget.typeLabel,
                 publishTimeSeconds = currentTarget.publishTimeSeconds,

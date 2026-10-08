@@ -1,7 +1,13 @@
 package com.zhihuminus.feature.collection
 
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.Person
+
+data class CollectionCreator(
+    val id: String = "",
+    val name: String = "",
+    val avatarUrl: String = "",
+    val headline: String = "",
+)
 
 data class Collection(
     val id: String,
@@ -21,7 +27,7 @@ data class Collection(
     val isLiking: Boolean = false,
     val createdTime: Long = 0L,
     val updatedTime: Long = 0L,
-    val creator: Person? = null,
+    val creator: CollectionCreator? = null,
     val isDefault: Boolean = false,
 )
 

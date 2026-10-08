@@ -1,9 +1,9 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.data.Feed
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.target
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
+import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.QuestionDto
 import com.zhihuminus.feature.question.QuestionAnswersPage
@@ -56,12 +56,13 @@ class ZhihuQuestionRepository(
             isEnd = isEnd,
         )
 
-    private fun Feed.toAnswerDisplayItem(): FeedDisplayItem {
+    private fun FeedDto.toAnswerDisplayItem(): FeedDisplayItem {
         val target = this@toAnswerDisplayItem.target
-        if (target is Feed.AnswerTarget) {
+        if (target is AnswerTargetDto) {
             return FeedDisplayItem(
                 authorName = target.author?.name ?: "未知作者",
                 avatarSrc = target.author?.avatarUrl,
+                authorBadge = target.author?.badgeV2?.toOfficialBadge(),
                 summary = target.excerpt,
                 details = target.detailsText,
                 feed = this@toAnswerDisplayItem,

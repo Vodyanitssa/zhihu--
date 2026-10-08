@@ -1,9 +1,9 @@
 package com.zhihuminus.feature.collection
 
-import com.zhihuminus.data.Feed
-import com.zhihuminus.data.Person
 import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemDto
+import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
 import com.zhihuminus.data.zhihu.toFeedDisplayItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
@@ -18,37 +18,36 @@ class CollectionTest {
         val privateCollection = Collection(id = "2", title = "Private Col", itemCount = 5, isPublic = false)
         assertEquals("5 内容·仅自己可见", privateCollection.subtitleText)
 
-        val zeroItemCollection = Collection(id = "3", title = "Zero Col", itemCount = 0, isPublic = false)
-        assertEquals("0 内容·仅自己可见", zeroItemCollection.subtitleText)
+        val zeroItemCollection = Collection(id = "3", title = "Empty Col", itemCount = 0, isPublic = true)
+        assertEquals("0 内容·公开", zeroItemCollection.subtitleText)
     }
 
     @Test
-    fun testCollectionArticleExcerptTitleDeserialization() {
+    fun testCollectionItemDtoDeserialization() {
         val json =
             """
             {
-                "created": 1768716969,
+                "created": "1727786400",
                 "content": {
-                    "id": 1995952847381095524,
                     "type": "article",
-                    "title": "“起”",
-                    "excerpt_title": "其实在月之四版本过后，最想写的就是哥伦比娅与桑多涅。",
-                    "url": "https://zhuanlan.zhihu.com/p/1995952847381095524",
+                    "id": 718304910,
+                    "title": "测试文章标题",
+                    "url": "https://zhuanlan.zhihu.com/p/718304910",
+                    "excerpt": "其实在月之四版本过后，最想写的就是哥伦比娅与桑多涅。",
+                    "voteup_count": 12,
+                    "comment_count": 3,
                     "author": {
-                        "id": "7ae4196ffcea1159d4419154b3817a7f",
-                        "name": "尾巴",
-                        "url_token": "weiba-wo",
-                        "avatar_url": "https://picx.zhimg.com/v2-59a25d417e7045d0eb4d09ca04188973_l.jpg",
-                        "url": "https://www.zhihu.com/people/7ae4196ffcea1159d4419154b3817a7f",
-                        "user_type": "people",
-                        "headline": "芙门"
+                        "id": "abc",
+                        "name": "测试作者",
+                        "headline": "",
+                        "avatar_url": "https://example.com/avatar.jpg"
                     }
                 }
             }
             """.trimIndent()
 
         val itemDto = ZhihuJson.decodeFromString<CollectionItemDto>(json)
-        assertIs<Feed.ArticleTarget>(itemDto.content)
+        assertIs<ArticleTargetDto>(itemDto.content)
         val article = itemDto.content
         assertEquals("其实在月之四版本过后，最想写的就是哥伦比娅与桑多涅。", article.excerpt)
 
@@ -58,31 +57,31 @@ class CollectionTest {
 
     @Test
     fun testArticleTargetExcerptFallback() {
-        val person = Person(id = "1", url = "", userType = "people", name = "Test", headline = "", avatarUrl = "")
-        val articleWithExcerpt = Feed.ArticleTarget(
+        val author = FeedAuthorDto(id = "1", name = "Test")
+        val articleWithExcerpt = ArticleTargetDto(
             id = 1,
             url = "",
-            author = person,
+            author = author,
             title = "Article 1",
             rawExcerpt = "Explicit excerpt",
             excerptTitle = "Excerpt title",
         )
         assertEquals("Explicit excerpt", articleWithExcerpt.excerpt)
 
-        val articleWithTitleOnly = Feed.ArticleTarget(
+        val articleWithTitleOnly = ArticleTargetDto(
             id = 2,
             url = "",
-            author = person,
+            author = author,
             title = "Article 2",
             rawExcerpt = "",
             excerptTitle = "Excerpt title fallback",
         )
         assertEquals("Excerpt title fallback", articleWithTitleOnly.excerpt)
 
-        val articleViaSecondaryConstructor = Feed.ArticleTarget(
+        val articleViaSecondaryConstructor = ArticleTargetDto(
             id = 3,
             url = "",
-            author = person,
+            author = author,
             title = "Article 3",
             excerpt = "Legacy secondary constructor excerpt",
         )

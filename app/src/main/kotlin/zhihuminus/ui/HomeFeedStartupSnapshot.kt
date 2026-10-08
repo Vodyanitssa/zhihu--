@@ -33,8 +33,7 @@ fun homeFeedStartupCacheFileNames(): List<String> =
     listOf(HOME_FEED_STARTUP_CACHE_FILE_NAME, "WEB")
 
 fun encodeHomeFeedStartupSnapshot(items: List<FeedDisplayItem>): String? {
-    // raw 的多态内容自带 type 字段，会与 kotlinx.serialization 的默认类型判别字段冲突；启动恢复也不需要这份可重新获取的详情缓存。
-    val snapshotItems = items.take(HOME_FEED_STARTUP_SNAPSHOT_MAX_ITEMS).map { it.copy(raw = null) }
+    val snapshotItems = items.take(HOME_FEED_STARTUP_SNAPSHOT_MAX_ITEMS)
     if (snapshotItems.isEmpty()) return null
 
     return try {

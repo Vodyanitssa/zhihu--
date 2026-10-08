@@ -3,8 +3,6 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
-import com.zhihuminus.data.sourceLabel
-import com.zhihuminus.data.target
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
