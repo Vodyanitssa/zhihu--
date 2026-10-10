@@ -43,6 +43,7 @@ google-services.json
 .memory/*
 !.memory/.gitkeep
 __pycache__/
+PLAN.md
 
 # Oh my codex
 .omx/
