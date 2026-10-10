@@ -43,12 +43,13 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedback
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.unit.DpOffset
-import com.zhihuminus.platform.rememberImageSaver
-import com.zhihuminus.platform.rememberImageSharer
+import com.zhihuminus.core.platform.rememberImageSaver
+import com.zhihuminus.core.platform.rememberImageSharer
 import kotlinx.coroutines.launch
 
 @OptIn(ExperimentalFoundationApi::class)
@@ -198,4 +199,20 @@ fun ProvideContentColorTextStyle(
         LocalTextStyle provides mergedStyle,
         content = content,
     )
+}
+
+@Composable
+fun rememberImageGalleryOpener(): (List<String>, Int) -> Unit {
+    val context = LocalContext.current
+    return remember(context) {
+        { urls, initialIndex ->
+            OpenImageDialog(context, urls, initialIndex).show()
+        }
+    }
+}
+
+@Composable
+fun rememberImagePreviewOpener(): (String) -> Unit {
+    val openGallery = rememberImageGalleryOpener()
+    return remember(openGallery) { { url -> openGallery(listOf(url), 0) } }
 }

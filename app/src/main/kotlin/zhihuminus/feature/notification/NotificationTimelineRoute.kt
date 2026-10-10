@@ -7,12 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.resolveContent
-import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
 fun NotificationTimelineRoute(

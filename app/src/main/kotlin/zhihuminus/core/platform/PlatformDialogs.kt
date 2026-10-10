@@ -7,8 +7,6 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.zhihuminus.core.util.HttpStatusException
 import com.zhihuminus.data.common.ZhihuJson.json
-import com.zhihuminus.platform.UserMessageSink
-import com.zhihuminus.platform.androidUserMessageSink
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive

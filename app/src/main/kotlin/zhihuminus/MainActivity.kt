@@ -49,6 +49,7 @@ import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clearShareImageCache
 import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
@@ -70,7 +71,6 @@ import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
-import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.theme.AndroidThemeSettings
 import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain

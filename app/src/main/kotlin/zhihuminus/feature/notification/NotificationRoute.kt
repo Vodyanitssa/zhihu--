@@ -9,10 +9,10 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
 fun NotificationRoute(

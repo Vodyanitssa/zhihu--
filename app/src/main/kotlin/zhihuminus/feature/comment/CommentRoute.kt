@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.comment
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
@@ -50,16 +51,15 @@ import androidx.compose.ui.window.Dialog
 import androidx.compose.ui.window.DialogProperties
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
+import com.zhihuminus.core.platform.rememberImageSaver
+import com.zhihuminus.core.platform.rememberImageSharer
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.feature.comment.components.ChildCommentSheet
 import com.zhihuminus.feature.comment.components.CommentInputOverlay
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
-import com.zhihuminus.platform.PlatformBackHandler
-import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImageSaver
-import com.zhihuminus.platform.rememberImageSharer
-import com.zhihuminus.platform.rememberUserMessageSink
 
 /**
  * 评论路由组件，负责创建 ViewModel、处理副作用、展示单 Sheet 评论系统。
@@ -196,10 +196,10 @@ fun CommentRoute(
             // 返回按键处理：
             // 1. 若处于输入状态，优先关闭输入浮层
             // 2. 若在子评论中，返回根评论
-            PlatformBackHandler(enabled = viewModel.uiState.isInputActive) {
+            BackHandler(enabled = viewModel.uiState.isInputActive) {
                 viewModel.onEvent(CommentEvent.DismissInput)
             }
-            PlatformBackHandler(enabled = !viewModel.uiState.isInputActive && activeParentId != null) {
+            BackHandler(enabled = !viewModel.uiState.isInputActive && activeParentId != null) {
                 viewModel.onEvent(CommentEvent.DismissChildComments)
             }
 

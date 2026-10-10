@@ -2,11 +2,11 @@ package com.zhihuminus.navigation.link
 
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
-import com.zhihuminus.platform.rememberExternalUrlOpener
 
 /**
  * 内容链接点击的统一入口：优先解析为应用内目的地导航，

@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.history
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -31,7 +32,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.history.components.HistoryCard
 import com.zhihuminus.feature.history.components.HistoryClearDialog
-import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.components.PaginatedList
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -45,7 +45,7 @@ fun HistoryScreen(
     val listState = rememberLazyListState()
     var showClearHistoryDialog by remember { mutableStateOf(false) }
 
-    PlatformBackHandler(enabled = showClearHistoryDialog) {
+    BackHandler(enabled = showClearHistoryDialog) {
         showClearHistoryDialog = false
     }
 
@@ -64,7 +64,7 @@ fun HistoryScreen(
                 },
                 actions = {
                     var showActionsMenu by remember { mutableStateOf(false) }
-                    PlatformBackHandler(enabled = showActionsMenu) {
+                    BackHandler(enabled = showActionsMenu) {
                         showActionsMenu = false
                     }
                     IconButton(

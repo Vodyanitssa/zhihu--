@@ -66,7 +66,7 @@ import com.journeyapps.barcodescanner.ScanIntentResult
 import com.journeyapps.barcodescanner.ScanOptions
 import com.zhihuminus.QRCodeScanActivity.Companion.LOGIN_PREFIX
 import com.zhihuminus.core.platform.clipboardManager
-import com.zhihuminus.platform.rememberUserMessageSink
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.theme.ZhihuTheme
 
 class QRCodeScanActivity : ComponentActivity() {

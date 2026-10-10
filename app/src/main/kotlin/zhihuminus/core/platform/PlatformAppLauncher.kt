@@ -6,6 +6,9 @@ import android.content.Intent
 import android.net.Uri
 import androidx.browser.customtabs.CustomTabColorSchemeParams
 import androidx.browser.customtabs.CustomTabsIntent
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.net.toUri
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import io.ktor.http.Url
@@ -49,3 +52,39 @@ fun luoTianYiUrlLauncher(context: Context, uri: Uri) {
         ).build()
     intent.launchUrl(context, uri)
 }
+
+@Composable
+fun rememberExternalUrlOpener(): (String) -> Unit {
+    val context = LocalContext.current
+    return remember(context) { { url -> luoTianYiUrlLauncher(context, url.toUri()) } }
+}
+
+@Composable
+fun rememberSystemUrlOpener(): (String) -> Unit {
+    val context = LocalContext.current
+    return remember(context) { { url -> context.startActivity(Intent(Intent.ACTION_VIEW, url.toUri())) } }
+}
+
+@Composable
+fun rememberShareText(): (String) -> Unit {
+    val context = LocalContext.current
+    return remember(context) {
+        { text ->
+            val sendIntent = Intent().apply {
+                action = Intent.ACTION_SEND
+                putExtra(Intent.EXTRA_TEXT, text)
+                type = "text/plain"
+            }
+            val shareIntent = Intent.createChooser(sendIntent, null)
+            context.startActivity(shareIntent)
+        }
+    }
+}
+
+@Composable
+fun rememberIsLiteVariant(): Boolean {
+    val context = LocalContext.current
+    return remember(context) { isAndroidLiteVariantPackageName(context.packageName) }
+}
+
+internal fun isAndroidLiteVariantPackageName(packageName: String): Boolean = packageName.endsWith(".lite")

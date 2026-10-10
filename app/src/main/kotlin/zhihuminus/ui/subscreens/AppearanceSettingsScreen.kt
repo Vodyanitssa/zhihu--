@@ -66,12 +66,12 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.core.settings.model.ShareActionOption
 import com.zhihuminus.core.settings.model.StartDestinationOption
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.theme.ThemeManager
 import com.zhihuminus.theme.ThemeMode
 import com.zhihuminus.ui.AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY

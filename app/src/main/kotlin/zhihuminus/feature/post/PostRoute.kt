@@ -7,18 +7,18 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
+import com.zhihuminus.core.platform.rememberImageSaver
+import com.zhihuminus.core.platform.rememberImageSharer
+import com.zhihuminus.core.platform.rememberPlainTextClipboard
+import com.zhihuminus.core.platform.rememberShareText
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.PostDestination
-import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImageSaver
-import com.zhihuminus.platform.rememberImageSharer
-import com.zhihuminus.platform.rememberPlainTextClipboard
-import com.zhihuminus.platform.rememberShareText
-import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
 fun PostRoute(

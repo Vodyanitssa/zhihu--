@@ -11,6 +11,10 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
+import com.zhihuminus.core.platform.rememberImageSaver
+import com.zhihuminus.core.platform.rememberImageSharer
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
@@ -21,10 +25,6 @@ import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
 import com.zhihuminus.navigation.router.toAppUrl
-import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImageSaver
-import com.zhihuminus.platform.rememberImageSharer
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.ArticleHost
 
 /**

@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.comment.components
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
@@ -58,7 +59,6 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
-import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.components.EmojiPicker
 import com.zhihuminus.ui.components.replaceSelection
 import kotlinx.coroutines.delay
@@ -102,7 +102,7 @@ fun CommentInputOverlay(
     }
 
     // 拦截物理/手势返回键，关闭输入浮层
-    PlatformBackHandler(enabled = true, onBack = onDismiss)
+    BackHandler(enabled = true, onBack = onDismiss)
 
     Box(modifier = Modifier.fillMaxSize()) {
         // 背景半透明遮罩，点击关闭弹窗

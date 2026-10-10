@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.notification
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.expandVertically
 import androidx.compose.animation.fadeIn
@@ -55,7 +56,6 @@ import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.feature.notification.components.PrivateMessageBubble
-import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.components.EmojiPicker
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -82,7 +82,7 @@ fun PrivateMessageScreen(
     }
     var showEmojiPicker by rememberSaveable { mutableStateOf(false) }
 
-    PlatformBackHandler(enabled = showEmojiPicker) {
+    BackHandler(enabled = showEmojiPicker) {
         showEmojiPicker = false
     }
 

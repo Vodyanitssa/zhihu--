@@ -17,6 +17,7 @@
 
 package com.zhihuminus.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.EnterTransition
@@ -116,7 +117,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.platform.PlatformBackHandler
 import com.zhihuminus.ui.components.LocalFeedCardConfig
 import com.zhihuminus.ui.components.LocalTopLevelReselectFlow
 import com.zhihuminus.ui.components.rememberFeedCardConfig
@@ -239,7 +239,7 @@ fun ZhihuMain(
         }
     }
 
-    PlatformBackHandler(currentTabIndex != 0) {
+    BackHandler(currentTabIndex != 0) {
         currentTabIndex = 0
     }
 

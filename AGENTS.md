@@ -34,7 +34,7 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
   - Data layer implementation in `data/zhihu/`: Remote DataSources in `api/` (`Zhihu<Name>Api.kt`), `@Serializable` DTOs (`dto/<Name>Dto.kt` using camelCase fields mapped to snake_case JSON via `ZhihuJson`), concrete repositories in `repository/` (`Zhihu<Name>Repository.kt`), and unified factory `ZhihuRepositoryFactory.kt`.
 - **Core layer separation (`core/`)**:
   - `core/environment/`: Decoupled runtime environments (`PaginationEnvironment`, `AndroidPaginationEnvironment`, `ZhihuApiEnvironment`, domain environments) to break circular dependencies between data/UI and ViewModels.
-  - `core/platform/`: Android platform capabilities (`Clipboard`, `FileExporter`, `PlatformDialogs`, `PlatformAppLauncher`, `WebView`).
+  - `core/platform/`: Android platform capabilities (`Clipboard`, `FileExporter`, `PlatformDialogs`, `PlatformAppLauncher`, `UserMessage`, `WebView`).
   - `core/content/`: Self-built AST pipeline (`Ast.kt`, `AstParser.kt`) rendered by `core/content/renderer/` (Compose/Html/Picture) — no WebView for articles. AST inline rendering is also used for styled inline text like private message bubbles (`AstParser.parseInline`). Real Zhihu HTML/HAR fixtures for parser work live in `samples/` (gitignored, local-only).
   - `core/util/`: Formatters (`Format.kt`) and error mappers (`FriendlyError.kt`).
 - **UI patterns**:

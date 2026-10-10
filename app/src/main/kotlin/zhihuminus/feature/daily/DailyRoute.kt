@@ -6,10 +6,10 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.HandleTopLevelReselect
 
 @Composable

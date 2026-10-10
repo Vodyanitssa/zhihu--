@@ -6,13 +6,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
-import com.zhihuminus.platform.rememberExternalUrlOpener
-import com.zhihuminus.platform.rememberImagePreviewOpener
-import com.zhihuminus.platform.rememberUserMessageSink
+import com.zhihuminus.ui.components.rememberImagePreviewOpener
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable

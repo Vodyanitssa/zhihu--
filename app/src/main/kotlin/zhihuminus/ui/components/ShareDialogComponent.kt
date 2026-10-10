@@ -62,6 +62,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.graphics.drawable.toDrawable
 import androidx.core.net.toUri
+import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.core.platform.luoTianYiUrlLauncher
 import com.zhihuminus.core.settings.model.ShareActionOption
@@ -72,7 +73,6 @@ import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
-import com.zhihuminus.platform.androidUserMessageSink
 import com.zhihuminus.ui.articleHost
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage

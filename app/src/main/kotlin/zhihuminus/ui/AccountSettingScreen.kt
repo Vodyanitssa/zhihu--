@@ -80,6 +80,9 @@ import androidx.lifecycle.repeatOnLifecycle
 import coil3.compose.AsyncImage
 import com.zhihuminus.R
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberPlainTextClipboard
+import com.zhihuminus.core.platform.rememberSystemUrlOpener
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
@@ -91,9 +94,6 @@ import com.zhihuminus.navigation.History
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
-import com.zhihuminus.platform.rememberPlainTextClipboard
-import com.zhihuminus.platform.rememberSystemUrlOpener
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 

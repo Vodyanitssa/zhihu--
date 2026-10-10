@@ -11,19 +11,25 @@ import android.os.Build
 import android.os.Environment
 import android.provider.MediaStore
 import android.provider.MediaStore.MediaColumns
+import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.ui.platform.LocalContext
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
 import com.zhihuminus.core.util.friendlyErrorMessage
-import com.zhihuminus.platform.androidUserMessageSink
+import com.zhihuminus.data.AccountData
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpHeaders
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import kotlinx.io.files.Path
 import java.io.OutputStream
 
 /**
@@ -263,3 +269,39 @@ fun Context.loadExportAssetText(fileName: String): String =
             reader.readText()
         }
     }
+
+@Composable
+fun rememberAppPrivateDirectory(): Path {
+    val context = LocalContext.current.applicationContext
+    return remember(context) { Path(context.filesDir.absolutePath) }
+}
+
+@Composable
+fun rememberImageSaver(
+    httpClient: HttpClient = AccountData.httpClient(LocalContext.current),
+): (String) -> Unit {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    return remember(context, scope, httpClient) {
+        { imageUrl ->
+            scope.launch {
+                saveImageToGallery(context, httpClient, imageUrl)
+            }
+        }
+    }
+}
+
+@Composable
+fun rememberImageSharer(
+    httpClient: HttpClient = AccountData.httpClient(LocalContext.current),
+): (String) -> Unit {
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    return remember(context, scope, httpClient) {
+        { imageUrl ->
+            scope.launch {
+                shareImage(context, httpClient, imageUrl)
+            }
+        }
+    }
+}

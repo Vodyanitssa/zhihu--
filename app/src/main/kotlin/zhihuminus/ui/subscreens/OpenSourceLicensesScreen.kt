@@ -42,8 +42,8 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.util.withContext
+import com.zhihuminus.core.platform.rememberIsLiteVariant
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.platform.rememberIsLiteVariant
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
 

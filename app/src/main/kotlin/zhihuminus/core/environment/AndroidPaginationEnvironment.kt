@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.copyPlainText
 import com.zhihuminus.core.platform.hasImageExportPermission
 import com.zhihuminus.core.platform.loadExportAssetText
@@ -20,7 +21,6 @@ import com.zhihuminus.data.ZhihuCookieStorage
 import com.zhihuminus.data.common.ZhihuJson.json
 import com.zhihuminus.feature.home.homeFeedStartupCacheFileNames
 import com.zhihuminus.navigation.NavDestination
-import com.zhihuminus.platform.androidUserMessageSink
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin

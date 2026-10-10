@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.imageview
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.gestures.detectVerticalDragGestures
@@ -29,7 +30,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.unit.DpOffset
-import com.zhihuminus.platform.PlatformBackHandler
 import kotlinx.coroutines.launch
 import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
 import me.saket.telephoto.zoomable.rememberZoomableImageState
@@ -136,7 +136,7 @@ fun ImageView(
             }
     }
 
-    PlatformBackHandler(manager.isShowing) {
+    BackHandler(manager.isShowing) {
         onDismiss()
     }
 

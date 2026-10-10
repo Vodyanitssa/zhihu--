@@ -8,11 +8,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.UserMessageDuration
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.platform.UserMessageDuration
-import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.HandleTopLevelReselect
 
 @Composable
