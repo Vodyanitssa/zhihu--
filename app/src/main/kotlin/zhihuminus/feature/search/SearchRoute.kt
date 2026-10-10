@@ -13,6 +13,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.local.SearchHistoryStore
+import com.zhihuminus.data.zhihu.ZhihuApiImpl
 import com.zhihuminus.data.zhihu.ZhihuSearchRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Search
@@ -39,8 +40,9 @@ fun SearchRoute(
     val topicListState = rememberLazyListState()
 
     val repository = remember(paginationEnvironment, settingsRepository, historyStorage) {
+        val api = ZhihuApiImpl(paginationEnvironment)
         ZhihuSearchRepository(
-            environment = paginationEnvironment,
+            api = api,
             settingsRepository = settingsRepository,
             historyStorage = historyStorage,
         )

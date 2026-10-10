@@ -2,12 +2,13 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.feature.follow.FollowFeedPage
 import com.zhihuminus.feature.follow.FollowRepository
 import com.zhihuminus.feature.follow.FollowingUser
 
 class ZhihuFollowRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuFeedApi,
 ) : FollowRepository {
     override suspend fun fetchFollowFeed(nextUrl: String?): FollowFeedPage {
         val feedPage = api.fetchFeedPage(url = nextUrl ?: MOMENTS_FEED_URL, include = "")

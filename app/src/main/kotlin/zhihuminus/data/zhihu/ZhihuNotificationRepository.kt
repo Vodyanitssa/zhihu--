@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu
 
+import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.data.zhihu.dto.NotificationAdditionalInfoDto
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
@@ -33,7 +34,7 @@ import com.zhihuminus.feature.notification.PrivateMessagePageResult
 import com.zhihuminus.feature.notification.PrivateMessagePlugin
 
 class ZhihuNotificationRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuNotificationApi,
 ) : NotificationRepository {
     override suspend fun getNotificationOverview(nextUrl: String?): NotificationOverviewResult {
         val dto = api.getNotificationOverview(nextUrl)

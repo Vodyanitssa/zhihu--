@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.dto
 
+import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -24,4 +25,24 @@ data class TopicSearchDto(
     val visitCount: Long = 0,
     val topAnswerCount: Long = 0,
     val isFollowing: Boolean = false,
+)
+
+@Serializable
+data class SearchResponseDto(
+    val data: List<SearchItemDto> = emptyList(),
+    val paging: ZhihuPaging? = null,
+)
+
+@Serializable
+data class HotSearchItemDto(
+    val query: String = "",
+    @SerialName("hot_show")
+    val hotShow: String = "",
+    val label: String = "",
+)
+
+@Serializable
+data class HotSearchResponseDto(
+    @SerialName("hot_search_queries")
+    val hotSearchQueries: List<HotSearchItemDto> = emptyList(),
 )

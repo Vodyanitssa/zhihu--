@@ -4,6 +4,8 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
+import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.feature.collection.Collection
@@ -20,12 +22,13 @@ import com.zhihuminus.feature.post.PostType
 import org.jsoup.Jsoup
 
 class ZhihuPeopleRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuPeopleApi,
+    private val historyApi: ZhihuHistoryApi? = api as? ZhihuHistoryApi,
 ) : PeopleRepository {
     override suspend fun getProfile(userTokenOrId: String): PeopleProfile {
         val raw = api.fetchMemberProfile(userTokenOrId)
         runCatching {
-            api.addHistory(raw.id, "profile")
+            historyApi?.addHistory(raw.id, "profile")
         }
         val detail = runCatching {
             api.fetchMemberProfileDetail(userTokenOrId)

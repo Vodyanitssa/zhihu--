@@ -7,6 +7,8 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
+import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.feature.home.HomeFeedPage
 import com.zhihuminus.feature.home.HomeRepository
 import com.zhihuminus.feature.home.decodeHomeFeedStartupSnapshot
@@ -26,9 +28,10 @@ import kotlinx.io.readString
 import kotlinx.io.writeString
 
 class ZhihuHomeRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuFeedApi,
     private val environment: ZhihuApiEnvironment,
     private val startupCacheFile: Path? = null,
+    private val notificationApi: ZhihuNotificationApi = api as ZhihuNotificationApi,
 ) : HomeRepository {
     override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
         val feedPage = api.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
@@ -85,7 +88,7 @@ class ZhihuHomeRepository(
     }
 
     override suspend fun fetchUnreadNotificationCount(): Int = try {
-        api.getMeNotifications().totalCount
+        notificationApi.getMeNotifications().totalCount
     } catch (_: Exception) {
         0
     }

@@ -17,6 +17,8 @@ import com.zhihuminus.data.zhihu.dto.CollectionItemDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemsPageDto
 import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
+import com.zhihuminus.data.zhihu.dto.CommentDto
+import com.zhihuminus.data.zhihu.dto.CommentsPageDto
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
@@ -26,6 +28,7 @@ import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.HotSearchItemDto
 import com.zhihuminus.data.zhihu.dto.MemberColumnItemDto
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.MemberProfileDto
@@ -39,6 +42,10 @@ import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePageDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
+import com.zhihuminus.data.zhihu.dto.SearchItemDto
+import com.zhihuminus.data.zhihu.dto.SearchResponseDto
+import com.zhihuminus.data.zhihu.dto.TopicDetailDto
+import com.zhihuminus.data.zhihu.dto.TopicFeedResponseDto
 import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.MultiPartFormDataContent
@@ -47,11 +54,11 @@ import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
-import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.Parameters
 import io.ktor.http.contentType
+import io.ktor.http.encodeURLParameter
 import io.ktor.http.formUrlEncode
 import io.ktor.http.isSuccess
 import io.ktor.util.network.UnresolvedAddressException
@@ -347,9 +354,11 @@ class ZhihuApiImpl(
         return CollectionItemsPageDto(data = items, paging = paging)
     }
 
-    override suspend fun fetchCommentsPage(url: String): JsonObject =
-        environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
+    override suspend fun fetchCommentsPage(url: String): CommentsPageDto {
+        val json = environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
             ?: throw IllegalStateException("Failed to fetch comments page")
+        return decodeCommentsPage(json)
+    }
 
     override suspend fun getRootComments(
         contentType: String,
@@ -357,42 +366,68 @@ class ZhihuApiImpl(
         orderBy: String,
         offset: Int,
         limit: Int,
-    ): JsonObject {
+    ): CommentsPageDto {
         val url = "https://www.zhihu.com/api/v4/comment_v5/${contentType}s/$contentId/root_comment" +
-            "?order_by=$orderBy"
-        return environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
+            "?order_by=$orderBy" + if (offset > 0) "&offset=$offset&limit=$limit" else ""
+        val json = environment.fetchJson(url, "data[*].content,excerpt,headline,target.author.badge_v2")
             ?: throw IllegalStateException("Failed to fetch root comments")
+        return decodeCommentsPage(json)
     }
 
-    override suspend fun getChildComments(commentId: String, offset: Int, limit: Int): JsonObject {
+    override suspend fun getChildComments(commentId: String, offset: Int, limit: Int): CommentsPageDto {
         val url = "https://www.zhihu.com/api/v4/comment_v5/comment/$commentId/child_comment" +
             "?offset=$offset&limit=$limit"
-        return environment.fetchJson(url, "")
+        val json = environment.fetchJson(url, "")
             ?: throw IllegalStateException("Failed to fetch child comments")
+        return decodeCommentsPage(json)
     }
 
-    override suspend fun getComment(commentId: String): JsonObject {
+    override suspend fun getComment(commentId: String): CommentDto {
         val url = "https://www.zhihu.com/api/v4/comment_v5/comment/$commentId"
-        return environment.fetchJson(url, "")
+        val json = environment.fetchJson(url, "")
             ?: throw IllegalStateException("Failed to fetch comment $commentId")
+        return decodeJson(json)
     }
 
-    override suspend fun submitComment(url: String, body: JsonObject): JsonObject {
+    override suspend fun submitComment(url: String, body: JsonObject): CommentDto {
         val response = environment.postSigned(url) {
             contentType(ContentType.Application.Json)
             setBody(body)
         }
+        response.raiseForStatus()
         return response.body()
     }
 
-    override suspend fun likeComment(commentId: String): HttpResponse =
-        environment.postSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+    override suspend fun likeComment(commentId: String) {
+        val response = environment.postSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+        response.raiseForStatus()
+    }
 
-    override suspend fun unlikeComment(commentId: String): HttpResponse =
-        environment.deleteSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+    override suspend fun unlikeComment(commentId: String) {
+        val response = environment.deleteSigned("https://www.zhihu.com/api/v4/comments/$commentId/like")
+        response.raiseForStatus()
+    }
 
-    override suspend fun deleteComment(commentId: String): HttpResponse =
-        environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
+    override suspend fun deleteComment(commentId: String) {
+        val response = environment.deleteSigned("https://www.zhihu.com/api/v4/comment_v5/comment/$commentId")
+        response.raiseForStatus()
+    }
+
+    private fun decodeCommentsPage(json: JsonObject): CommentsPageDto {
+        val dataArray = json["data"] as? JsonArray ?: JsonArray(emptyList())
+        val comments = dataArray.mapIndexedNotNull { index, element ->
+            try {
+                decodeJson<CommentDto>(element)
+            } catch (e: Exception) {
+                Log.e("ZhihuApiImpl", "Failed to decode comment at index $index", e)
+                null
+            }
+        }
+        val paging = json["paging"]?.let {
+            runCatching { decodeJson<ZhihuPaging>(it) }.getOrNull()
+        }
+        return CommentsPageDto(data = comments, paging = paging)
+    }
 
     override suspend fun addHistory(contentToken: String, contentType: String) {
         val url = "https://www.zhihu.com/api/v4/read_history/add"
@@ -509,17 +544,19 @@ class ZhihuApiImpl(
         }
     }
 
-    override suspend fun getTopicDetail(topicId: String): JsonObject {
+    override suspend fun getTopicDetail(topicId: String): TopicDetailDto {
         val url = "https://www.zhihu.com/api/v5.1/topics/$topicId"
         val include = "name,excerpt,avatar_url,followers_count,questions_count,is_following,topic_id,total_pv,discuss_count"
-        return environment.fetchJson(url, include)
+        val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("话题详情响应为空")
+        return decodeJson(json)
     }
 
-    override suspend fun getTopicFeed(url: String, include: String): JsonObject {
+    override suspend fun getTopicFeed(url: String, include: String): TopicFeedResponseDto {
         @Suppress("HttpUrlsUsage")
-        return environment.fetchJson(url.replace("http://", "https://"), include)
+        val json = environment.fetchJson(url.replace("http://", "https://"), include)
             ?: throw IllegalStateException("话题内容响应为空")
+        return decodeJson(json)
     }
 
     override suspend fun followTopic(topicId: String, follow: Boolean) {
@@ -811,6 +848,99 @@ class ZhihuApiImpl(
             url = nextUrl ?: "https://www.zhihu.com/api/v4/members/$userTokenOrId/following-favlists",
             include = MEMBER_COLLECTIONS_INCLUDE,
         )
+
+    override suspend fun search(
+        query: String,
+        tab: String,
+        sort: String,
+        vertical: String,
+        timeInterval: String,
+        restrictedMemberHashId: String,
+        nextUrl: String?,
+    ): SearchResponseDto {
+        val url = nextUrl ?: buildSearchUrl(
+            query = query,
+            tab = tab,
+            sort = sort,
+            vertical = vertical,
+            timeInterval = timeInterval,
+            restrictedMemberHashId = restrictedMemberHashId,
+        )
+        return fetchSearchPage(url)
+    }
+
+    override suspend fun fetchSearchPage(url: String): SearchResponseDto {
+        val json = environment.fetchJson(url, SEARCH_INCLUDE)
+            ?: throw IllegalStateException("搜索响应为空")
+        val jsonArray = json["data"] as? JsonArray ?: JsonArray(emptyList())
+        val items = jsonArray.mapNotNull { element ->
+            try {
+                decodeJson<SearchItemDto>(element)
+            } catch (e: Exception) {
+                environment.logDecodeFailure("ZhihuApiImpl", element, e)
+                null
+            }
+        }
+        val paging = (json["paging"] as? JsonObject)?.let {
+            runCatching { decodeJson<ZhihuPaging>(it) }.getOrNull()
+        }
+        return SearchResponseDto(data = items, paging = paging)
+    }
+
+    override suspend fun getHotSearches(): List<HotSearchItemDto> {
+        val json = environment.fetchJson(ZHIHU_HOT_SEARCH_URL, "") ?: return emptyList()
+        val queries = json["hot_search_queries"] as? JsonArray ?: return emptyList()
+        return queries.take(15).mapNotNull { element ->
+            runCatching { decodeJson<HotSearchItemDto>(element) }.getOrNull()
+        }
+    }
+
+    override suspend fun followMember(urlToken: String, follow: Boolean) {
+        val endpoint = "https://www.zhihu.com/api/v4/members/$urlToken/followers"
+        val response = if (follow) environment.postSigned(endpoint) else environment.deleteSigned(endpoint)
+        response.raiseForStatus()
+    }
+
+    private fun buildSearchUrl(
+        query: String,
+        tab: String,
+        sort: String,
+        vertical: String,
+        timeInterval: String,
+        restrictedMemberHashId: String,
+    ): String {
+        val hasActiveFilter = sort.isNotEmpty() || vertical.isNotEmpty() || timeInterval.isNotEmpty()
+        val params = buildList {
+            add("gk_version" to "gz-gaokao")
+            add("t" to tab)
+            add("q" to query)
+            add("correction" to "1")
+            add("offset" to "0")
+            add("limit" to "20")
+            add("search_source" to if (hasActiveFilter) "Filter" else "Normal")
+            add("show_all_topics" to if (tab == "topic") "1" else "0")
+            if (restrictedMemberHashId.isNotBlank()) {
+                add("filter_fields" to "")
+                add("lc_idx" to "0")
+                add("restricted_scene" to "member")
+                add("restricted_field" to "member_hash_id")
+                add("restricted_value" to restrictedMemberHashId)
+            }
+            if (vertical.isNotEmpty()) {
+                add("vertical" to vertical)
+                add("vertical_info" to SEARCH_VERTICAL_INFO)
+            }
+            if (sort.isNotEmpty()) {
+                add("sort" to sort)
+            }
+            if (timeInterval.isNotEmpty()) {
+                add("time_interval" to timeInterval)
+            }
+        }.joinToString("&") { (key, value) ->
+            "$key=${value.encodeURLParameter(spaceToPlus = true)}"
+        }
+        return "https://www.zhihu.com/api/v4/search_v3?$params"
+    }
 }
 
 private const val PEOPLE_PROFILE_INCLUDE =
@@ -837,7 +967,9 @@ private const val MOBILE_NOTIFICATION_TIMELINE_URL = "https://api.zhihu.com/noti
 private const val MOBILE_PRIVATE_MESSAGE_URL = "https://api.zhihu.com/messages"
 private const val MOBILE_PRIVATE_MESSAGE_USER_URL = "https://api.zhihu.com/messages/user"
 
-internal const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
+private const val SEARCH_INCLUDE = "data[*].highlight,object,type"
+private const val SEARCH_VERTICAL_INFO = "0,0,0,0,0,0,0,0,0,0,0,0"
+private const val ZHIHU_HOT_SEARCH_URL = "https://www.zhihu.com/api/v4/search/hot_search_queries"
 
 /** 桌面 Web v3 推荐流首页 URL；续页用响应里的 paging.next。 */
 internal const val RECOMMEND_FEED_URL =

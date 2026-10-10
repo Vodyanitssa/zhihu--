@@ -5,6 +5,10 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.booleanCompat
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
+import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
+import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
+import com.zhihuminus.data.zhihu.api.ZhihuPostApi
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
@@ -28,7 +32,10 @@ import kotlinx.serialization.json.jsonObject
 import kotlin.coroutines.cancellation.CancellationException
 
 class ZhihuPostRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuPostApi,
+    private val collectionApi: ZhihuCollectionApi = api as ZhihuCollectionApi,
+    private val peopleApi: ZhihuPeopleApi = api as ZhihuPeopleApi,
+    private val historyApi: ZhihuHistoryApi = api as ZhihuHistoryApi,
 ) : PostRepository {
     private val cacheScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -104,7 +111,7 @@ class ZhihuPostRepository(
             PostType.Article -> "article"
             PostType.Pin -> "pin"
         }
-        val response = api.getCollections(type, id)
+        val response = collectionApi.getCollections(type, id)
         return response.data.map { it.toDomain() }
     }
 
@@ -114,7 +121,7 @@ class ZhihuPostRepository(
             PostType.Article -> "article"
             PostType.Pin -> "pin"
         }
-        api.addToCollection(type, id, collectionId)
+        collectionApi.addToCollection(type, id, collectionId)
         refreshCache(postType, id)
     }
 
@@ -124,15 +131,15 @@ class ZhihuPostRepository(
             PostType.Article -> "article"
             PostType.Pin -> "pin"
         }
-        api.removeFromCollection(type, id, collectionId)
+        collectionApi.removeFromCollection(type, id, collectionId)
         refreshCache(postType, id)
     }
 
     override suspend fun createCollection(title: String, description: String, isPublic: Boolean): Collection =
-        api.createCollection(title, description, isPublic).toDomain()
+        collectionApi.createCollection(title, description, isPublic).toDomain()
 
     override suspend fun followMember(urlToken: String, follow: Boolean) {
-        if (follow) api.followMember(urlToken) else api.unfollowMember(urlToken)
+        if (follow) peopleApi.followMember(urlToken) else peopleApi.unfollowMember(urlToken)
     }
 
     override suspend fun recordHistory(postType: PostType, id: Long) {
@@ -142,8 +149,8 @@ class ZhihuPostRepository(
             PostType.Pin -> "pin"
         }
         val contentToken = id.toString()
-        api.addHistory(contentToken, apiType)
-        api.markAsRead(contentToken, apiType)
+        historyApi.addHistory(contentToken, apiType)
+        historyApi.markAsRead(contentToken, apiType)
     }
 
     private fun mapAnswer(dto: AnswerDto): Post {

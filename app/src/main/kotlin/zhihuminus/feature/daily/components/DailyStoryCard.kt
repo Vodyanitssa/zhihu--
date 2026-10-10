@@ -27,11 +27,11 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
-import com.zhihuminus.data.zhihu.dto.DailyStoryDto
+import com.zhihuminus.feature.daily.DailyStory
 
 @Composable
 fun DailyStoryCard(
-    story: DailyStoryDto,
+    story: DailyStory,
     modifier: Modifier = Modifier,
     onClick: () -> Unit,
 ) {

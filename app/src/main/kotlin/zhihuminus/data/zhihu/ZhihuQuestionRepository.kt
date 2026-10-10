@@ -2,6 +2,9 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
+import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
+import com.zhihuminus.data.zhihu.api.ZhihuQuestionApi
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
@@ -13,20 +16,22 @@ import com.zhihuminus.feature.question.QuestionSort
 import com.zhihuminus.feature.question.QuestionTopic
 
 class ZhihuQuestionRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuQuestionApi,
+    private val historyApi: ZhihuHistoryApi = api as ZhihuHistoryApi,
+    private val feedApi: ZhihuFeedApi = api as ZhihuFeedApi,
 ) : QuestionRepository {
     override suspend fun getQuestion(questionId: Long): QuestionDetail = api.getQuestion(questionId).toDomain()
 
     override suspend fun recordRead(questionId: Long) {
-        api.addHistory(contentToken = questionId.toString(), contentType = "question")
+        historyApi.addHistory(contentToken = questionId.toString(), contentType = "question")
     }
 
     override suspend fun loadAnswers(
         questionId: Long,
         sort: QuestionSort,
-    ): QuestionAnswersPage = api.fetchFeedPage(questionFeedsUrl(questionId, sort.apiValue)).toAnswersPage()
+    ): QuestionAnswersPage = feedApi.fetchFeedPage(questionFeedsUrl(questionId, sort.apiValue)).toAnswersPage()
 
-    override suspend fun loadAnswers(nextUrl: String): QuestionAnswersPage = api.fetchFeedPage(nextUrl).toAnswersPage()
+    override suspend fun loadAnswers(nextUrl: String): QuestionAnswersPage = feedApi.fetchFeedPage(nextUrl).toAnswersPage()
 
     override suspend fun followQuestion(
         questionId: Long,

@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.dto
 
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonPrimitive
 
 @Serializable
@@ -55,4 +56,10 @@ data class TopicPinCounterDto(
 data class TopicPagingDto(
     val isEnd: Boolean = true,
     val next: String? = null,
+)
+
+@Serializable
+data class TopicFeedResponseDto(
+    val data: List<JsonElement> = emptyList(),
+    val paging: TopicPagingDto? = null,
 )

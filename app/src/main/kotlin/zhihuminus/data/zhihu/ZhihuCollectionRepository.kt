@@ -3,6 +3,7 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
 import com.zhihuminus.data.zhihu.dto.CollectionDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemDto
 import com.zhihuminus.feature.collection.Collection
@@ -12,7 +13,7 @@ import com.zhihuminus.feature.collection.CollectionRepository
 import com.zhihuminus.feature.collection.CollectionsPageResult
 
 class ZhihuCollectionRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuCollectionApi,
 ) : CollectionRepository {
     override suspend fun getUserCollections(urlToken: String, nextUrl: String?): CollectionsPageResult {
         val response = api.getUserCollections(urlToken, nextUrl)

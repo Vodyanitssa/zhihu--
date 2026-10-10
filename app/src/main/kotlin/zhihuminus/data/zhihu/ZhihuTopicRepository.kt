@@ -5,9 +5,8 @@ import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.data.zhihu.api.ZhihuTopicApi
 import com.zhihuminus.data.zhihu.dto.FeedDto
-import com.zhihuminus.data.zhihu.dto.TopicDetailDto
-import com.zhihuminus.data.zhihu.dto.TopicPagingDto
 import com.zhihuminus.data.zhihu.dto.TopicPinFeedDto
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.topic.TopicDetail
@@ -18,14 +17,13 @@ import com.zhihuminus.feature.topic.TopicIdeasSort
 import com.zhihuminus.feature.topic.TopicRepository
 import com.zhihuminus.navigation.PostDestination
 import io.ktor.http.Url
-import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 
 class ZhihuTopicRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuTopicApi,
 ) : TopicRepository {
     override suspend fun getTopicDetail(topicId: String): TopicDetail {
-        val json = api.getTopicDetail(topicId)
-        val dto = ZhihuJson.decodeJson(TopicDetailDto.serializer(), json)
+        val dto = api.getTopicDetail(topicId)
         return TopicDetail(
             id = dto.id,
             name = dto.name,
@@ -48,10 +46,10 @@ class ZhihuTopicRepository(
         nextUrl: String?,
     ): TopicFeedResult {
         val url = nextUrl ?: topicFeedUrl(topicId, tab, discussionSort, ideasSort)
-        val json = api.getTopicFeed(url, "data[*].content,excerpt,target.author.badge_v2")
-        val responseItems = (json["data"] as? JsonArray).orEmpty()
+        val feedResponse = api.getTopicFeed(url, "data[*].content,excerpt,target.author.badge_v2")
+        val responseItems = feedResponse.data
         val loadedItems = if (tab == TopicFeedTab.Ideas) {
-            decodeTopicPinFeeds(json)
+            decodeTopicPinFeeds(responseItems)
         } else {
             val feeds = responseItems.mapNotNull { element ->
                 runCatching { ZhihuJson.decodeJson<FeedDto>(element) }.getOrNull()
@@ -66,7 +64,7 @@ class ZhihuTopicRepository(
                 error = "话题内容解码失败：服务端返回 ${responseItems.size} 项，但没有可显示内容",
             )
         }
-        val paging = json["paging"]?.let { ZhihuJson.decodeJson(TopicPagingDto.serializer(), it) }
+        val paging = feedResponse.paging
         val rawNext = paging?.next
         val normalizedNext = rawNext?.let(::normalizeTopicPagingUrl)
         val isEnd = if (rawNext != null && normalizedNext == null) {
@@ -107,8 +105,8 @@ private fun topicFeedUrl(
     TopicFeedTab.Unanswered -> "https://www.zhihu.com/api/v5.1/topics/$topicId/feeds/top_question/v2?limit=20&offset=0"
 }
 
-private fun decodeTopicPinFeeds(json: kotlinx.serialization.json.JsonObject): List<FeedDisplayItem> =
-    (json["data"] as? JsonArray).orEmpty().mapNotNull { element ->
+private fun decodeTopicPinFeeds(items: List<JsonElement>): List<FeedDisplayItem> =
+    items.mapNotNull { element ->
         runCatching { ZhihuJson.decodeJson<TopicPinFeedDto>(element) }.getOrNull()?.target?.let { target ->
             val pinId = target.id.content.toLongOrNull() ?: return@let null
             FeedDisplayItem(

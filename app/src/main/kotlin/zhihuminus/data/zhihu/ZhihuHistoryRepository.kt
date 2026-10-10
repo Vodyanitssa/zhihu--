@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu
 
+import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.feature.history.HistoryDeletePair
@@ -14,7 +15,7 @@ import com.zhihuminus.feature.history.HistoryRepository
  * 将 API DTO 转换为业务层 [HistoryItem] 对象，ViewModel 不感知 API 细节。
  */
 class ZhihuHistoryRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuHistoryApi,
 ) : HistoryRepository {
     override suspend fun fetchHistory(nextUrl: String?): HistoryPageResult {
         val url = nextUrl ?: DEFAULT_HISTORY_URL

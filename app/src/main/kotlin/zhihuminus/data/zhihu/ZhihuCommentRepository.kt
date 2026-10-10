@@ -1,25 +1,21 @@
 package com.zhihuminus.data.zhihu
 
-import com.zhihuminus.core.util.Log
-import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.zhihu.api.ZhihuCommentApi
 import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.CommentDto
+import com.zhihuminus.data.zhihu.dto.CommentsPageDto
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentAuthor
 import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentPage
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentSortOrder
-import io.ktor.http.isSuccess
-import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.boolean
-import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 class ZhihuCommentRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuCommentApi,
 ) : CommentRepository {
     override suspend fun getRootComments(
         type: CommentContentType,
@@ -32,23 +28,22 @@ class ZhihuCommentRepository(
             CommentSortOrder.TIME -> "ts"
         }
         val contentType = type.toApiType()
-        val json = api.getRootComments(contentType, id, orderParam, offset)
-        return parseCommentPage(json)
+        val page = api.getRootComments(contentType, id, orderParam, offset)
+        return page.toDomain()
     }
 
     override suspend fun getNextPage(nextUrl: String): CommentPage {
-        val json = api.fetchCommentsPage(nextUrl)
-        return parseCommentPage(json)
+        val page = api.fetchCommentsPage(nextUrl)
+        return page.toDomain()
     }
 
     override suspend fun getChildComments(commentId: String, offset: Int): CommentPage {
-        val json = api.getChildComments(commentId, offset)
-        return parseCommentPage(json)
+        val page = api.getChildComments(commentId, offset)
+        return page.toDomain()
     }
 
     override suspend fun getComment(commentId: String): Comment {
-        val json = api.getComment(commentId)
-        val dto = ZhihuJson.decodeJson<CommentDto>(json)
+        val dto = api.getComment(commentId)
         return dto.toDomain()
     }
 
@@ -64,50 +59,27 @@ class ZhihuCommentRepository(
             put("content", JsonPrimitive("<p>$escapedContent</p>"))
             replyToCommentId?.let { put("reply_comment_id", JsonPrimitive(it)) }
         }
-        val json = api.submitComment(url, body)
-        val dto = ZhihuJson.decodeJson<CommentDto>(json)
+        val dto = api.submitComment(url, body)
         return dto.toDomain()
     }
 
     override suspend fun likeComment(commentId: String) {
-        val response = api.likeComment(commentId)
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("点赞失败: ${response.status}")
-        }
+        api.likeComment(commentId)
     }
 
     override suspend fun unlikeComment(commentId: String) {
-        val response = api.unlikeComment(commentId)
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("取消点赞失败: ${response.status}")
-        }
+        api.unlikeComment(commentId)
     }
 
     override suspend fun deleteComment(commentId: String) {
-        val response = api.deleteComment(commentId)
-        if (!response.status.isSuccess()) {
-            throw IllegalStateException("删除评论失败: ${response.status}")
-        }
+        api.deleteComment(commentId)
     }
 
-    private fun parseCommentPage(json: JsonObject): CommentPage {
-        val dataArray = json["data"] as? JsonArray
-            ?: throw IllegalStateException("评论 API 响应缺少 data 数组: ${json.keys}")
-        val paging = json["paging"] as? JsonObject
-        val isEnd = paging?.get("is_end")?.jsonPrimitive?.boolean ?: true
-        val nextUrl = paging?.get("next")?.jsonPrimitive?.contentOrNull
-
-        val comments = dataArray.mapIndexedNotNull { index, element ->
-            try {
-                ZhihuJson.decodeJson<CommentDto>(element).toDomain()
-            } catch (e: Exception) {
-                Log.e("ZhihuCommentRepo", "Failed to decode comment at index $index", e)
-                null
-            }
-        }
-
-        return CommentPage(comments = comments, isEnd = isEnd, nextUrl = nextUrl)
-    }
+    private fun CommentsPageDto.toDomain(): CommentPage = CommentPage(
+        comments = data.map { it.toDomain() },
+        isEnd = paging?.isEnd ?: (paging?.next == null),
+        nextUrl = paging?.next?.takeIf { !(paging.isEnd) },
+    )
 
     private fun buildSubmitCommentUrl(type: CommentContentType, id: Long): String {
         val path = when (type) {

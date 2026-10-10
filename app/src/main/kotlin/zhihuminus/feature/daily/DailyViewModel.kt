@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
-import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -49,7 +48,7 @@ class DailyViewModel(
         loadJob = viewModelScope.launch {
             try {
                 uiState = uiState.copy(isLoading = true, error = null)
-                val data: DailyStoriesResponse = repository.getLatestDaily()
+                val data = repository.getLatestDaily()
                 uiState = uiState.copy(
                     sections = if (data.stories.isEmpty()) emptyList() else listOf(DailySection(data.date, data.stories)),
                     isLoading = false,
@@ -77,7 +76,7 @@ class DailyViewModel(
                     .plus(1, DateTimeUnit.DAY)
                     .toString()
                     .replace("-", "")
-                val data: DailyStoriesResponse = repository.getDailyStoriesBefore(nextApiDate)
+                val data = repository.getDailyStoriesBefore(nextApiDate)
                 uiState = uiState.copy(
                     sections = if (data.stories.isEmpty()) emptyList() else listOf(DailySection(data.date, data.stories)),
                     isLoading = false,
@@ -103,7 +102,7 @@ class DailyViewModel(
         loadJob = viewModelScope.launch {
             try {
                 uiState = uiState.copy(isLoadingMore = true)
-                val data: DailyStoriesResponse = repository.getDailyStoriesBefore(date)
+                val data = repository.getDailyStoriesBefore(date)
                 if (data.stories.isNotEmpty()) {
                     uiState = uiState.copy(
                         sections = uiState.sections + DailySection(data.date, data.stories),

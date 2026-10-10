@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.data.zhihu.api.ZhihuColumnApi
 import com.zhihuminus.data.zhihu.dto.ColumnArticleDto
 import com.zhihuminus.feature.column.ColumnArticleResult
 import com.zhihuminus.feature.column.ColumnRepository
@@ -9,7 +10,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.PostDestination
 
 class ZhihuColumnRepository(
-    private val api: ZhihuApi,
+    private val api: ZhihuColumnApi,
 ) : ColumnRepository {
     override suspend fun getColumnArticles(columnId: String, nextUrl: String?): ColumnArticleResult {
         val page = api.getColumnArticles(columnId, nextUrl)

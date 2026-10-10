@@ -1,15 +1,26 @@
 package com.zhihuminus.feature.daily
 
-import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
-import com.zhihuminus.data.zhihu.dto.DailyStoryDto
+data class DailyStory(
+    val id: Long,
+    val title: String,
+    val url: String,
+    val hint: String,
+    val images: List<String>,
+    val type: Int,
+)
+
+data class DailyStoriesResult(
+    val date: String,
+    val stories: List<DailyStory>,
+)
 
 data class DailySection(
     val date: String,
-    val stories: List<DailyStoryDto>,
+    val stories: List<DailyStory>,
 )
 
 interface DailyRepository {
-    suspend fun getLatestDaily(): DailyStoriesResponse
+    suspend fun getLatestDaily(): DailyStoriesResult
 
-    suspend fun getDailyStoriesBefore(date: String): DailyStoriesResponse
+    suspend fun getDailyStoriesBefore(date: String): DailyStoriesResult
 }

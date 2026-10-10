@@ -45,7 +45,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import java.io.File
 
-object  AccountData {
+object AccountData {
     val json = ZhihuJson.json
 
     internal val ANDROID_HEADERS = mapOf(

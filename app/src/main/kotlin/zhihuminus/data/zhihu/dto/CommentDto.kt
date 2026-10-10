@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.dto
 
+import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -36,4 +37,10 @@ data class CommentTagDto(
     val color: String = "",
     val nightColor: String = "",
     val hasBorder: Boolean = false,
+)
+
+@Serializable
+data class CommentsPageDto(
+    val data: List<CommentDto> = emptyList(),
+    val paging: ZhihuPaging? = null,
 )

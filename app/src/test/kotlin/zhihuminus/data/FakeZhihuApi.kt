@@ -7,6 +7,8 @@ import com.zhihuminus.data.zhihu.dto.CollectionDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemsPageDto
 import com.zhihuminus.data.zhihu.dto.CollectionResponseDto
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
+import com.zhihuminus.data.zhihu.dto.CommentDto
+import com.zhihuminus.data.zhihu.dto.CommentsPageDto
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
@@ -14,6 +16,7 @@ import com.zhihuminus.data.zhihu.dto.FollowedTopicDto
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
 import com.zhihuminus.data.zhihu.dto.HistoryPage
+import com.zhihuminus.data.zhihu.dto.HotSearchItemDto
 import com.zhihuminus.data.zhihu.dto.MemberColumnItemDto
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.MemberProfileDto
@@ -24,8 +27,10 @@ import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePageDto
 import com.zhihuminus.data.zhihu.dto.QuestionDto
+import com.zhihuminus.data.zhihu.dto.SearchResponseDto
+import com.zhihuminus.data.zhihu.dto.TopicDetailDto
+import com.zhihuminus.data.zhihu.dto.TopicFeedResponseDto
 import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
-import io.ktor.client.statement.HttpResponse
 import kotlinx.serialization.json.JsonObject
 
 open class FakeZhihuApi : ZhihuApi {
@@ -84,7 +89,7 @@ open class FakeZhihuApi : ZhihuApi {
         nextUrl: String?,
     ): CollectionItemsPageDto = TODO()
 
-    override suspend fun fetchCommentsPage(url: String): JsonObject = TODO()
+    override suspend fun fetchCommentsPage(url: String): CommentsPageDto = TODO()
 
     override suspend fun getRootComments(
         contentType: String,
@@ -92,19 +97,19 @@ open class FakeZhihuApi : ZhihuApi {
         orderBy: String,
         offset: Int,
         limit: Int,
-    ): JsonObject = TODO()
+    ): CommentsPageDto = TODO()
 
-    override suspend fun getChildComments(commentId: String, offset: Int, limit: Int): JsonObject = TODO()
+    override suspend fun getChildComments(commentId: String, offset: Int, limit: Int): CommentsPageDto = TODO()
 
-    override suspend fun getComment(commentId: String): JsonObject = TODO()
+    override suspend fun getComment(commentId: String): CommentDto = TODO()
 
-    override suspend fun submitComment(url: String, body: JsonObject): JsonObject = TODO()
+    override suspend fun submitComment(url: String, body: JsonObject): CommentDto = TODO()
 
-    override suspend fun likeComment(commentId: String): HttpResponse = TODO()
+    override suspend fun likeComment(commentId: String) = TODO()
 
-    override suspend fun unlikeComment(commentId: String): HttpResponse = TODO()
+    override suspend fun unlikeComment(commentId: String) = TODO()
 
-    override suspend fun deleteComment(commentId: String): HttpResponse = TODO()
+    override suspend fun deleteComment(commentId: String) = TODO()
 
     override suspend fun addHistory(contentToken: String, contentType: String) = TODO()
 
@@ -122,9 +127,9 @@ open class FakeZhihuApi : ZhihuApi {
 
     override suspend fun getDailyStoriesBefore(date: String): DailyStoriesResponse = TODO()
 
-    override suspend fun getTopicDetail(topicId: String): JsonObject = TODO()
+    override suspend fun getTopicDetail(topicId: String): TopicDetailDto = TODO()
 
-    override suspend fun getTopicFeed(url: String, include: String): JsonObject = TODO()
+    override suspend fun getTopicFeed(url: String, include: String): TopicFeedResponseDto = TODO()
 
     override suspend fun followTopic(topicId: String, follow: Boolean) = TODO()
 
@@ -171,4 +176,20 @@ open class FakeZhihuApi : ZhihuApi {
     override suspend fun fetchMemberFollowingQuestions(userTokenOrId: String, nextUrl: String?): PeoplePageDto<FollowedQuestionDto> = TODO()
 
     override suspend fun fetchMemberFollowingCollections(userTokenOrId: String, nextUrl: String?): PeoplePageDto<CollectionDto> = TODO()
+
+    override suspend fun search(
+        query: String,
+        tab: String,
+        sort: String,
+        vertical: String,
+        timeInterval: String,
+        restrictedMemberHashId: String,
+        nextUrl: String?,
+    ): SearchResponseDto = TODO()
+
+    override suspend fun fetchSearchPage(url: String): SearchResponseDto = TODO()
+
+    override suspend fun getHotSearches(): List<HotSearchItemDto> = emptyList()
+
+    override suspend fun followMember(urlToken: String, follow: Boolean) = TODO()
 }
