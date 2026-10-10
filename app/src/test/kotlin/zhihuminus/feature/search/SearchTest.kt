@@ -4,7 +4,7 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.SearchItemDto
-import com.zhihuminus.data.zhihu.toPeopleMemberItem
+import com.zhihuminus.data.zhihu.repository.toPeopleMemberItem
 import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.coroutines.runBlocking
 import kotlinx.serialization.json.jsonObject

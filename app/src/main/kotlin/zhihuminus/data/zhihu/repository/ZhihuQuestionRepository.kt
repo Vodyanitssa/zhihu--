@@ -1,6 +1,7 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
@@ -16,11 +17,12 @@ import com.zhihuminus.feature.question.QuestionSort
 import com.zhihuminus.feature.question.QuestionTopic
 
 class ZhihuQuestionRepository(
-    private val api: ZhihuQuestionApi,
-    private val historyApi: ZhihuHistoryApi = api as ZhihuHistoryApi,
-    private val feedApi: ZhihuFeedApi = api as ZhihuFeedApi,
+    private val questionApi: ZhihuQuestionApi,
+    private val historyApi: ZhihuHistoryApi,
+    private val feedApi: ZhihuFeedApi,
+    private val postCache: PostContentCache = PostContentCache,
 ) : QuestionRepository {
-    override suspend fun getQuestion(questionId: Long): QuestionDetail = api.getQuestion(questionId).toDomain()
+    override suspend fun getQuestion(questionId: Long): QuestionDetail = questionApi.getQuestion(questionId).toDomain()
 
     override suspend fun recordRead(questionId: Long) {
         historyApi.addHistory(contentToken = questionId.toString(), contentType = "question")
@@ -37,7 +39,7 @@ class ZhihuQuestionRepository(
         questionId: Long,
         follow: Boolean,
     ) {
-        api.followQuestion(questionId, follow)
+        questionApi.followQuestion(questionId, follow)
     }
 
     private fun QuestionDto.toDomain(): QuestionDetail =
@@ -54,12 +56,14 @@ class ZhihuQuestionRepository(
             topics = topics.map { QuestionTopic(id = it.id, name = it.name) },
         )
 
-    private fun FeedPage.toAnswersPage(): QuestionAnswersPage =
-        QuestionAnswersPage(
+    private suspend fun FeedPage.toAnswersPage(): QuestionAnswersPage {
+        items.forEach { it.target?.let { target -> postCache.putFromFeed(target) } }
+        return QuestionAnswersPage(
             items = items.map { it.toAnswerDisplayItem() },
             nextUrl = nextUrl,
             isEnd = isEnd,
         )
+    }
 
     private fun FeedDto.toAnswerDisplayItem(): FeedDisplayItem {
         val target = this@toAnswerDisplayItem.target

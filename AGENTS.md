@@ -31,7 +31,7 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
   - `<Name>ViewModel.kt`: MVI ViewModel holding Compose-observable state (`mutableStateOf`), handling `onEvent(event)` and emitting `Channel<Effect>`.
   - `<Name>Route.kt`: Composable wiring layer that creates ViewModels, collects side effects, and passes pure state and event lambdas to Screen.
   - `<Name>Screen.kt`: Pure stateless UI composable (no ViewModel/Repository knowledge). Subcomponents live in `feature/<name>/components/`.
-  - Data layer implementation in `data/zhihu/`: Implements API (`ZhihuApi`, `ZhihuApiImpl`), `@Serializable` DTOs (`dto/<Name>Dto.kt` using camelCase fields mapped to snake_case JSON via `ZhihuJson`), and concrete repositories (`Zhihu<Name>Repository.kt`).
+  - Data layer implementation in `data/zhihu/`: Remote DataSources in `api/` (`Zhihu<Name>Api.kt`), `@Serializable` DTOs (`dto/<Name>Dto.kt` using camelCase fields mapped to snake_case JSON via `ZhihuJson`), concrete repositories in `repository/` (`Zhihu<Name>Repository.kt`), and unified factory `ZhihuRepositoryFactory.kt`.
 - **Core layer separation (`core/`)**:
   - `core/environment/`: Decoupled runtime environments (`PaginationEnvironment`, `AndroidPaginationEnvironment`, `ZhihuApiEnvironment`, domain environments) to break circular dependencies between data/UI and ViewModels.
   - `core/platform/`: Android platform capabilities (`Clipboard`, `FileExporter`, `PlatformDialogs`, `PlatformAppLauncher`, `WebView`).

@@ -6,8 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.platform.rememberUserMessageSink
 
@@ -19,7 +18,7 @@ fun PrivateMessageRoute(
 ) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {
-        ZhihuNotificationRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createNotificationRepository()
     }
     val viewModel: PrivateMessageViewModel = viewModel(key = "private_message_${destination.peerId}") {
         PrivateMessageViewModel(

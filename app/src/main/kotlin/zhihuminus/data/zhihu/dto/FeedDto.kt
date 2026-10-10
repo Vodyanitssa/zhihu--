@@ -138,6 +138,7 @@ data class ArticleTargetDto(
     val segmentInfos: List<SegmentInfoParagraph> = emptyList(),
     @Serializable(with = BooleanCompatSerializer::class)
     val allowSegmentInteraction: Boolean = false,
+    val voting: Int? = null,
 ) : FeedTargetDto {
     constructor(
         id: Long,
@@ -155,6 +156,7 @@ data class ArticleTargetDto(
         favoriteCount: Int = 0,
         segmentInfos: List<SegmentInfoParagraph> = emptyList(),
         allowSegmentInteraction: Boolean = false,
+        voting: Int? = null,
     ) : this(
         id = id,
         url = url,
@@ -172,6 +174,7 @@ data class ArticleTargetDto(
         favoriteCount = favoriteCount,
         segmentInfos = segmentInfos,
         allowSegmentInteraction = allowSegmentInteraction,
+        voting = voting,
     )
 
     override val detailsText = "文章 · $voteupCount 赞 · $commentCount 评论"
@@ -409,4 +412,5 @@ val FeedTargetDto.questionAuthor: FeedAuthorDto?
 data class FeedRelationshipDto(
     val isFollowing: Boolean = false,
     val isFollowed: Boolean = false,
+    val voting: Int? = null,
 )

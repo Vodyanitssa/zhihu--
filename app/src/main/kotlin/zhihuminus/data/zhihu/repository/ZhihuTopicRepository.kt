@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
@@ -70,7 +70,7 @@ class ZhihuTopicRepository(
         val isEnd = if (rawNext != null && normalizedNext == null) {
             true
         } else {
-            paging?.isEnd ?: true
+            paging?.hasMore != true
         }
         val error = if (rawNext != null && normalizedNext == null) {
             "服务端返回了不受信任的分页地址，已停止加载"

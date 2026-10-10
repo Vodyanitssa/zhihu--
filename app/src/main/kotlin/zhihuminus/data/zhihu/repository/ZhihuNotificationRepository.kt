@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.data.zhihu.dto.NotificationAdditionalInfoDto
@@ -49,12 +49,12 @@ class ZhihuNotificationRepository(
             .filter { it.type != "empty" }
             .map { it.toDomain() }
 
-        val isEnd = dto.paging?.isEnd == true || dto.paging?.next.isNullOrBlank()
+        val isEnd = dto.paging?.hasMore != true
         return NotificationOverviewResult(
             unreadCounts = unreadCounts,
             invitation = invitation,
             items = items,
-            nextUrl = dto.paging?.next?.takeIf { !isEnd },
+            nextUrl = dto.paging?.nextUrl,
             isEnd = isEnd,
         )
     }
@@ -62,10 +62,10 @@ class ZhihuNotificationRepository(
     override suspend fun getNotificationTimeline(entryName: String, nextUrl: String?): NotificationTimelineResult {
         val dto = api.getNotificationTimeline(entryName, nextUrl)
         val items = dto.data.map { it.toDomain() }
-        val isEnd = dto.paging?.isEnd == true || dto.paging?.next.isNullOrBlank()
+        val isEnd = dto.paging?.hasMore != true
         return NotificationTimelineResult(
             items = items,
-            nextUrl = dto.paging?.next?.takeIf { !isEnd },
+            nextUrl = dto.paging?.nextUrl,
             isEnd = isEnd,
         )
     }
@@ -88,10 +88,10 @@ class ZhihuNotificationRepository(
     override suspend fun getPrivateMessages(peerId: String, nextUrl: String?): PrivateMessagePageResult {
         val dto = api.getPrivateMessages(peerId, nextUrl)
         val items = dto.data.map { it.toDomain() }
-        val isEnd = dto.paging.isEnd || dto.paging.next.isBlank()
+        val isEnd = !dto.paging.hasMore
         return PrivateMessagePageResult(
             items = items,
-            nextUrl = dto.paging.next.takeIf { !isEnd },
+            nextUrl = dto.paging.nextUrl,
             isEnd = isEnd,
         )
     }

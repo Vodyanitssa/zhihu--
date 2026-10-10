@@ -146,9 +146,3 @@ data class FollowedTopicDto(
     val displayName: String get() = topic?.name?.takeIf { it.isNotBlank() } ?: name
     val displayAvatarUrl: String? get() = topic?.avatarUrl ?: avatarUrl
 }
-
-data class PeoplePageDto<T>(
-    val items: List<T>,
-    val nextUrl: String?,
-    val isEnd: Boolean,
-)

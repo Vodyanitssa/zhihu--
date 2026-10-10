@@ -4,7 +4,7 @@ import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
-import com.zhihuminus.data.zhihu.toFeedDisplayItem
+import com.zhihuminus.data.zhihu.repository.toFeedDisplayItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs

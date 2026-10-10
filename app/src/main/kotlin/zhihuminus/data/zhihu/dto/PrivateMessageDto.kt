@@ -1,12 +1,11 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 
 @Serializable
 data class PrivateMessagePageDto(
     val data: List<PrivateMessageDto> = emptyList(),
-    val paging: ZhihuPaging = ZhihuPaging(isEnd = true, next = ""),
+    val paging: PagingDto = PagingDto(),
 )
 
 @Serializable

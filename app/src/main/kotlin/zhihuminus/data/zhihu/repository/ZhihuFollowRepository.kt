@@ -1,7 +1,9 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.MOMENTS_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.feature.follow.FollowFeedPage
 import com.zhihuminus.feature.follow.FollowRepository
@@ -9,9 +11,13 @@ import com.zhihuminus.feature.follow.FollowingUser
 
 class ZhihuFollowRepository(
     private val api: ZhihuFeedApi,
+    private val postCache: PostContentCache = PostContentCache,
 ) : FollowRepository {
     override suspend fun fetchFollowFeed(nextUrl: String?): FollowFeedPage {
         val feedPage = api.fetchFeedPage(url = nextUrl ?: MOMENTS_FEED_URL, include = "")
+        feedPage.items.forEach { feed ->
+            feed.target?.let { postCache.putFromFeed(it) }
+        }
         val displayItems = feedPage.items.flattenFeeds().map { feed ->
             val item = feed.toDisplayItem()
             val target = feed.target

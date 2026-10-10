@@ -1,6 +1,5 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
-import com.zhihuminus.core.environment.PaginationEnvironment
 import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
@@ -8,7 +7,9 @@ import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.local.SearchHistoryStore
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
 import com.zhihuminus.data.zhihu.api.ZhihuSearchApi
+import com.zhihuminus.data.zhihu.api.ZhihuTopicApi
 import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.FeedTargetDto
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
@@ -29,20 +30,12 @@ import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
 class ZhihuSearchRepository(
-    private val api: ZhihuSearchApi,
+    private val searchApi: ZhihuSearchApi,
+    private val topicApi: ZhihuTopicApi,
+    private val peopleApi: ZhihuPeopleApi,
     private val settingsRepository: AppSettingsRepository,
     private val historyStorage: SearchHistoryStore,
 ) : SearchRepository {
-    constructor(
-        environment: PaginationEnvironment,
-        settingsRepository: AppSettingsRepository,
-        historyStorage: SearchHistoryStore,
-    ) : this(
-        api = ZhihuApiImpl(environment),
-        settingsRepository = settingsRepository,
-        historyStorage = historyStorage,
-    )
-
     override suspend fun searchGeneral(
         query: String,
         tab: SearchTab,
@@ -52,7 +45,7 @@ class ZhihuSearchRepository(
         restrictedMemberHashId: String,
         nextUrl: String?,
     ): SearchPage<FeedDisplayItem> {
-        val response = api.search(
+        val response = searchApi.search(
             query = query,
             tab = "general",
             sort = sort.value,
@@ -84,8 +77,8 @@ class ZhihuSearchRepository(
 
         return SearchPage(
             items = displayItems,
-            nextUrl = paging?.next,
-            isEnd = paging?.isEnd ?: (paging?.next == null),
+            nextUrl = paging?.nextUrl,
+            isEnd = paging?.hasMore != true,
         )
     }
 
@@ -96,7 +89,7 @@ class ZhihuSearchRepository(
         restrictedMemberHashId: String,
         nextUrl: String?,
     ): SearchPage<PeopleSearchResult> {
-        val response = api.search(
+        val response = searchApi.search(
             query = query,
             tab = "people",
             sort = sort.value,
@@ -128,8 +121,8 @@ class ZhihuSearchRepository(
 
         return SearchPage(
             items = people,
-            nextUrl = paging?.next,
-            isEnd = paging?.isEnd ?: (paging?.next == null),
+            nextUrl = paging?.nextUrl,
+            isEnd = paging?.hasMore != true,
         )
     }
 
@@ -140,7 +133,7 @@ class ZhihuSearchRepository(
         restrictedMemberHashId: String,
         nextUrl: String?,
     ): SearchPage<TopicSearchResult> {
-        val response = api.search(
+        val response = searchApi.search(
             query = query,
             tab = "topic",
             sort = sort.value,
@@ -160,13 +153,13 @@ class ZhihuSearchRepository(
 
         return SearchPage(
             items = topics,
-            nextUrl = paging?.next,
-            isEnd = paging?.isEnd ?: (paging?.next == null),
+            nextUrl = paging?.nextUrl,
+            isEnd = paging?.hasMore != true,
         )
     }
 
     override suspend fun fetchHotSearches(): List<HotSearchItem> =
-        api.getHotSearches().map {
+        searchApi.getHotSearches().map {
             HotSearchItem(
                 query = it.query,
                 hotShow = it.hotShow,
@@ -184,14 +177,14 @@ class ZhihuSearchRepository(
         topicId: String,
         following: Boolean,
     ): Result<Unit> = runCatching {
-        api.followTopic(topicId, following)
+        topicApi.followTopic(topicId, following)
     }
 
     override suspend fun setMemberFollowing(
         urlToken: String,
         following: Boolean,
     ): Result<Unit> = runCatching {
-        api.followMember(urlToken, following)
+        peopleApi.followMember(urlToken, following)
     }
 
     override fun getSearchHistory(): List<String> =

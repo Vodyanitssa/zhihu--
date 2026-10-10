@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
@@ -23,7 +23,7 @@ import org.jsoup.Jsoup
 
 class ZhihuPeopleRepository(
     private val api: ZhihuPeopleApi,
-    private val historyApi: ZhihuHistoryApi? = api as? ZhihuHistoryApi,
+    private val historyApi: ZhihuHistoryApi? = null,
 ) : PeopleRepository {
     override suspend fun getProfile(userTokenOrId: String): PeopleProfile {
         val raw = api.fetchMemberProfile(userTokenOrId)

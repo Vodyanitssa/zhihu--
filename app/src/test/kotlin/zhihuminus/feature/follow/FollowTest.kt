@@ -1,10 +1,11 @@
 package com.zhihuminus.feature.follow
 
-import com.zhihuminus.data.FakeZhihuApi
+import com.zhihuminus.data.FakeZhihuApiEnvironment
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.zhihu.ZhihuFollowRepository
+import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.dto.FollowingUserActorDto
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
+import com.zhihuminus.data.zhihu.repository.ZhihuFollowRepository
 import com.zhihuminus.navigation.Person
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
@@ -111,7 +112,7 @@ class FollowTest {
 
     @Test
     fun testZhihuFollowRepositoryRecentUsersMapping() = runBlocking {
-        val fakeApi = object : FakeZhihuApi() {
+        val fakeApi = object : ZhihuFeedApi(FakeZhihuApiEnvironment) {
             override suspend fun getRecentFollowingUsers(): List<FollowingUserItemDto> = listOf(
                 FollowingUserItemDto(
                     actor = FollowingUserActorDto(

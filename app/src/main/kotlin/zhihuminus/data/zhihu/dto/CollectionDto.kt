@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -29,7 +28,7 @@ data class CollectionDto(
 @Serializable
 data class CollectionResponseDto(
     val data: List<CollectionDto> = emptyList(),
-    val paging: ZhihuPaging = ZhihuPaging(isEnd = true, next = ""),
+    val paging: PagingDto = PagingDto(),
 )
 
 @Serializable
@@ -41,5 +40,5 @@ data class CollectionItemDto(
 @Serializable
 data class CollectionItemsPageDto(
     val data: List<CollectionItemDto> = emptyList(),
-    val paging: ZhihuPaging = ZhihuPaging(isEnd = true, next = ""),
+    val paging: PagingDto = PagingDto(),
 )

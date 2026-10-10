@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonObject
 
@@ -42,5 +41,5 @@ data class CommentTagDto(
 @Serializable
 data class CommentsPageDto(
     val data: List<CommentDto> = emptyList(),
-    val paging: ZhihuPaging? = null,
+    val paging: PagingDto? = null,
 )

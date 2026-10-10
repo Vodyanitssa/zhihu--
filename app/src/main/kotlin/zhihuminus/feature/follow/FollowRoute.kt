@@ -8,8 +8,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuFollowRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Follow
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.UserMessageDuration
@@ -26,9 +25,7 @@ fun FollowRoute(
     val paginationEnvironment = rememberPaginationEnvironment()
 
     val repository = remember(paginationEnvironment) {
-        ZhihuFollowRepository(
-            api = ZhihuApiImpl(paginationEnvironment),
-        )
+        ZhihuRepositoryFactory(paginationEnvironment).createFollowRepository()
     }
 
     val viewModel: FollowViewModel = viewModel {

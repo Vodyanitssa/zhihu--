@@ -5,9 +5,9 @@ import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
-import com.zhihuminus.data.FakeZhihuApi
+import com.zhihuminus.data.FakeZhihuApiEnvironment
 import com.zhihuminus.data.common.ZhihuJson
-import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
+import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto
 import com.zhihuminus.data.zhihu.dto.NotificationContentDto
@@ -21,7 +21,8 @@ import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePluginDto
 import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
-import com.zhihuminus.data.zhihu.toDomain
+import com.zhihuminus.data.zhihu.repository.ZhihuNotificationRepository
+import com.zhihuminus.data.zhihu.repository.toDomain
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
 import kotlinx.coroutines.runBlocking
@@ -394,7 +395,7 @@ class NotificationTest {
             ),
         )
 
-        val fakeApi = object : FakeZhihuApi() {
+        val fakeApi = object : ZhihuNotificationApi(FakeZhihuApiEnvironment) {
             override suspend fun getNotificationOverview(nextUrl: String?): NotificationOverviewDto = overviewDto
         }
 

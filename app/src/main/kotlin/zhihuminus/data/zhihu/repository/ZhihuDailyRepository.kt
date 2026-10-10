@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuDailyApi
 import com.zhihuminus.data.zhihu.dto.DailyStoriesResponse

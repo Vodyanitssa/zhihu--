@@ -4,17 +4,8 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class ColumnArticlePage(
-    val paging: ColumnPaging,
+    val paging: PagingDto = PagingDto(),
     val data: List<ColumnArticleDto>,
-)
-
-@Serializable
-data class ColumnPaging(
-    val isEnd: Boolean = false,
-    val isStart: Boolean = false,
-    val totals: Int = 0,
-    val previous: String? = null,
-    val next: String? = null,
 )
 
 @Serializable

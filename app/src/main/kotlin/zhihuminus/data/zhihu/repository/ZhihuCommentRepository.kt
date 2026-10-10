@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuCommentApi
 import com.zhihuminus.data.zhihu.dto.AuthorDto
@@ -77,8 +77,8 @@ class ZhihuCommentRepository(
 
     private fun CommentsPageDto.toDomain(): CommentPage = CommentPage(
         comments = data.map { it.toDomain() },
-        isEnd = paging?.isEnd ?: (paging?.next == null),
-        nextUrl = paging?.next?.takeIf { !(paging.isEnd) },
+        isEnd = paging?.hasMore != true,
+        nextUrl = paging?.nextUrl,
     )
 
     private fun buildSubmitCommentUrl(type: CommentContentType, id: Long): String {

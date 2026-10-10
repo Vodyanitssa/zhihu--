@@ -9,8 +9,7 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.settings.LocalAppSettings
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuTopicRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.platform.rememberUserMessageSink
@@ -23,7 +22,7 @@ import com.zhihuminus.ui.components.rememberShareActionExecutor
 fun TopicRoute(topic: Topic) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {
-        ZhihuTopicRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createTopicRepository()
     }
     val viewModel: TopicViewModel = viewModel(key = "topic_${topic.id}_${topic.section}") {
         TopicViewModel(

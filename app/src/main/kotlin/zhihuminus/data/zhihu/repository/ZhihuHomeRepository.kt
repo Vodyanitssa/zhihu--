@@ -1,24 +1,16 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
-import com.zhihuminus.core.environment.ZhihuApiEnvironment
-import com.zhihuminus.core.environment.postSigned
-import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.api.RECOMMEND_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.feature.home.HomeFeedPage
 import com.zhihuminus.feature.home.HomeRepository
 import com.zhihuminus.feature.home.decodeHomeFeedStartupSnapshot
 import com.zhihuminus.feature.home.encodeHomeFeedStartupSnapshot
-import io.ktor.client.request.forms.MultiPartFormDataContent
-import io.ktor.client.request.forms.formData
-import io.ktor.client.request.header
-import io.ktor.client.request.setBody
-import io.ktor.client.statement.bodyAsText
-import io.ktor.http.isSuccess
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import kotlinx.io.buffered
@@ -28,13 +20,16 @@ import kotlinx.io.readString
 import kotlinx.io.writeString
 
 class ZhihuHomeRepository(
-    private val api: ZhihuFeedApi,
-    private val environment: ZhihuApiEnvironment,
+    private val feedApi: ZhihuFeedApi,
+    private val notificationApi: ZhihuNotificationApi,
     private val startupCacheFile: Path? = null,
-    private val notificationApi: ZhihuNotificationApi = api as ZhihuNotificationApi,
+    private val postCache: PostContentCache = PostContentCache,
 ) : HomeRepository {
     override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
-        val feedPage = api.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
+        val feedPage = feedApi.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
+        feedPage.items.forEach { item ->
+            item.target?.let { postCache.putFromFeed(it) }
+        }
         val displayItems = feedPage.items.flattenFeeds().map { it.toDisplayItem() }
         return HomeFeedPage(
             items = displayItems,
@@ -44,47 +39,11 @@ class ZhihuHomeRepository(
     }
 
     override suspend fun reportContentTouch(untouchedItems: List<Pair<String, String>>) {
-        if (untouchedItems.isEmpty()) return
-        if (environment.authenticatedCookies()["d_c0"] == null) return
-
-        try {
-            val payload = untouchedItems.map { (type, id) -> listOf(type, id, "touch") }
-            val response = environment.postSigned("https://www.zhihu.com/lastread/touch") {
-                header("x-requested-with", "fetch")
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            append("items", ZhihuJson.json.encodeToString(payload))
-                        },
-                    ),
-                )
-            }
-            if (!response.status.isSuccess()) {
-                Log.e("ZhihuHomeRepository", "Touch report failed: ${response.bodyAsText()}")
-            }
-        } catch (e: Exception) {
-            Log.w("ZhihuHomeRepository", "Failed to report content touch", e)
-        }
+        feedApi.reportContentTouch(untouchedItems)
     }
 
     override suspend fun reportContentRead(type: String, id: String) {
-        if (environment.authenticatedCookies()["d_c0"] == null) return
-
-        try {
-            val payload = listOf(listOf(type, id, "read"))
-            environment.postSigned("https://www.zhihu.com/lastread/touch") {
-                header("x-requested-with", "fetch")
-                setBody(
-                    MultiPartFormDataContent(
-                        formData {
-                            append("items", ZhihuJson.json.encodeToString(payload))
-                        },
-                    ),
-                )
-            }
-        } catch (e: Exception) {
-            Log.w("ZhihuHomeRepository", "Failed to report content read", e)
-        }
+        feedApi.reportContentRead(type, id)
     }
 
     override suspend fun fetchUnreadNotificationCount(): Int = try {

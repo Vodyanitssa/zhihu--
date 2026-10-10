@@ -6,8 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuCollectionRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.platform.rememberUserMessageSink
 
 @Composable
@@ -20,7 +19,7 @@ fun CollectionRoute(
 ) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {
-        ZhihuCollectionRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createCollectionRepository()
     }
     val viewModel: CollectionViewModel = viewModel(key = urlToken) {
         CollectionViewModel(urlToken.orEmpty(), repository)

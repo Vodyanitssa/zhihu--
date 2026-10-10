@@ -53,13 +53,7 @@ data class TopicPinCounterDto(
 )
 
 @Serializable
-data class TopicPagingDto(
-    val isEnd: Boolean = true,
-    val next: String? = null,
-)
-
-@Serializable
 data class TopicFeedResponseDto(
     val data: List<JsonElement> = emptyList(),
-    val paging: TopicPagingDto? = null,
+    val paging: PagingDto? = null,
 )

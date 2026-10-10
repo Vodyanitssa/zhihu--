@@ -1,10 +1,9 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.booleanCompat
 import com.zhihuminus.data.cache.PostContentCache
-import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
 import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
@@ -27,15 +26,14 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
-import kotlinx.serialization.json.encodeToJsonElement
-import kotlinx.serialization.json.jsonObject
 import kotlin.coroutines.cancellation.CancellationException
 
 class ZhihuPostRepository(
-    private val api: ZhihuPostApi,
-    private val collectionApi: ZhihuCollectionApi = api as ZhihuCollectionApi,
-    private val peopleApi: ZhihuPeopleApi = api as ZhihuPeopleApi,
-    private val historyApi: ZhihuHistoryApi = api as ZhihuHistoryApi,
+    private val postApi: ZhihuPostApi,
+    private val collectionApi: ZhihuCollectionApi,
+    private val peopleApi: ZhihuPeopleApi,
+    private val historyApi: ZhihuHistoryApi,
+    private val postCache: PostContentCache = PostContentCache,
 ) : PostRepository {
     private val cacheScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
@@ -50,52 +48,26 @@ class ZhihuPostRepository(
         }
     }
 
-    override suspend fun getPost(type: PostType, id: Long): Post = when (type) {
-        PostType.Answer -> api.getAnswer(id).also { cachePost(type, id, it) }.let(::mapAnswer)
-        PostType.Article -> api.getArticle(id).also { cachePost(type, id, it) }.let(::mapArticle)
-        PostType.Pin -> api.getPin(id).also { cachePost(type, id, it) }.let(::mapPin)
+    override suspend fun getPost(type: PostType, id: Long): Post {
+        val post = when (type) {
+            PostType.Answer -> mapAnswer(postApi.getAnswer(id))
+            PostType.Article -> mapArticle(postApi.getArticle(id))
+            PostType.Pin -> mapPin(postApi.getPin(id))
+        }
+        postCache.put(post)
+        return post
     }
 
-    override suspend fun getCachedPost(type: PostType, id: Long): Post? {
-        val json = PostContentCache.get(type, id) ?: return null
-        return try {
-            when (type) {
-                PostType.Answer -> mapAnswer(ZhihuJson.decodeJson<AnswerDto>(json))
-                PostType.Article -> mapArticle(ZhihuJson.decodeJson<ArticleDto>(json))
-                PostType.Pin -> mapPin(ZhihuJson.decodeJson<PinDto>(json))
-            }
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Log.e("ZhihuPostRepository", "Failed to decode cached post $type/$id", e)
-            null
-        }
-    }
-
-    /**
-     * 网络详情写入缓存（详情数据保真度高于 feed 预热，直接覆盖）。
-     * 编码/写入失败只影响缓存，不抛出。
-     */
-    private suspend inline fun <reified T : Any> cachePost(
-        type: PostType,
-        id: Long,
-        dto: T,
-    ) {
-        try {
-            val payload = ZhihuJson.json.encodeToJsonElement(dto).jsonObject
-            PostContentCache.put(type, id, payload)
-        } catch (e: Exception) {
-            if (e is CancellationException) throw e
-            Log.e("ZhihuPostRepository", "Failed to cache post $type/$id", e)
-        }
-    }
+    override suspend fun getCachedPost(type: PostType, id: Long): Post? =
+        postCache.get(type, id)
 
     override suspend fun vote(postType: PostType, id: Long, vote: String): Int {
         val result = when (postType) {
-            PostType.Answer -> api.voteAnswer(id, vote)
-            PostType.Article -> api.voteArticle(id, vote)
+            PostType.Answer -> postApi.voteAnswer(id, vote)
+            PostType.Article -> postApi.voteArticle(id, vote)
             PostType.Pin -> when (vote) {
-                "up" -> api.likePin(id)
-                "neutral" -> api.unlikePin(id)
+                "up" -> postApi.likePin(id)
+                "neutral" -> postApi.unlikePin(id)
                 else -> throw UnsupportedOperationException("Pin does not support vote: $vote")
             }
         }
@@ -103,7 +75,7 @@ class ZhihuPostRepository(
         return result
     }
 
-    override suspend fun submitPinPollVote(pollId: String, optionId: String) = api.submitPinPollVote(pollId, optionId)
+    override suspend fun submitPinPollVote(pollId: String, optionId: String) = postApi.submitPinPollVote(pollId, optionId)
 
     override suspend fun getCollections(postType: PostType, id: Long): List<Collection> {
         val type = when (postType) {

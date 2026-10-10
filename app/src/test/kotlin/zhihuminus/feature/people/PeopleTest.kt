@@ -1,11 +1,11 @@
 package com.zhihuminus.feature.people
 
-import com.zhihuminus.data.FakeZhihuApi
+import com.zhihuminus.data.FakeZhihuApiEnvironment
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.navDestination
-import com.zhihuminus.data.zhihu.ZhihuPeopleRepository
+import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
@@ -15,7 +15,8 @@ import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
-import com.zhihuminus.data.zhihu.toGithubSocialUiState
+import com.zhihuminus.data.zhihu.repository.ZhihuPeopleRepository
+import com.zhihuminus.data.zhihu.repository.toGithubSocialUiState
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person
@@ -623,7 +624,7 @@ class PeopleTest {
             voteupCount = 10,
             commentCount = 2,
         )
-        val fakeApi = object : FakeZhihuApi() {
+        val fakeApi = object : ZhihuPeopleApi(FakeZhihuApiEnvironment) {
             override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
                 FeedPage(
                     items = listOf(
@@ -662,7 +663,7 @@ class PeopleTest {
             voteupCount = 10,
             commentCount = 2,
         )
-        val fakeApi = object : FakeZhihuApi() {
+        val fakeApi = object : ZhihuPeopleApi(FakeZhihuApiEnvironment) {
             override suspend fun fetchMemberActivities(userTokenOrId: String, nextUrl: String?): FeedPage =
                 FeedPage(
                     items = listOf(

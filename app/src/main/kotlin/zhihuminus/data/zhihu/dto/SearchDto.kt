@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
@@ -30,7 +29,7 @@ data class TopicSearchDto(
 @Serializable
 data class SearchResponseDto(
     val data: List<SearchItemDto> = emptyList(),
-    val paging: ZhihuPaging? = null,
+    val paging: PagingDto? = null,
 )
 
 @Serializable

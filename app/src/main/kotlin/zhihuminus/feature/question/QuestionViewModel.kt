@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
@@ -37,7 +36,6 @@ class QuestionViewModel(
     private val questionId: Long,
     initialTitle: String,
     private val repository: QuestionRepository,
-    private val apiEnvironment: ZhihuApiEnvironment,
 ) : ViewModel() {
     var uiState by mutableStateOf(QuestionUiState(title = initialTitle))
         private set

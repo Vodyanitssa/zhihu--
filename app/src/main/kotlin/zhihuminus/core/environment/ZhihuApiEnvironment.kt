@@ -9,17 +9,12 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.post
-import io.ktor.client.request.setBody
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLProtocol
-import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.buildJsonObject
-import kotlinx.serialization.json.put
-import io.ktor.http.ContentType as KtorContentType
 
 interface ZhihuApiEnvironment {
     fun httpClient(): HttpClient
@@ -76,24 +71,6 @@ interface ZhihuApiEnvironment {
         error: Exception,
     ) {
         Log.e(tag ?: "ZhihuApiEnvironment", "Failed to decode item: $item", error)
-    }
-}
-
-suspend fun ZhihuApiEnvironment.addReadHistory(
-    contentToken: String,
-    contentTypeName: String,
-) {
-    if (authenticatedCookies()["d_c0"] == null) return
-    runCatching {
-        postSigned("https://www.zhihu.com/api/v4/read_history/add") {
-            contentType(KtorContentType.Application.Json)
-            setBody(
-                buildJsonObject {
-                    put("content_token", contentToken)
-                    put("content_type", contentTypeName)
-                }.toString(),
-            )
-        }
     }
 }
 

@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
@@ -19,8 +19,8 @@ class ZhihuCollectionRepository(
         val response = api.getUserCollections(urlToken, nextUrl)
         return CollectionsPageResult(
             items = response.data.map { it.toDomain() },
-            nextUrl = response.paging.next.takeIf { !response.paging.isEnd && it.isNotBlank() },
-            isEnd = response.paging.isEnd || response.paging.next.isBlank(),
+            nextUrl = response.paging.nextUrl,
+            isEnd = !response.paging.hasMore,
         )
     }
 
@@ -35,8 +35,8 @@ class ZhihuCollectionRepository(
         val response = api.getCollectionItems(collectionId, offset, limit, nextUrl)
         return CollectionContentPageResult(
             items = response.data.map { it.toFeedDisplayItem() },
-            nextUrl = response.paging.next.takeIf { !response.paging.isEnd && it.isNotBlank() },
-            isEnd = response.paging.isEnd || response.paging.next.isBlank(),
+            nextUrl = response.paging.nextUrl,
+            isEnd = !response.paging.hasMore,
         )
     }
 

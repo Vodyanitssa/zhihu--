@@ -7,6 +7,38 @@ import kotlinx.serialization.SerializationException
 import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
+import kotlin.coroutines.cancellation.CancellationException
+
+/**
+ * 友好业务领域异常封装。
+ */
+class FriendlyException(
+    val friendlyMessage: String,
+    cause: Throwable? = null,
+) : RuntimeException(friendlyMessage, cause)
+
+/**
+ * 将异常转换为友好的本地化错误文本。
+ */
+val Throwable.friendlyMessage: String
+    get() = friendlyErrorMessage(this)
+
+/**
+ * 将当前异常转换为领域友好的 [FriendlyException]。
+ */
+fun Throwable.toFriendlyException(): FriendlyException =
+    if (this is FriendlyException) this else FriendlyException(friendlyErrorMessage(this), this)
+
+/**
+ * 安全执行操作，若捕获异常则转换为友好错误（透传协程取消异常 CancellationException）。
+ */
+inline fun <T> runCatchingFriendly(block: () -> T): Result<T> = try {
+    Result.success(block())
+} catch (e: CancellationException) {
+    throw e
+} catch (e: Throwable) {
+    Result.failure(e.toFriendlyException())
+}
 
 fun friendlyErrorMessage(error: Throwable?): String {
     if (error == null) return "未知错误"
@@ -17,7 +49,8 @@ fun friendlyErrorMessage(error: Throwable?): String {
 private fun unwrapException(error: Throwable): Throwable {
     var current: Throwable = error
     while (current.cause != null && current.cause !== current) {
-        if (current is SocketTimeoutException ||
+        if (current is FriendlyException ||
+            current is SocketTimeoutException ||
             current is java.net.SocketTimeoutException ||
             current is HttpRequestTimeoutException ||
             current is HttpStatusException ||
@@ -28,7 +61,8 @@ private fun unwrapException(error: Throwable): Throwable {
             return current
         }
         val cause = current.cause!!
-        if (cause is SocketTimeoutException ||
+        if (cause is FriendlyException ||
+            cause is SocketTimeoutException ||
             cause is java.net.SocketTimeoutException ||
             cause is HttpRequestTimeoutException ||
             cause is HttpStatusException ||
@@ -44,6 +78,8 @@ private fun unwrapException(error: Throwable): Throwable {
 }
 
 private fun formatThrowable(error: Throwable): String = when (error) {
+    is FriendlyException -> error.friendlyMessage
+
     is SocketTimeoutException,
     is java.net.SocketTimeoutException,
     is HttpRequestTimeoutException,

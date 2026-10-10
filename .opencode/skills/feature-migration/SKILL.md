@@ -19,10 +19,10 @@ feature/<name>/
   components/            # Sub-composables extracted from Screen
 
 data/zhihu/
-  ZhihuApi.kt            # Interface: all API method signatures
-  ZhihuApiImpl.kt        # Implementation: HTTP calls, response parsing
-  dto/<Name>Dto.kt       # @Serializable wire-format models
-  Zhihu<Name>Repository.kt  # Implements feature's repository interface
+  api/Zhihu<Name>Api.kt    # Remote DataSource: endpoint calls and response parsing
+  dto/<Name>Dto.kt         # @Serializable wire-format models
+  repository/Zhihu<Name>Repository.kt  # Implements feature's repository interface
+  ZhihuRepositoryFactory.kt # Unified instantiation and DI factory
 ```
 
 ## Architectural Principles
@@ -173,7 +173,7 @@ Route is the wiring layer:
 @Composable
 fun FooRoute(scrollToTopTrigger: Int = 0) {
     val environment = rememberPaginationEnvironment()
-    val repository = remember(environment) { ZhihuFooRepository(ZhihuApiImpl(environment)) }
+    val repository = remember(environment) { ZhihuRepositoryFactory(environment.apiEnvironment).fooRepository }
     val viewModel: FooViewModel = viewModel { FooViewModel(repository) }
     val inAppLinkOpener = rememberInAppLinkOpener()
 
@@ -202,9 +202,9 @@ Update call sites in `ui/ZhihuMain.kt`:
 
 ### Phase 7: Add data layer
 
-1. Add API methods to `ZhihuApi` interface
-2. Implement in `ZhihuApiImpl`
-3. Create `ZhihuFooRepository` implementing feature's interface
+1. Add Remote DataSource in `data/zhihu/api/Zhihu<Name>Api.kt`
+2. Create `Zhihu<Name>Repository` in `data/zhihu/repository/` implementing feature's interface
+3. Wire repository into `ZhihuRepositoryFactory.kt`
 4. Move DTOs to `data/zhihu/dto/`
 
 ### Phase 8: Delete old files
@@ -240,8 +240,8 @@ grep -r "import com.zhihuminus.viewmodel.FooViewModel" --include="*.kt"
 | **Route** | Create ViewModel/Repository, collect effects, wire dependencies | Import Screen internals, hold business logic |
 | **Repository (interface)** | Define data contracts | Import HTTP client, Ktor, serialization |
 | **Repository (impl)** | Call API, map DTOs, parse responses | Hold UI state, emit effects |
-| **ZhihuApi** | Define endpoint signatures | Know about domain models |
-| **ZhihuApiImpl** | HTTP calls, JSON parsing | Hold business logic, know about UI |
+| **Zhihu<Name>Api** | HTTP calls, endpoint response parsing | Hold business logic, know about UI |
+| **ZhihuRepositoryFactory** | Instantiate and wire repositories and APIs | Hold business state |
 | **Domain models** | Represent business concepts | Have serialization annotations, HTTP dependencies |
 | **DTOs** | `@Serializable` data classes for API responses | Contain business logic |
 
@@ -337,7 +337,7 @@ Use this checklist for migrating any legacy screen:
 - [ ] **ViewModel**: create MVI ViewModel with `UiState`, `onEvent()`, `Channel<Effect>`
 - [ ] **Screen**: move UI code, replace ViewModel state with parameters, extract components
 - [ ] **Route**: create wiring composable, self-contained for tabs / parameterized for detail screens
-- [ ] **Data**: add API methods to `ZhihuApi`, implement in `ZhihuApiImpl`, create `Zhihu<Name>Repository`
+- [ ] **Data**: add API methods to `data/zhihu/api/Zhihu<Name>Api`, create `Zhihu<Name>Repository` in `data/zhihu/repository/`, wire into `ZhihuRepositoryFactory`
 - [ ] **DTOs**: move `@Serializable` models to `data/zhihu/dto/`
 - [ ] **Wire**: update `ZhihuMain.kt` or `AndroidZhihuMain.kt` call sites
 - [ ] **Delete**: remove old files

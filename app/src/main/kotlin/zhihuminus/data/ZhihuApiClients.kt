@@ -29,7 +29,6 @@ import io.ktor.http.Cookie
 import io.ktor.http.CookieEncoding
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
-import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlin.time.Clock
@@ -104,13 +103,5 @@ class ZhihuCookieStorage(
     override fun close() = Unit
 }
 
-@Serializable
-data class ZhihuPaging(
-    val page: Int = -1,
-    val isEnd: Boolean = false,
-    val isStart: Boolean = false,
-    val previous: String? = null,
-    val totals: Int = 0,
-    val next: String,
-    val prev: String? = null,
-)
+@Deprecated("Use com.zhihuminus.data.zhihu.dto.PagingDto instead", ReplaceWith("PagingDto", "com.zhihuminus.data.zhihu.dto.PagingDto"))
+typealias ZhihuPaging = com.zhihuminus.data.zhihu.dto.PagingDto

@@ -18,8 +18,7 @@ import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuHomeRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.UserMessageDuration
@@ -45,11 +44,7 @@ fun HomeRoute(
 
     val repository = remember(appPrivateDirectory, paginationEnvironment) {
         val cacheFile = Path(appPrivateDirectory, homeFeedStartupCacheFileName())
-        ZhihuHomeRepository(
-            api = ZhihuApiImpl(paginationEnvironment),
-            environment = paginationEnvironment,
-            startupCacheFile = cacheFile,
-        )
+        ZhihuRepositoryFactory(paginationEnvironment).createHomeRepository(startupCacheFile = cacheFile)
     }
 
     val viewModel: HomeViewModel = viewModel {

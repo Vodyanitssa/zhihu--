@@ -8,7 +8,7 @@ data class HistoryDeletePair(
 /**
  * 在线浏览历史记录的业务模型。
  *
- * 由 [com.zhihuminus.data.zhihu.ZhihuHistoryRepository] 从 API DTO 解析而来，
+ * 由 [com.zhihuminus.data.zhihu.repository.ZhihuHistoryRepository] 从 API DTO 解析而来，
  * Feature 层只依赖此类型，不感知 API 细节。
  */
 data class HistoryItem(

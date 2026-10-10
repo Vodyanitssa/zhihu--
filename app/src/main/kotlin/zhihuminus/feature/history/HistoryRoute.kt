@@ -5,8 +5,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuHistoryRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.platform.rememberUserMessageSink
 
@@ -17,7 +16,7 @@ fun HistoryRoute(
 ) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {
-        ZhihuHistoryRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createHistoryRepository()
     }
     val viewModel: HistoryViewModel = viewModel {
         HistoryViewModel(repository)

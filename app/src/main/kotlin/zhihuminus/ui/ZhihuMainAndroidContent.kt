@@ -23,11 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.navigation.NavHostController
 import com.zhihuminus.MainActivity
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuColumnRepository
-import com.zhihuminus.data.zhihu.ZhihuCommentRepository
-import com.zhihuminus.data.zhihu.ZhihuPostRepository
-import com.zhihuminus.data.zhihu.ZhihuQuestionRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.feature.column.ColumnRoute
 import com.zhihuminus.feature.post.PostRoute
 import com.zhihuminus.feature.question.QuestionRoute
@@ -54,14 +50,9 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 activity.consumePendingCommentId(destination)
             }
             val environment = rememberPaginationEnvironment()
-            val repository = remember {
-                val api = ZhihuApiImpl(environment)
-                ZhihuPostRepository(api)
-            }
-            val commentRepository = remember {
-                val api = ZhihuApiImpl(environment)
-                ZhihuCommentRepository(api)
-            }
+            val factory = remember(environment) { ZhihuRepositoryFactory(environment) }
+            val repository = remember(factory) { factory.createPostRepository() }
+            val commentRepository = remember(factory) { factory.createCommentRepository() }
             PostRoute(
                 destination = destination,
                 repository = repository,
@@ -76,12 +67,9 @@ fun AndroidZhihuMain(navController: NavHostController) {
                 activity.consumePendingCommentId(destination)
             }
             val environment = rememberPaginationEnvironment()
-            val questionRepository = remember(environment) {
-                ZhihuQuestionRepository(ZhihuApiImpl(environment))
-            }
-            val commentRepository = remember(environment) {
-                ZhihuCommentRepository(ZhihuApiImpl(environment))
-            }
+            val factory = remember(environment) { ZhihuRepositoryFactory(environment) }
+            val questionRepository = remember(factory) { factory.createQuestionRepository() }
+            val commentRepository = remember(factory) { factory.createCommentRepository() }
             QuestionRoute(
                 destination = destination,
                 repository = questionRepository,
@@ -94,9 +82,8 @@ fun AndroidZhihuMain(navController: NavHostController) {
         },
         columnContent = { destination, _ ->
             val environment = rememberPaginationEnvironment()
-            val columnRepository = remember(environment) {
-                ZhihuColumnRepository(ZhihuApiImpl(environment))
-            }
+            val factory = remember(environment) { ZhihuRepositoryFactory(environment) }
+            val columnRepository = remember(factory) { factory.createColumnRepository() }
             ColumnRoute(
                 columnId = destination.columnId,
                 repository = columnRepository,

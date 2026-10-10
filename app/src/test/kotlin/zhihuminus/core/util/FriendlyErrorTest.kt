@@ -5,12 +5,14 @@ import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
 import io.ktor.http.HttpStatusCode
 import io.ktor.http.Url
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.SerializationException
 import java.io.IOException
 import java.net.ConnectException
 import java.net.UnknownHostException
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFailsWith
 import kotlin.test.assertTrue
 
 class FriendlyErrorTest {
@@ -86,5 +88,42 @@ class FriendlyErrorTest {
     fun handlesGenericIoExceptions() {
         val brokenPipe = IOException("write failed: Broken pipe")
         assertTrue(friendlyErrorMessage(brokenPipe).contains("中断"))
+    }
+
+    @Test
+    fun testFriendlyExceptionAndExtensions() {
+        val ex = FriendlyException("自定义错误信息")
+        assertEquals("自定义错误信息", friendlyErrorMessage(ex))
+        assertEquals("自定义错误信息", ex.friendlyMessage)
+
+        val timeout = SocketTimeoutException("timeout")
+        val friendly = timeout.toFriendlyException()
+        assertEquals("网络连接超时，请检查网络后重试", friendly.friendlyMessage)
+        assertEquals(timeout, friendly.cause)
+
+        // Idempotent
+        assertEquals(friendly, friendly.toFriendlyException())
+    }
+
+    @Test
+    fun testRunCatchingFriendly() {
+        val successResult = runCatchingFriendly { "hello" }
+        assertTrue(successResult.isSuccess)
+        assertEquals("hello", successResult.getOrNull())
+
+        val failResult = runCatchingFriendly {
+            throw UnknownHostException("no internet")
+        }
+        assertTrue(failResult.isFailure)
+        val error = failResult.exceptionOrNull()
+        assertTrue(error is FriendlyException)
+        assertEquals("无法连接到服务器，请检查网络设置", error.friendlyMessage)
+
+        // CancellationException must rethrow
+        assertFailsWith<CancellationException> {
+            runCatchingFriendly {
+                throw CancellationException("cancelled")
+            }
+        }
     }
 }

@@ -37,7 +37,7 @@ fun QuestionRoute(
     destination: Question,
     repository: QuestionRepository,
     commentRepository: CommentRepository,
-    apiEnvironment: ZhihuApiEnvironment,
+    apiEnvironment: ZhihuApiEnvironment? = null,
     articleHost: ArticleHost?,
     onBack: () -> Unit,
     initialCommentId: String? = null,
@@ -57,7 +57,6 @@ fun QuestionRoute(
                 questionId = destination.questionId,
                 initialTitle = destination.title,
                 repository = repository,
-                apiEnvironment = apiEnvironment,
             )
         }
 

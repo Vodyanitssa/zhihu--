@@ -1,4 +1,4 @@
-package com.zhihuminus.data.zhihu
+package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
@@ -17,8 +17,8 @@ class ZhihuColumnRepository(
         val articles = page.data.map { it.toFeedDisplayItem() }
         return ColumnArticleResult(
             articles = articles,
-            nextUrl = page.paging.next,
-            isEnd = page.paging.isEnd,
+            nextUrl = page.paging.nextUrl,
+            isEnd = !page.paging.hasMore,
             totals = page.paging.totals,
         )
     }

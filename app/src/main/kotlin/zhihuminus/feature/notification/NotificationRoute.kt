@@ -10,8 +10,7 @@ import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.state.UnreadNotificationState
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.platform.rememberUserMessageSink
 
@@ -25,7 +24,7 @@ fun NotificationRoute(
 ) {
     val environment = rememberPaginationEnvironment()
     val repository = remember(environment) {
-        ZhihuNotificationRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createNotificationRepository()
     }
     val viewModel: NotificationViewModel = viewModel {
         NotificationViewModel(repository)

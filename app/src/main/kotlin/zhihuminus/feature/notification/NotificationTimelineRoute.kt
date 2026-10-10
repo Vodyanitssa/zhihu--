@@ -8,8 +8,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
-import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
+import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.resolveContent
@@ -27,7 +26,7 @@ fun NotificationTimelineRoute(
     val environment = rememberPaginationEnvironment()
     val settingsRepository = remember(context) { AndroidAppSettingsRepository.getInstance(context) }
     val repository = remember(environment) {
-        ZhihuNotificationRepository(ZhihuApiImpl(environment))
+        ZhihuRepositoryFactory(environment).createNotificationRepository()
     }
     val viewModel: NotificationTimelineViewModel = viewModel(key = "notification_timeline_$entryName") {
         NotificationTimelineViewModel(

@@ -1,6 +1,5 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.ZhihuPaging
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -8,7 +7,7 @@ data class NotificationOverviewDto(
     val head: List<NotificationHeadEntryDto> = emptyList(),
     val columnHead: List<NotificationColumnHeadDto> = emptyList(),
     val data: List<NotificationTimelineItemDto> = emptyList(),
-    val paging: ZhihuPaging? = null,
+    val paging: PagingDto? = null,
 )
 
 @Serializable

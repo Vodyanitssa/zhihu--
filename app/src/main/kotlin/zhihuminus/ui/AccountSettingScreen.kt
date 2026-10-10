@@ -84,7 +84,7 @@ import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
-import com.zhihuminus.data.zhihu.ZhihuApiImpl
+import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.Collections
 import com.zhihuminus.navigation.History
@@ -132,7 +132,7 @@ fun AccountSettingScreen(
             return@LaunchedEffect
         }
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
-            val api = ZhihuApiImpl(environment)
+            val api = ZhihuNotificationApi(environment)
             val count = runCatching { api.getMeNotifications().totalCount }.getOrDefault(0)
             UnreadNotificationState.update(count)
         }
