@@ -9,7 +9,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -27,7 +26,6 @@ import com.zhihuminus.platform.UserMessageDuration
 import com.zhihuminus.platform.rememberAppPrivateDirectory
 import com.zhihuminus.platform.rememberUserMessageSink
 import com.zhihuminus.ui.components.HandleTopLevelReselect
-import com.zhihuminus.ui.homeFeedStartupCacheFileName
 import com.zhihuminus.ui.rememberAccountSettingsAccountState
 import kotlinx.io.files.Path
 

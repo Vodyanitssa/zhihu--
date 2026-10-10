@@ -34,16 +34,6 @@ import androidx.navigation.NavHostController
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.TopLevelDestination
-import kotlinx.serialization.json.JsonObject
-import kotlinx.serialization.json.booleanOrNull
-import kotlinx.serialization.json.jsonPrimitive
-
-internal fun JsonObject?.booleanCompat(vararg keys: String): Boolean {
-    if (this == null) return false
-    return keys.firstNotNullOfOrNull { key ->
-        get(key)?.jsonPrimitive?.booleanOrNull
-    } ?: false
-}
 
 /**
  * 文章页需要从外围应用获取的宿主级服务。

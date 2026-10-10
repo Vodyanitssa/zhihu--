@@ -57,7 +57,6 @@ import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.AppRuntimeStorage
-import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CommentHolder
@@ -98,7 +97,6 @@ class MainActivity :
         set(value) {
             sharedData.clipboardDestination = value
         }
-    lateinit var history: HistoryStorage
     val httpClient by lazy {
         AccountData.httpClient(this)
     }
@@ -136,7 +134,6 @@ class MainActivity :
         }
         super.onCreate(savedInstanceState)
         clearShareImageCache(this)
-        history = HistoryStorage(this)
         AccountData.loadData(this)
         AndroidThemeSettings.initialize(this)
 
@@ -324,7 +321,6 @@ class MainActivity :
         if (pendingCommentHolder?.article != route) {
             pendingCommentHolder = null
         }
-        history.add(route)
         if (route is Video) {
             val current = runCatching {
                 navController.currentBackStackEntry?.toRoute<PostDestination>()
@@ -419,9 +415,7 @@ class MainActivity :
         }
     }
 
-    override fun postHistoryDestination(destination: NavDestination) {
-        history.add(destination)
-    }
+    override fun postHistoryDestination(destination: NavDestination) = Unit
 
     @Suppress("unused")
     companion object {

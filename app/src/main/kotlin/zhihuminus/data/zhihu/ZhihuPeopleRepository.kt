@@ -4,9 +4,12 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
+import com.zhihuminus.data.zhihu.dto.MemberItemDto
+import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
 import com.zhihuminus.feature.people.FollowedTopic
+import com.zhihuminus.feature.people.GithubSocialUiState
 import com.zhihuminus.feature.people.PeopleColumnItem
 import com.zhihuminus.feature.people.PeopleCreationItem
 import com.zhihuminus.feature.people.PeopleMemberItem
@@ -334,3 +337,37 @@ class ZhihuPeopleRepository(
         )
     }
 }
+
+fun MemberSocialMediaDto.toGithubSocialUiState(): GithubSocialUiState? {
+    if (!title.startsWith("GitHub", ignoreCase = true)) return null
+    val starCount = modules
+        .firstOrNull { it.title.equals("stars", ignoreCase = true) }
+        ?.value
+        ?.takeIf { it.isNotBlank() } ?: return null
+    val profileLink = link.takeIf { it.isNotBlank() } ?: return null
+    val profileUrl = if (profileLink.startsWith("zhihu://", ignoreCase = true)) {
+        val username = title.substringAfter('·', "").trim().takeIf { it.isNotBlank() } ?: return null
+        "https://github.com/$username"
+    } else {
+        profileLink
+    }
+    return GithubSocialUiState(
+        title = title,
+        starCount = starCount,
+        profileUrl = profileUrl,
+        iconUrl = icon.takeIf { it.isNotBlank() },
+    )
+}
+
+fun MemberItemDto.toPeopleMemberItem(): PeopleMemberItem = PeopleMemberItem(
+    id = id,
+    urlToken = urlToken ?: "",
+    name = name,
+    avatarUrl = avatarUrl,
+    headline = headline,
+    officialBadge = badgeV2?.toOfficialBadge(),
+    answerCount = answerCount,
+    articleCount = articlesCount,
+    followerCount = followerCount,
+    isFollowing = isFollowing,
+)

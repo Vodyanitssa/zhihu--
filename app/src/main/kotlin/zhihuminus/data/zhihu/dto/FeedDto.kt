@@ -26,8 +26,6 @@ sealed interface FeedDto {
 
 @Serializable
 sealed interface FeedTargetDto {
-    fun filterReason(): String? = null
-
     fun description(): String = when (this) {
         is AnswerTargetDto -> "回答"
         is VideoTargetDto -> "视频"
@@ -94,12 +92,6 @@ data class AnswerTargetDto(
     @Serializable(with = BooleanCompatSerializer::class)
     val allowSegmentInteraction: Boolean = false,
 ) : FeedTargetDto {
-    override fun filterReason(): String? = if (voteupCount < 10 && author?.isFollowing == false) {
-        "规则：回答；赞数 < 10，未关注作者"
-    } else {
-        null
-    }
-
     override val detailsText = "回答 · $voteupCount 赞同 · $commentCount 评论"
     override val title: String
         get() = question.title
@@ -117,13 +109,6 @@ data class VideoTargetDto(
     val description: String = "",
     override val excerpt: String = "",
 ) : FeedTargetDto {
-    override fun filterReason(): String? =
-        if (author != null && author.followersCount < 50 && voteCount < 20 && !author.isFollowing) {
-            "规则：所有视频"
-        } else {
-            null
-        }
-
     override val detailsText = "视频 · $voteCount 赞 · $commentCount 评论"
 
     override val createdTime: Long
@@ -190,13 +175,6 @@ data class ArticleTargetDto(
         allowSegmentInteraction = allowSegmentInteraction,
     )
 
-    override fun filterReason(): String? =
-        if (author != null && (author.followersCount < 50 || voteupCount < 20) && !author.isFollowing) {
-            "规则：文章；作者粉丝数 < 50 或 文章赞数 < 20，未关注作者"
-        } else {
-            null
-        }
-
     override val detailsText = "文章 · $voteupCount 赞 · $commentCount 评论"
 
     override val excerpt: String
@@ -225,8 +203,6 @@ data class PinTargetDto(
     val reactionCount: Int = 0,
     val favoriteCount: Int = 0,
 ) : FeedTargetDto {
-    override fun filterReason(): String? = null
-
     override val detailsText = "想法 · $likeCount 赞 · $commentCount 评论"
     override val title: String
         get() = "想法"
@@ -266,12 +242,6 @@ data class QuestionTargetDto(
 ) : FeedTargetDto {
     override val title: String
         get() = _title ?: _name.orEmpty()
-
-    override fun filterReason(): String? = if (answerCount < 5 && followerCount < 50) {
-        "规则：问题；回答数 < 5，关注数 < 50"
-    } else {
-        null
-    }
 
     override val detailsText = "问题 · $followerCount 关注 · $answerCount 回答"
 

@@ -16,12 +16,11 @@ import com.zhihuminus.core.util.HttpStatusException
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.HistoryStorage
 import com.zhihuminus.data.ZhihuCookieStorage
 import com.zhihuminus.data.ZhihuJson.json
+import com.zhihuminus.feature.home.homeFeedStartupCacheFileNames
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.platform.androidUserMessageSink
-import com.zhihuminus.ui.homeFeedStartupCacheFileNames
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
@@ -127,11 +126,7 @@ open class AndroidPaginationEnvironment(
         }
     }
 
-    override fun localHistory(): List<NavDestination> = HistoryStorage(context).history
-
-    override suspend fun postHistoryDestination(destination: NavDestination) {
-        HistoryStorage(context).add(destination)
-    }
+    override suspend fun postHistoryDestination(destination: NavDestination) = Unit
 
     override fun setPlainTextClipboard(
         label: String,

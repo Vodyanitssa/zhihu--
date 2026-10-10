@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.util.booleanCompat
 import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.cache.PostContentCache
@@ -18,7 +19,6 @@ import com.zhihuminus.feature.post.PostPollOption
 import com.zhihuminus.feature.post.PostRepository
 import com.zhihuminus.feature.post.PostTopic
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.ui.booleanCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

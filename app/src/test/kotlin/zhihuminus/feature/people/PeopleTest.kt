@@ -15,6 +15,7 @@ import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.toGithubSocialUiState
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person

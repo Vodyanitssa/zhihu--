@@ -1,8 +1,6 @@
 package com.zhihuminus.data.zhihu.dto
 
 import com.zhihuminus.data.OfficialBadge
-import com.zhihuminus.feature.people.GithubSocialUiState
-import com.zhihuminus.feature.people.PeopleMemberItem
 import kotlinx.serialization.Serializable
 
 @Serializable
@@ -67,28 +65,7 @@ data class MemberSocialMediaDto(
     val link: String = "",
     val icon: String = "",
     val modules: List<MemberSocialMediaModuleDto> = emptyList(),
-) {
-    fun toGithubSocialUiState(): GithubSocialUiState? {
-        if (!title.startsWith("GitHub", ignoreCase = true)) return null
-        val starCount = modules
-            .firstOrNull { it.title.equals("stars", ignoreCase = true) }
-            ?.value
-            ?.takeIf { it.isNotBlank() } ?: return null
-        val profileLink = link.takeIf { it.isNotBlank() } ?: return null
-        val profileUrl = if (profileLink.startsWith("zhihu://", ignoreCase = true)) {
-            val username = title.substringAfter('·', "").trim().takeIf { it.isNotBlank() } ?: return null
-            "https://github.com/$username"
-        } else {
-            profileLink
-        }
-        return GithubSocialUiState(
-            title = title,
-            starCount = starCount,
-            profileUrl = profileUrl,
-            iconUrl = icon.takeIf { it.isNotBlank() },
-        )
-    }
-}
+)
 
 @Serializable
 data class MemberProfileDto(
@@ -119,20 +96,7 @@ data class MemberItemDto(
     val articlesCount: Int = 0,
     val followerCount: Int = 0,
     val isFollowing: Boolean = false,
-) {
-    fun toPeopleMemberItem(): PeopleMemberItem = PeopleMemberItem(
-        id = id,
-        urlToken = urlToken ?: "",
-        name = name,
-        avatarUrl = avatarUrl,
-        headline = headline,
-        officialBadge = badgeV2?.toOfficialBadge(),
-        answerCount = answerCount,
-        articleCount = articlesCount,
-        followerCount = followerCount,
-        isFollowing = isFollowing,
-    )
-}
+)
 
 @Serializable
 data class MemberColumnItemDto(

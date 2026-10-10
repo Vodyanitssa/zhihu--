@@ -9,8 +9,8 @@ import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.feature.home.HomeFeedPage
 import com.zhihuminus.feature.home.HomeRepository
-import com.zhihuminus.ui.decodeHomeFeedStartupSnapshot
-import com.zhihuminus.ui.encodeHomeFeedStartupSnapshot
+import com.zhihuminus.feature.home.decodeHomeFeedStartupSnapshot
+import com.zhihuminus.feature.home.encodeHomeFeedStartupSnapshot
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header

@@ -1,9 +1,6 @@
 package com.zhihuminus.core.settings.model
 
 import com.zhihuminus.feature.notification.NotificationType
-import com.zhihuminus.navigation.Daily
-import com.zhihuminus.navigation.Follow
-import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.theme.ThemeMode
 import kotlinx.serialization.Serializable
