@@ -17,7 +17,7 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.ZhihuCookieStorage
-import com.zhihuminus.data.ZhihuJson.json
+import com.zhihuminus.data.common.ZhihuJson.json
 import com.zhihuminus.feature.home.homeFeedStartupCacheFileNames
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.platform.androidUserMessageSink

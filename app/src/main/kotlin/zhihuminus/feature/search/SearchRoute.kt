@@ -12,7 +12,7 @@ import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
-import com.zhihuminus.data.SearchHistoryStorage
+import com.zhihuminus.data.local.SearchHistoryStore
 import com.zhihuminus.data.zhihu.ZhihuSearchRepository
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Search
@@ -27,7 +27,7 @@ fun SearchRoute(
     val navigator = LocalNavigator.current
     val userMessages = rememberUserMessageSink()
     val settingsRepository = remember(context) { AndroidAppSettingsRepository.getInstance(context) }
-    val historyStorage = remember(context) { SearchHistoryStorage(context) }
+    val historyStorage = remember(context) { SearchHistoryStore(context) }
     val paginationEnvironment = rememberPaginationEnvironment()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current

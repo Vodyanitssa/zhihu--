@@ -17,7 +17,7 @@
 
 package com.zhihuminus.account
 
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement

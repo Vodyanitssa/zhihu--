@@ -6,10 +6,10 @@ import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.raiseForStatus
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.SearchHistoryStorage
-import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.ZhihuPaging
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
+import com.zhihuminus.data.local.SearchHistoryStore
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.FeedTargetDto
@@ -40,7 +40,7 @@ private const val SEARCH_VERTICAL_INFO = "0,0,0,0,0,0,0,0,0,0,0,0"
 class ZhihuSearchRepository(
     private val environment: PaginationEnvironment,
     private val settingsRepository: AppSettingsRepository,
-    private val historyStorage: SearchHistoryStorage,
+    private val historyStorage: SearchHistoryStore,
 ) : SearchRepository {
     override suspend fun searchGeneral(
         query: String,

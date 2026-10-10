@@ -1,7 +1,7 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson

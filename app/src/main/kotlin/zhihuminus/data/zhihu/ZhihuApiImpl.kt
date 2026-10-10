@@ -5,10 +5,10 @@ import com.zhihuminus.core.environment.deleteSigned
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.raiseForStatus
-import com.zhihuminus.data.ZhihuJson
-import com.zhihuminus.data.ZhihuJson.decodeJson
 import com.zhihuminus.data.ZhihuPaging
 import com.zhihuminus.data.cache.PostContentCache
+import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson.decodeJson
 import com.zhihuminus.data.zhihu.crypto.ZhihuMessageBodyEncryptor
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto

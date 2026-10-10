@@ -10,7 +10,6 @@ import com.zhihuminus.core.content.renderer.PictureRenderer
 import com.zhihuminus.core.platform.FileExporter
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
-import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.components.PostBottomBarState
 import kotlinx.coroutines.CancellationException

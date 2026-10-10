@@ -1,7 +1,6 @@
 package com.zhihuminus.feature.post
 
 import android.app.Application
-import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.collection.Collection
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi

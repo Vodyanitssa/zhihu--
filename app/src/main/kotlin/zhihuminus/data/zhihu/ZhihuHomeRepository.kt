@@ -4,7 +4,7 @@ import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.feature.home.HomeFeedPage

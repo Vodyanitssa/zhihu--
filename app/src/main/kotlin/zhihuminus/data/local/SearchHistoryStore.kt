@@ -1,26 +1,36 @@
-package com.zhihuminus.data
+package com.zhihuminus.data.local
 
 import android.content.Context
 import kotlinx.serialization.json.Json
 import java.io.File
 
-class SearchHistoryStorage(
+interface SearchHistoryStore {
+    val history: List<String>
+
+    fun add(query: String)
+
+    fun saveHistory(history: List<String>)
+
+    fun clear()
+}
+
+class FileSearchHistoryStore(
     private val file: File,
     private val maxSize: Int = 20,
-) {
+) : SearchHistoryStore {
     constructor(context: Context, maxSize: Int = 20) : this(
         file = File(context.applicationContext.filesDir, "search_history.json"),
         maxSize = maxSize,
     )
 
     private val _history = mutableListOf<String>()
-    val history: List<String> get() = synchronized(this) { _history.toList() }
+    override val history: List<String> get() = synchronized(this) { _history.toList() }
 
     init {
         load()
     }
 
-    fun add(query: String) {
+    override fun add(query: String) {
         val trimmed = query.trim()
         if (trimmed.isEmpty()) return
         synchronized(this) {
@@ -33,7 +43,7 @@ class SearchHistoryStorage(
         }
     }
 
-    fun saveHistory(history: List<String>) {
+    override fun saveHistory(history: List<String>) {
         synchronized(this) {
             _history.clear()
             _history.addAll(history.take(maxSize))
@@ -41,7 +51,7 @@ class SearchHistoryStorage(
         }
     }
 
-    fun clear() {
+    override fun clear() {
         synchronized(this) {
             _history.clear()
             save()
@@ -78,3 +88,6 @@ class SearchHistoryStorage(
         }
     }
 }
+
+fun SearchHistoryStore(context: Context, maxSize: Int = 20): SearchHistoryStore =
+    FileSearchHistoryStore(context, maxSize)

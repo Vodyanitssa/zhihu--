@@ -56,7 +56,7 @@ import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.AppRuntimeStorage
+import com.zhihuminus.data.local.AppRuntimeStore
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CommentHolder
@@ -137,7 +137,7 @@ class MainActivity :
         AccountData.loadData(this)
         AndroidThemeSettings.initialize(this)
 
-        val runtimeStorage = AppRuntimeStorage(this)
+        val runtimeStorage = AppRuntimeStore(this)
         val lastLaunchTimestamp = runtimeStorage.lastLaunchTimestamp
         val now = System.currentTimeMillis()
         if (now - lastLaunchTimestamp >= TimeUnit.DAYS.toMillis(1)) {

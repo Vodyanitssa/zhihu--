@@ -1,6 +1,6 @@
 package com.zhihuminus.feature.collection
 
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.CollectionItemDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto

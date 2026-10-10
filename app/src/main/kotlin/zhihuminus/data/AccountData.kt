@@ -31,6 +31,8 @@ import com.zhihuminus.account.ZhihuAccountRepository
 import com.zhihuminus.account.ZhihuAccountSession
 import com.zhihuminus.account.ZhihuAccountSessionStore
 import com.zhihuminus.account.ZhihuMobileLoginToken
+import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.common.installZhihuCommonClientConfig
 import io.ktor.client.HttpClient
 import io.ktor.client.HttpClientConfig
 import io.ktor.client.engine.HttpClientEngine
@@ -43,7 +45,7 @@ import kotlinx.serialization.json.decodeFromJsonElement
 import kotlinx.serialization.json.encodeToJsonElement
 import java.io.File
 
-object AccountData {
+object  AccountData {
     val json = ZhihuJson.json
 
     internal val ANDROID_HEADERS = mapOf(

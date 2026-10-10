@@ -17,7 +17,7 @@
 
 package com.zhihuminus.account
 
-import com.zhihuminus.data.fetchVerifiedZhihuSession
+import com.zhihuminus.data.common.fetchVerifiedZhihuSession
 import io.ktor.client.HttpClient
 
 class ZhihuAccountClient(

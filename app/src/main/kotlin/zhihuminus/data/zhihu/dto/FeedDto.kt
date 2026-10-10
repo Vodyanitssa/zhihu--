@@ -1,7 +1,6 @@
 package com.zhihuminus.data.zhihu.dto
 
-import com.zhihuminus.data.BooleanCompatSerializer
-import com.zhihuminus.data.SegmentInfoParagraph
+import com.zhihuminus.data.common.BooleanCompatSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.SerialName

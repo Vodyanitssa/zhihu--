@@ -3,9 +3,8 @@ package com.zhihuminus.data.zhihu
 import com.zhihuminus.core.content.AstParser.parseContent
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.booleanCompat
-import com.zhihuminus.data.VoteUpState
-import com.zhihuminus.data.ZhihuJson
 import com.zhihuminus.data.cache.PostContentCache
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
@@ -19,6 +18,7 @@ import com.zhihuminus.feature.post.PostPollOption
 import com.zhihuminus.feature.post.PostRepository
 import com.zhihuminus.feature.post.PostTopic
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.post.VoteUpState
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

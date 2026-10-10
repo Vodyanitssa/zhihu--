@@ -66,8 +66,8 @@ import com.zhihuminus.core.platform.saveImageToGallery
 import com.zhihuminus.core.platform.shareImage
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.fetchHighestQualityZhihuVideoUrl
 import com.zhihuminus.data.zhihu.crypto.signFetchRequest
+import com.zhihuminus.data.zhihu.fetchHighestQualityZhihuVideoUrl
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent

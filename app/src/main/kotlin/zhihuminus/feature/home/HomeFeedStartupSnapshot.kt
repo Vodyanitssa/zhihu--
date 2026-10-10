@@ -2,7 +2,7 @@ package com.zhihuminus.feature.home
 
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 
 const val HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"
 

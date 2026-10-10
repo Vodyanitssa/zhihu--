@@ -1,7 +1,23 @@
 package com.zhihuminus.feature.post
 
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.data.VoteUpState
+
+enum class VoteUpState(
+    val key: String,
+) {
+    Up("up"),
+    Down("down"),
+    Neutral("neutral"),
+    ;
+
+    companion object {
+        fun from(key: String?): VoteUpState {
+            if (key == null) return Neutral
+            val key = key.lowercase()
+            return VoteUpState.entries.find { it.key == key } ?: Neutral
+        }
+    }
+}
 
 enum class PostType {
     Answer,

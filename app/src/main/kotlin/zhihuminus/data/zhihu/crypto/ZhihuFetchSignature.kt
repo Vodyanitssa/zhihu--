@@ -3,7 +3,7 @@
 package com.zhihuminus.data.zhihu.crypto
 
 import com.zhihuminus.data.AccountData
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
 import io.ktor.http.ContentType

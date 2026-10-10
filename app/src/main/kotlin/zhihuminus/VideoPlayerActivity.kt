@@ -42,10 +42,10 @@ import androidx.media3.common.MediaItem
 import androidx.media3.common.util.UnstableApi
 import androidx.media3.exoplayer.ExoPlayer
 import androidx.media3.ui.PlayerView
-import com.zhihuminus.data.VideoProgressStorage
+import com.zhihuminus.data.local.VideoProgressStore
 
 class VideoPlayerActivity : ComponentActivity() {
-    private val progressStorage by lazy { VideoProgressStorage(this) }
+    private val progressStorage by lazy { VideoProgressStore(this) }
     private var player: ExoPlayer? = null
     private var videoId: Long = 0L
 

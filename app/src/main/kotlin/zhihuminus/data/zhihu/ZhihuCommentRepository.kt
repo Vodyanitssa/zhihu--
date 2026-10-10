@@ -1,7 +1,7 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.util.Log
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.AuthorDto
 import com.zhihuminus.data.zhihu.dto.CommentDto
 import com.zhihuminus.feature.comment.Comment

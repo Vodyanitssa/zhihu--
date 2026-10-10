@@ -39,9 +39,9 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
-import com.zhihuminus.data.VoteUpState
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.post.VoteUpState
 
 data class PostBottomBarState(
     val voteUpState: VoteUpState = VoteUpState.Neutral,

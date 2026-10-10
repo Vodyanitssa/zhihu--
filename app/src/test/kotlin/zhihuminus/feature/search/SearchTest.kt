@@ -1,7 +1,7 @@
 package com.zhihuminus.feature.search
 
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.SearchItemDto
 import com.zhihuminus.data.zhihu.toPeopleMemberItem

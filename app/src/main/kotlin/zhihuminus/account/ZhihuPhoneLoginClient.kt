@@ -17,7 +17,7 @@
 
 package com.zhihuminus.account
 
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.toCookieHeaderString
 import com.zhihuminus.data.zhihu.crypto.ZhihuMessageBodyEncryptor
 import io.ktor.client.HttpClient

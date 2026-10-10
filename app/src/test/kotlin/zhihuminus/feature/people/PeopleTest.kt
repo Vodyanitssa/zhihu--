@@ -3,7 +3,7 @@ package com.zhihuminus.feature.people
 import com.zhihuminus.data.FakeZhihuApi
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.zhihu.ZhihuPeopleRepository
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto

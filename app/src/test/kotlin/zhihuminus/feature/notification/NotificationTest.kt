@@ -6,7 +6,7 @@ import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.data.FakeZhihuApi
-import com.zhihuminus.data.ZhihuJson
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.ZhihuNotificationRepository
 import com.zhihuminus.data.zhihu.dto.NotificationAuthorDto
 import com.zhihuminus.data.zhihu.dto.NotificationColumnHeadDto

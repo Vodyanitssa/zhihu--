@@ -32,7 +32,12 @@ import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.data.zhihu.dto.TopicFeedDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
+import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.Question
 import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 
 @Serializable
@@ -57,6 +62,50 @@ data class FeedDisplayItem(
             ?: feed?.target?.stableTargetKey
             ?: "$title|${summary.orEmpty()}|$details"
 }
+
+private val feedNavigationJson = Json {
+    ignoreUnknownKeys = true
+}
+
+val FeedDisplayItem.navDestination: NavDestination?
+    get() = navDestinationJson
+        ?.let { runCatching { feedNavigationJson.decodeFromString<NavDestination>(it) }.getOrNull() }
+        ?: feed?.target?.navDestination
+
+fun NavDestination.toFeedDisplayItemNavDestinationJson(): String =
+    feedNavigationJson.encodeToString<NavDestination>(this)
+
+val FeedTargetDto.navDestination: NavDestination?
+    get() = when (this) {
+        is AnswerTargetDto -> PostDestination(
+            title = question.title,
+            type = PostType.Answer,
+            id = id,
+            authorName = author?.name ?: "loading...",
+            authorBio = author?.headline ?: "",
+            avatarSrc = author?.avatarUrl,
+            excerpt = excerpt,
+        )
+
+        is ArticleTargetDto -> PostDestination(
+            title = title,
+            type = PostType.Article,
+            id = id,
+            authorName = author?.name ?: "loading...",
+            authorBio = author?.headline ?: "",
+            avatarSrc = author?.avatarUrl,
+            excerpt = excerpt,
+        )
+
+        is PinTargetDto -> PostDestination(type = PostType.Pin, id = id, authorName = author?.name ?: "loading...")
+
+        is QuestionTargetDto -> Question(
+            questionId = id,
+            title = title,
+        )
+
+        is VideoTargetDto -> null
+    }
 
 val PinContentItemDto.feedThumbnailUrl: String
     get() = thumbnail?.takeIf { it.isNotBlank() } ?: url.orEmpty()
