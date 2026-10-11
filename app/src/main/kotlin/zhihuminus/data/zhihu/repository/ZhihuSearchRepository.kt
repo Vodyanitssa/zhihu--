@@ -24,6 +24,7 @@ import com.zhihuminus.feature.search.SearchTab
 import com.zhihuminus.feature.search.SearchTimeRange
 import com.zhihuminus.feature.search.SearchTopicItem
 import com.zhihuminus.feature.search.TopicSearchResult
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
@@ -158,7 +159,7 @@ class ZhihuSearchRepository(
         )
     }
 
-    override suspend fun fetchHotSearches(): List<HotSearchItem> =
+    override suspend fun fetchHotSearches(): List<HotSearchItem> = try {
         searchApi.getHotSearches().map {
             HotSearchItem(
                 query = it.query,
@@ -166,6 +167,12 @@ class ZhihuSearchRepository(
                 label = it.label,
             )
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w("ZhihuSearchRepository", "Failed to fetch hot searches", e)
+        emptyList()
+    }
 
     override fun isHotSearchEnabled(): Boolean =
         settingsRepository.current.interaction.showSearchHotSearch

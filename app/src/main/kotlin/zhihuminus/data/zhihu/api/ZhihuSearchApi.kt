@@ -1,18 +1,20 @@
 package com.zhihuminus.data.zhihu.api
 
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.HotSearchItemDto
 import com.zhihuminus.data.zhihu.dto.PagingDto
 import com.zhihuminus.data.zhihu.dto.SearchItemDto
 import com.zhihuminus.data.zhihu.dto.SearchResponseDto
 import io.ktor.http.encodeURLParameter
+import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
 
 private const val SEARCH_INCLUDE = "data[*].highlight,object,type"
 private const val SEARCH_VERTICAL_INFO = "0,0,0,0,0,0,0,0,0,0,0,0"
-private const val ZHIHU_HOT_SEARCH_URL = "https://www.zhihu.com/api/v4/search/hot_search_queries"
+private const val ZHIHU_HOT_SEARCH_URL = "https://www.zhihu.com/api/v4/search/hot_search"
 
 open class ZhihuSearchApi(
     protected val environment: ZhihuApiEnvironment,
@@ -72,12 +74,17 @@ open class ZhihuSearchApi(
     /**
      * 获取热搜词条列表
      */
-    open suspend fun getHotSearches(): List<HotSearchItemDto> {
+    open suspend fun getHotSearches(): List<HotSearchItemDto> = try {
         val json = environment.fetchJson(ZHIHU_HOT_SEARCH_URL, "") ?: return emptyList()
         val queries = json["hot_search_queries"] as? JsonArray ?: return emptyList()
-        return queries.take(15).mapNotNull { element ->
+        queries.take(15).mapNotNull { element ->
             runCatching { ZhihuJson.decodeJson<HotSearchItemDto>(element) }.getOrNull()
         }
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: Exception) {
+        Log.w("ZhihuSearchApi", "Failed to fetch hot searches", e)
+        emptyList()
     }
 
     private fun buildSearchUrl(

@@ -35,13 +35,11 @@ data class SearchResponseDto(
 @Serializable
 data class HotSearchItemDto(
     val query: String = "",
-    @SerialName("hot_show")
     val hotShow: String = "",
     val label: String = "",
 )
 
 @Serializable
 data class HotSearchResponseDto(
-    @SerialName("hot_search_queries")
     val hotSearchQueries: List<HotSearchItemDto> = emptyList(),
 )

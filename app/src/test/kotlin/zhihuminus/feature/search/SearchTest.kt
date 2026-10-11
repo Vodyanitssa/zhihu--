@@ -1,12 +1,19 @@
 package com.zhihuminus.feature.search
 
+import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.util.HttpStatusException
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.zhihu.api.ZhihuSearchApi
 import com.zhihuminus.data.zhihu.dto.MemberItemDto
 import com.zhihuminus.data.zhihu.dto.SearchItemDto
 import com.zhihuminus.data.zhihu.repository.toPeopleMemberItem
 import com.zhihuminus.feature.people.PeopleMemberItem
+import io.ktor.client.HttpClient
+import io.ktor.http.HttpStatusCode
+import io.ktor.http.Url
 import kotlinx.coroutines.runBlocking
+import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlin.test.Test
@@ -255,5 +262,58 @@ class SearchTest {
         assertEquals(999, member.followerCount)
         assertTrue(member.isFollowing)
         assertEquals("优秀答主", member.officialBadge?.title)
+    }
+
+    @Test
+    fun testHotSearchApiParsesResponseSuccessfully() = runBlocking {
+        val jsonPayload =
+            """
+            {
+                "hot_search_queries": [
+                    {
+                        "query": "国庆节",
+                        "hot_show": "500 万",
+                        "label": "热"
+                    },
+                    {
+                        "query": "诺贝尔奖",
+                        "hot_show": "300 万",
+                        "label": ""
+                    }
+                ]
+            }
+            """.trimIndent()
+        val env = object : ZhihuApiEnvironment {
+            override fun httpClient(): HttpClient = error("stub")
+
+            override fun authenticatedCookies(): Map<String, String> = emptyMap()
+
+            override suspend fun handleFetchFailure(tag: String?, error: Exception) = Unit
+
+            override suspend fun fetchJson(url: String, include: String): JsonObject = ZhihuJson.json.parseToJsonElement(jsonPayload).jsonObject
+        }
+        val api = ZhihuSearchApi(env)
+        val items = api.getHotSearches()
+        assertEquals(2, items.size)
+        assertEquals("国庆节", items[0].query)
+        assertEquals("500 万", items[0].hotShow)
+        assertEquals("热", items[0].label)
+        assertEquals("诺贝尔奖", items[1].query)
+    }
+
+    @Test
+    fun testHotSearchApiHandles404Gracefully() = runBlocking {
+        val env = object : ZhihuApiEnvironment {
+            override fun httpClient(): HttpClient = error("stub")
+
+            override fun authenticatedCookies(): Map<String, String> = emptyMap()
+
+            override suspend fun handleFetchFailure(tag: String?, error: Exception) = Unit
+
+            override suspend fun fetchJson(url: String, include: String): JsonObject? = throw HttpStatusException(HttpStatusCode.NotFound, Url(url), "404 page not found")
+        }
+        val api = ZhihuSearchApi(env)
+        val items = api.getHotSearches()
+        assertTrue(items.isEmpty())
     }
 }

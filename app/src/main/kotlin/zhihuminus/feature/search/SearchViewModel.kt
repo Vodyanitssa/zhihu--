@@ -95,8 +95,15 @@ class SearchViewModel(
     private fun refreshHotSearch() {
         viewModelScope.launch {
             uiState = uiState.copy(isHotSearchLoading = true)
-            val hot = repository.fetchHotSearches()
-            uiState = uiState.copy(hotSearchItems = hot, isHotSearchLoading = false)
+            try {
+                val hot = repository.fetchHotSearches()
+                uiState = uiState.copy(hotSearchItems = hot, isHotSearchLoading = false)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                Log.e("SearchViewModel", "Failed to refresh hot search", e)
+                uiState = uiState.copy(isHotSearchLoading = false)
+            }
         }
     }
 
