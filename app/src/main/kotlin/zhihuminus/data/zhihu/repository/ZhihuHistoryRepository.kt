@@ -42,7 +42,7 @@ class ZhihuHistoryRepository(
     }
 }
 
-private fun HistoryItemDto.toHistoryItem() = HistoryItem(
+internal fun HistoryItemDto.toHistoryItem() = HistoryItem(
     title = data.header.title,
     summary = data.content?.summary ?: "",
     details = data.matrix
@@ -59,4 +59,5 @@ private fun HistoryItemDto.toHistoryItem() = HistoryItem(
     actionUrl = data.action.url,
     contentToken = data.extra.contentToken,
     contentType = data.extra.contentType,
+    coverImage = data.content?.coverImage?.takeIf { it.isNotBlank() },
 )

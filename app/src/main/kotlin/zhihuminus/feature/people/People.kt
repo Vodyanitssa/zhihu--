@@ -88,7 +88,7 @@ data class PeopleCreationItem(
     val authorBio: String = "",
     val avatarUrl: String = "",
     val publishTimeSeconds: Long? = null,
-    val pinImages: List<String> = emptyList(),
+    val images: List<String> = emptyList(),
 ) {
     fun toDestination(): PostDestination = PostDestination(
         type = type,

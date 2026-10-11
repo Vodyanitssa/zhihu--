@@ -64,6 +64,7 @@ import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.FeedImageLayout
 import org.jsoup.Jsoup
 
 /**
@@ -112,7 +113,6 @@ fun FeedCard(
     onLongClick: (() -> Unit)? = null,
     onAuthorClick: (() -> Unit)? = null,
     maxHeight: Dp = 240.dp,
-    thumbnailUrl: String? = null,
     horizontalPadding: Dp = 16.dp,
     showSourceLabel: Boolean = false,
     fontSizePercent: Int = LocalFeedCardConfig.current.fontSizePercent,
@@ -120,15 +120,13 @@ fun FeedCard(
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit = { _ -> },
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    val effectiveThumbnailUrl = thumbnailUrl ?: item.thumbnailUrl
-    val pinImages = item.pinImages
-    val hasPinImages = pinImages.isNotEmpty()
+    val hasGalleryImages = item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column(
             modifier = Modifier
                 .fillMaxWidth()
-                .then(if (hasPinImages) Modifier else Modifier.heightIn(max = maxHeight)),
+                .then(if (hasGalleryImages) Modifier else Modifier.heightIn(max = maxHeight)),
         ) {
             Column(
                 modifier = Modifier
@@ -140,8 +138,6 @@ fun FeedCard(
             ) {
                 FeedCardContent(
                     item = item,
-                    thumbnailUrl = effectiveThumbnailUrl,
-                    pinImages = pinImages,
                     showSourceLabel = showSourceLabel,
                     fontSizePercent = fontSizePercent,
                     lineHeightPercent = lineHeightPercent,
@@ -185,8 +181,6 @@ private fun FeedCardMenu(
 @Composable
 private fun FeedCardContent(
     item: FeedDisplayItem,
-    thumbnailUrl: String?,
-    pinImages: List<String>,
     showSourceLabel: Boolean,
     fontSizePercent: Int,
     lineHeightPercent: Int,
@@ -194,7 +188,7 @@ private fun FeedCardContent(
 ) {
     val sourceLabel = item.sourceLabel
     val typeLabel = item.contentTypeLabel
-    // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要 → 图片 → 统计行 ─────────────────────
+    // ── 卡片排版：来源标签 → 作者行 → 标题 → 摘要与图片 → 统计行 ─────────────────────
     if (showSourceLabel) {
         FeedCardSourceLabel(sourceLabel)
     }
@@ -254,35 +248,51 @@ private fun FeedCardContent(
             .orEmpty()
     }
     Column {
-        Row {
-            InlineNodes(
-                nodes = summaryNodes,
-                style = MaterialTheme.typography.bodyMedium.copy(
-                    fontSize = 14.sp * fontSizePercent / 100,
-                    lineHeight = 14.sp * fontSizePercent / 100 * lineHeightPercent / 100,
-                ),
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                maxLines = 4,
-                overflow = TextOverflow.Ellipsis,
-                modifier = Modifier.weight(1f),
-            )
-            if (!thumbnailUrl.isNullOrEmpty()) {
-                Spacer(modifier = Modifier.width(8.dp))
-                AsyncImage(
-                    model = thumbnailUrl,
-                    contentDescription = "Thumbnail",
+        val showRightThumbnail = item.imageLayout == FeedImageLayout.RIGHT_THUMBNAIL && item.images.isNotEmpty()
+        val rightThumbnailUrl = if (showRightThumbnail) item.images.first() else null
+
+        if (summaryNodes.isNotEmpty() || rightThumbnailUrl != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.Top,
+            ) {
+                Box(
                     modifier = Modifier
-                        .padding(top = 8.dp)
-                        .sizeIn(maxHeight = 80.dp, maxWidth = 128.dp)
-                        .clip(RoundedCornerShape(8.dp)),
-                    contentScale = ContentScale.FillHeight,
-                )
+                        .weight(1f)
+                        .padding(top = 2.dp),
+                ) {
+                    if (summaryNodes.isNotEmpty()) {
+                        InlineNodes(
+                            nodes = summaryNodes,
+                            style = MaterialTheme.typography.bodyMedium.copy(
+                                fontSize = 14.sp * fontSizePercent / 100,
+                                lineHeight = 14.sp * fontSizePercent / 100 * lineHeightPercent / 100,
+                            ),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                        )
+                    }
+                }
+                if (rightThumbnailUrl != null) {
+                    Spacer(modifier = Modifier.width(12.dp))
+                    AsyncImage(
+                        model = rightThumbnailUrl,
+                        contentDescription = "Thumbnail",
+                        modifier = Modifier
+                            .sizeIn(maxHeight = 80.dp, maxWidth = 120.dp)
+                            .clip(RoundedCornerShape(8.dp)),
+                        contentScale = ContentScale.Crop,
+                    )
+                }
             }
         }
-        PinFeedImages(
-            images = pinImages,
-            modifier = Modifier.padding(top = 8.dp),
-        )
+        if (item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()) {
+            FeedGalleryImages(
+                images = item.images,
+                modifier = Modifier.padding(top = 8.dp),
+            )
+        }
         val statsText = typeLabel
             ?.takeIf { item.details.startsWith("$it · ") }
             ?.let { item.details.removePrefix("$it · ") }
@@ -322,31 +332,35 @@ private fun FeedCardContent(
     }
 }
 
-internal enum class PinFeedImageLayout {
+internal enum class FeedGalleryImageLayout {
     SINGLE,
     MULTI_ROW,
     NINE_GRID,
 }
 
-internal fun pinFeedImageLayout(imageCount: Int): PinFeedImageLayout? = when (imageCount) {
+internal typealias PinFeedImageLayout = FeedGalleryImageLayout
+
+internal fun feedGalleryImageLayout(imageCount: Int): FeedGalleryImageLayout? = when (imageCount) {
     0 -> null
-    1 -> PinFeedImageLayout.SINGLE
-    in 2..4 -> PinFeedImageLayout.MULTI_ROW
-    else -> PinFeedImageLayout.NINE_GRID
+    1 -> FeedGalleryImageLayout.SINGLE
+    in 2..4 -> FeedGalleryImageLayout.MULTI_ROW
+    else -> FeedGalleryImageLayout.NINE_GRID
 }
 
+internal fun pinFeedImageLayout(imageCount: Int): FeedGalleryImageLayout? = feedGalleryImageLayout(imageCount)
+
 @Composable
-private fun PinFeedImages(
+private fun FeedGalleryImages(
     images: List<String>,
     modifier: Modifier = Modifier,
 ) {
-    when (pinFeedImageLayout(images.size)) {
+    when (feedGalleryImageLayout(images.size)) {
         null -> return
-        PinFeedImageLayout.SINGLE -> {
+        FeedGalleryImageLayout.SINGLE -> {
             val image = images.single()
             AsyncImage(
                 model = image,
-                contentDescription = "想法图片 1/1",
+                contentDescription = "画廊图片 1/1",
                 modifier = modifier
                     .fillMaxWidth(1f / 3f)
                     .aspectRatio(1f)
@@ -355,14 +369,14 @@ private fun PinFeedImages(
             )
         }
 
-        PinFeedImageLayout.MULTI_ROW -> {
+        FeedGalleryImageLayout.MULTI_ROW -> {
             Row(
                 modifier = modifier
                     .fillMaxWidth(),
                 horizontalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 images.forEachIndexed { index, image ->
-                    PinFeedImage(
+                    FeedGalleryImage(
                         imageUrl = image,
                         index = index,
                         totalCount = images.size,
@@ -381,7 +395,7 @@ private fun PinFeedImages(
             }
         }
 
-        PinFeedImageLayout.NINE_GRID -> {
+        FeedGalleryImageLayout.NINE_GRID -> {
             val visibleImages = images.take(9)
             Column(
                 modifier = modifier
@@ -395,7 +409,7 @@ private fun PinFeedImages(
                     ) {
                         rowImages.forEachIndexed { columnIndex, image ->
                             val index = rowIndex * 3 + columnIndex
-                            PinFeedImage(
+                            FeedGalleryImage(
                                 imageUrl = image,
                                 index = index,
                                 totalCount = images.size,
@@ -420,7 +434,7 @@ private fun PinFeedImages(
 }
 
 @Composable
-private fun PinFeedImage(
+private fun FeedGalleryImage(
     imageUrl: String,
     index: Int,
     totalCount: Int,
@@ -433,7 +447,7 @@ private fun PinFeedImage(
     ) {
         AsyncImage(
             model = imageUrl,
-            contentDescription = "想法图片 ${index + 1}/$totalCount",
+            contentDescription = "画廊图片 ${index + 1}/$totalCount",
             modifier = Modifier.fillMaxSize(),
             contentScale = ContentScale.Crop,
         )

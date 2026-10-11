@@ -18,6 +18,8 @@ data class ArticleDto(
     val reaction: ReactionDto? = null,
     val topics: List<TopicDto> = emptyList(),
     val segmentInfos: List<SegmentInfoDto> = emptyList(),
+    val thumbnail: String? = null,
+    val imageUrl: String? = null,
 )
 
 @Serializable

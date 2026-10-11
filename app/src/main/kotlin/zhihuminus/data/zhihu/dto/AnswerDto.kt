@@ -16,6 +16,7 @@ data class AnswerDto(
     val ipInfo: String? = null,
     val reaction: ReactionDto? = null,
     val segmentInfos: List<SegmentInfoDto> = emptyList(),
+    val thumbnail: String? = null,
 )
 
 /**

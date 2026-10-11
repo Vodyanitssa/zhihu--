@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.resolveFeedImages
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
 import com.zhihuminus.data.zhihu.dto.CollectionDto
@@ -84,14 +85,19 @@ fun CollectionDto.toDomain(): Collection = Collection(
     isDefault = isDefault,
 )
 
-fun CollectionItemDto.toFeedDisplayItem(): FeedDisplayItem = FeedDisplayItem(
-    title = content.title,
-    summary = content.excerpt,
-    details = content.detailsText,
-    navDestinationJson = content.navDestination?.toFeedDisplayItemNavDestinationJson(),
-    feed = null,
-    authorName = content.author?.name,
-    avatarSrc = content.author?.avatarUrl,
-    contentTypeLabel = content.description(),
-    publishTimeSeconds = content.createdTime.takeIf { it > 0 },
-)
+fun CollectionItemDto.toFeedDisplayItem(): FeedDisplayItem {
+    val (images, layout) = content.resolveFeedImages()
+    return FeedDisplayItem(
+        title = content.title,
+        summary = content.excerpt,
+        details = content.detailsText,
+        navDestinationJson = content.navDestination?.toFeedDisplayItemNavDestinationJson(),
+        feed = null,
+        authorName = content.author?.name,
+        avatarSrc = content.author?.avatarUrl,
+        contentTypeLabel = content.description(),
+        publishTimeSeconds = content.createdTime.takeIf { it > 0 },
+        images = images,
+        imageLayout = layout,
+    )
+}

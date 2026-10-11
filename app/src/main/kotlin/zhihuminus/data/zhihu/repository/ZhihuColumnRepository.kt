@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.api.ZhihuColumnApi
 import com.zhihuminus.data.zhihu.dto.ColumnArticleDto
@@ -34,6 +35,8 @@ class ZhihuColumnRepository(
             avatarSrc = author?.avatarUrl,
             excerpt = excerpt.orEmpty(),
         )
+        val titleImg = titleImage?.takeIf { it.isNotBlank() }
+        val images = listOfNotNull(titleImg)
         return FeedDisplayItem(
             title = title,
             summary = excerpt.orEmpty().ifEmpty { excerptTitle.orEmpty() }.takeIf { it.isNotBlank() },
@@ -43,6 +46,8 @@ class ZhihuColumnRepository(
             authorName = author?.name ?: "未知作者",
             contentTypeLabel = "文章",
             publishTimeSeconds = created.takeIf { it > 0 },
+            images = images,
+            imageLayout = if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE,
         )
     }
 }

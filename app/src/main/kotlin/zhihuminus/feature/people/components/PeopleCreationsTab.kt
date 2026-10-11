@@ -13,6 +13,7 @@ import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.feature.people.PeopleCreationItem
 import com.zhihuminus.feature.people.PeopleCreationTab
 import com.zhihuminus.feature.people.PeopleEvent
@@ -183,17 +184,24 @@ fun PeopleCreationsTab(
     }
 }
 
-private fun PeopleCreationItem.toFeedDisplayItem(): FeedDisplayItem = FeedDisplayItem(
-    title = title,
-    summary = summary,
-    details = details,
-    avatarSrc = avatarUrl.takeIf { it.isNotBlank() },
-    authorName = authorName.takeIf { it.isNotBlank() },
-    contentTypeLabel = when (type) {
-        PostType.Answer -> "回答"
-        PostType.Article -> "文章"
-        PostType.Pin -> "想法"
-    },
-    publishTimeSeconds = publishTimeSeconds,
-    pinImages = pinImages,
-)
+private fun PeopleCreationItem.toFeedDisplayItem(): FeedDisplayItem {
+    val layout = when (type) {
+        PostType.Pin -> if (images.isNotEmpty()) FeedImageLayout.BOTTOM_GALLERY else FeedImageLayout.NONE
+        else -> if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE
+    }
+    return FeedDisplayItem(
+        title = title,
+        summary = summary,
+        details = details,
+        avatarSrc = avatarUrl.takeIf { it.isNotBlank() },
+        authorName = authorName.takeIf { it.isNotBlank() },
+        contentTypeLabel = when (type) {
+            PostType.Answer -> "回答"
+            PostType.Article -> "文章"
+            PostType.Pin -> "想法"
+        },
+        publishTimeSeconds = publishTimeSeconds,
+        images = images,
+        imageLayout = layout,
+    )
+}

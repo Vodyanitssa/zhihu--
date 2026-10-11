@@ -5,6 +5,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.feature.history.HistoryItem
 import com.zhihuminus.navigation.resolveContent
@@ -19,6 +20,12 @@ fun HistoryCard(
 ) {
     val displayItem = remember(item) {
         val navDest = resolveContent(item.actionUrl)
+        val images = listOfNotNull(item.coverImage)
+        val layout = if (images.isNotEmpty()) {
+            if (item.contentType == "pin") FeedImageLayout.BOTTOM_GALLERY else FeedImageLayout.RIGHT_THUMBNAIL
+        } else {
+            FeedImageLayout.NONE
+        }
         FeedDisplayItem(
             title = item.title,
             summary = item.summary,
@@ -29,6 +36,8 @@ fun HistoryCard(
             authorName = item.authorName,
             contentTypeLabel = item.contentTypeLabel,
             content = item.actionUrl,
+            images = images,
+            imageLayout = layout,
         )
     }
 

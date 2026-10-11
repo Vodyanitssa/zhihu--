@@ -20,6 +20,7 @@ data class HistoryItem(
     val actionUrl: String,
     val contentToken: String,
     val contentType: String,
+    val coverImage: String? = null,
 )
 
 data class HistoryPageResult(

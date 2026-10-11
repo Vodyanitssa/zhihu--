@@ -139,6 +139,8 @@ data class ArticleTargetDto(
     @Serializable(with = BooleanCompatSerializer::class)
     val allowSegmentInteraction: Boolean = false,
     val voting: Int? = null,
+    val thumbnail: String? = null,
+    val imageUrl: String? = null,
 ) : FeedTargetDto {
     constructor(
         id: Long,

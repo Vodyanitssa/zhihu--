@@ -41,6 +41,13 @@ import kotlinx.serialization.json.Json
 import org.jsoup.Jsoup
 
 @Serializable
+enum class FeedImageLayout {
+    NONE,
+    RIGHT_THUMBNAIL,
+    BOTTOM_GALLERY,
+}
+
+@Serializable
 data class FeedDisplayItem(
     val title: String,
     val summary: String?,
@@ -54,8 +61,8 @@ data class FeedDisplayItem(
     val contentTypeLabel: String? = null,
     val publishTimeSeconds: Long? = null,
     val sourceLabel: String? = null,
-    val thumbnailUrl: String? = null,
-    val pinImages: List<String> = emptyList(),
+    val images: List<String> = emptyList(),
+    val imageLayout: FeedImageLayout = FeedImageLayout.NONE,
 ) {
     val stableKey: String
         get() = navDestinationJson
@@ -142,24 +149,23 @@ fun FeedDto.toDisplayItem(): FeedDisplayItem = when (this) {
     )
 
     is GroupFeedDto -> error("GroupFeed should be flattened before creating display items")
-    is QuestionFeedCardDto -> FeedDisplayItem(
-        title = target.title,
-        summary = target.excerpt,
-        details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
-        avatarSrc = target.author?.avatarUrl,
-        authorName = target.author?.name,
-        authorBadge = target.author?.badgeV2?.toOfficialBadge(),
-        feed = this,
-        contentTypeLabel = target.typeLabel,
-        publishTimeSeconds = target.publishTimeSeconds,
-        thumbnailUrl = (target as? AnswerTargetDto)?.thumbnail,
-        pinImages = (target as? PinTargetDto)
-            ?.content
-            ?.filter { it.type == "image" }
-            ?.map { it.feedThumbnailUrl }
-            .orEmpty(),
-        navDestinationJson = target.navDestination?.toFeedDisplayItemNavDestinationJson(),
-    )
+    is QuestionFeedCardDto -> {
+        val (images, layout) = target.resolveFeedImages()
+        FeedDisplayItem(
+            title = target.title,
+            summary = target.excerpt,
+            details = listOfNotNull(target.detailsText, actionText).joinToString(" · "),
+            avatarSrc = target.author?.avatarUrl,
+            authorName = target.author?.name,
+            authorBadge = target.author?.badgeV2?.toOfficialBadge(),
+            feed = this,
+            contentTypeLabel = target.typeLabel,
+            publishTimeSeconds = target.publishTimeSeconds,
+            images = images,
+            imageLayout = layout,
+            navDestinationJson = target.navDestination?.toFeedDisplayItemNavDestinationJson(),
+        )
+    }
 }
 
 private val FeedTargetDto.typeLabel: String
@@ -168,11 +174,34 @@ private val FeedTargetDto.typeLabel: String
 private val FeedTargetDto.publishTimeSeconds: Long?
     get() = createdTime.takeIf { it > 0 }
 
+fun FeedTargetDto.resolveFeedImages(): Pair<List<String>, FeedImageLayout> = when (this) {
+    is PinTargetDto -> {
+        val images = content
+            .filter { it.type == "image" }
+            .map { it.feedThumbnailUrl }
+        images to if (images.isNotEmpty()) FeedImageLayout.BOTTOM_GALLERY else FeedImageLayout.NONE
+    }
+
+    is AnswerTargetDto -> {
+        val img = thumbnail?.takeIf { it.isNotBlank() }
+        val images = listOfNotNull(img)
+        images to if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE
+    }
+
+    is ArticleTargetDto -> {
+        val img = (thumbnail ?: imageUrl)?.takeIf { it.isNotBlank() }
+        val images = listOfNotNull(img)
+        images to if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE
+    }
+
+    else -> emptyList<String>() to FeedImageLayout.NONE
+}
+
 private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
     val currentTarget = target
     val resolvedSourceLabel = sourceLabel
-    val resolvedThumbnail = (currentTarget as? AnswerTargetDto)?.thumbnail
     val resolvedNavDestinationJson = currentTarget?.navDestination?.toFeedDisplayItemNavDestinationJson()
+    val (resolvedImages, resolvedImageLayout) = currentTarget?.resolveFeedImages() ?: (emptyList<String>() to FeedImageLayout.NONE)
 
     return when (currentTarget) {
         is AnswerTargetDto,
@@ -189,7 +218,8 @@ private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
             contentTypeLabel = currentTarget.typeLabel,
             publishTimeSeconds = currentTarget.publishTimeSeconds,
             sourceLabel = resolvedSourceLabel,
-            thumbnailUrl = resolvedThumbnail,
+            images = resolvedImages,
+            imageLayout = resolvedImageLayout,
             navDestinationJson = resolvedNavDestinationJson,
         )
 
@@ -205,9 +235,6 @@ private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
                 ?.let { Jsoup.parse(it).text() }
                 ?.takeIf { it.isNotBlank() }
             val summary = (contentSummary ?: excerptSummary)?.takeUnless { it == title }
-            val pinImages = currentTarget.content
-                .filter { it.type == "image" }
-                .map { it.feedThumbnailUrl }
 
             FeedDisplayItem(
                 title = title,
@@ -220,8 +247,8 @@ private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
                 contentTypeLabel = currentTarget.typeLabel,
                 publishTimeSeconds = currentTarget.publishTimeSeconds,
                 sourceLabel = resolvedSourceLabel,
-                thumbnailUrl = resolvedThumbnail,
-                pinImages = pinImages,
+                images = resolvedImages,
+                imageLayout = resolvedImageLayout,
                 navDestinationJson = resolvedNavDestinationJson,
             )
         }
@@ -234,7 +261,8 @@ private fun FeedDto.toTargetDisplayItem(): FeedDisplayItem {
             contentTypeLabel = currentTarget?.typeLabel,
             publishTimeSeconds = currentTarget?.publishTimeSeconds,
             sourceLabel = resolvedSourceLabel,
-            thumbnailUrl = resolvedThumbnail,
+            images = resolvedImages,
+            imageLayout = resolvedImageLayout,
             navDestinationJson = resolvedNavDestinationJson,
         )
     }

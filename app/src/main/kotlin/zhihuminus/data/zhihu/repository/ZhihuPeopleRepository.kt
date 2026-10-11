@@ -76,6 +76,7 @@ class ZhihuPeopleRepository(
         val dto = api.fetchMemberAnswers(userTokenOrId, sortBy, nextUrl)
         return PeoplePage(
             items = dto.items.map {
+                val thumbnail = it.thumbnail?.takeIf { s -> s.isNotBlank() }
                 PeopleCreationItem(
                     id = it.id,
                     type = PostType.Answer,
@@ -86,6 +87,7 @@ class ZhihuPeopleRepository(
                     authorBio = it.author.headline,
                     avatarUrl = it.author.avatarUrl,
                     publishTimeSeconds = it.createdTime.takeIf { t -> t > 0 },
+                    images = listOfNotNull(thumbnail),
                 )
             },
             nextUrl = dto.nextUrl,
@@ -101,6 +103,7 @@ class ZhihuPeopleRepository(
         val dto = api.fetchMemberArticles(userTokenOrId, sortBy, nextUrl)
         return PeoplePage(
             items = dto.items.map {
+                val thumbnail = (it.thumbnail ?: it.imageUrl)?.takeIf { s -> s.isNotBlank() }
                 PeopleCreationItem(
                     id = it.id,
                     type = PostType.Article,
@@ -111,6 +114,7 @@ class ZhihuPeopleRepository(
                     authorBio = it.author.headline,
                     avatarUrl = it.author.avatarUrl,
                     publishTimeSeconds = it.created.takeIf { t -> t > 0 },
+                    images = listOfNotNull(thumbnail),
                 )
             },
             nextUrl = dto.nextUrl,
@@ -149,7 +153,9 @@ class ZhihuPeopleRepository(
                 val text = it.excerptTitle.takeIf { s -> s.isNotBlank() }?.let { s -> Jsoup.parse(s).text() }
                     ?: it.contentHtml.takeIf { s -> s.isNotBlank() }?.let { s -> Jsoup.parse(s).text() }
                     ?: ""
-                val images = it.content.filter { c -> c.type == "image" }.mapNotNull { c -> c.thumbnail ?: c.url }
+                val images = it.content
+                    .filter { c -> c.type == "image" }
+                    .mapNotNull { c -> c.thumbnail?.takeIf { s -> s.isNotBlank() } ?: c.url?.takeIf { s -> s.isNotBlank() } }
                 PeopleCreationItem(
                     id = it.id.toLongOrNull() ?: 0L,
                     type = PostType.Pin,
@@ -160,7 +166,7 @@ class ZhihuPeopleRepository(
                     authorBio = it.author.headline,
                     avatarUrl = it.author.avatarUrl,
                     publishTimeSeconds = it.created.takeIf { t -> t > 0 },
-                    pinImages = images,
+                    images = images,
                 )
             },
             nextUrl = dto.nextUrl,

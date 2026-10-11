@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.cache.PostContentCache
+import com.zhihuminus.data.resolveFeedImages
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
@@ -68,6 +69,7 @@ class ZhihuQuestionRepository(
     private fun FeedDto.toAnswerDisplayItem(): FeedDisplayItem {
         val target = this@toAnswerDisplayItem.target
         if (target is AnswerTargetDto) {
+            val (images, layout) = target.resolveFeedImages()
             return FeedDisplayItem(
                 authorName = target.author?.name ?: "未知作者",
                 avatarSrc = target.author?.avatarUrl,
@@ -78,6 +80,8 @@ class ZhihuQuestionRepository(
                 title = "",
                 contentTypeLabel = "回答",
                 publishTimeSeconds = target.createdTime.takeIf { it > 0 },
+                images = images,
+                imageLayout = layout,
             )
         }
         return toDisplayItem()
