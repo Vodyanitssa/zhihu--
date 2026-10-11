@@ -35,6 +35,7 @@ data class HomeUiState(
 class HomeViewModel(
     private val repository: HomeRepository,
     private val autoRefreshOnStartup: Boolean = true,
+    private val initialIsLoggedIn: Boolean = true,
 ) : ViewModel() {
     var uiState by mutableStateOf(HomeUiState())
         private set
@@ -47,7 +48,9 @@ class HomeViewModel(
     private val reportedTouchedItems = hashSetOf<Pair<String, String>>()
 
     init {
-        initializeData()
+        if (initialIsLoggedIn) {
+            initializeData()
+        }
     }
 
     private fun initializeData() {

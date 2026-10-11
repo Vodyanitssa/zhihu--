@@ -8,7 +8,10 @@ import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -47,14 +50,16 @@ fun HomeRoute(
         ZhihuRepositoryFactory(paginationEnvironment).createHomeRepository(startupCacheFile = cacheFile)
     }
 
+    val account = rememberAccountSettingsAccountState().value
+
     val viewModel: HomeViewModel = viewModel {
         HomeViewModel(
             repository = repository,
             autoRefreshOnStartup = autoRefreshOnStartup,
+            initialIsLoggedIn = account.login,
         )
     }
 
-    val account = rememberAccountSettingsAccountState().value
     if (account.login && !account.hasRequiredCookie) {
         AlertDialog(
             onDismissRequest = {},
@@ -75,8 +80,21 @@ fun HomeRoute(
         onRefresh = { viewModel.onEvent(HomeEvent.Refresh) },
     )
 
+    var wasLoggedIn by rememberSaveable { mutableStateOf(account.login) }
+    LaunchedEffect(account.login) {
+        if (account.login && !wasLoggedIn) {
+            viewModel.onEvent(HomeEvent.Refresh)
+        }
+        wasLoggedIn = account.login
+    }
+
     val lifecycleOwner = LocalLifecycleOwner.current
-    LaunchedEffect(lifecycleOwner, repository) {
+    LaunchedEffect(lifecycleOwner, repository, account.login) {
+        if (!account.login) {
+            UnreadNotificationState.update(0)
+            viewModel.onEvent(HomeEvent.UpdateUnreadCount(0))
+            return@LaunchedEffect
+        }
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             val count = repository.fetchUnreadNotificationCount()
             UnreadNotificationState.update(count)

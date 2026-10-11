@@ -52,7 +52,7 @@ suspend fun executeZhihuAuthenticatedRequest(
     }
     if (response.status != HttpStatusCode.Unauthorized) return response
 
-    if (Clock.System.now().toEpochMilliseconds() - lastRefreshMillis < 10_000) {
+    if (!AccountData.data.login || Clock.System.now().toEpochMilliseconds() - lastRefreshMillis < 10_000) {
         return response
     }
     val refreshToken = ZhihuCredentialRefresher.fetchRefreshToken(client)

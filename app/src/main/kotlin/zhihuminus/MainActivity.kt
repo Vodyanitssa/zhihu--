@@ -52,6 +52,7 @@ import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clearShareImageCache
 import com.zhihuminus.core.platform.clipboardManager
+import com.zhihuminus.core.platform.startLoginActivity
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
@@ -138,8 +139,9 @@ class MainActivity :
 
         val runtimeStorage = AppRuntimeStore(this)
         val lastLaunchTimestamp = runtimeStorage.lastLaunchTimestamp
+        val isFirstLaunch = !runtimeStorage.hasLaunchedBefore
         val now = System.currentTimeMillis()
-        if (now - lastLaunchTimestamp >= TimeUnit.DAYS.toMillis(1)) {
+        if (AccountData.data.login && !isFirstLaunch && now - lastLaunchTimestamp >= TimeUnit.DAYS.toMillis(1)) {
             val client = httpClient
             lifecycleScope.launch(Dispatchers.IO) {
                 try {
@@ -155,6 +157,7 @@ class MainActivity :
                 }
             }
         }
+        runtimeStorage.hasLaunchedBefore = true
         runtimeStorage.lastLaunchTimestamp = now
 
         // 初始化emoji管理器
@@ -206,6 +209,8 @@ class MainActivity :
                             .show()
                     }
                 }
+            } else if (isFirstLaunch && !AccountData.data.login) {
+                startLoginActivity()
             }
         }
 

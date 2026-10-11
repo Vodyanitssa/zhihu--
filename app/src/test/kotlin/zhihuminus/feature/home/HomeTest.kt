@@ -1,14 +1,37 @@
 package com.zhihuminus.feature.home
 
 import com.zhihuminus.data.FeedDisplayItem
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.runBlocking
+import kotlinx.coroutines.test.StandardTestDispatcher
+import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.test.setMain
+import kotlin.test.AfterTest
+import kotlin.test.BeforeTest
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertFalse
 import kotlin.test.assertTrue
 
+@OptIn(ExperimentalCoroutinesApi::class)
 class HomeTest {
+    private val testDispatcher = StandardTestDispatcher()
+
+    @BeforeTest
+    fun setUp() {
+        Dispatchers.setMain(testDispatcher)
+    }
+
+    @AfterTest
+    fun tearDown() {
+        Dispatchers.resetMain()
+    }
+
     private class FakeHomeRepository : HomeRepository {
+        var fetchCallCount = 0
         var touchReportCount = 0
         var readReportCount = 0
         val itemsPage1 = listOf(
@@ -20,10 +43,13 @@ class HomeTest {
             FeedDisplayItem(title = "Item 3", summary = "Summary 3", details = "Details 3", navDestinationJson = "nav:3"),
         )
 
-        override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage = if (nextUrl == null) {
-            HomeFeedPage(items = itemsPage1, nextUrl = "page2", isEnd = false)
-        } else {
-            HomeFeedPage(items = itemsPage2, nextUrl = null, isEnd = true)
+        override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
+            fetchCallCount++
+            return if (nextUrl == null) {
+                HomeFeedPage(items = itemsPage1, nextUrl = "page2", isEnd = false)
+            } else {
+                HomeFeedPage(items = itemsPage2, nextUrl = null, isEnd = true)
+            }
         }
 
         override suspend fun reportContentTouch(untouchedItems: List<Pair<String, String>>) {
@@ -83,5 +109,52 @@ class HomeTest {
             repo.reportContentRead("answer", "1")
             assertEquals(1, repo.readReportCount)
         }
+    }
+
+    @Test
+    fun testHomeViewModelUnauthenticatedDoesNotLoadFeedsOnStartup() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = false,
+        )
+        advanceUntilIdle()
+
+        assertEquals(0, repo.fetchCallCount)
+        assertTrue(viewModel.uiState.items.isEmpty())
+    }
+
+    @Test
+    fun testHomeViewModelRefreshAfterLoginLoadsFeeds() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = false,
+        )
+        advanceUntilIdle()
+        assertEquals(0, repo.fetchCallCount)
+
+        viewModel.onEvent(HomeEvent.Refresh)
+        advanceUntilIdle()
+
+        assertEquals(1, repo.fetchCallCount)
+        assertEquals(2, viewModel.uiState.items.size)
+        assertEquals("Item 1", viewModel.uiState.items[0].title)
+    }
+
+    @Test
+    fun testHomeViewModelAuthenticatedLoadsFeedsOnStartup() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+
+        assertEquals(1, repo.fetchCallCount)
+        assertEquals(2, viewModel.uiState.items.size)
     }
 }
