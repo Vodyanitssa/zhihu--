@@ -61,7 +61,6 @@
     private ** descriptor;
 }
 
--keepnames class ** implements com.zhihuminus.data.Feed$Target
 # Keep all enums
 -keep enum ** {
     <fields>;

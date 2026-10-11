@@ -68,7 +68,7 @@ open class ZhihuHistoryApi(
      */
     open suspend fun fetchHistoryPage(url: String): HistoryPage {
         @Suppress("HttpUrlsUsage")
-        val json = environment.fetchJson(url.replace("http://://", "https://"), "")
+        val json = environment.fetchJson(url.replace("http://", "https://"), "")
             ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: not json object."))
 
         val rawData = json["data"] as? JsonArray

@@ -128,8 +128,10 @@ android {
     }
 }
 
-tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile> {
-    compilerOptions.freeCompilerArgs.add("-Xdebug")
+tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+    if (name.contains("Debug", ignoreCase = true)) {
+        compilerOptions.freeCompilerArgs.add("-Xdebug")
+    }
 }
 
 val ktor = "3.5.0"

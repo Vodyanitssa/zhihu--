@@ -80,6 +80,7 @@ import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
+import java.io.File
 import java.util.concurrent.TimeUnit
 
 class MainActivity :
@@ -108,29 +109,49 @@ class MainActivity :
 
     @SuppressLint("SetJavaScriptEnabled")
     override fun onCreate(savedInstanceState: Bundle?) {
-        Thread.setDefaultUncaughtExceptionHandler { _, e ->
+        val previousHandler = Thread.getDefaultUncaughtExceptionHandler()
+        Thread.setDefaultUncaughtExceptionHandler { thread, e ->
             Log.e(TAG, "Uncaught exception", e)
-            val intent = Intent(
-                Intent.ACTION_VIEW,
-                Uri
-                    .Builder()
-                    .apply {
-                        scheme("https")
-                        authority("zhihu-plus.internal")
-                        appendPath("error")
-                        appendQueryParameter("title", "Uncaught exception: ${e.message}")
-                        appendQueryParameter(
-                            "message",
-                            e.message,
-                        )
-                        appendQueryParameter("stack", e.stackTraceToString())
-                    }.build(),
-                this,
-                MainActivity::class.java,
-            )
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            finish()
+            val isAlreadyHandlingError = intent?.data?.let { uri ->
+                uri.authority == "zhihu-plus.internal" && uri.path == "/error"
+            } ?: false
+            if (isAlreadyHandlingError) {
+                previousHandler?.uncaughtException(thread, e)
+                return@setDefaultUncaughtExceptionHandler
+            }
+            try {
+                val stackString = e.stackTraceToString()
+                val crashFile = File(cacheDir, "last_crash.log")
+                runCatching { crashFile.writeText(stackString) }
+
+                val safeStackPreview = if (stackString.length > 2000) {
+                    stackString.take(2000) + "\n... (更多堆栈信息见崩溃日志)"
+                } else {
+                    stackString
+                }
+
+                val intent = Intent(
+                    Intent.ACTION_VIEW,
+                    Uri
+                        .Builder()
+                        .apply {
+                            scheme("https")
+                            authority("zhihu-plus.internal")
+                            appendPath("error")
+                            appendQueryParameter("title", "应用发生异常: ${e.javaClass.simpleName}")
+                            appendQueryParameter("message", e.message.orEmpty())
+                            appendQueryParameter("stack", safeStackPreview)
+                        }.build(),
+                    this,
+                    MainActivity::class.java,
+                )
+                intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+                startActivity(intent)
+                finish()
+            } catch (fatal: Throwable) {
+                Log.e(TAG, "Failed to launch crash reporter, falling back to default handler", fatal)
+                previousHandler?.uncaughtException(thread, e)
+            }
         }
         super.onCreate(savedInstanceState)
         clearShareImageCache(this)
@@ -188,27 +209,27 @@ class MainActivity :
             }
         }
         if (savedInstanceState == null) {
-            if (intent.data != null) {
-                if (intent.data!!.authority == "zhihu-plus.internal") {
-                    if (intent.data!!.path == "/error") {
-                        val title = intent.data!!.getQueryParameter("title")
-//                        val message = intent.data!!.getQueryParameter("message")
-                        val stack = intent.data!!.getQueryParameter("stack")
-                        AlertDialog
-                            .Builder(this)
-                            .apply {
-                                setTitle(title)
-                                setMessage(stack)
-                                setPositiveButton("OK") { _, _ ->
-                                }
-                                setNeutralButton("Copy") { _, _ ->
-                                    val clip = ClipData.newPlainText("error", "$stack")
-                                    clipboardManager.setPrimaryClip(clip)
-                                }
-                            }.create()
-                            .show()
-                    }
-                }
+            val errorData = intent?.data
+            if (errorData?.authority == "zhihu-plus.internal" && errorData.path == "/error") {
+                val title = errorData.getQueryParameter("title") ?: "应用发生异常"
+                val crashFile = File(cacheDir, "last_crash.log")
+                val fullStack = if (crashFile.exists()) {
+                    runCatching { crashFile.readText() }.getOrNull()
+                } else {
+                    null
+                } ?: errorData.getQueryParameter("stack").orEmpty()
+                AlertDialog
+                    .Builder(this)
+                    .apply {
+                        setTitle(title)
+                        setMessage(fullStack)
+                        setPositiveButton("确定") { _, _ -> }
+                        setNeutralButton("复制堆栈") { _, _ ->
+                            val clip = ClipData.newPlainText("error", fullStack)
+                            clipboardManager.setPrimaryClip(clip)
+                        }
+                    }.create()
+                    .show()
             } else if (isFirstLaunch && !AccountData.data.login) {
                 startLoginActivity()
             }
