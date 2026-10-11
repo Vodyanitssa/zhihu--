@@ -12,6 +12,7 @@ import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeItemDto
 import com.zhihuminus.data.zhihu.dto.MemberBadgeV2Dto
+import com.zhihuminus.data.zhihu.dto.MemberProfileDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
@@ -247,8 +248,8 @@ class PeopleTest {
         assertEquals("回答", PeopleCreationTab.TITLES[0])
         assertEquals("文章", PeopleCreationTab.TITLES[1])
         assertEquals("想法", PeopleCreationTab.TITLES[2])
-        assertEquals("专栏", PeopleCreationTab.TITLES[3])
-        assertEquals("提问", PeopleCreationTab.TITLES[4])
+        assertEquals("提问", PeopleCreationTab.TITLES[3])
+        assertEquals("专栏", PeopleCreationTab.TITLES[4])
     }
 
     @Test
@@ -321,8 +322,8 @@ class PeopleTest {
         assertEquals("回答", PeopleCreationTab.TITLES[0])
         assertEquals("文章", PeopleCreationTab.TITLES[1])
         assertEquals("想法", PeopleCreationTab.TITLES[2])
-        assertEquals("专栏", PeopleCreationTab.TITLES[3])
-        assertEquals("提问", PeopleCreationTab.TITLES[4])
+        assertEquals("提问", PeopleCreationTab.TITLES[3])
+        assertEquals("专栏", PeopleCreationTab.TITLES[4])
     }
 
     @Test
@@ -685,5 +686,38 @@ class PeopleTest {
         assertNull(item.sourceLabel)
         assertEquals("回答 · 10 赞同 · 2 评论", item.details)
         assertTrue(page.isEnd)
+    }
+
+    @Test
+    fun testMemberProfileDtoPinsAndQuestionCount() {
+        val json =
+            """
+            {
+                "id": "member-123",
+                "name": "测试用户",
+                "answer_count": 25,
+                "articles_count": 12,
+                "pins_count": 8,
+                "question_count": 3
+            }
+            """.trimIndent()
+        val dto = ZhihuJson.decodeFromString<MemberProfileDto>(json)
+        assertEquals("member-123", dto.id)
+        assertEquals("测试用户", dto.name)
+        assertEquals(25, dto.answerCount)
+        assertEquals(12, dto.articlesCount)
+        assertEquals(8, dto.pinsCount)
+        assertEquals(3, dto.questionCount)
+
+        val profile = PeopleProfile(
+            id = dto.id,
+            name = dto.name,
+            answerCount = dto.answerCount,
+            articleCount = dto.articlesCount,
+            pinsCount = dto.pinsCount,
+            questionCount = dto.questionCount,
+        )
+        assertEquals(8, profile.pinsCount)
+        assertEquals(3, profile.questionCount)
     }
 }

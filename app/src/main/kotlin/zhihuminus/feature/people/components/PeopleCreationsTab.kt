@@ -57,6 +57,8 @@ fun PeopleCreationsTab(
                 val countText = when (tab) {
                     PeopleCreationTab.Answers -> if (state.profile.answerCount > 0) " (${state.profile.answerCount})" else ""
                     PeopleCreationTab.Articles -> if (state.profile.articleCount > 0) " (${state.profile.articleCount})" else ""
+                    PeopleCreationTab.Pins -> if (state.profile.pinsCount > 0) " (${state.profile.pinsCount})" else ""
+                    PeopleCreationTab.Questions -> if (state.profile.questionCount > 0) " (${state.profile.questionCount})" else ""
                     else -> ""
                 }
                 val bg by animateColorAsState(

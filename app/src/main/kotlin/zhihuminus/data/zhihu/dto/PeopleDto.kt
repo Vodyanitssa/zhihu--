@@ -79,6 +79,8 @@ data class MemberProfileDto(
     val followingCount: Int = 0,
     val answerCount: Int = 0,
     val articlesCount: Int = 0,
+    val pinsCount: Int = 0,
+    val questionCount: Int = 0,
     val isFollowing: Boolean = false,
     val isBlocking: Boolean = false,
     val socialMedias: List<MemberSocialMediaDto> = emptyList(),

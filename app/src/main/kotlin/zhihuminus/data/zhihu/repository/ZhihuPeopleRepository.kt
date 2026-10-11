@@ -52,6 +52,8 @@ class ZhihuPeopleRepository(
             followingCount = raw.followingCount,
             answerCount = raw.answerCount,
             articleCount = raw.articlesCount,
+            pinsCount = raw.pinsCount,
+            questionCount = raw.questionCount,
             isFollowing = raw.isFollowing,
             isBlocking = raw.isBlocking,
         )

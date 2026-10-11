@@ -21,6 +21,8 @@ data class PeopleProfile(
     val followingCount: Int = 0,
     val answerCount: Int = 0,
     val articleCount: Int = 0,
+    val pinsCount: Int = 0,
+    val questionCount: Int = 0,
     val isFollowing: Boolean = false,
     val isBlocking: Boolean = false,
 ) {
@@ -151,8 +153,8 @@ enum class PeopleCreationTab(
     Answers("回答"),
     Articles("文章"),
     Pins("想法"),
-    Columns("专栏"),
     Questions("提问"),
+    Columns("专栏"),
     ;
 
     companion object {
