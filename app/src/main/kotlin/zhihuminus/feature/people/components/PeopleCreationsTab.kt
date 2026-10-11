@@ -105,7 +105,7 @@ fun PeopleCreationsTab(
                             items = state.answersState.items,
                             onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Answers)) },
                             isEnd = { state.answersState.isEnd },
-                            footer = ProgressIndicatorFooter,
+                            footer = if (state.isRefreshingProfile || state.answersState.isRefreshing) null else ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
                             key = { it.id },
                         ) { item ->
@@ -134,7 +134,7 @@ fun PeopleCreationsTab(
                             items = state.articlesState.items,
                             onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Articles)) },
                             isEnd = { state.articlesState.isEnd },
-                            footer = ProgressIndicatorFooter,
+                            footer = if (state.isRefreshingProfile || state.articlesState.isRefreshing) null else ProgressIndicatorFooter,
                             modifier = Modifier.fillMaxSize(),
                             key = { it.id },
                         ) { item ->
@@ -158,7 +158,7 @@ fun PeopleCreationsTab(
                         items = state.pinsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Pins)) },
                         isEnd = { state.pinsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (state.isRefreshingProfile || state.pinsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { item ->
@@ -181,7 +181,7 @@ fun PeopleCreationsTab(
                         items = state.columnsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Columns)) },
                         isEnd = { state.columnsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (state.isRefreshingProfile || state.columnsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { column ->
@@ -201,7 +201,7 @@ fun PeopleCreationsTab(
                         items = state.questionsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Questions)) },
                         isEnd = { state.questionsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (state.isRefreshingProfile || state.questionsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { question ->

@@ -29,6 +29,7 @@ data class PaginatedTabState<T>(
 data class PeopleUiState(
     val profile: PeopleProfile = PeopleProfile(),
     val isLoadingProfile: Boolean = false,
+    val isRefreshingProfile: Boolean = false,
     val profileErrorMessage: String? = null,
     val answersSort: PeopleSortOrder = PeopleSortOrder.Voteups,
     val articlesSort: PeopleSortOrder = PeopleSortOrder.Created,
@@ -101,7 +102,7 @@ class PeopleViewModel(
 
     fun onEvent(event: PeopleEvent) {
         when (event) {
-            is PeopleEvent.RefreshProfile -> loadProfile()
+            is PeopleEvent.RefreshProfile -> loadProfile(isRefresh = true)
             is PeopleEvent.ToggleFollow -> toggleFollow()
             is PeopleEvent.ToggleItemFollow -> toggleItemFollow(event.people)
             is PeopleEvent.ToggleBlock -> toggleBlock()
@@ -125,14 +126,19 @@ class PeopleViewModel(
         }
     }
 
-    fun loadProfile() {
+    fun loadProfile(isRefresh: Boolean = false) {
         viewModelScope.launch {
-            uiState = uiState.copy(isLoadingProfile = true, profileErrorMessage = null)
+            uiState = uiState.copy(
+                isLoadingProfile = !isRefresh,
+                isRefreshingProfile = isRefresh,
+                profileErrorMessage = null,
+            )
             try {
                 val profile = repository.getProfile(person.userTokenOrId)
                 uiState = uiState.copy(
                     profile = profile,
                     isLoadingProfile = false,
+                    isRefreshingProfile = false,
                 )
                 _effect.send(
                     PeopleEffect.ProfileLoaded(
@@ -149,6 +155,7 @@ class PeopleViewModel(
                 val msg = friendlyErrorMessage(e)
                 uiState = uiState.copy(
                     isLoadingProfile = false,
+                    isRefreshingProfile = false,
                     profileErrorMessage = msg,
                 )
                 _effect.send(PeopleEffect.ShowMessage("加载用户信息失败: $msg"))

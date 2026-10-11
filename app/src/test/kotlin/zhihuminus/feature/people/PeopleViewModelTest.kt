@@ -180,4 +180,27 @@ class PeopleViewModelTest {
         val unblockEffect = viewModel.effect.filterIsInstance<PeopleEffect.ShowMessage>().first()
         assertEquals("已移出黑名单", unblockEffect.message)
     }
+
+    @Test
+    fun testInitialLoadProfileDoesNotSetIsRefreshingProfile() = runTest(testDispatcher) {
+        val repo = TestPeopleRepo()
+        val viewModel = PeopleViewModel(Person("1", "alice"), repo)
+        assertEquals(false, viewModel.uiState.isRefreshingProfile)
+        advanceUntilIdle()
+        assertEquals(false, viewModel.uiState.isRefreshingProfile)
+        assertEquals(false, viewModel.uiState.isLoadingProfile)
+    }
+
+    @Test
+    fun testRefreshProfileSetsIsRefreshingProfile() = runTest(testDispatcher) {
+        val repo = TestPeopleRepo()
+        val viewModel = PeopleViewModel(Person("1", "alice"), repo)
+        advanceUntilIdle()
+
+        viewModel.onEvent(PeopleEvent.RefreshProfile)
+        // Advance dispatcher to completion
+        advanceUntilIdle()
+        assertEquals(false, viewModel.uiState.isRefreshingProfile)
+        assertEquals(false, viewModel.uiState.isLoadingProfile)
+    }
 }

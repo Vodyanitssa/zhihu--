@@ -185,7 +185,7 @@ fun PeopleScreen(
             else -> false
         }
     }
-    val isRefreshing = state.isLoadingProfile || isCurrentTabRefreshing
+    val isRefreshing = state.isRefreshingProfile || isCurrentTabRefreshing
 
     Scaffold(
         modifier = modifier.fillMaxSize(),
@@ -383,7 +383,7 @@ fun PeopleScreen(
                                     items = state.activitiesState.items,
                                     onLoadMore = { onEvent(PeopleEvent.LoadMorePrimary(PeoplePrimaryTab.Activities)) },
                                     isEnd = { state.activitiesState.isEnd },
-                                    footer = ProgressIndicatorFooter,
+                                    footer = if (state.isRefreshingProfile || state.activitiesState.isRefreshing) null else ProgressIndicatorFooter,
                                     modifier = Modifier.fillMaxSize(),
                                     key = { it.stableKey },
                                 ) { item ->
@@ -407,7 +407,7 @@ fun PeopleScreen(
                                     items = state.collectionsState.items,
                                     onLoadMore = { onEvent(PeopleEvent.LoadMorePrimary(PeoplePrimaryTab.Collections)) },
                                     isEnd = { state.collectionsState.isEnd },
-                                    footer = ProgressIndicatorFooter,
+                                    footer = if (state.isRefreshingProfile || state.collectionsState.isRefreshing) null else ProgressIndicatorFooter,
                                     modifier = Modifier.fillMaxSize(),
                                     key = { it.id },
                                 ) { collection ->

@@ -99,7 +99,7 @@ fun PeopleFollowingSubscriptionsTab(
                         items = columnsState.items,
                         onLoadMore = { onLoadMore(0) },
                         isEnd = { columnsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (columnsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { column ->
@@ -119,7 +119,7 @@ fun PeopleFollowingSubscriptionsTab(
                         items = topicsState.items,
                         onLoadMore = { onLoadMore(1) },
                         isEnd = { topicsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (topicsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { topic ->
@@ -139,7 +139,7 @@ fun PeopleFollowingSubscriptionsTab(
                         items = questionsState.items,
                         onLoadMore = { onLoadMore(2) },
                         isEnd = { questionsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (questionsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { question ->
@@ -160,7 +160,7 @@ fun PeopleFollowingSubscriptionsTab(
                         items = collectionsState.items,
                         onLoadMore = { onLoadMore(3) },
                         isEnd = { collectionsState.isEnd },
-                        footer = ProgressIndicatorFooter,
+                        footer = if (collectionsState.isRefreshing) null else ProgressIndicatorFooter,
                         modifier = Modifier.fillMaxSize(),
                         key = { it.id },
                     ) { collection ->
