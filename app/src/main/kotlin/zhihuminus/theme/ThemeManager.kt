@@ -25,7 +25,7 @@ import androidx.compose.ui.graphics.toArgb
 
 data class ThemeSnapshot(
     val useDynamicColor: Boolean = true,
-    val customColor: Int = 0xFF2196F3.toInt(),
+    val customColor: Int = 0xFF056DE8.toInt(),
     val backgroundColorLight: Int = 0xFFFFFFFF.toInt(),
     val backgroundColorDark: Int = 0xFF121212.toInt(),
     val themeMode: ThemeMode = ThemeMode.SYSTEM,
@@ -33,10 +33,13 @@ data class ThemeSnapshot(
 
 object ThemeManager {
     private val useDynamicColor = mutableStateOf(true)
-    private val customColorInt = mutableIntStateOf(0xFF2196F3.toInt())
+    private val customColorInt = mutableIntStateOf(0xFF056DE8.toInt())
     private val backgroundColorLight = mutableIntStateOf(0xFFFFFFFF.toInt())
     private val backgroundColorDark = mutableIntStateOf(0xFF121212.toInt())
     private val themeMode = mutableStateOf(ThemeMode.SYSTEM)
+
+    var currentPrimaryColor: Color = Color(0xFF056DE8)
+        internal set
 
     @Composable
     fun getUseDynamicColor(): Boolean = useDynamicColor.value

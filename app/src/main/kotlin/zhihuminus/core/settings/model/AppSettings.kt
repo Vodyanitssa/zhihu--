@@ -18,7 +18,7 @@ data class AppSettings(
 data class ThemeSettings(
     val mode: ThemeMode = ThemeMode.SYSTEM,
     val useDynamicColor: Boolean = true,
-    val customColor: Int = 0xFF2196F3.toInt(),
+    val customColor: Int = 0xFF056DE8.toInt(),
     val backgroundColorLight: Int = 0xFFFFFFFF.toInt(),
     val backgroundColorDark: Int = 0xFF121212.toInt(),
     val browserToolbarColor: Int = 0xFF66CCFF.toInt(),

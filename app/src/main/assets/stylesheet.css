@@ -20,7 +20,7 @@ pre {
 }
 
 a {
-  color: #007bff;
+  color: var(--theme-primary-color, #007bff);
   text-decoration: none;
   white-space: pre-wrap;
 }
@@ -106,7 +106,7 @@ body.dark-theme img {
 }
 
 #zhihu-plus-footnotes a {
-  color: #0066cc;
+  color: var(--theme-primary-color, #0066cc);
   text-decoration: none;
 }
 
@@ -116,7 +116,7 @@ body.dark-theme img {
 
 sup[data-draft-type="reference"] {
   cursor: pointer;
-  color: #0066cc;
+  color: var(--theme-primary-color, #0066cc);
   font-size: 0.85em;
   vertical-align: super;
 }
@@ -140,7 +140,7 @@ body.dark-theme #zhihu-plus-footnotes li {
 
 body.dark-theme #zhihu-plus-footnotes a,
 body.dark-theme sup[data-draft-type="reference"] {
-  color: #4da3ff;
+  color: var(--theme-primary-color, #4da3ff);
 }
 
 body.dark-theme .footnote-highlight {

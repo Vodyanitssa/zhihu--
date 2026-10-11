@@ -54,6 +54,7 @@ fun ColorPickerDialog(
     title: String = "选择颜色",
     initialColor: Color,
     presetColors: List<Color> = listOf(
+        Color(0xFF056DE8),
         Color(0xFF2196F3),
         Color(0xFF4CAF50),
         Color(0xFFF44336),

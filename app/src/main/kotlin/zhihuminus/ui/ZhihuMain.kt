@@ -68,7 +68,6 @@ import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.graphics.compositeOver
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.input.nestedscroll.NestedScrollConnection
 import androidx.compose.ui.input.nestedscroll.NestedScrollSource
@@ -293,16 +292,7 @@ fun ZhihuMain(
                                     },
                                     label = { Text(label) },
                                     alwaysShowLabel = true,
-                                    colors = if (!isDarkTheme) {
-                                        NavigationBarItemDefaults.colors().copy(
-                                            selectedIndicatorColor =
-                                                MaterialTheme.colorScheme.secondaryContainer
-                                                    .copy(alpha = 0.92f)
-                                                    .compositeOver(MaterialTheme.colorScheme.secondary),
-                                        )
-                                    } else {
-                                        NavigationBarItemDefaults.colors()
-                                    },
+                                    colors = NavigationBarItemDefaults.colors(),
                                     icon = {
                                         Icon(icon, contentDescription = label)
                                     },

@@ -50,6 +50,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.viewinterop.AndroidView
@@ -325,6 +326,7 @@ class CustomWebView : WebView {
         }
 
         val bodyClass = if (ThemeManager.isDarkTheme) " class=\"dark-theme\" " else ""
+        val primaryHex = String.format("#%06X", (ThemeManager.currentPrimaryColor.toArgb() and 0xFFFFFF))
 
         loadDataWithBaseURL(
             url,
@@ -334,6 +336,9 @@ class CustomWebView : WebView {
             <viewport content="width=device-width, initial-scale=1.0">
             </viewport>
             <style>
+            :root {
+                --theme-primary-color: $primaryHex;
+            }
             body {
                 font-size: $fontSize%;
                 line-height: ${lineHeight / 100f};

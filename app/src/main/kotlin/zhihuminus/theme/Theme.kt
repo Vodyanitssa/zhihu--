@@ -23,10 +23,8 @@ import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.ColorScheme
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.darkColorScheme
 import androidx.compose.material3.dynamicDarkColorScheme
 import androidx.compose.material3.dynamicLightColorScheme
-import androidx.compose.material3.lightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.SideEffect
 import androidx.compose.ui.graphics.Color
@@ -37,25 +35,6 @@ import com.materialkolor.dynamicColorScheme
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.model.ThemeSettings
-
-private val DarkColorScheme = darkColorScheme(
-    primary = Purple80,
-    secondary = PurpleGrey80,
-    tertiary = Pink80,
-)
-
-private val LightColorScheme = lightColorScheme(
-    primary = Purple40,
-    secondary = PurpleGrey40,
-    tertiary = Pink40,
-    background = Color(0xFFFFFBFE),
-    surface = Color(0xFFFFFBFE),
-    onPrimary = Color.White,
-    onSecondary = Color.White,
-    onTertiary = Color.White,
-    onBackground = Color(0xFF1C1B1F),
-    onSurface = Color(0xFF1C1B1F),
-)
 
 @Composable
 fun ZhihuTheme(
@@ -68,32 +47,43 @@ fun ZhihuTheme(
     val useDynamicColor = themeSettings.useDynamicColor
     val darkTheme = resolveDarkTheme(themeSettings.mode, currentSystemInDarkTheme())
     ThemeManager.isDarkTheme = darkTheme
-    val customBackgroundColor = if (darkTheme) {
-        Color(themeSettings.backgroundColorDark)
-    } else {
-        Color(themeSettings.backgroundColorLight)
-    }
+
     val platformDynamicColorScheme = platformDynamicColorScheme(darkTheme)
+
+    val seedColor = if (themeSettings.customColor != 0) {
+        Color(themeSettings.customColor)
+    } else {
+        ZhihuDefaultSeedColor
+    }
 
     val baseColorScheme = when {
         useDynamicColor && platformDynamicColorScheme != null -> platformDynamicColorScheme
-        !useDynamicColor -> {
-            dynamicColorScheme(
-                seedColor = Color(themeSettings.customColor),
-                isDark = darkTheme,
-                isAmoled = false,
-            )
-        }
-
-        darkTheme -> DarkColorScheme
-        else -> LightColorScheme
+        else -> dynamicColorScheme(
+            seedColor = seedColor,
+            isDark = darkTheme,
+            isAmoled = false,
+        )
     }
 
-    val colorScheme = baseColorScheme.copy(
-        primary = Color(0XFF1772F6),
-        background = customBackgroundColor,
-        surface = customBackgroundColor,
-    )
+    val hasCustomBackground = if (darkTheme) {
+        themeSettings.backgroundColorDark != 0 && themeSettings.backgroundColorDark != 0xFF121212.toInt()
+    } else {
+        themeSettings.backgroundColorLight != 0 && themeSettings.backgroundColorLight != 0xFFFFFFFF.toInt()
+    }
+
+    val colorScheme = if (hasCustomBackground) {
+        val customBg = if (darkTheme) Color(themeSettings.backgroundColorDark) else Color(themeSettings.backgroundColorLight)
+        baseColorScheme.copy(
+            background = customBg,
+            surface = customBg,
+        )
+    } else {
+        baseColorScheme
+    }
+
+    SideEffect {
+        ThemeManager.currentPrimaryColor = colorScheme.primary
+    }
 
     PlatformSystemBarEffect(darkTheme)
 

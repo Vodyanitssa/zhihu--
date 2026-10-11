@@ -34,6 +34,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.materialkolor.ktx.harmonize
 import com.zhihuminus.feature.collection.Collection
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -176,7 +177,11 @@ private fun CollectionItem(
             Icon(
                 imageVector = if (collection.isFavorited) Icons.Filled.Bookmark else Icons.Filled.BookmarkBorder,
                 contentDescription = if (collection.isFavorited) "已收藏" else "未收藏",
-                tint = if (collection.isFavorited) Color(0xFFF57C00) else MaterialTheme.colorScheme.onSurfaceVariant,
+                tint = if (collection.isFavorited) {
+                    Color(0xFFF57C00).harmonize(MaterialTheme.colorScheme.primary)
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
                 modifier = Modifier.size(24.dp),
             )
         }

@@ -291,6 +291,7 @@ fun AppearanceSettingsScreen(
                         title = "选择浏览器主题色",
                         initialColor = luotianYiColor,
                         presetColors = listOf(
+                            Color(0xFF056DE8),
                             Color(0xFF66CCFF),
                             Color(0xFF2196F3),
                             Color(0xFF4CAF50),
@@ -335,6 +336,7 @@ fun AppearanceSettingsScreen(
                         title = "选择背景颜色",
                         initialColor = backgroundColor,
                         presetColors = listOfNotNull(
+                            MaterialTheme.colorScheme.surface,
                             Color(if (currentIsDarkTheme) 0xFF121212.toInt() else 0xFFFFFFFF.toInt()),
                             MaterialTheme.colorScheme.surfaceContainer,
                             if (ThemeManager.isDarkTheme()) Color.Black else null,

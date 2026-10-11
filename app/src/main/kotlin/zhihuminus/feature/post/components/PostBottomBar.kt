@@ -81,7 +81,7 @@ fun PostBottomBar(
                     targetValue = if (state.voteUpState == VoteUpState.Up) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
                 )
                 val upContentColor by animateColorAsState(
-                    targetValue = if (state.voteUpState == VoteUpState.Up) Color.White else MaterialTheme.colorScheme.onSurface,
+                    targetValue = if (state.voteUpState == VoteUpState.Up) MaterialTheme.colorScheme.onPrimary else MaterialTheme.colorScheme.onSurface,
                 )
                 Row(
                     modifier = Modifier
@@ -116,10 +116,18 @@ fun PostBottomBar(
                 visible = postType != PostType.Pin && (state.voteUpState == VoteUpState.Neutral || state.voteUpState == VoteUpState.Down),
             ) {
                 val downBgColor by animateColorAsState(
-                    targetValue = if (state.voteUpState == VoteUpState.Down) MaterialTheme.colorScheme.primary else MaterialTheme.colorScheme.surfaceContainer,
+                    targetValue = if (state.voteUpState == VoteUpState.Down) {
+                        MaterialTheme.colorScheme.tertiaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.surfaceContainer
+                    },
                 )
                 val downContentColor by animateColorAsState(
-                    targetValue = if (state.voteUpState == VoteUpState.Down) Color.White else MaterialTheme.colorScheme.onSurface,
+                    targetValue = if (state.voteUpState == VoteUpState.Down) {
+                        MaterialTheme.colorScheme.onTertiaryContainer
+                    } else {
+                        MaterialTheme.colorScheme.onSurface
+                    },
                 )
                 Row(
                     modifier = Modifier
