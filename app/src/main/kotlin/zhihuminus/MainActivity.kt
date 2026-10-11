@@ -68,7 +68,6 @@ import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Video
-import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
 import com.zhihuminus.theme.AndroidThemeSettings
@@ -242,7 +241,7 @@ class MainActivity :
                 if (clip != null && clip.itemCount > 0) {
                     val text = clip.getItemAt(0).text
                     if (text != null) {
-                        val regex = Regex("""(?:https?|zhminus)://[-a-zA-Z0-9@:%_+.~#?&/=]*""")
+                        val regex = Regex("""(?:https?|zhihu)://[-a-zA-Z0-9@:%_+.~#?&/=]*""")
                         val destination = regex.findAll(text).firstNotNullOfOrNull {
                             resolveScreen(it.value)
                         }
@@ -269,23 +268,18 @@ class MainActivity :
         if (data.authority == "zhihu-plus.internal") return true
 
         Log.i(TAG, "Intent data: $data")
-        when (val resolution = AppRouter.resolve(data.toString())) {
+        when (val resolution = AppRouter.resolveAny(data.toString())) {
             is RouteResolution.Screen -> openScreenDestination(resolution.destination)
             is RouteResolution.Tab -> navigateToMainTabs(resolution.destination)
             null -> {
-                val destination = resolveContent(data.toString())
-                if (destination != null) {
-                    openScreenDestination(destination)
-                } else {
-                    AlertDialog
-                        .Builder(this)
-                        .apply {
-                            setTitle("Unsupported URL")
-                            setMessage("Unknown URL: $data")
-                            setPositiveButton("OK") { _, _ -> }
-                        }.create()
-                        .show()
-                }
+                AlertDialog
+                    .Builder(this)
+                    .apply {
+                        setTitle("Unsupported URL")
+                        setMessage("Unknown URL: $data")
+                        setPositiveButton("OK") { _, _ -> }
+                    }.create()
+                    .show()
             }
         }
         return true
@@ -293,10 +287,7 @@ class MainActivity :
 
     /** 解析任意 URL（应用协议或知乎 Web 链接）为屏幕目的地；tab 切换 URL 返回 null。 */
     private fun resolveScreen(url: String): NavDestination? =
-        when (val resolution = AppRouter.resolve(url)) {
-            is RouteResolution.Screen -> resolution.destination
-            else -> null
-        } ?: resolveContent(url)
+        (AppRouter.resolveAny(url) as? RouteResolution.Screen)?.destination
 
     private fun openScreenDestination(destination: NavDestination) {
         if (destination != sharedData.clipboardDestination) {

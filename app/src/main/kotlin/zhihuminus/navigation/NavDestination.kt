@@ -4,7 +4,7 @@
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
- * the Free Software Foundation (version 3 only).
+ * the Free Software Foundation (version 3 overlay).
  *
  * This program is distributed in the hope that it will be useful,
  * but WITHOUT ANY WARRANTY; without even the implied warranty of
@@ -17,8 +17,10 @@
 
 package com.zhihuminus.navigation
 
-import com.zhihuminus.core.util.Log
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.router.AppRouter
+import com.zhihuminus.navigation.router.RouteResolution
+import com.zhihuminus.navigation.router.ZhihuWebUrlResolver
 import io.ktor.http.Url
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
@@ -28,9 +30,7 @@ sealed interface NavDestination
 
 /**
  * 底部栏和主 pager 使用的 tab 目标。
- *
- * 为了兼容旧调用，tab 目标仍可能同时是历史遗留的 [NavDestination] 值。需要进入主壳时应使用 [MainTabs]，
- * 再由主壳选择对应 tab。
+ * 需要进入主壳时应使用 [MainTabs]，再由主壳选择对应 tab。
  */
 interface TopLevelDestination {
     val name: String
@@ -38,18 +38,12 @@ interface TopLevelDestination {
 
 /**
  * 主壳真实使用的导航目的地。
- *
- * [Home]、[Follow]、[Daily] 等旧顶层目的地仍保留为可序列化值，因为 deeplink、剪贴板解析、设置、持久化历史和旧调用点
- * 仍可能解析到它们。顶层目标应视为 tab 选择目标，而不是直接 push 到主 NavHost 的页面 route。
  */
 @Serializable
 data object MainTabs : NavDestination
 
 /**
- * 主 pager 的历史顶层 tab 目标。
- *
- * 该值服务 deeplink、设置、测试和旧导航调用点。不要把它重新注册成主 NavHost 的独立页面；
- * 应导航到 [MainTabs] 后选择对应 pager 页。
+ * 主 pager 的顶层 tab 目标。
  */
 @Serializable
 data object Home : TopLevelDestination {
@@ -58,9 +52,7 @@ data object Home : TopLevelDestination {
 }
 
 /**
- * 主 pager 的历史顶层 tab 目标。
- *
- * [Follow] 会映射到“推荐”和“动态”两个相邻 pager 页；上次选择由 ZhihuMain 记住。
+ * 主 pager 的顶层 tab 目标。
  */
 @Serializable
 data object Follow : TopLevelDestination {
@@ -75,11 +67,11 @@ data object Follow : TopLevelDestination {
 data object History : NavDestination
 
 /**
- * Legacy top-level tab target for the main pager.
+ * 账号与设置目的地。
  */
 @Serializable
-data object Account : TopLevelDestination, NavDestination {
-    override val name: String
+data object Account : NavDestination {
+    val name: String
         get() = "Account"
 
     @Serializable
@@ -108,7 +100,7 @@ data object Account : TopLevelDestination, NavDestination {
 }
 
 /**
- * 主 pager 的历史顶层 tab 目标。
+ * 主 pager 的顶层 tab 目标。
  */
 @Serializable
 data object Daily : TopLevelDestination {
@@ -157,14 +149,14 @@ data class CollectionContent(
 
 @Serializable
 data class PostDestination(
-    var title: String = "loading...",
+    val title: String = "loading...",
     @SerialName("article_type_1")
     val type: PostType,
     val id: Long,
-    var authorName: String = "loading...",
-    var authorBio: String = "loading...",
-    var avatarSrc: String? = null,
-    var excerpt: String? = null,
+    val authorName: String = "loading...",
+    val authorBio: String = "loading...",
+    val avatarSrc: String? = null,
+    val excerpt: String? = null,
     val readingQueueSourceId: String? = null,
 ) : NavDestination {
     override fun hashCode(): Int = id.hashCode()
@@ -176,17 +168,6 @@ data class PostDestination(
 data class CommentHolder(
     val commentId: String,
     val article: NavDestination,
-) : NavDestination
-
-@Serializable
-data class SegmentCommentHolder(
-    val contentId: String,
-    val contentType: String,
-    val segmentId: String,
-    val segmentContent: String,
-    val paragraphId: String,
-    val startOffset: Int,
-    val endOffset: Int,
 ) : NavDestination
 
 @Serializable
@@ -205,17 +186,16 @@ data class Person(
     /**
      * 32 位十六进制字符。
      */
-    var id: String,
+    val id: String,
     /**
      * 用在 URL 中的可读 token。
      */
-    var urlToken: String,
+    val urlToken: String,
     val name: String = "loading...",
     val jumpTo: String = "",
 ) : NavDestination {
     override fun hashCode(): Int {
         if (id != EMPTY_ID) {
-            // 32 位十六进制字符，通常是用户 ID。
             return id.hashCode()
         }
         return urlToken.hashCode()
@@ -261,173 +241,18 @@ fun NavDestination.withReadingQueueSource(sourceId: String?): NavDestination = w
     else -> this
 }
 
-fun resolveContent(url: String): NavDestination? = runCatching { resolveContent(Url(url)) }.getOrNull()
+/**
+ * 链接解析门面，兼容旧调用点。内部委托给统一的 [AppRouter.resolveDestination]。
+ */
+fun resolveContent(url: String): NavDestination? = AppRouter.resolveDestination(url)
 
-fun resolveContent(url: Url): NavDestination? {
-    val segments = url.segments
-    if (url.protocol.name == "http" || url.protocol.name == "https") {
-        if (url.host == "zhihu.com" || url.host == "www.zhihu.com") {
-            if (segments.size == 1 && segments[0] == "compose_answer_tab") {
-                return Notification.Invitations
-            } else if (segments.size == 2 && segments[0] == "inbox") {
-                return Notification.Message(
-                    peerId = segments[1],
-                    name = url.parameters["title"].orEmpty(),
-                )
-            } else if (
-                segments.size == 5 &&
-                segments[0] == "notifications" &&
-                segments[1] == "v3" &&
-                segments[2] == "timeline" &&
-                segments[3] == "entry"
-            ) {
-                return Notification.Entry(
-                    entryName = segments[4],
-                    title = url.parameters["title"].orEmpty().ifBlank { "消息" },
-                )
-            } else if (segments.size == 4 &&
-                segments[0] == "question" &&
-                segments[2] == "answer"
-            ) {
-                val answerId = segments[3].toLong()
-                return PostDestination(type = PostType.Answer, id = answerId)
-            } else if (segments.size == 2 &&
-                segments[0] == "answer"
-            ) {
-                val answerId = segments[1].toLong()
-                return PostDestination(type = PostType.Answer, id = answerId)
-            } else if (segments.size == 2 &&
-                segments[0] == "question"
-            ) {
-                val questionId = segments[1].toLong()
-                return Question(questionId)
-            } else if (segments.size == 3 &&
-                segments[0] == "oia" &&
-                segments[1] == "articles"
-            ) {
-                val articleId = segments[2].toLong()
-                return PostDestination(type = PostType.Article, id = articleId)
-            } else if (segments.size == 2 && segments[0] == "people") {
-                val urlToken = segments[1]
-                if (urlToken.length == 32 && urlToken.all { it in '0'..'9' || it in 'a'..'f' }) {
-                    // 32 位十六进制字符，通常是用户 ID。
-                    return Person(id = urlToken, urlToken = urlToken)
-                } else {
-                    // 可读 token。
-                    return Person(id = Person.EMPTY_ID, urlToken = urlToken)
-                }
-            } else if (segments.size == 2 && segments[0] == "video") {
-                val videoId = segments[1].toLongOrNull() ?: return null
-                return Video(id = videoId) // TODO: 视频详情页待完善。
-            } else if (segments.size == 2 && segments[0] == "pin") {
-                val pinId = segments[1].toLongOrNull() ?: return null
-                return PostDestination(type = PostType.Pin, id = pinId)
-            } else if (segments.size >= 2 && segments[0] == "topic") {
-                return Topic(id = segments[1], section = segments.getOrNull(2).orEmpty())
-            } else if (segments.size == 3 && segments[0] == "appview") {
-                val contentId = segments[2].toLongOrNull() ?: return null
-                return when (segments[1]) {
-                    "pin" -> PostDestination(type = PostType.Pin, id = contentId)
-                    "answer" -> PostDestination(type = PostType.Answer, id = contentId)
-                    "p" -> PostDestination(type = PostType.Article, id = contentId)
-                    else -> null
-                }
-            } else if (segments.size == 1 &&
-                segments[0] == "search"
-            ) {
-                val query = url.parameters["q"] ?: ""
-                return Search(query)
-            } else if (segments.size == 2 &&
-                segments[0] == "column"
-            ) {
-                return Column(columnId = segments[1])
-            } else if (segments.size == 2 &&
-                (segments[0] == "collection" || segments[0] == "collections")
-            ) {
-                return CollectionContent(collectionId = segments[1])
-            }
-            /*
-             * 尚未支持的 destination，等待后续补充对应的 NavDestination：
-             * - https://www.zhihu.com/appview/roundtable -> https://www.zhihu.com/roundtable
-             * - https://www.zhihu.com/appview/special -> https://www.zhihu.com/special/all
-             * - https://daily.zhihu.com/story/{storyId}
-             * - https://www.zhihu.com/special/{specialId}
-             */
-            Log.w("NavDestination", "Cannot resolve content from url: $url")
-        } else if (url.host == "api.zhihu.com") {
-            if (segments.size == 2 && segments[0] == "collections") {
-                return CollectionContent(collectionId = segments[1])
-            }
-            Log.w("NavDestination", "Cannot resolve content from url: $url")
-        } else if (url.host == "zhuanlan.zhihu.com") {
-            if (segments.size == 2 &&
-                segments[0] == "p"
-            ) {
-                val articleId = segments[1].toLong()
-                return PostDestination(type = PostType.Article, id = articleId)
-            }
-            Log.w("NavDestination", "Cannot resolve content from url: $url")
-        } else if (url.host == "link.zhihu.com") {
-            val target = url.parameters["target"] ?: return null
-            return runCatching { Url(target) }.getOrNull()?.let(::resolveContent)
+/**
+ * [Url] 链接解析门面，兼容旧调用点。
+ */
+fun resolveContent(url: Url): NavDestination? =
+    ZhihuWebUrlResolver.resolve(url) ?: runCatching { AppRouter.resolve(url) }.getOrNull()?.let { resolution ->
+        when (resolution) {
+            is RouteResolution.Screen -> resolution.destination
+            is RouteResolution.Tab -> MainTabs
         }
     }
-    if (url.protocol.name == "zhihu") {
-        if (
-            url.host == "comment" &&
-            segments.size == 3 &&
-            segments[0] == "list"
-        ) {
-            val contentId = segments[2].toLongOrNull() ?: return null
-            val commentId = url.parameters["anchor_comment_id"]
-                ?.takeIf { id -> id.isNotEmpty() && id.all { it in '0'..'9' } }
-                ?: return null
-            val content = when (segments[1]) {
-                "answer" -> PostDestination(
-                    type = PostType.Answer,
-                    id = contentId,
-                )
-
-                "article" -> PostDestination(
-                    type = PostType.Article,
-                    id = contentId,
-                )
-
-                "pin" -> PostDestination(type = PostType.Pin, id = contentId)
-
-                "question" -> Question(questionId = contentId)
-
-                else -> return null
-            }
-            return CommentHolder(commentId = commentId, article = content)
-        } else if (url.host == "answers") {
-            val answerId = segments[0].toLong()
-            return PostDestination(type = PostType.Answer, id = answerId)
-        } else if (url.host == "questions") {
-            val questionId = segments[0].toLong()
-            return Question(questionId)
-        } else if (url.host == "feed") {
-            return MainTabs
-        } else if (url.host == "articles") {
-            val articleId = segments[0].toLong()
-            return PostDestination(type = PostType.Article, id = articleId)
-        } else if (url.host == "search") {
-            val query = url.parameters["q"] ?: ""
-            return Search(query)
-        } else if (url.host == "pin") {
-            val pinId = segments[0].toLong()
-            return PostDestination(type = PostType.Pin, id = pinId)
-        } else if (url.host == "topic" || url.host == "topics") {
-            val topicId = segments.firstOrNull() ?: return null
-            return Topic(id = topicId, section = segments.getOrNull(1).orEmpty())
-        } else if (url.host == "pin20") {
-            val topicId = url.parameters["topic_id"]
-                ?: url.parameters["topicId"]
-                ?: segments.lastOrNull()?.takeIf { it.all(Char::isDigit) }
-                ?: return null
-            return Topic(id = topicId)
-        }
-        Log.w("NavDestination", "Cannot resolve content from url: $url")
-    }
-    return null
-}

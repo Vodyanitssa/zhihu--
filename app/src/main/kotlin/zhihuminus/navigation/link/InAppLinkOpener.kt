@@ -4,7 +4,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.navigation.LocalNavigator
-import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
 
@@ -18,19 +17,11 @@ fun rememberInAppLinkOpener(): (String) -> Unit {
     val openExternalUrl = rememberExternalUrlOpener()
     return remember(navigator, openExternalUrl) {
         { url ->
-            val normalized = normalizeContentUrl(url)
-            when (val resolution = AppRouter.resolve(normalized)) {
+            when (val resolution = AppRouter.resolveAny(url)) {
                 is RouteResolution.Screen -> navigator.onNavigate(resolution.destination)
                 is RouteResolution.Tab -> navigator.onNavigateTopLevel(resolution.destination)
-                null -> resolveContent(normalized)?.let(navigator.onNavigate) ?: openExternalUrl(url)
+                null -> openExternalUrl(url)
             }
         }
     }
-}
-
-/** 知乎 HTML 里的链接常见 `//host/path` 与 `/path` 相对形式，补全后才能被路由解析。 */
-private fun normalizeContentUrl(url: String): String = when {
-    url.startsWith("//") -> "https:$url"
-    url.startsWith("/") -> "https://www.zhihu.com$url"
-    else -> url
 }

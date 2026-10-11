@@ -24,7 +24,7 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
 
 ## Architecture notes
 
-- Entry point is `MainActivity.kt`; UI is Compose throughout. In-app routing for `zhminus://` deep links is `navigation/router/AppRouter.kt` (+ `AppRouteTable.kt`), round-trip tested by `AppRouterRoundTripTest`.
+- Entry point is `MainActivity.kt`; UI is Compose throughout. In-app routing for `zhihu://` deep links is `navigation/router/AppRouter.kt` (+ `AppRouteTable.kt`), round-trip tested by `AppRouterRoundTripTest`.
 - **Feature architecture (`feature/<name>/`)**: Features are organized as domain modules under `app/src/main/kotlin/zhihuminus/feature/<name>/` (`collection`, `column`, `comment`, `daily`, `history`, `imageview`, `notification`, `post`, `question`, `topic`) following a clean MVI architecture:
   - Feature layer owns domain models and contracts: `<Name>.kt` defines domain models and `<Name>Repository` interface.
   - `<Name>Signal.kt`: Defines `Event` (user actions/intents) and `Effect` (one-shot navigation/snackbars) sealed interfaces.

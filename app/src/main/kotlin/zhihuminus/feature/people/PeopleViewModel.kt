@@ -134,8 +134,6 @@ class PeopleViewModel(
                     profile = profile,
                     isLoadingProfile = false,
                 )
-                if (profile.id.isNotBlank()) person.id = profile.id
-                if (profile.urlToken.isNotBlank()) person.urlToken = profile.urlToken
                 _effect.send(
                     PeopleEffect.ProfileLoaded(
                         Person(

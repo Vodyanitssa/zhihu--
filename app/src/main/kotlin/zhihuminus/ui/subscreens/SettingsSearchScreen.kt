@@ -110,7 +110,7 @@ private fun systemEntry(
     title = title,
     section = "系统与更新",
     description = description,
-    destination = Account.SystemAndUpdateSettings(setting = settingKey),
+    destination = Account.AppearanceSettings(setting = settingKey),
     keywords = keywords,
 )
 

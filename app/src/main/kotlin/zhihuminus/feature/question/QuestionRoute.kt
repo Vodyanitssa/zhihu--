@@ -23,8 +23,6 @@ import com.zhihuminus.feature.question.components.HistoryLogSheet
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
-import com.zhihuminus.navigation.link.rememberInAppLinkOpener
-import com.zhihuminus.navigation.router.toAppUrl
 import com.zhihuminus.ui.ArticleHost
 
 /**
@@ -47,7 +45,6 @@ fun QuestionRoute(
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
     val navigator = LocalNavigator.current
-    val inAppLinkOpener = rememberInAppLinkOpener()
     val imageViewManager = remember { ImageViewManager() }
     var showLogUrl by remember { mutableStateOf<String?>(null) }
 
@@ -102,7 +99,7 @@ fun QuestionRoute(
             onEvent = viewModel::onEvent,
             onAnswerClick = { _, itemDestination ->
                 if (itemDestination is PostDestination) {
-                    itemDestination.toAppUrl()?.let(inAppLinkOpener)
+                    navigator.onNavigate(itemDestination)
                 }
             },
             onBack = onBack,

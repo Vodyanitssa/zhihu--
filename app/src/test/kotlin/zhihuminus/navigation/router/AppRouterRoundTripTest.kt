@@ -18,7 +18,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
-import com.zhihuminus.navigation.resolveContent
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -39,59 +38,66 @@ class AppRouterRoundTripTest {
         (AppRouter.resolve(url) as? RouteResolution.Screen)?.destination
 
     @Test
-    fun question() = assertRoundTrip(Question(questionId = 123456L), "zhminus://question/123456")
+    fun question() {
+        assertRoundTrip(Question(questionId = 123456L), "zhihu://questions/123456")
+        assertEquals(RouteResolution.Screen(Question(123456L)), AppRouter.resolve("zhihu://question/123456"))
+    }
 
     @Test
-    fun answerPost() = assertRoundTrip(PostDestination(type = PostType.Answer, id = 1L), "zhminus://answer/1")
+    fun answerPost() {
+        assertRoundTrip(PostDestination(type = PostType.Answer, id = 1L), "zhihu://answers/1")
+        assertEquals(
+            RouteResolution.Screen(PostDestination(type = PostType.Answer, id = 1L)),
+            AppRouter.resolve("zhihu://answer/1"),
+        )
+    }
 
     @Test
-    fun articlePost() = assertRoundTrip(PostDestination(type = PostType.Article, id = 2L), "zhminus://article/2")
+    fun articlePost() {
+        assertRoundTrip(PostDestination(type = PostType.Article, id = 2L), "zhihu://articles/2")
+        assertEquals(
+            RouteResolution.Screen(PostDestination(type = PostType.Article, id = 2L)),
+            AppRouter.resolve("zhihu://article/2"),
+        )
+    }
 
     @Test
-    fun pinPost() = assertRoundTrip(PostDestination(type = PostType.Pin, id = 3L), "zhminus://pin/3")
+    fun pinPost() = assertRoundTrip(PostDestination(type = PostType.Pin, id = 3L), "zhihu://pin/3")
 
     @Test
-    fun video() = assertRoundTrip(Video(id = 4L), "zhminus://video/4")
+    fun video() = assertRoundTrip(Video(id = 4L), "zhihu://video/4")
 
     @Test
-    fun topicWithSection() = assertRoundTrip(Topic(id = "1954", section = "talk"), "zhminus://topic/1954/talk")
+    fun topicWithSection() = assertRoundTrip(Topic(id = "1954", section = "talk"), "zhihu://topic/1954/talk")
 
     @Test
-    fun topicWithoutSection() = assertRoundTrip(Topic(id = "1954"), "zhminus://topic/1954")
+    fun topicWithoutSection() {
+        assertRoundTrip(Topic(id = "1954"), "zhihu://topic/1954")
+        assertEquals(RouteResolution.Screen(Topic("1954")), AppRouter.resolve("zhihu://topics/1954"))
+        assertEquals(RouteResolution.Screen(Topic("1954")), AppRouter.resolve("zhihu://pin20?topic_id=1954"))
+    }
 
     @Test
     fun personWithReadableToken() =
-        assertRoundTrip(Person(id = Person.EMPTY_ID, urlToken = "exc-fulfillment"), "zhminus://people/exc-fulfillment")
+        assertRoundTrip(Person(id = Person.EMPTY_ID, urlToken = "exc-fulfillment"), "zhihu://people/exc-fulfillment")
 
     @Test
     fun personWithHexId() =
         assertRoundTrip(
             Person(id = "0123456789abcdef0123456789abcdef", urlToken = "0123456789abcdef0123456789abcdef"),
-            "zhminus://people/0123456789abcdef0123456789abcdef",
+            "zhihu://people/0123456789abcdef0123456789abcdef",
         )
 
     @Test
-    fun collections() = assertRoundTrip(Collections(userToken = "some-token"), "zhminus://collections/some-token")
+    fun collections() = assertRoundTrip(Collections(userToken = "some-token"), "zhihu://collections/some-token")
 
     @Test
-    fun collectionContent() = assertRoundTrip(CollectionContent(collectionId = "9527"), "zhminus://collection/9527")
-
-    @Test
-    fun collectionContentFromWebUrl() {
-        assertEquals(
-            CollectionContent(collectionId = "9527"),
-            resolveContent("https://www.zhihu.com/collection/9527"),
-        )
-        assertEquals(
-            CollectionContent(collectionId = "9527"),
-            resolveContent("https://api.zhihu.com/collections/9527"),
-        )
-    }
+    fun collectionContent() = assertRoundTrip(CollectionContent(collectionId = "9527"), "zhihu://collection/9527")
 
     @Test
     fun searchWithQueryOnly() {
         val url = Search(query = "kotlin").toAppUrl()
-        assertEquals("zhminus://search?q=kotlin", url)
+        assertEquals("zhihu://search?q=kotlin", url)
         assertEquals(
             RouteResolution.Screen(Search(query = "kotlin")),
             AppRouter.resolve(requireNotNull(url)),
@@ -107,100 +113,134 @@ class AppRouterRoundTripTest {
 
     @Test
     fun searchRestrictedToMember() =
-        assertRoundTrip(Search(query = "", restrictedMemberHashId = "abc123"), "zhminus://search?member=abc123")
+        assertRoundTrip(Search(query = "", restrictedMemberHashId = "abc123"), "zhihu://search?member=abc123")
 
     @Test
     fun emptySearchHasNoQuery() {
-        assertEquals("zhminus://search", Search().toAppUrl())
-        assertEquals(RouteResolution.Screen(Search()), AppRouter.resolve("zhminus://search"))
+        assertEquals("zhihu://search", Search().toAppUrl())
+        assertEquals(RouteResolution.Screen(Search()), AppRouter.resolve("zhihu://search"))
     }
 
     @Test
-    fun commentOnAnswer() =
+    fun commentOnAnswer() {
         assertRoundTrip(
             CommentHolder(commentId = "42", article = PostDestination(type = PostType.Answer, id = 7L)),
-            "zhminus://comment/answer/7?anchor=42",
+            "zhihu://comment/list/answer/7?anchor_comment_id=42",
         )
+        // 兼容单数与简写参数
+        assertEquals(
+            RouteResolution.Screen(
+                CommentHolder(commentId = "42", article = PostDestination(type = PostType.Answer, id = 7L)),
+            ),
+            AppRouter.resolve("zhihu://comment/answer/7?anchor=42"),
+        )
+    }
 
     @Test
     fun commentOnQuestion() =
         assertRoundTrip(
             CommentHolder(commentId = "42", article = Question(questionId = 8L)),
-            "zhminus://comment/question/8?anchor=42",
+            "zhihu://comment/list/question/8?anchor_comment_id=42",
         )
 
     @Test
     fun commentWithoutAnchorIsRejected() =
-        assertNull(resolveScreen("zhminus://comment/answer/7"))
+        assertNull(resolveScreen("zhihu://comment/answer/7"))
+
+    @Test
+    fun feedDeeplinkResolvesToHomeTab() {
+        assertEquals(RouteResolution.Tab(Home), AppRouter.resolve("zhihu://feed"))
+        assertEquals("zhihu://feed", MainTabs.toAppUrl())
+    }
 
     @Test
     fun tabs() {
         mapOf(
-            Home to "zhminus://tab/home",
-            Follow to "zhminus://tab/follow",
-            Daily to "zhminus://tab/daily",
+            Home to "zhihu://tab/home",
+            Follow to "zhihu://tab/follow",
+            Daily to "zhihu://tab/daily",
         ).forEach { destination, url ->
             assertEquals(RouteResolution.Tab(destination), AppRouter.resolve(url), url)
         }
     }
 
     @Test
-    fun accountLegacyTabUrlResolvesToScreen() = assertRoundTrip(Account, "zhminus://tab/account")
+    fun accountLegacyTabUrlResolvesToScreen() = assertRoundTrip(Account, "zhihu://tab/account")
 
     @Test
-    fun historyRoot() = assertRoundTrip(History, "zhminus://history")
+    fun historyRoot() = assertRoundTrip(History, "zhihu://history")
 
     @Test
     fun historyLegacyTabUrlResolvesToScreen() {
-        assertEquals(RouteResolution.Screen(History), AppRouter.resolve("zhminus://tab/history"))
+        assertEquals(RouteResolution.Screen(History), AppRouter.resolve("zhihu://tab/history"))
     }
 
     @Test
-    fun mainTabsEncodesToHomeTab() {
-        assertEquals("zhminus://tab/home", MainTabs.toAppUrl())
-    }
-
-    @Test
-    fun notificationRoot() = assertRoundTrip(Notification, "zhminus://notification")
+    fun notificationRoot() = assertRoundTrip(Notification, "zhihu://notification")
 
     @Test
     fun notificationEntry() =
-        // 富字段（title）不参与 URL 编码，往返后保持默认空值。
-        assertRoundTrip(Notification.Entry(entryName = "follow", title = ""), "zhminus://notification/entry/follow")
+        assertRoundTrip(Notification.Entry(entryName = "follow", title = ""), "zhihu://notification/entry/follow")
 
     @Test
     fun notificationMessage() =
-        // 富字段（name、avatarUrl）不参与 URL 编码，往返后保持默认空值。
-        assertRoundTrip(Notification.Message(peerId = "p1"), "zhminus://notification/message/p1")
+        assertRoundTrip(Notification.Message(peerId = "p1"), "zhihu://notification/message/p1")
 
     @Test
     fun notificationInvitations() =
-        assertRoundTrip(Notification.Invitations, "zhminus://notification/invitations")
+        assertRoundTrip(Notification.Invitations, "zhihu://notification/invitations")
 
     @Test
     fun settingsPages() {
-        assertRoundTrip(Account.AppearanceSettings(setting = "dark"), "zhminus://settings/appearance?setting=dark")
-        assertRoundTrip(Account.AppearanceSettings(), "zhminus://settings/appearance")
-        assertRoundTrip(Account.ReadingSettings, "zhminus://settings/reading")
-        assertRoundTrip(Account.SystemAndUpdateSettings(setting = "s"), "zhminus://settings/system?setting=s")
-        assertRoundTrip(Account.NotificationSettings(setting = "s"), "zhminus://settings/notification?setting=s")
-        assertRoundTrip(Account.NotificationSettings(), "zhminus://settings/notification")
-        assertRoundTrip(Account.SettingsSearch, "zhminus://settings/search")
-        assertRoundTrip(Account.OpenSourceLicenses, "zhminus://settings/licenses")
+        assertRoundTrip(Account.AppearanceSettings(setting = "dark"), "zhihu://settings/appearance?setting=dark")
+        assertRoundTrip(Account.AppearanceSettings(), "zhihu://settings/appearance")
+        assertRoundTrip(Account.NotificationSettings(setting = "s"), "zhihu://settings/notification?setting=s")
+        assertRoundTrip(Account.NotificationSettings(), "zhihu://settings/notification")
+        assertRoundTrip(Account.SettingsSearch, "zhihu://settings/search")
+        assertRoundTrip(Account.OpenSourceLicenses, "zhihu://settings/licenses")
+        // 验证阅读与系统旧路径平滑映射到 appearance
+        assertEquals(
+            RouteResolution.Screen(Account.AppearanceSettings("test")),
+            AppRouter.resolve("zhihu://settings/system?setting=test"),
+        )
+        assertEquals(
+            RouteResolution.Screen(Account.AppearanceSettings("")),
+            AppRouter.resolve("zhihu://settings/reading"),
+        )
+    }
+
+    @Test
+    fun resolveAnyHandlesBothSchemeAndWeb() {
+        assertEquals(
+            RouteResolution.Screen(Question(questionId = 123L)),
+            AppRouter.resolveAny("zhihu://questions/123"),
+        )
+        assertEquals(
+            RouteResolution.Screen(Question(questionId = 123L)),
+            AppRouter.resolveAny("https://www.zhihu.com/question/123"),
+        )
+        assertEquals(
+            RouteResolution.Screen(Question(questionId = 123L)),
+            AppRouter.resolveAny("//www.zhihu.com/question/123"),
+        )
+        assertEquals(
+            RouteResolution.Tab(Home),
+            AppRouter.resolveAny("zhihu://feed"),
+        )
     }
 
     @Test
     fun foreignSchemeIsIgnored() {
         assertNull(AppRouter.resolve("https://www.zhihu.com/question/1"))
-        assertNull(AppRouter.resolve("zhihu://answers/1"))
+        assertNull(AppRouter.resolve("ftp://answers/1"))
     }
 
     @Test
     fun malformedUrlsReturnNull() {
-        assertNull(resolveScreen("zhminus://question/not-a-number"))
-        assertNull(resolveScreen("zhminus://unknown-host/segment"))
-        assertNull(resolveScreen("zhminus://question/1/extra"))
-        assertNull(resolveScreen("zhminus://write/video/1"))
+        assertNull(resolveScreen("zhihu://question/not-a-number"))
+        assertNull(resolveScreen("zhihu://unknown-host/segment"))
+        assertNull(resolveScreen("zhihu://question/1/extra"))
+        assertNull(resolveScreen("zhihu://write/video/1"))
         assertNull(AppRouter.resolve("::::not a url:::"))
     }
 
@@ -208,13 +248,12 @@ class AppRouterRoundTripTest {
     fun hostMatchingIsCaseInsensitive() {
         assertEquals(
             RouteResolution.Screen(Question(questionId = 1L)),
-            AppRouter.resolve("ZHMINUS://Question/1"),
+            AppRouter.resolve("ZHIHU://Questions/1"),
         )
     }
 
     @Test
     fun encodedUrlIsParseableByKtorAgain() {
-        // 编码结果必须能被 ktor 二次无损解析（无多余端口、路径斜杠等）。
-        assertTrue(Question(questionId = 1L).toAppUrl().let { it == "zhminus://question/1" && AppRouter.resolve(it) != null })
+        assertTrue(Question(questionId = 1L).toAppUrl().let { it == "zhihu://questions/1" && AppRouter.resolve(it) != null })
     }
 }
