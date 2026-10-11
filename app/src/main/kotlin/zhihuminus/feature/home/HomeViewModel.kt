@@ -12,6 +12,7 @@ import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
+import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
@@ -71,6 +72,7 @@ class HomeViewModel(
             is HomeEvent.Refresh -> loadFeeds(reset = true)
             is HomeEvent.LoadMore -> loadFeeds(reset = false)
             is HomeEvent.ContentClick -> handleContentClick(event.item)
+            is HomeEvent.MarkUninterested -> handleMarkUninterested(event.item)
             is HomeEvent.SearchClick -> {
                 viewModelScope.launch {
                     _effect.send(HomeEffect.Navigate(Search(query = "")))
@@ -102,6 +104,28 @@ class HomeViewModel(
                 _effect.send(HomeEffect.OpenExternalUrl(item.content))
             } else {
                 _effect.send(HomeEffect.ShowMessage("暂不支持打开该内容"))
+            }
+        }
+    }
+
+    private fun handleMarkUninterested(item: FeedDisplayItem) {
+        val payload = resolveUninterestedPayload(item)
+        if (payload == null) {
+            viewModelScope.launch {
+                _effect.send(HomeEffect.ShowMessage("该条目不支持标记不感兴趣"))
+            }
+            return
+        }
+        val (contentTypeCode, contentToken) = payload
+        viewModelScope.launch {
+            val success = repository.markUninterested(contentToken, contentTypeCode)
+            if (success) {
+                val updatedItems = uiState.items.filterNot { it.stableKey == item.stableKey }
+                uiState = uiState.copy(items = updatedItems)
+                repository.saveStartupSnapshot(updatedItems)
+                _effect.send(HomeEffect.ShowMessage("已标记不感兴趣"))
+            } else {
+                _effect.send(HomeEffect.ShowMessage("操作失败，请重试"))
             }
         }
     }
@@ -179,7 +203,20 @@ class HomeViewModel(
             is AnswerTargetDto -> "answer" to target.id.toString()
             is ArticleTargetDto -> "article" to target.id.toString()
             is PinTargetDto -> "pin" to target.id.toString()
+            is VideoTargetDto -> "video" to target.id.toString()
             else -> null
         }
+    }
+
+    private fun resolveUninterestedPayload(item: FeedDisplayItem): Pair<String, String>? {
+        val (type, id) = resolveContentPayload(item) ?: return null
+        val code = when (type) {
+            "answer" -> "1"
+            "article" -> "2"
+            "video", "zvideo" -> "3"
+            "pin" -> "5"
+            else -> return null
+        }
+        return code to id
     }
 }

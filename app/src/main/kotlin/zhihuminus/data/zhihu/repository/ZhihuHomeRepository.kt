@@ -74,4 +74,7 @@ class ZhihuHomeRepository(
             }
         }
     }
+
+    override suspend fun markUninterested(contentToken: String, contentType: String): Boolean =
+        feedApi.markUninterested(contentToken, contentType)
 }

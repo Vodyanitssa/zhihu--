@@ -20,4 +20,6 @@ interface HomeRepository {
     suspend fun loadStartupSnapshot(): List<FeedDisplayItem>
 
     suspend fun saveStartupSnapshot(items: List<FeedDisplayItem>)
+
+    suspend fun markUninterested(contentToken: String, contentType: String): Boolean
 }

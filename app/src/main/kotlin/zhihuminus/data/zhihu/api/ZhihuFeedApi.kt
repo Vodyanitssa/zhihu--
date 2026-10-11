@@ -8,13 +8,18 @@ import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
 import com.zhihuminus.data.zhihu.dto.PagingDto
+import io.ktor.client.call.body
+import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
+import io.ktor.http.Parameters
 import io.ktor.http.isSuccess
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
@@ -140,6 +145,48 @@ open class ZhihuFeedApi(
             }
         } catch (e: Exception) {
             Log.w("ZhihuFeedApi", "Failed to report content read", e)
+        }
+    }
+
+    /**
+     * 将推荐内容标记为不感兴趣
+     * @param contentToken 内容 token（数字 ID 字符串）
+     * @param contentType 内容数字类型编码（1: 回答, 2: 文章, 3: 视频, 5: 想法）
+     */
+    open suspend fun markUninterested(
+        contentToken: String,
+        contentType: String,
+        uninterestedType: String = "less_similar",
+        feedDeliverType: String = "Normal",
+        sceneCode: String = "RECOMMEND",
+    ): Boolean {
+        if (environment.authenticatedCookies()["d_c0"] == null) return false
+
+        return try {
+            val response = environment.postSigned("https://www.zhihu.com/api/v4/zrec-feedback/uninterested") {
+                setBody(
+                    FormDataContent(
+                        Parameters.build {
+                            append("scene_code", sceneCode)
+                            append("content_type", contentType)
+                            append("content_token", contentToken)
+                            append("uninterested_type", uninterestedType)
+                            append("feed_deliver_type", feedDeliverType)
+                            append("desktop", "true")
+                        },
+                    ),
+                )
+            }
+            if (response.status.isSuccess()) {
+                val json = runCatching { response.body<JsonObject>() }.getOrNull()
+                json?.get("success")?.jsonPrimitive?.booleanOrNull == true
+            } else {
+                Log.e("ZhihuFeedApi", "Mark uninterested failed: ${response.bodyAsText()}")
+                false
+            }
+        } catch (e: Exception) {
+            Log.w("ZhihuFeedApi", "Failed to mark content uninterested", e)
+            false
         }
     }
 }

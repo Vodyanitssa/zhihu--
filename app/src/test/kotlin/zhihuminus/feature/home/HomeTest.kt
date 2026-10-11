@@ -1,8 +1,12 @@
 package com.zhihuminus.feature.home
 
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
+import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.PostDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
@@ -34,13 +38,57 @@ class HomeTest {
         var fetchCallCount = 0
         var touchReportCount = 0
         var readReportCount = 0
+        var markUninterestedCallCount = 0
+        var markUninterestedResult = true
+        var lastMarkUninterestedToken: String? = null
+        var lastMarkUninterestedType: String? = null
         val itemsPage1 = listOf(
-            FeedDisplayItem(title = "Item 1", summary = "Summary 1", details = "Details 1", navDestinationJson = "nav:1"),
-            FeedDisplayItem(title = "Item 2", summary = "Summary 2", details = "Details 2", navDestinationJson = "nav:2"),
+            FeedDisplayItem(
+                title = "Item 1",
+                summary = "Summary 1",
+                details = "Details 1",
+                navDestinationJson = PostDestination(
+                    title = "Title 1",
+                    type = PostType.Answer,
+                    id = 1001L,
+                    authorName = "Author 1",
+                ).toFeedDisplayItemNavDestinationJson(),
+            ),
+            FeedDisplayItem(
+                title = "Item 2",
+                summary = "Summary 2",
+                details = "Details 2",
+                navDestinationJson = PostDestination(
+                    title = "Title 2",
+                    type = PostType.Article,
+                    id = 2002L,
+                    authorName = "Author 2",
+                ).toFeedDisplayItemNavDestinationJson(),
+            ),
         )
         val itemsPage2 = listOf(
-            FeedDisplayItem(title = "Item 2", summary = "Summary 2", details = "Details 2", navDestinationJson = "nav:2"), // 重复条目
-            FeedDisplayItem(title = "Item 3", summary = "Summary 3", details = "Details 3", navDestinationJson = "nav:3"),
+            FeedDisplayItem(
+                title = "Item 2",
+                summary = "Summary 2",
+                details = "Details 2",
+                navDestinationJson = PostDestination(
+                    title = "Title 2",
+                    type = PostType.Article,
+                    id = 2002L,
+                    authorName = "Author 2",
+                ).toFeedDisplayItemNavDestinationJson(),
+            ), // 重复条目
+            FeedDisplayItem(
+                title = "Item 3",
+                summary = "Summary 3",
+                details = "Details 3",
+                navDestinationJson = PostDestination(
+                    title = "Title 3",
+                    type = PostType.Pin,
+                    id = 3003L,
+                    authorName = "Author 3",
+                ).toFeedDisplayItemNavDestinationJson(),
+            ),
         )
 
         override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
@@ -65,6 +113,13 @@ class HomeTest {
         override suspend fun loadStartupSnapshot(): List<FeedDisplayItem> = emptyList()
 
         override suspend fun saveStartupSnapshot(items: List<FeedDisplayItem>) {}
+
+        override suspend fun markUninterested(contentToken: String, contentType: String): Boolean {
+            markUninterestedCallCount++
+            lastMarkUninterestedToken = contentToken
+            lastMarkUninterestedType = contentType
+            return markUninterestedResult
+        }
     }
 
     @Test
@@ -156,5 +211,93 @@ class HomeTest {
 
         assertEquals(1, repo.fetchCallCount)
         assertEquals(2, viewModel.uiState.items.size)
+    }
+
+    @Test
+    fun testMarkUninterestedSuccessRemovesItemAndShowsMessage() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.items.size)
+        val targetItem = viewModel.uiState.items.first { it.title == "Item 1" }
+
+        val effects = mutableListOf<HomeEffect>()
+        val effectJob = launch { viewModel.effect.collect { effects.add(it) } }
+
+        viewModel.onEvent(HomeEvent.MarkUninterested(targetItem))
+        advanceUntilIdle()
+
+        assertEquals(1, repo.markUninterestedCallCount)
+        assertEquals("1001", repo.lastMarkUninterestedToken)
+        assertEquals("1", repo.lastMarkUninterestedType)
+        assertEquals(1, viewModel.uiState.items.size)
+        assertEquals(
+            "Item 2",
+            viewModel.uiState.items
+                .first()
+                .title,
+        )
+        assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "已标记不感兴趣" })
+
+        effectJob.cancel()
+    }
+
+    @Test
+    fun testMarkUninterestedFailureRetainsItemAndShowsError() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        repo.markUninterestedResult = false
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.items.size)
+        val targetItem = viewModel.uiState.items.first { it.title == "Item 2" }
+
+        val effects = mutableListOf<HomeEffect>()
+        val effectJob = launch { viewModel.effect.collect { effects.add(it) } }
+
+        viewModel.onEvent(HomeEvent.MarkUninterested(targetItem))
+        advanceUntilIdle()
+
+        assertEquals(1, repo.markUninterestedCallCount)
+        assertEquals("2002", repo.lastMarkUninterestedToken)
+        assertEquals("2", repo.lastMarkUninterestedType)
+        assertEquals(2, viewModel.uiState.items.size)
+        assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "操作失败，请重试" })
+
+        effectJob.cancel()
+    }
+
+    @Test
+    fun testMarkUninterestedUnsupportedItemShowsNotice() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        val unsupportedItem = FeedDisplayItem(
+            title = "Unsupported",
+            summary = "No target",
+            details = "details",
+        )
+
+        val effects = mutableListOf<HomeEffect>()
+        val effectJob = launch { viewModel.effect.collect { effects.add(it) } }
+
+        viewModel.onEvent(HomeEvent.MarkUninterested(unsupportedItem))
+        advanceUntilIdle()
+
+        assertEquals(0, repo.markUninterestedCallCount)
+        assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "该条目不支持标记不感兴趣" })
+
+        effectJob.cancel()
     }
 }

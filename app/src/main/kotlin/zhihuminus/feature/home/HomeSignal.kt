@@ -21,6 +21,10 @@ sealed interface HomeEvent {
     data class UpdateUnreadCount(
         val count: Int,
     ) : HomeEvent
+
+    data class MarkUninterested(
+        val item: FeedDisplayItem,
+    ) : HomeEvent
 }
 
 sealed interface HomeEffect {
