@@ -3,14 +3,12 @@ package com.zhihuminus.ui.components
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -106,12 +104,10 @@ fun PeopleListItem(
                 )
             }
         }
-        OutlinedButton(
-            onClick = onToggleFollow,
+        FollowButton(
+            isFollowing = isFollowing,
             enabled = !isChangingFollowing,
-            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-        ) {
-            Text(if (isFollowing) "取消关注" else "关注")
-        }
+            onClick = onToggleFollow,
+        )
     }
 }

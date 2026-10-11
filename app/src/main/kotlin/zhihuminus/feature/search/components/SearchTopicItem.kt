@@ -9,7 +9,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -19,6 +18,7 @@ import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.search.TopicSearchResult
+import com.zhihuminus.ui.components.FollowButton
 
 @Composable
 fun SearchTopicItem(
@@ -69,11 +69,10 @@ fun SearchTopicItem(
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
-        TextButton(
+        FollowButton(
+            isFollowing = result.isFollowing,
             enabled = !isChangingFollowing,
             onClick = { onToggleFollowing(!result.isFollowing) },
-        ) {
-            Text(if (result.isFollowing) "已关注" else "关注")
-        }
+        )
     }
 }
