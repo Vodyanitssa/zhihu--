@@ -31,11 +31,11 @@ sealed interface PeopleEvent {
     ) : PeopleEvent
 
     data class ChangeAnswersSort(
-        val sortBy: String,
+        val sortBy: PeopleSortOrder,
     ) : PeopleEvent
 
     data class ChangeArticlesSort(
-        val sortBy: String,
+        val sortBy: PeopleSortOrder,
     ) : PeopleEvent
 
     data class LoadMorePrimary(

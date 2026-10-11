@@ -1,16 +1,26 @@
 package com.zhihuminus.feature.people.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.pager.HorizontalPager
-import androidx.compose.foundation.pager.PagerState
-import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.SecondaryScrollableTabRow
-import androidx.compose.material3.Tab
+import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
@@ -24,51 +34,71 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
-import kotlinx.coroutines.launch
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PeopleCreationsTab(
     state: PeopleUiState,
-    pagerState: PagerState,
     onEvent: (PeopleEvent) -> Unit,
     onNavigate: (NavDestination) -> Unit,
     onLinkClick: (String) -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    val coroutineScope = rememberCoroutineScope()
-
     Column(modifier = modifier.fillMaxSize()) {
-        SecondaryScrollableTabRow(
-            selectedTabIndex = pagerState.currentPage,
-            edgePadding = 8.dp,
-            modifier = Modifier,
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 6.dp),
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
-            PeopleCreationTab.entries.forEachIndexed { index, tab ->
-                Tab(
-                    selected = pagerState.currentPage == index,
-                    onClick = {
-                        coroutineScope.launch {
-                            pagerState.animateScrollToPage(index)
-                        }
-                    },
-                    text = { Text(tab.title) },
+            PeopleCreationTab.entries.forEach { tab ->
+                val isSelected = state.selectedCreationTab == tab
+                val countText = when (tab) {
+                    PeopleCreationTab.Answers -> if (state.profile.answerCount > 0) " (${state.profile.answerCount})" else ""
+                    PeopleCreationTab.Articles -> if (state.profile.articleCount > 0) " (${state.profile.articleCount})" else ""
+                    else -> ""
+                }
+                val bg by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+                    label = "creationTabBg_${tab.name}",
                 )
+                val textColor by animateColorAsState(
+                    targetValue = if (isSelected) {
+                        MaterialTheme.colorScheme.onSurface
+                    } else {
+                        MaterialTheme.colorScheme.onSurfaceVariant
+                    },
+                    label = "creationTabTextColor_${tab.name}",
+                )
+
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(bg)
+                        .clickable { onEvent(PeopleEvent.CreationTabSelected(tab)) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
+                ) {
+                    Text(
+                        text = "${tab.title}$countText",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = textColor,
+                    )
+                }
             }
         }
 
-        HorizontalPager(
-            state = pagerState,
-            modifier = Modifier.weight(1f),
-        ) { page ->
-            when (page) {
-                0 -> {
-                    // 回答
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        PeopleSortBar(
-                            currentSort = state.answersSort,
-                            onSortChange = { onEvent(PeopleEvent.ChangeAnswersSort(it)) },
-                        )
+        when (state.selectedCreationTab) {
+            PeopleCreationTab.Answers -> {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    PeopleSortBar(
+                        currentSort = state.answersSort,
+                        onSortChange = { onEvent(PeopleEvent.ChangeAnswersSort(it)) },
+                    )
+                    if (state.answersState.items.isEmpty() && state.answersState.hasLoaded && !state.answersState.isLoading) {
+                        EmptyHint(message = "暂无回答")
+                    } else {
                         PaginatedList(
                             items = state.answersState.items,
                             onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Answers)) },
@@ -80,7 +110,6 @@ fun PeopleCreationsTab(
                             FeedCard(
                                 item = item.toFeedDisplayItem(),
                                 modifier = Modifier,
-                                horizontalPadding = 4.dp,
                                 onClick = {
                                     onNavigate(item.toDestination())
                                 },
@@ -88,14 +117,17 @@ fun PeopleCreationsTab(
                         }
                     }
                 }
+            }
 
-                1 -> {
-                    // 文章
-                    Column(modifier = Modifier.fillMaxSize()) {
-                        PeopleSortBar(
-                            currentSort = state.articlesSort,
-                            onSortChange = { onEvent(PeopleEvent.ChangeArticlesSort(it)) },
-                        )
+            PeopleCreationTab.Articles -> {
+                Column(modifier = Modifier.fillMaxSize()) {
+                    PeopleSortBar(
+                        currentSort = state.articlesSort,
+                        onSortChange = { onEvent(PeopleEvent.ChangeArticlesSort(it)) },
+                    )
+                    if (state.articlesState.items.isEmpty() && state.articlesState.hasLoaded && !state.articlesState.isLoading) {
+                        EmptyHint(message = "暂无文章")
+                    } else {
                         PaginatedList(
                             items = state.articlesState.items,
                             onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Articles)) },
@@ -107,7 +139,6 @@ fun PeopleCreationsTab(
                             FeedCard(
                                 item = item.toFeedDisplayItem(),
                                 modifier = Modifier,
-                                horizontalPadding = 4.dp,
                                 onClick = {
                                     onNavigate(item.toDestination())
                                 },
@@ -115,9 +146,12 @@ fun PeopleCreationsTab(
                         }
                     }
                 }
+            }
 
-                2 -> {
-                    // 想法
+            PeopleCreationTab.Pins -> {
+                if (state.pinsState.items.isEmpty() && state.pinsState.hasLoaded && !state.pinsState.isLoading) {
+                    EmptyHint(message = "暂无想法")
+                } else {
                     PaginatedList(
                         items = state.pinsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Pins)) },
@@ -129,16 +163,18 @@ fun PeopleCreationsTab(
                         FeedCard(
                             item = item.toFeedDisplayItem(),
                             modifier = Modifier,
-                            horizontalPadding = 4.dp,
                             onClick = {
                                 onNavigate(item.toDestination())
                             },
                         )
                     }
                 }
+            }
 
-                3 -> {
-                    // 专栏
+            PeopleCreationTab.Columns -> {
+                if (state.columnsState.items.isEmpty() && state.columnsState.hasLoaded && !state.columnsState.isLoading) {
+                    EmptyHint(message = "暂无专栏")
+                } else {
                     PaginatedList(
                         items = state.columnsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Columns)) },
@@ -153,9 +189,12 @@ fun PeopleCreationsTab(
                         )
                     }
                 }
+            }
 
-                4 -> {
-                    // 提问
+            PeopleCreationTab.Questions -> {
+                if (state.questionsState.items.isEmpty() && state.questionsState.hasLoaded && !state.questionsState.isLoading) {
+                    EmptyHint(message = "暂无提问")
+                } else {
                     PaginatedList(
                         items = state.questionsState.items,
                         onLoadMore = { onEvent(PeopleEvent.LoadMoreCreation(PeopleCreationTab.Questions)) },
@@ -170,7 +209,6 @@ fun PeopleCreationsTab(
                                 fallbackAvatarUrl = state.profile.avatarUrl,
                             ),
                             modifier = Modifier,
-                            horizontalPadding = 4.dp,
                             onClick = {
                                 question.id.toLongOrNull()?.let { qId ->
                                     onNavigate(Question(qId, question.title))

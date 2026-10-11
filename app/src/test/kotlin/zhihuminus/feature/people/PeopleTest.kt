@@ -68,7 +68,7 @@ class PeopleTest {
 
         override suspend fun getAnswers(
             userTokenOrId: String,
-            sortBy: String,
+            sortBy: PeopleSortOrder,
             nextUrl: String?,
         ): PeoplePage<PeopleCreationItem> = PeoplePage(
             items = listOf(
@@ -86,7 +86,7 @@ class PeopleTest {
 
         override suspend fun getArticles(
             userTokenOrId: String,
-            sortBy: String,
+            sortBy: PeopleSortOrder,
             nextUrl: String?,
         ): PeoplePage<PeopleCreationItem> = PeoplePage(
             items = listOf(
@@ -311,17 +311,18 @@ class PeopleTest {
 
     @Test
     fun testPeopleTabTitles() {
-        assertEquals(10, PeopleTab.TITLES.size)
-        assertEquals("回答", PeopleTab.TITLES[0])
-        assertEquals("文章", PeopleTab.TITLES[1])
-        assertEquals("动态", PeopleTab.TITLES[2])
-        assertEquals("收藏", PeopleTab.TITLES[3])
-        assertEquals("提问", PeopleTab.TITLES[4])
-        assertEquals("想法", PeopleTab.TITLES[5])
-        assertEquals("专栏", PeopleTab.TITLES[6])
-        assertEquals("粉丝", PeopleTab.TITLES[7])
-        assertEquals("关注", PeopleTab.TITLES[8])
-        assertEquals("关注订阅", PeopleTab.TITLES[9])
+        assertEquals(4, PeoplePrimaryTab.TITLES.size)
+        assertEquals("创作", PeoplePrimaryTab.TITLES[0])
+        assertEquals("动态", PeoplePrimaryTab.TITLES[1])
+        assertEquals("收藏", PeoplePrimaryTab.TITLES[2])
+        assertEquals("关注订阅", PeoplePrimaryTab.TITLES[3])
+
+        assertEquals(5, PeopleCreationTab.TITLES.size)
+        assertEquals("回答", PeopleCreationTab.TITLES[0])
+        assertEquals("文章", PeopleCreationTab.TITLES[1])
+        assertEquals("想法", PeopleCreationTab.TITLES[2])
+        assertEquals("专栏", PeopleCreationTab.TITLES[3])
+        assertEquals("提问", PeopleCreationTab.TITLES[4])
     }
 
     @Test
@@ -495,12 +496,12 @@ class PeopleTest {
     @Test
     fun testRepositoryDataStreams() = runBlocking {
         val repo = FakePeopleRepository()
-        val answers = repo.getAnswers("alex", "voteups")
+        val answers = repo.getAnswers("alex", PeopleSortOrder.Voteups)
         assertEquals(1, answers.items.size)
         assertEquals("Test Answer", answers.items.first().title)
         assertFalse(answers.isEnd)
 
-        val articles = repo.getArticles("alex", "created")
+        val articles = repo.getArticles("alex", PeopleSortOrder.Created)
         assertEquals(1, articles.items.size)
         assertTrue(articles.isEnd)
 

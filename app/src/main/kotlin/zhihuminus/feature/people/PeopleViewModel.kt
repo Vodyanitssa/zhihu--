@@ -30,8 +30,8 @@ data class PeopleUiState(
     val profile: PeopleProfile = PeopleProfile(),
     val isLoadingProfile: Boolean = false,
     val profileErrorMessage: String? = null,
-    val answersSort: String = "voteups",
-    val articlesSort: String = "created",
+    val answersSort: PeopleSortOrder = PeopleSortOrder.Voteups,
+    val articlesSort: PeopleSortOrder = PeopleSortOrder.Created,
     val answersState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
     val articlesState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
     val activitiesState: PaginatedTabState<FeedDisplayItem> = PaginatedTabState(),
@@ -357,7 +357,7 @@ class PeopleViewModel(
         }
     }
 
-    private fun changeAnswersSort(newSort: String) {
+    private fun changeAnswersSort(newSort: PeopleSortOrder) {
         if (uiState.answersSort == newSort) return
         uiState = uiState.copy(
             answersSort = newSort,
@@ -366,7 +366,7 @@ class PeopleViewModel(
         loadAnswers(reset = true)
     }
 
-    private fun changeArticlesSort(newSort: String) {
+    private fun changeArticlesSort(newSort: PeopleSortOrder) {
         if (uiState.articlesSort == newSort) return
         uiState = uiState.copy(
             articlesSort = newSort,

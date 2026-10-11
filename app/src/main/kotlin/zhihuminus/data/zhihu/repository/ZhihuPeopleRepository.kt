@@ -18,6 +18,7 @@ import com.zhihuminus.feature.people.PeopleMemberItem
 import com.zhihuminus.feature.people.PeoplePage
 import com.zhihuminus.feature.people.PeopleProfile
 import com.zhihuminus.feature.people.PeopleRepository
+import com.zhihuminus.feature.people.PeopleSortOrder
 import com.zhihuminus.feature.post.PostType
 import org.jsoup.Jsoup
 
@@ -70,10 +71,10 @@ class ZhihuPeopleRepository(
 
     override suspend fun getAnswers(
         userTokenOrId: String,
-        sortBy: String,
+        sortBy: PeopleSortOrder,
         nextUrl: String?,
     ): PeoplePage<PeopleCreationItem> {
-        val dto = api.fetchMemberAnswers(userTokenOrId, sortBy, nextUrl)
+        val dto = api.fetchMemberAnswers(userTokenOrId, sortBy.key, nextUrl)
         return PeoplePage(
             items = dto.items.map {
                 val thumbnail = it.thumbnail?.takeIf { s -> s.isNotBlank() }
@@ -97,10 +98,10 @@ class ZhihuPeopleRepository(
 
     override suspend fun getArticles(
         userTokenOrId: String,
-        sortBy: String,
+        sortBy: PeopleSortOrder,
         nextUrl: String?,
     ): PeoplePage<PeopleCreationItem> {
-        val dto = api.fetchMemberArticles(userTokenOrId, sortBy, nextUrl)
+        val dto = api.fetchMemberArticles(userTokenOrId, sortBy.key, nextUrl)
         return PeoplePage(
             items = dto.items.map {
                 val thumbnail = (it.thumbnail ?: it.imageUrl)?.takeIf { s -> s.isNotBlank() }

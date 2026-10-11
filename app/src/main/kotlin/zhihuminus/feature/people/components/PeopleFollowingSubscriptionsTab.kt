@@ -1,19 +1,26 @@
 package com.zhihuminus.feature.people.components
 
+import androidx.compose.animation.animateColorAsState
+import androidx.compose.foundation.background
+import androidx.compose.foundation.clickable
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.ButtonDefaults
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
@@ -25,7 +32,6 @@ import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
 
-@OptIn(ExperimentalLayoutApi::class)
 @Composable
 fun PeopleFollowingSubscriptionsTab(
     selectedIndex: Int,
@@ -44,90 +50,146 @@ fun PeopleFollowingSubscriptionsTab(
     Column(
         modifier = modifier.fillMaxSize(),
     ) {
-        FlowRow(
+        Row(
             modifier = Modifier
                 .fillMaxWidth()
-                .padding(vertical = 8.dp, horizontal = 4.dp),
+                .horizontalScroll(rememberScrollState())
+                .padding(horizontal = 16.dp, vertical = 6.dp),
             horizontalArrangement = Arrangement.spacedBy(8.dp),
-            verticalArrangement = Arrangement.spacedBy(8.dp),
+            verticalAlignment = Alignment.CenterVertically,
         ) {
             PeopleSubscriptionTab.TITLES.forEachIndexed { index, title ->
-                OutlinedButton(
-                    onClick = { onTabSelect(index) },
-                    modifier = Modifier,
-                    shape = RoundedCornerShape(8.dp),
-                    colors = if (selectedIndex == index) {
-                        ButtonDefaults.outlinedButtonColors(
-                            containerColor = MaterialTheme.colorScheme.primaryContainer,
-                            contentColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                        )
+                val isSelected = selectedIndex == index
+                val bg by animateColorAsState(
+                    targetValue = if (isSelected) MaterialTheme.colorScheme.surfaceContainerHigh else Color.Transparent,
+                    label = "subTabBg_$index",
+                )
+                val textColor by animateColorAsState(
+                    targetValue = if (isSelected) {
+                        MaterialTheme.colorScheme.onSurface
                     } else {
-                        ButtonDefaults.outlinedButtonColors()
+                        MaterialTheme.colorScheme.onSurfaceVariant
                     },
+                    label = "subTabTextColor_$index",
+                )
+
+                Box(
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(bg)
+                        .clickable { onTabSelect(index) }
+                        .padding(horizontal = 12.dp, vertical = 6.dp),
+                    contentAlignment = Alignment.Center,
                 ) {
-                    Text(title)
+                    Text(
+                        text = title,
+                        style = MaterialTheme.typography.labelMedium,
+                        color = textColor,
+                    )
                 }
             }
         }
 
         when (selectedIndex) {
-            0 -> PaginatedList(
-                items = columnsState.items,
-                onLoadMore = { onLoadMore(0) },
-                isEnd = { columnsState.isEnd },
-                footer = ProgressIndicatorFooter,
-                modifier = Modifier.fillMaxSize(),
-                key = { it.id },
-            ) { column ->
-                PeopleColumnListItem(
-                    column = column,
-                    onClick = { onColumnClick(column) },
-                )
+            0 -> {
+                if (columnsState.items.isEmpty() && columnsState.hasLoaded && !columnsState.isLoading) {
+                    EmptyHint(message = "暂无订阅的专栏")
+                } else {
+                    PaginatedList(
+                        items = columnsState.items,
+                        onLoadMore = { onLoadMore(0) },
+                        isEnd = { columnsState.isEnd },
+                        footer = ProgressIndicatorFooter,
+                        modifier = Modifier.fillMaxSize(),
+                        key = { it.id },
+                    ) { column ->
+                        PeopleColumnListItem(
+                            column = column,
+                            onClick = { onColumnClick(column) },
+                        )
+                    }
+                }
             }
 
-            1 -> PaginatedList(
-                items = topicsState.items,
-                onLoadMore = { onLoadMore(1) },
-                isEnd = { topicsState.isEnd },
-                footer = ProgressIndicatorFooter,
-                modifier = Modifier.fillMaxSize(),
-                key = { it.id },
-            ) { topic ->
-                PeopleFollowedTopicListItem(
-                    topic = topic,
-                    onClick = { onTopicClick(topic) },
-                )
+            1 -> {
+                if (topicsState.items.isEmpty() && topicsState.hasLoaded && !topicsState.isLoading) {
+                    EmptyHint(message = "暂无关注的话题")
+                } else {
+                    PaginatedList(
+                        items = topicsState.items,
+                        onLoadMore = { onLoadMore(1) },
+                        isEnd = { topicsState.isEnd },
+                        footer = ProgressIndicatorFooter,
+                        modifier = Modifier.fillMaxSize(),
+                        key = { it.id },
+                    ) { topic ->
+                        PeopleFollowedTopicListItem(
+                            topic = topic,
+                            onClick = { onTopicClick(topic) },
+                        )
+                    }
+                }
             }
 
-            2 -> PaginatedList(
-                items = questionsState.items,
-                onLoadMore = { onLoadMore(2) },
-                isEnd = { questionsState.isEnd },
-                footer = ProgressIndicatorFooter,
-                modifier = Modifier.fillMaxSize(),
-                key = { it.id },
-            ) { question ->
-                FeedCard(
-                    item = question.toFeedDisplayItem(),
-                    modifier = Modifier,
-                    horizontalPadding = 4.dp,
-                    onClick = { onQuestionClick(question) },
-                )
+            2 -> {
+                if (questionsState.items.isEmpty() && questionsState.hasLoaded && !questionsState.isLoading) {
+                    EmptyHint(message = "暂无关注的问题")
+                } else {
+                    PaginatedList(
+                        items = questionsState.items,
+                        onLoadMore = { onLoadMore(2) },
+                        isEnd = { questionsState.isEnd },
+                        footer = ProgressIndicatorFooter,
+                        modifier = Modifier.fillMaxSize(),
+                        key = { it.id },
+                    ) { question ->
+                        FeedCard(
+                            item = question.toFeedDisplayItem(),
+                            modifier = Modifier,
+                            onClick = { onQuestionClick(question) },
+                        )
+                    }
+                }
             }
 
-            3 -> PaginatedList(
-                items = collectionsState.items,
-                onLoadMore = { onLoadMore(3) },
-                isEnd = { collectionsState.isEnd },
-                footer = ProgressIndicatorFooter,
-                modifier = Modifier.fillMaxSize(),
-                key = { it.id },
-            ) { collection ->
-                PeopleCollectionListItem(
-                    collection = collection,
-                    onClick = { onCollectionClick(collection) },
-                )
+            3 -> {
+                if (collectionsState.items.isEmpty() && collectionsState.hasLoaded && !collectionsState.isLoading) {
+                    EmptyHint(message = "暂无关注的收藏夹")
+                } else {
+                    PaginatedList(
+                        items = collectionsState.items,
+                        onLoadMore = { onLoadMore(3) },
+                        isEnd = { collectionsState.isEnd },
+                        footer = ProgressIndicatorFooter,
+                        modifier = Modifier.fillMaxSize(),
+                        key = { it.id },
+                    ) { collection ->
+                        PeopleCollectionListItem(
+                            collection = collection,
+                            onClick = { onCollectionClick(collection) },
+                        )
+                    }
+                }
             }
         }
+    }
+}
+
+@Composable
+fun EmptyHint(
+    message: String,
+    modifier: Modifier = Modifier,
+) {
+    Box(
+        modifier = modifier
+            .fillMaxWidth()
+            .padding(vertical = 48.dp),
+        contentAlignment = Alignment.Center,
+    ) {
+        Text(
+            text = message,
+            style = MaterialTheme.typography.bodyMedium,
+            color = MaterialTheme.colorScheme.onSurfaceVariant,
+        )
     }
 }

@@ -61,10 +61,10 @@ class PeopleViewModelTest {
             isBlocked = false
         }
 
-        override suspend fun getAnswers(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePage<PeopleCreationItem> =
+        override suspend fun getAnswers(userTokenOrId: String, sortBy: PeopleSortOrder, nextUrl: String?): PeoplePage<PeopleCreationItem> =
             PeoplePage(emptyList(), null, true)
 
-        override suspend fun getArticles(userTokenOrId: String, sortBy: String, nextUrl: String?): PeoplePage<PeopleCreationItem> =
+        override suspend fun getArticles(userTokenOrId: String, sortBy: PeopleSortOrder, nextUrl: String?): PeoplePage<PeopleCreationItem> =
             PeoplePage(emptyList(), null, true)
 
         override suspend fun getActivities(userTokenOrId: String, nextUrl: String?): PeoplePage<com.zhihuminus.data.FeedDisplayItem> =

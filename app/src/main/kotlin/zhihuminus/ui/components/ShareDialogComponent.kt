@@ -70,6 +70,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
@@ -265,6 +266,10 @@ fun getShareText(content: NavDestination, title: String = "", authorName: String
         "https://www.zhihu.com/topic/${content.id}\n【${content.name.ifBlank { title.ifBlank { "知乎话题" } }}】"
     }
 
+    is Person -> {
+        "https://www.zhihu.com/people/${content.userTokenOrId}\n【${content.name.ifBlank { title.ifBlank { "知乎用户" } }} 的主页】"
+    }
+
     else -> null
 }
 
@@ -277,6 +282,7 @@ fun getShareTitle(content: NavDestination): String = when (content) {
 
     is Question -> content.title
     is Topic -> content.name.ifBlank { "知乎话题" }
+    is Person -> content.name.ifBlank { "知乎用户" }
     else -> "分享内容"
 }
 

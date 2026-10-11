@@ -21,7 +21,7 @@ fun PeopleCollectionListItem(
         modifier = modifier
             .fillMaxWidth()
             .clickable(onClick = onClick)
-            .padding(vertical = 8.dp, horizontal = 4.dp),
+            .padding(vertical = 12.dp, horizontal = 16.dp),
     ) {
         Text(
             text = collection.title,

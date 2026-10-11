@@ -193,27 +193,6 @@ fun resolvePeopleInitialSelection(jumpTo: String): PeopleInitialSelection = when
     else -> PeopleInitialSelection(PeoplePrimaryTab.Activities)
 }
 
-@Deprecated("Use PeoplePrimaryTab and PeopleCreationTab instead")
-enum class PeopleTab(
-    val title: String,
-) {
-    Answers("回答"),
-    Articles("文章"),
-    Activities("动态"),
-    Collections("收藏"),
-    Questions("提问"),
-    Pins("想法"),
-    Columns("专栏"),
-    Followers("粉丝"),
-    Following("关注"),
-    FollowingSubscriptions("关注订阅"),
-    ;
-
-    companion object {
-        val TITLES = entries.map { it.title }
-    }
-}
-
 enum class PeopleSubscriptionTab(
     val title: String,
 ) {
@@ -225,6 +204,20 @@ enum class PeopleSubscriptionTab(
 
     companion object {
         val TITLES = entries.map { it.title }
+    }
+}
+
+enum class PeopleSortOrder(
+    val key: String,
+    val title: String,
+) {
+    Voteups("voteups", "按热度"),
+    Created("created", "按时间"),
+    ;
+
+    fun toggle(): PeopleSortOrder = when (this) {
+        Voteups -> Created
+        Created -> Voteups
     }
 }
 
@@ -245,9 +238,17 @@ interface PeopleRepository {
 
     suspend fun unblock(urlToken: String)
 
-    suspend fun getAnswers(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<PeopleCreationItem>
+    suspend fun getAnswers(
+        userTokenOrId: String,
+        sortBy: PeopleSortOrder = PeopleSortOrder.Voteups,
+        nextUrl: String? = null,
+    ): PeoplePage<PeopleCreationItem>
 
-    suspend fun getArticles(userTokenOrId: String, sortBy: String, nextUrl: String? = null): PeoplePage<PeopleCreationItem>
+    suspend fun getArticles(
+        userTokenOrId: String,
+        sortBy: PeopleSortOrder = PeopleSortOrder.Created,
+        nextUrl: String? = null,
+    ): PeoplePage<PeopleCreationItem>
 
     suspend fun getActivities(userTokenOrId: String, nextUrl: String? = null): PeoplePage<FeedDisplayItem>
 
