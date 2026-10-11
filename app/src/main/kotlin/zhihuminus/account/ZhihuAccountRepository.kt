@@ -22,8 +22,7 @@ import kotlinx.serialization.Serializable
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonElement
 
-const val DEFAULT_ZHIHU_USER_AGENT =
-    "Mozilla/5.0 (X11; U; Linux x86_64; en-US) AppleWebKit/540.0 (KHTML, like Gecko) Ubuntu/10.10 Chrome/9.1.0.0 Safari/540.0"
+const val DEFAULT_ZHIHU_USER_AGENT = ZHIHU_DESKTOP_USER_AGENT
 
 @Serializable
 data class ZhihuAccountProfileSnapshot(
@@ -65,6 +64,18 @@ class ZhihuAccountRepository(
             .readText()
             ?.takeIf { it.isNotBlank() }
             ?.let { json.decodeFromString<ZhihuAccountSession>(it) }
+            ?.let { session ->
+                if (session.userAgent.isBlank() ||
+                    session.userAgent.contains("Chrome/9.1.0.0") ||
+                    session.userAgent.contains("Ubuntu/10.10")
+                ) {
+                    val migrated = session.copy(userAgent = DEFAULT_ZHIHU_USER_AGENT)
+                    save(migrated)
+                    migrated
+                } else {
+                    session
+                }
+            }
             ?: ZhihuAccountSession()
     }.getOrDefault(ZhihuAccountSession())
 

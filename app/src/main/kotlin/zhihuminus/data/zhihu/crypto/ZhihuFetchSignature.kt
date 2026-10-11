@@ -14,6 +14,9 @@ import kotlin.math.floor
 import kotlin.math.sin
 
 const val ZHIHU_WEB_ZSE93 = "101_3_3.0"
+const val ZHIHU_WEB_REFERER = "https://www.zhihu.com/"
+const val ZHIHU_WEB_API_VERSION = "3.0.53"
+const val ZHIHU_WEB_ACCEPT_LANGUAGE = "zh-CN,zh;q=0.9"
 
 fun HttpRequestBuilder.signFetchRequest() {
     signZhihuFetchRequest(AccountData.data.cookies)
@@ -28,12 +31,48 @@ fun HttpRequestBuilder.signZhihuFetchRequest(
     header("x-zse-93", zse93)
     header("x-zse-96", ZhihuFetchSignature.createZse96Header(zse93, requestUrl, dc0, body))
     header("x-requested-with", "fetch")
+    if (headers["Referer"] == null) {
+        header("Referer", ZHIHU_WEB_REFERER)
+    }
+    if (headers["x-api-version"] == null) {
+        header("x-api-version", ZHIHU_WEB_API_VERSION)
+    }
+    if (headers["Accept-Language"] == null) {
+        header("Accept-Language", ZHIHU_WEB_ACCEPT_LANGUAGE)
+    }
+    if (headers["Sec-Fetch-Site"] == null) {
+        header("Sec-Fetch-Site", "same-origin")
+    }
+    if (headers["Sec-Fetch-Mode"] == null) {
+        header("Sec-Fetch-Mode", "cors")
+    }
+    if (headers["Sec-Fetch-Dest"] == null) {
+        header("Sec-Fetch-Dest", "empty")
+    }
 }
 
 fun HttpRequestBuilder.signZhihuFetchRequest(
     cookies: Map<String, String>,
     body: String? = null,
 ) {
+    if (headers["Referer"] == null) {
+        header("Referer", ZHIHU_WEB_REFERER)
+    }
+    if (headers["x-api-version"] == null) {
+        header("x-api-version", ZHIHU_WEB_API_VERSION)
+    }
+    if (headers["Accept-Language"] == null) {
+        header("Accept-Language", ZHIHU_WEB_ACCEPT_LANGUAGE)
+    }
+    if (headers["Sec-Fetch-Site"] == null) {
+        header("Sec-Fetch-Site", "same-origin")
+    }
+    if (headers["Sec-Fetch-Mode"] == null) {
+        header("Sec-Fetch-Mode", "cors")
+    }
+    if (headers["Sec-Fetch-Dest"] == null) {
+        header("Sec-Fetch-Dest", "empty")
+    }
     val dc0 = cookies["d_c0"]?.takeIf { it.isNotBlank() } ?: return
     val requestBody = body ?: if (contentType() == ContentType.Application.Json) {
         this.body as? String

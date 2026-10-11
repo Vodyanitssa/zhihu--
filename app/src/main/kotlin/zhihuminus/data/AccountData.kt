@@ -206,7 +206,14 @@ object AccountData {
         login = login,
         username = username,
         cookies = cookies.toMutableMap(),
-        userAgent = userAgent,
+        userAgent = if (userAgent.isBlank() ||
+            userAgent.contains("Chrome/9.1.0.0") ||
+            userAgent.contains("Ubuntu/10.10")
+        ) {
+            DEFAULT_ZHIHU_USER_AGENT
+        } else {
+            userAgent
+        },
         profile = profile,
         mobileAccessToken = mobileAccessToken,
         mobileRefreshToken = mobileRefreshToken,

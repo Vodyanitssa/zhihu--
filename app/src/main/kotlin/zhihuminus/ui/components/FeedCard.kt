@@ -293,10 +293,14 @@ private fun FeedCardContent(
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        val statsText = typeLabel
-            ?.takeIf { item.details.startsWith("$it · ") }
-            ?.let { item.details.removePrefix("$it · ") }
-            ?: item.details
+        val statsText = when {
+            typeLabel != null && !item.details.startsWith("$typeLabel") && item.details.isNotEmpty() ->
+                "$typeLabel · ${item.details}"
+            typeLabel != null && item.details.isEmpty() ->
+                typeLabel
+            else ->
+                item.details
+        }
         val publishTimeText = item.publishTimeSeconds
             ?.let(::formatDateTime)
         if (statsText.isNotEmpty() || publishTimeText != null) {
