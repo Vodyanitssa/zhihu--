@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -319,7 +319,7 @@ class CustomWebView : WebView {
         val customFontCss = if (customFontName != null && customFontFile.exists()) {
             val fontName = customFontName
             val format = if (fontName.endsWith(".otf", ignoreCase = true)) "opentype" else "truetype"
-            "@font-face { font-family: 'ZhihuCustomFont'; src: url('https://zhihu-plus.internal/user-files/custom_font') format('$format'); }\n" +
+            "@font-face { font-family: 'ZhihuCustomFont'; src: url('https://zhihu-minus.internal/user-files/custom_font') format('$format'); }\n" +
                 "body { font-family: 'ZhihuCustomFont', sans-serif; }"
         } else {
             ""
@@ -332,7 +332,7 @@ class CustomWebView : WebView {
             url,
             """
             <head>
-            <link rel="stylesheet" href="https://zhihu-plus.internal/assets/stylesheet.css">
+            <link rel="stylesheet" href="https://zhihu-minus.internal/assets/stylesheet.css">
             <viewport content="width=device-width, initial-scale=1.0">
             </viewport>
             <style>
@@ -513,7 +513,7 @@ fun WebView.setupUpWebviewClient(onPageFinished: ((String) -> Unit)? = null) {
     val context = this.context
     val assetLoader = WebViewAssetLoader
         .Builder()
-        .setDomain("zhihu-plus.internal")
+        .setDomain("zhihu-minus.internal")
         .addPathHandler("/assets/", WebViewAssetLoader.AssetsPathHandler(context))
         .addPathHandler("/user-files/", UserFilesPathHandler(context))
         .build()

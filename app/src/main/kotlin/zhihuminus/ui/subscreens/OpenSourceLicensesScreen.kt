@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -22,7 +22,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.DataObject
-import androidx.compose.material.icons.filled.Memory
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -42,7 +41,6 @@ import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.util.withContext
-import com.zhihuminus.core.platform.rememberIsLiteVariant
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
@@ -55,47 +53,12 @@ data class ManualLicenseEntry(
     val icon: @Composable () -> Unit,
 )
 
-val fullVariantManualLibraries = listOf(
+val upstreamLibraries = listOf(
     ManualLicenseEntry(
-        name = "Sentence-Embeddings-Android",
-        license = "Apache-2.0",
-        summary = "用于执行句子嵌入。",
-        url = "https://github.com/shubham0204/Sentence-Embeddings-Android",
-        icon = { Icon(Icons.Default.Memory, contentDescription = null) },
-    ),
-    ManualLicenseEntry(
-        name = "huggingface/tokenizers 0.22.2",
-        license = "Apache-2.0",
-        summary = "huggingface tokenizer",
-        url = "https://github.com/huggingface/tokenizers",
-        icon = { Icon(Icons.Default.DataObject, contentDescription = null) },
-    ),
-    ManualLicenseEntry(
-        name = "jni 0.21.1",
-        license = "MIT/Apache-2.0",
-        summary = "Rust JNI 绑定。",
-        url = "https://github.com/jni-rs/jni-rs",
-        icon = { Icon(Icons.Default.DataObject, contentDescription = null) },
-    ),
-    ManualLicenseEntry(
-        name = "bytes 1.11.1",
-        license = "MIT",
-        summary = "Rust bytes 缓冲区库。",
-        url = "https://github.com/tokio-rs/bytes",
-        icon = { Icon(Icons.Default.DataObject, contentDescription = null) },
-    ),
-    ManualLicenseEntry(
-        name = "serde 1.0.228",
-        license = "MIT OR Apache-2.0",
-        summary = "Rust 序列化框架。",
-        url = "https://github.com/serde-rs/serde",
-        icon = { Icon(Icons.Default.DataObject, contentDescription = null) },
-    ),
-    ManualLicenseEntry(
-        name = "serde_json 1.0.149",
-        license = "MIT OR Apache-2.0",
-        summary = "Rust JSON 序列化实现。",
-        url = "https://github.com/serde-rs/json",
+        name = "zhihu-plus-plus",
+        license = "AGPL-3.0-only",
+        summary = "知乎第三方全平台客户端，本项目基于该项目分支衍生开发。原作者：Liyan Zhao (zly2006)",
+        url = "https://github.com/zly2006/zhihu-plus-plus",
         icon = { Icon(Icons.Default.DataObject, contentDescription = null) },
     ),
 )
@@ -134,7 +97,7 @@ fun OpenSourceLicensesContent(
 /**
  * 开源许可页面。
  *
- * 页面包装许可证列表、返回按钮和滚动行为，并根据当前变体决定是否展示 Full variant 的手工许可证项。它是账号页“开源许可”入口的终点。
+ * 页面包装许可证列表、返回按钮和滚动行为，并在顶部展示上游基础项目许可证项。它是账号页“开源许可”入口的终点。
  */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -142,7 +105,7 @@ fun OpenSourceLicensesScreen() {
     val navigator = LocalNavigator.current
     val uriHandler = LocalUriHandler.current
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
-    val manualLibraries = if (rememberShowFullVariantLicenses()) fullVariantManualLibraries else emptyList()
+    val manualLibraries = upstreamLibraries
 
     Scaffold(
         modifier = Modifier
@@ -190,7 +153,7 @@ fun ManualLicenseEntryGroup(
     if (manualLibraries.isEmpty()) {
         return
     }
-    SettingItemGroup(title = "Full 版本特有组件") {
+    SettingItemGroup(title = "上游基础项目") {
         manualLibraries.forEach { entry ->
             SettingItem(
                 title = { Text(entry.name) },
@@ -212,6 +175,3 @@ fun rememberOpenSourceLicensesLibraries(): Libs {
             .build()
     }
 }
-
-@Composable
-fun rememberShowFullVariantLicenses(): Boolean = !rememberIsLiteVariant()

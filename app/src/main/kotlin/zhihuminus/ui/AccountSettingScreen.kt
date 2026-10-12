@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -335,7 +335,7 @@ fun AccountSettingScreen(
                 footer = { Text("本软件仅供学习交流使用，应用内内容由知乎网站提供，著作权归其对应作者所有。") },
             ) {
                 SettingItem(
-                    title = { Text("知乎++") },
+                    title = { Text("知乎--") },
                     description = { Text("版本号：$versionInfo") },
                     icon = {
                         Image(
@@ -357,6 +357,21 @@ fun AccountSettingScreen(
                 )
                 SettingItem(
                     title = { Text("GitHub 项目地址") },
+                    description = { Text("https://github.com/Vodyanitssa/zhihu--") },
+                    icon = { Icon(painterResource(R.drawable.ic_github_24dp), null) },
+                    onClick = {
+                        openSystemUrl("https://github.com/Vodyanitssa/zhihu--")
+                    },
+                    endAction = {
+                        Icon(
+                            Icons.Default.ArrowOutward,
+                            null,
+                            tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    },
+                )
+                SettingItem(
+                    title = { Text("上游项目 (zhihu-plus-plus)") },
                     description = { Text("https://github.com/zly2006/zhihu-plus-plus") },
                     icon = { Icon(painterResource(R.drawable.ic_github_24dp), null) },
                     onClick = {
@@ -376,7 +391,7 @@ fun AccountSettingScreen(
                     description = { Text("AGPL-3.0-only") },
                     icon = { Icon(painterResource(R.drawable.ic_license_24dp), null) },
                     onClick = {
-                        openSystemUrl("https://github.com/zly2006/zhihu-plus-plus/blob/master/LICENSE")
+                        openSystemUrl("https://github.com/Vodyanitssa/zhihu--/blob/main/LICENSE")
                     },
                     endAction = {
                         Icon(

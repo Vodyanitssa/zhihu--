@@ -18,7 +18,7 @@
 
     // 创建脚注容器
     var footnotesContainer = document.createElement('div');
-    footnotesContainer.id = 'zhihu-plus-footnotes';
+    footnotesContainer.id = 'zhihu-minus-footnotes';
 
     // 添加脚注标题
     var footnotesTitle = document.createElement('h4');

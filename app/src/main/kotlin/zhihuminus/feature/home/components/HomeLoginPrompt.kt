@@ -42,7 +42,7 @@ fun HomeLoginPrompt(
         )
         Spacer(modifier = Modifier.height(8.dp))
         Text(
-            text = "知乎++ 需要登录以浏览推荐、关注动态与收藏夹",
+            text = "知乎-- 需要登录以浏览推荐、关注动态与收藏夹",
             style = MaterialTheme.typography.bodyMedium,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             textAlign = TextAlign.Center,

@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -113,7 +113,7 @@ class MainActivity :
         Thread.setDefaultUncaughtExceptionHandler { thread, e ->
             Log.e(TAG, "Uncaught exception", e)
             val isAlreadyHandlingError = intent?.data?.let { uri ->
-                uri.authority == "zhihu-plus.internal" && uri.path == "/error"
+                (uri.authority == "zhihu-minus.internal" || uri.authority == "zhihu-plus.internal") && uri.path == "/error"
             } ?: false
             if (isAlreadyHandlingError) {
                 previousHandler?.uncaughtException(thread, e)
@@ -136,7 +136,7 @@ class MainActivity :
                         .Builder()
                         .apply {
                             scheme("https")
-                            authority("zhihu-plus.internal")
+                            authority("zhihu-minus.internal")
                             appendPath("error")
                             appendQueryParameter("title", "应用发生异常: ${e.javaClass.simpleName}")
                             appendQueryParameter("message", e.message.orEmpty())
@@ -210,7 +210,7 @@ class MainActivity :
         }
         if (savedInstanceState == null) {
             val errorData = intent?.data
-            if (errorData?.authority == "zhihu-plus.internal" && errorData.path == "/error") {
+            if ((errorData?.authority == "zhihu-minus.internal" || errorData?.authority == "zhihu-plus.internal") && errorData.path == "/error") {
                 val title = errorData.getQueryParameter("title") ?: "应用发生异常"
                 val crashFile = File(cacheDir, "last_crash.log")
                 val fullStack = if (crashFile.exists()) {
@@ -291,7 +291,7 @@ class MainActivity :
 
     private fun handleIntentData(incomingIntent: Intent): Boolean {
         val data = incomingIntent.data ?: return false
-        if (data.authority == "zhihu-plus.internal") return true
+        if (data.authority == "zhihu-minus.internal" || data.authority == "zhihu-plus.internal") return true
 
         Log.i(TAG, "Intent data: $data")
         when (val resolution = AppRouter.resolveAny(data.toString())) {

@@ -82,35 +82,35 @@ body.dark-theme img {
 }
 
 /* 脚注样式 */
-#zhihu-plus-footnotes {
+#zhihu-minus-footnotes {
   padding-top: 20px;
   font-size: 14px;
 }
 
-#zhihu-plus-footnotes h4 {
+#zhihu-minus-footnotes h4 {
   font-size: 16px;
   font-weight: bold;
   margin-bottom: 15px;
   color: #333;
 }
 
-#zhihu-plus-footnotes ol {
+#zhihu-minus-footnotes ol {
   padding-left: 20px;
   line-height: 1.8;
 }
 
-#zhihu-plus-footnotes li {
+#zhihu-minus-footnotes li {
   margin-bottom: 10px;
   color: #555;
   transition: background-color 0.3s ease;
 }
 
-#zhihu-plus-footnotes a {
+#zhihu-minus-footnotes a {
   color: var(--theme-primary-color, #0066cc);
   text-decoration: none;
 }
 
-#zhihu-plus-footnotes li a.footnote-url {
+#zhihu-minus-footnotes li a.footnote-url {
   word-break: break-all;
 }
 
@@ -126,19 +126,19 @@ sup[data-draft-type="reference"] {
 }
 
 /* 脚注深色模式 */
-body.dark-theme #zhihu-plus-footnotes {
+body.dark-theme #zhihu-minus-footnotes {
   border-top-color: #444;
 }
 
-body.dark-theme #zhihu-plus-footnotes h4 {
+body.dark-theme #zhihu-minus-footnotes h4 {
   color: #ddd;
 }
 
-body.dark-theme #zhihu-plus-footnotes li {
+body.dark-theme #zhihu-minus-footnotes li {
   color: #bbb;
 }
 
-body.dark-theme #zhihu-plus-footnotes a,
+body.dark-theme #zhihu-minus-footnotes a,
 body.dark-theme sup[data-draft-type="reference"] {
   color: var(--theme-primary-color, #4da3ff);
 }

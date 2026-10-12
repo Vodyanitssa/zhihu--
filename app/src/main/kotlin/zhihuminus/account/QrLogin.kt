@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -388,7 +388,7 @@ fun SharedQrLoginPane(
     modifier: Modifier = Modifier,
     generateQrBitmap: (String) -> ImageBitmap = ::generateQrLoginBitmap,
     initialCookies: Map<String, String> = emptyMap(),
-    qrReadyMessage: String = "请打开知乎++ App 扫一扫",
+    qrReadyMessage: String = "请打开知乎-- App 扫一扫",
     onQrReady: () -> Unit = {},
     readRiskControlCookies: (String) -> Map<String, String> = { emptyMap() },
     riskControlContent: (

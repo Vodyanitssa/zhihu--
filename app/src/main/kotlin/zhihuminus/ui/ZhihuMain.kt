@@ -1,5 +1,5 @@
 /*
- * Zhihu++ - Free & Ad-Free Zhihu client for all platforms.
+ * Zhihu-- - Free & Ad-Free Zhihu client for Android.
  * Copyright (C) 2024-2026, zly2006 <i@zly2006.me>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -145,7 +145,7 @@ private sealed class MainTabPage(
 }
 
 /**
- * Zhihu++ 的共享应用主壳。
+ * Zhihu-- 的共享应用主壳。
  *
  * 这个 composable 是顶层体验的唯一所有者：渲染可配置底部导航栏，承载仅可通过底栏点击/深链接切换的主 tab 页面，
  * 向子页面提供 [LocalNavigator]，
