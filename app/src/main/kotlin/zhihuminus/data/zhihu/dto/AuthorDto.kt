@@ -4,10 +4,10 @@ import kotlinx.serialization.Serializable
 
 @Serializable
 data class AuthorDto(
-    val id: String,
-    val name: String,
+    val id: String = "",
+    val name: String = "",
     val headline: String = "",
-    val avatarUrl: String,
+    val avatarUrl: String = "",
     val urlToken: String = "",
     val badgeV2: BadgeV2Dto? = null,
     val isFollowing: Boolean = false,

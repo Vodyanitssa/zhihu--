@@ -9,8 +9,8 @@ import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.CommentDto
 import com.zhihuminus.data.zhihu.dto.CommentsPageDto
 import com.zhihuminus.data.zhihu.dto.PagingDto
-import io.ktor.client.call.body
 import io.ktor.client.request.setBody
+import io.ktor.client.statement.bodyAsText
 import io.ktor.http.ContentType
 import io.ktor.http.contentType
 import kotlinx.serialization.json.JsonArray
@@ -79,7 +79,7 @@ open class ZhihuCommentApi(
             setBody(body)
         }
         response.raiseForStatus()
-        return response.body()
+        return ZhihuJson.decodeFromString(response.bodyAsText())
     }
 
     /**

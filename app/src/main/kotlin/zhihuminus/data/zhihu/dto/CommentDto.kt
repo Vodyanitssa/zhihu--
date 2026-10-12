@@ -5,11 +5,11 @@ import kotlinx.serialization.json.JsonObject
 
 @Serializable
 data class CommentDto(
-    val id: String,
+    val id: String = "",
     val type: String = "",
     val resourceType: String = "",
     val url: String = "",
-    val content: String,
+    val content: String = "",
     val createdTime: Long = 0,
     val isDelete: Boolean = false,
     val collapsed: Boolean = false,
@@ -21,7 +21,7 @@ data class CommentDto(
     val isAuthor: Boolean = false,
     val canDelete: Boolean = false,
     val isAuthorTop: Boolean = false,
-    val author: AuthorDto,
+    val author: AuthorDto = AuthorDto(),
     val replyToAuthor: AuthorDto? = null,
     val authorTag: List<JsonObject> = emptyList(),
     val commentTag: List<CommentTagDto> = emptyList(),
