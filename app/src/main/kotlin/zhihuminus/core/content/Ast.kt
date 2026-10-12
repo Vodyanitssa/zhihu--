@@ -98,5 +98,12 @@ sealed interface InlineNode {
         val url: String,
     ) : InlineNode
 
+    // 脚注/参考资料（例如文章中带 data-text 和 data-url 的 sup 元素）
+    data class Footnote(
+        val label: String,
+        val text: String,
+        val url: String,
+    ) : InlineNode
+
     data object LineBreak : InlineNode
 }

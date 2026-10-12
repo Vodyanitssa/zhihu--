@@ -194,6 +194,25 @@ object HtmlRenderer {
         is InlineNode.Link ->
             "<a href=\"${escapeHtml(node.url)}\">${escapeHtml(node.name)}</a>"
 
+        is InlineNode.Footnote -> buildString {
+            append("<sup")
+            if (node.text.isNotBlank()) {
+                append(" data-text=\"${escapeHtml(node.text)}\"")
+                append(" title=\"${escapeHtml(node.text)}\"")
+            }
+            if (node.url.isNotBlank()) {
+                append(" data-url=\"${escapeHtml(node.url)}\"")
+            }
+            append(" data-draft-type=\"reference\"")
+            append(">")
+            if (node.url.isNotBlank()) {
+                append("<a href=\"${escapeHtml(node.url)}\">${escapeHtml(node.label)}</a>")
+            } else {
+                append(escapeHtml(node.label))
+            }
+            append("</sup>")
+        }
+
         is InlineNode.LineBreak -> {
             "<br>"
         }

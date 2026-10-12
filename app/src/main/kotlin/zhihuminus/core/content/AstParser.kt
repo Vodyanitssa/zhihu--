@@ -112,6 +112,29 @@ object AstParser {
                 }
             }
 
+            "sup" -> {
+                val dataText = node.attr("data-text").trim()
+                val dataUrl = node.attr("data-url").trim()
+                val isReference = node.attr("data-draft-type") == "reference" ||
+                    dataText.isNotEmpty() ||
+                    dataUrl.isNotEmpty()
+                if (isReference) {
+                    val numero = node.attr("data-numero").trim()
+                    val label = node.text().trim().ifBlank {
+                        if (numero.isNotEmpty()) "[$numero]" else "[*]"
+                    }
+                    listOf(
+                        InlineNode.Footnote(
+                            label = label,
+                            text = dataText,
+                            url = dataUrl,
+                        ),
+                    )
+                } else {
+                    parseText(node.text())
+                }
+            }
+
             else -> parseText(node.text())
         }
 

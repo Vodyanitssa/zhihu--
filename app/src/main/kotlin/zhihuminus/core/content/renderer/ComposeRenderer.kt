@@ -22,10 +22,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -33,8 +35,13 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.LocalTextStyle
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -48,7 +55,6 @@ import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
 import androidx.compose.ui.platform.LocalDensity
-import androidx.compose.ui.text.AnnotatedString
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
 import androidx.compose.ui.text.TextLinkStyles
@@ -56,12 +62,14 @@ import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontStyle
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.BaselineShift
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
 import coil3.compose.AsyncImage
@@ -98,6 +106,7 @@ fun InlineNodes(
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
 ) {
+    var activeFootnote by remember { mutableStateOf<InlineNode.Footnote?>(null) }
     val openInApp = rememberInAppLinkOpener()
     val linkStyle = TextLinkStyles(
         style = SpanStyle(
@@ -105,14 +114,74 @@ fun InlineNodes(
             textDecoration = TextDecoration.Underline,
         ),
     )
+    val footnoteStyle = TextLinkStyles(
+        style = SpanStyle(
+            color = MaterialTheme.colorScheme.primary,
+            baselineShift = BaselineShift.Superscript,
+            fontSize = 0.8.em,
+            fontWeight = FontWeight.Medium,
+        ),
+    )
     val codeStyle = MaterialTheme.colorScheme.surfaceVariant
     // 行内公式与表情的 InlineTextContent；公式的尺寸解析与占位符构建在 FormulaManager。
     // BoxWithConstraints 提供可用宽度：超宽公式强制占满可用宽度、高度等比缩放
     val emSize = with(LocalDensity.current) { style.fontSize.takeOrElse { 16.sp }.toDp() }
     val text = buildAnnotatedString {
-        nodes.forEach { node ->
-            appendInlineNode(node, openInApp, linkStyle, codeStyle)
+        fun appendNode(node: InlineNode) {
+            when (node) {
+                is InlineNode.Text -> append(node.text)
+
+                is InlineNode.Emoji -> appendInlineContent(node.name)
+
+                is InlineNode.Bold -> withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
+                    node.children.forEach(::appendNode)
+                }
+
+                is InlineNode.Italic -> withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
+                    node.children.forEach(::appendNode)
+                }
+
+                is InlineNode.Code -> withStyle(
+                    SpanStyle(
+                        fontFamily = CodeFontFamily,
+                        background = codeStyle,
+                    ),
+                ) {
+                    append(" ${node.text} ")
+                }
+
+                is InlineNode.Formula -> appendInlineContent(node.url, "[公式]")
+
+                is InlineNode.Link -> {
+                    val link = LinkAnnotation.Url(
+                        url = node.url,
+                        styles = linkStyle,
+                    ) {
+                        val url = (it as LinkAnnotation.Url).url
+                        openInApp(url)
+                    }
+                    withLink(link) {
+                        append(node.name)
+                    }
+                }
+
+                is InlineNode.Footnote -> {
+                    val link = LinkAnnotation.Clickable(
+                        tag = "footnote",
+                        styles = footnoteStyle,
+                    ) {
+                        activeFootnote = node
+                    }
+                    withLink(link) {
+                        append(node.label)
+                    }
+                }
+
+                is InlineNode.LineBreak -> appendLine()
+            }
         }
+
+        nodes.forEach(::appendNode)
     }
     BoxWithConstraints {
         val inlineContent = EmojiManager.inlineContent +
@@ -125,6 +194,17 @@ fun InlineNodes(
             maxLines = maxLines,
             overflow = overflow,
             inlineContent = inlineContent,
+        )
+    }
+
+    activeFootnote?.let { footnote ->
+        FootnoteDialog(
+            footnote = footnote,
+            onDismiss = { activeFootnote = null },
+            onOpenUrl = { url ->
+                activeFootnote = null
+                openInApp(url)
+            },
         )
     }
 }
@@ -147,72 +227,94 @@ fun EmojiItem(
     }
 }
 
-private fun AnnotatedString.Builder.appendInlineNode(
-    node: InlineNode,
-    openLink: (String) -> Unit,
-    linkStyle: TextLinkStyles,
-    codeStyle: Color,
+@Composable
+private fun FootnoteDialog(
+    footnote: InlineNode.Footnote,
+    onDismiss: () -> Unit,
+    onOpenUrl: (String) -> Unit,
 ) {
-    when (node) {
-        is InlineNode.Text -> {
-            append(node.text)
-        }
+    val clipboard = LocalClipboard.current
+    val coroutineScope = rememberCoroutineScope()
+    val hasUrl = footnote.url.isNotBlank()
+    val hasText = footnote.text.isNotBlank()
 
-        is InlineNode.Emoji -> {
-            appendInlineContent(node.name)
-        }
-
-        is InlineNode.Bold -> {
-            withStyle(SpanStyle(fontWeight = FontWeight.Bold)) {
-                node.children.forEach { child ->
-                    appendInlineNode(child, openLink, linkStyle, codeStyle)
-                }
-            }
-        }
-
-        is InlineNode.Italic -> {
-            withStyle(SpanStyle(fontStyle = FontStyle.Italic)) {
-                node.children.forEach { child ->
-                    appendInlineNode(child, openLink, linkStyle, codeStyle)
-                }
-            }
-        }
-
-        is InlineNode.Code -> {
-            withStyle(
-                SpanStyle(
-                    fontFamily = CodeFontFamily,
-                    background = codeStyle,
-                ),
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Text(
+                text = if (footnote.label.isNotBlank()) "注释 ${footnote.label}" else "注释",
+                style = MaterialTheme.typography.titleLarge,
+            )
+        },
+        text = {
+            Column(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .verticalScroll(rememberScrollState()),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
             ) {
-                append(" ${node.text} ")
+                if (!hasText && !hasUrl) {
+                    Text(
+                        text = "暂无注释详情",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                if (hasText) {
+                    SelectionContainer {
+                        Text(
+                            text = footnote.text,
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.onSurface,
+                        )
+                    }
+                }
+                if (hasUrl) {
+                    Link(
+                        node = ContentNode.Link(
+                            content = "参考链接",
+                            url = footnote.url,
+                            isCard = true,
+                        ),
+                        onClick = onOpenUrl,
+                    )
+                }
             }
-        }
+        },
+        confirmButton = {
+            when {
+                hasUrl -> Row(horizontalArrangement = Arrangement.spacedBy(4.dp)) {
+                    TextButton(
+                        onClick = {
+                            coroutineScope.launch {
+                                clipboard.copyText(footnote.url)
+                            }
+                        },
+                    ) {
+                        Text("复制链接")
+                    }
+                    TextButton(onClick = { onOpenUrl(footnote.url) }) {
+                        Text("打开链接")
+                    }
+                }
 
-        is InlineNode.Formula -> {
-            appendInlineContent(node.url, "[公式]")
-        }
-
-        is InlineNode.Link -> {
-            val link =
-                LinkAnnotation.Url(
-                    url = node.url,
-                    styles = linkStyle,
+                hasText -> TextButton(
+                    onClick = {
+                        coroutineScope.launch {
+                            clipboard.copyText(footnote.text)
+                        }
+                    },
                 ) {
-                    val url = (it as LinkAnnotation.Url).url
-                    openLink(url)
+                    Text("复制内容")
                 }
-            withLink(
-                link,
-            ) {
-                append(node.name)
             }
-        }
-
-        is InlineNode.LineBreak -> {
-            appendLine()
-        }
-    }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("关闭")
+            }
+        },
+    )
 }
 
 @Composable
@@ -298,8 +400,12 @@ fun RenderContentNode(
 }
 
 @Composable
-private fun Link(node: ContentNode.Link) {
-    val openLink = rememberInAppLinkOpener()
+private fun Link(
+    node: ContentNode.Link,
+    onClick: ((String) -> Unit)? = null,
+) {
+    val defaultOpenLink = rememberInAppLinkOpener()
+    val openLink = onClick ?: defaultOpenLink
     if (node.isCard) {
         Card(
             modifier = Modifier
