@@ -195,14 +195,14 @@ fun PostScreen(
 
                 is PostLoadState.Success -> {
                     val imageViewManager = LocalImageViewManager.current
-                    LaunchedEffect(state.post.content, isTransitionFinished) {
+                    LaunchedEffect(state.post.content, state.post.coverUrl, isTransitionFinished) {
                         if (isTransitionFinished) {
-                            imageViewManager?.submitImages(
-                                state.post.content
-                                    .filterIsInstance<ContentNode.Image>()
-                                    .filter { it.url.isNotBlank() }
-                                    .map { it.url },
-                            )
+                            val contentImages = state.post.content
+                                .filterIsInstance<ContentNode.Image>()
+                                .filter { it.url.isNotBlank() }
+                                .map { it.url }
+                            val allImages = listOfNotNull(state.post.coverUrl) + contentImages
+                            imageViewManager?.submitImages(allImages)
                         }
                     }
                     Column(
@@ -220,6 +220,8 @@ fun PostScreen(
                             voteCount = state.post.voteCount,
                             isFollowing = state.post.author.isFollowing,
                             questionId = state.post.questionId,
+                            coverUrl = state.post.coverUrl,
+                            onCoverClick = { url -> imageViewManager?.show(url) },
                             onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                         )
                         if (isTransitionFinished) {

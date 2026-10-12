@@ -152,6 +152,7 @@ private fun FeedTargetDto.toCachedPost(): Post? = when (this) {
                 updatedAt = updatedTime,
                 ipInfo = null,
                 excerpt = excerpt,
+                coverUrl = imageUrl?.takeIf { it.isNotBlank() },
             )
         }
     }

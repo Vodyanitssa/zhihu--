@@ -18,6 +18,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
@@ -39,9 +40,28 @@ fun PostHeader(
     voteCount: Int = 0,
     isFollowing: Boolean = false,
     questionId: Long? = null,
+    coverUrl: String? = null,
+    onCoverClick: ((String) -> Unit)? = null,
     onFollowClick: () -> Unit = {},
 ) {
     val navigator = LocalNavigator.current
+    if (!coverUrl.isNullOrBlank()) {
+        AsyncImage(
+            model = coverUrl,
+            contentDescription = "文章封面",
+            modifier = Modifier
+                .fillMaxWidth()
+                .then(
+                    if (onCoverClick != null) {
+                        Modifier.clickable { onCoverClick(coverUrl) }
+                    } else {
+                        Modifier
+                    },
+                ),
+            contentScale = ContentScale.FillWidth,
+        )
+        Spacer(modifier = Modifier.height(12.dp))
+    }
     if (title != null) {
         Column(
             modifier = Modifier

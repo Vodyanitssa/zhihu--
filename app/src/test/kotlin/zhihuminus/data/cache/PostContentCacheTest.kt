@@ -127,6 +127,7 @@ class PostContentCacheTest {
             voteupCount = 50,
             commentCount = 5,
             voting = -1,
+            imageUrl = "https://example.com/cover.jpg",
         )
 
         cache.putFromFeed(articleTarget)
@@ -137,6 +138,7 @@ class PostContentCacheTest {
         assertEquals(PostType.Article, cached?.type)
         assertEquals("Article Title", cached?.title)
         assertEquals(VoteUpState.Down, cached?.voteState)
+        assertEquals("https://example.com/cover.jpg", cached?.coverUrl)
     }
 
     @Test

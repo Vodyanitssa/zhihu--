@@ -162,6 +162,7 @@ class ZhihuPostRepository(
             ipInfo = dto.ipInfo,
             excerpt = dto.excerpt.ifEmpty { dto.excerptTitle },
             topics = dto.topics.map { PostTopic(id = it.id, name = it.name) },
+            coverUrl = dto.imageUrl?.takeIf { it.isNotBlank() },
         )
     }
 

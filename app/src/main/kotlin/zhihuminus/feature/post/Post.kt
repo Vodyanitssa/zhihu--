@@ -54,6 +54,7 @@ data class Post(
     val questionId: Long? = null,
     // Article-specific
     val topics: List<PostTopic> = emptyList(),
+    val coverUrl: String? = null,
     // Pin-specific
     val poll: PostPoll? = null,
     val linkCards: List<PostLinkCard> = emptyList(),
