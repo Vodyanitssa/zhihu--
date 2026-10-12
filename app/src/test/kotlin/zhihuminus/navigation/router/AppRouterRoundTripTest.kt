@@ -18,6 +18,7 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.WatchLater
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull
@@ -255,5 +256,12 @@ class AppRouterRoundTripTest {
     @Test
     fun encodedUrlIsParseableByKtorAgain() {
         assertTrue(Question(questionId = 1L).toAppUrl().let { it == "zhihu://questions/1" && AppRouter.resolve(it) != null })
+    }
+
+    @Test
+    fun watchLater() {
+        assertEquals("zhihu://tab/watch_later", WatchLater.toAppUrl())
+        assertEquals(RouteResolution.Tab(WatchLater), AppRouter.resolve("zhihu://tab/watch_later"))
+        assertEquals(RouteResolution.Tab(WatchLater), AppRouter.resolve("zhihu://tab/watchlater"))
     }
 }

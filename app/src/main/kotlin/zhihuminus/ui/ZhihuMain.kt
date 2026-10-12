@@ -47,6 +47,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Group
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Newspaper
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.NavigationBar
@@ -96,6 +97,7 @@ import com.zhihuminus.feature.people.PeopleRoute
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.search.SearchRoute
 import com.zhihuminus.feature.topic.TopicRoute
+import com.zhihuminus.feature.watchlater.WatchLaterRoute
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
@@ -116,6 +118,7 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
+import com.zhihuminus.navigation.WatchLater
 import com.zhihuminus.ui.components.LocalFeedCardConfig
 import com.zhihuminus.ui.components.LocalTopLevelReselectFlow
 import com.zhihuminus.ui.components.rememberFeedCardConfig
@@ -137,6 +140,8 @@ private sealed class MainTabPage(
     data object FollowPage : MainTabPage(Follow, "follow")
 
     data object DailyPage : MainTabPage(Daily, "daily")
+
+    data object WatchLaterPage : MainTabPage(WatchLater, "watch_later")
 }
 
 /**
@@ -200,6 +205,7 @@ fun ZhihuMain(
             Triple(Home, "主页", Icons.Filled.Home),
             Triple(Follow, "关注", Icons.Filled.Group),
             Triple(Daily, "日报", Icons.Filled.Newspaper),
+            Triple(WatchLater, "稍后再看", Icons.Filled.Schedule),
         )
     }
 
@@ -208,6 +214,7 @@ fun ZhihuMain(
             MainTabPage.HomePage,
             MainTabPage.FollowPage,
             MainTabPage.DailyPage,
+            MainTabPage.WatchLaterPage,
         )
     }
 
@@ -215,9 +222,11 @@ fun ZhihuMain(
         Home -> 0
         Follow -> 1
         Daily -> 2
+        WatchLater -> 3
         else -> when (startDestination) {
             Follow -> 1
             Daily -> 2
+            WatchLater -> 3
             else -> 0
         }
     }
@@ -389,6 +398,13 @@ fun ZhihuMain(
                     composable<History> {
                         val navigator = LocalNavigator.current
                         HistoryRoute(
+                            onNavigateBack = navigator.onNavigateBack,
+                        )
+                    }
+                    composable<WatchLater> {
+                        val navigator = LocalNavigator.current
+                        WatchLaterRoute(
+                            innerPadding = innerPadding,
                             onNavigateBack = navigator.onNavigateBack,
                         )
                     }
@@ -576,6 +592,10 @@ private fun MainTabsContent(
                 )
 
                 MainTabPage.DailyPage -> DailyRoute()
+
+                MainTabPage.WatchLaterPage -> WatchLaterRoute(
+                    innerPadding = innerPadding,
+                )
             }
         }
     }

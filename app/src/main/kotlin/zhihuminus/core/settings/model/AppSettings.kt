@@ -45,12 +45,14 @@ enum class StartDestinationOption(
     Home("主页"),
     Follow("关注"),
     Daily("日报"),
+    WatchLater("稍后再看"),
     ;
 
     fun toTopLevelDestination(): TopLevelDestination = when (this) {
         Home -> com.zhihuminus.navigation.Home
         Follow -> com.zhihuminus.navigation.Follow
         Daily -> com.zhihuminus.navigation.Daily
+        WatchLater -> com.zhihuminus.navigation.WatchLater
     }
 
     companion object {
@@ -58,6 +60,7 @@ enum class StartDestinationOption(
             when (destination.name) {
                 com.zhihuminus.navigation.Follow.name -> Follow
                 com.zhihuminus.navigation.Daily.name -> Daily
+                com.zhihuminus.navigation.WatchLater.name -> WatchLater
                 else -> Home
             }
     }

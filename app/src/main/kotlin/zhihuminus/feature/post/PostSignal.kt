@@ -54,6 +54,8 @@ sealed interface PostEvent {
     data object RefreshCollections : PostEvent
 
     data object FollowAuthor : PostEvent
+
+    data object AddToWatchLater : PostEvent
 }
 
 sealed interface PostEffect {

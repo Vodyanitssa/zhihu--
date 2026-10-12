@@ -20,6 +20,7 @@ import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.WatchLater
 import io.ktor.http.DEFAULT_PORT
 import io.ktor.http.URLBuilder
 import io.ktor.http.URLProtocol
@@ -444,6 +445,8 @@ private val TAB_DESTINATIONS: Map<String, TopLevelDestination> = mapOf(
     "home" to Home,
     "follow" to Follow,
     "daily" to Daily,
+    "watchlater" to WatchLater,
+    "watch_later" to WatchLater,
 )
 
 private val PostType.urlSegment: String

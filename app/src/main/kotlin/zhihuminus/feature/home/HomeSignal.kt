@@ -25,6 +25,10 @@ sealed interface HomeEvent {
     data class MarkUninterested(
         val item: FeedDisplayItem,
     ) : HomeEvent
+
+    data class AddToWatchLater(
+        val item: FeedDisplayItem,
+    ) : HomeEvent
 }
 
 sealed interface HomeEffect {

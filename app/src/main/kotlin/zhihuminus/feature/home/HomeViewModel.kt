@@ -14,6 +14,8 @@ import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.watchlater.WatchLaterItem
+import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
@@ -37,6 +39,7 @@ class HomeViewModel(
     private val repository: HomeRepository,
     private val autoRefreshOnStartup: Boolean = true,
     private val initialIsLoggedIn: Boolean = true,
+    private val watchLaterRepository: WatchLaterRepository? = null,
 ) : ViewModel() {
     var uiState by mutableStateOf(HomeUiState())
         private set
@@ -73,6 +76,7 @@ class HomeViewModel(
             is HomeEvent.LoadMore -> loadFeeds(reset = false)
             is HomeEvent.ContentClick -> handleContentClick(event.item)
             is HomeEvent.MarkUninterested -> handleMarkUninterested(event.item)
+            is HomeEvent.AddToWatchLater -> handleAddToWatchLater(event.item)
             is HomeEvent.SearchClick -> {
                 viewModelScope.launch {
                     _effect.send(HomeEffect.Navigate(Search(query = "")))
@@ -126,6 +130,45 @@ class HomeViewModel(
                 _effect.send(HomeEffect.ShowMessage("已标记不感兴趣"))
             } else {
                 _effect.send(HomeEffect.ShowMessage("操作失败，请重试"))
+            }
+        }
+    }
+
+    private fun handleAddToWatchLater(item: FeedDisplayItem) {
+        val payload = resolveContentPayload(item)
+        val id = payload?.second?.toLongOrNull()
+        val type = payload?.first
+        if (id == null || type == null || type !in setOf("answer", "article", "pin")) {
+            viewModelScope.launch {
+                _effect.send(HomeEffect.ShowMessage("该条目不支持添加到稍后再看"))
+            }
+            return
+        }
+        val repo = watchLaterRepository
+        if (repo == null) {
+            viewModelScope.launch {
+                _effect.send(HomeEffect.ShowMessage("稍后再看不可用"))
+            }
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val watchLaterItem = WatchLaterItem(
+                    id = id,
+                    type = type,
+                    title = item.title,
+                    excerpt = item.summary.orEmpty(),
+                    authorName = item.authorName,
+                    authorAvatar = item.avatarSrc,
+                    coverImage = item.images.firstOrNull(),
+                    addedAt = System.currentTimeMillis(),
+                )
+                repo.addItem(watchLaterItem)
+                _effect.send(HomeEffect.ShowMessage("已添加到稍后再看"))
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("HomeViewModel", "Failed to add to watch later", e)
+                _effect.send(HomeEffect.ShowMessage("添加失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

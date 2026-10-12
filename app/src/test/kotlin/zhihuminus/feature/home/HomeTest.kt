@@ -3,9 +3,14 @@ package com.zhihuminus.feature.home
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.feature.watchlater.WatchLaterItem
+import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import com.zhihuminus.navigation.PostDestination
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -119,6 +124,29 @@ class HomeTest {
             lastMarkUninterestedToken = contentToken
             lastMarkUninterestedType = contentType
             return markUninterestedResult
+        }
+    }
+
+    private class FakeWatchLaterRepository : WatchLaterRepository {
+        val items = mutableListOf<WatchLaterItem>()
+        private val _itemsFlow = MutableStateFlow<List<WatchLaterItem>>(emptyList())
+        override val itemsFlow: StateFlow<List<WatchLaterItem>> = _itemsFlow.asStateFlow()
+
+        override suspend fun getItems(): List<WatchLaterItem> = items.toList()
+
+        override suspend fun addItem(item: WatchLaterItem) {
+            items.add(0, item)
+            _itemsFlow.value = items.toList()
+        }
+
+        override suspend fun deleteItem(id: Long, type: String) {
+            items.removeAll { it.id == id && it.type.equals(type, ignoreCase = true) }
+            _itemsFlow.value = items.toList()
+        }
+
+        override suspend fun clearAll() {
+            items.clear()
+            _itemsFlow.value = emptyList()
         }
     }
 
@@ -297,6 +325,66 @@ class HomeTest {
 
         assertEquals(0, repo.markUninterestedCallCount)
         assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "该条目不支持标记不感兴趣" })
+
+        effectJob.cancel()
+    }
+
+    @Test
+    fun testAddToWatchLaterSupportedItemAddsAndEmitsToast() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val watchLaterRepo = FakeWatchLaterRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+            watchLaterRepository = watchLaterRepo,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.items.size)
+        val targetItem = viewModel.uiState.items.first { it.title == "Item 1" }
+
+        val effects = mutableListOf<HomeEffect>()
+        val effectJob = launch { viewModel.effect.collect { effects.add(it) } }
+
+        viewModel.onEvent(HomeEvent.AddToWatchLater(targetItem))
+        advanceUntilIdle()
+
+        assertEquals(1, watchLaterRepo.items.size)
+        val added = watchLaterRepo.items.first()
+        assertEquals(1001L, added.id)
+        assertEquals("answer", added.type)
+        assertEquals("Item 1", added.title)
+        assertEquals("Summary 1", added.excerpt)
+        assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "已添加到稍后再看" })
+
+        effectJob.cancel()
+    }
+
+    @Test
+    fun testAddToWatchLaterUnsupportedItemShowsNotice() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val watchLaterRepo = FakeWatchLaterRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+            watchLaterRepository = watchLaterRepo,
+        )
+        advanceUntilIdle()
+        val unsupportedItem = FeedDisplayItem(
+            title = "Unsupported",
+            summary = "No target",
+            details = "details",
+        )
+
+        val effects = mutableListOf<HomeEffect>()
+        val effectJob = launch { viewModel.effect.collect { effects.add(it) } }
+
+        viewModel.onEvent(HomeEvent.AddToWatchLater(unsupportedItem))
+        advanceUntilIdle()
+
+        assertEquals(0, watchLaterRepo.items.size)
+        assertTrue(effects.any { it is HomeEffect.ShowMessage && it.message == "该条目不支持添加到稍后再看" })
 
         effectJob.cancel()
     }

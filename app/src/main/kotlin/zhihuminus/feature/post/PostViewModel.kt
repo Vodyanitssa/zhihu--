@@ -10,8 +10,11 @@ import com.zhihuminus.core.content.renderer.PictureRenderer
 import com.zhihuminus.core.platform.FileExporter
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
+import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.components.PostBottomBarState
+import com.zhihuminus.feature.watchlater.WatchLaterItem
+import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
@@ -26,6 +29,7 @@ class PostViewModel(
     private val postId: Long,
     private val postType: PostType,
     private val repository: PostRepository,
+    private val watchLaterRepository: WatchLaterRepository? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : AndroidViewModel(application) {
     var uiState: PostUiState by mutableStateOf(PostUiState(postType = postType))
@@ -136,6 +140,44 @@ class PostViewModel(
 
             is PostEvent.FollowAuthor -> {
                 handleFollowAuthor()
+            }
+
+            is PostEvent.AddToWatchLater -> {
+                handleAddToWatchLater()
+            }
+        }
+    }
+
+    private fun handleAddToWatchLater() {
+        val post = (uiState.loadState as? PostLoadState.Success)?.post
+        if (post == null) {
+            sendEffect(PostEffect.ShowMessage("内容未加载完成"))
+            return
+        }
+        viewModelScope.launch {
+            try {
+                val item = WatchLaterItem(
+                    id = post.id,
+                    type = when (post.type) {
+                        PostType.Answer -> "answer"
+                        PostType.Article -> "article"
+                        PostType.Pin -> "pin"
+                    },
+                    title = post.title,
+                    excerpt = post.excerpt,
+                    authorName = post.author.name,
+                    authorAvatar = post.author.avatarUrl,
+                    coverImage = post.coverUrl,
+                    addedAt = System.currentTimeMillis(),
+                )
+                val repo = watchLaterRepository ?: LocalWatchLaterRepository.getInstance(getApplication())
+                repo.addItem(item)
+                uiState = uiState.copy(showActionsMenu = false)
+                sendEffect(PostEffect.ShowMessage("已添加到稍后再看"))
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.e("PostViewModel", "Failed to add to watch later", e)
+                sendEffect(PostEffect.ShowMessage("添加失败: ${friendlyErrorMessage(e)}"))
             }
         }
     }

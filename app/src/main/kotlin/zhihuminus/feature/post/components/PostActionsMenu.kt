@@ -14,6 +14,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.GetApp
+import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material.icons.filled.Share
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
@@ -39,6 +40,7 @@ fun PostActionsMenu(
     onShare: () -> Unit,
     onCopyLink: () -> Unit,
     onExport: () -> Unit,
+    onAddToWatchLater: () -> Unit,
 ) {
     val sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)
 
@@ -128,6 +130,16 @@ fun PostActionsMenu(
                     onClick = {
                         onDismissRequest()
                         onCopyLink()
+                    },
+                )
+
+                Spacer(modifier = Modifier.height(12.dp))
+                MenuActionButton(
+                    icon = Icons.Filled.Schedule,
+                    text = "添加到稍后再看",
+                    onClick = {
+                        onDismissRequest()
+                        onAddToWatchLater()
                     },
                 )
 

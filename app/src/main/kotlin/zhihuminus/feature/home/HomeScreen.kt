@@ -96,6 +96,13 @@ fun HomeScreen(
                             },
                             menuItems = { dismissMenu ->
                                 DropdownMenuItem(
+                                    text = { Text("添加到稍后再看") },
+                                    onClick = {
+                                        dismissMenu()
+                                        onEvent(HomeEvent.AddToWatchLater(item))
+                                    },
+                                )
+                                DropdownMenuItem(
                                     text = { Text("不感兴趣") },
                                     onClick = {
                                         dismissMenu()

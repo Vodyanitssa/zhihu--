@@ -2,8 +2,12 @@ package com.zhihuminus.feature.post
 
 import android.app.Application
 import com.zhihuminus.feature.collection.Collection
+import com.zhihuminus.feature.watchlater.WatchLaterItem
+import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.filterIsInstance
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.StandardTestDispatcher
@@ -20,6 +24,29 @@ import kotlin.test.assertTrue
 @OptIn(ExperimentalCoroutinesApi::class)
 class PostViewModelTest {
     private val testDispatcher = StandardTestDispatcher()
+
+    private class FakeWatchLaterRepository : WatchLaterRepository {
+        val items = mutableListOf<WatchLaterItem>()
+        private val _itemsFlow = MutableStateFlow<List<WatchLaterItem>>(emptyList())
+        override val itemsFlow: StateFlow<List<WatchLaterItem>> = _itemsFlow
+
+        override suspend fun getItems(): List<WatchLaterItem> = items.toList()
+
+        override suspend fun addItem(item: WatchLaterItem) {
+            items.add(0, item)
+            _itemsFlow.value = items.toList()
+        }
+
+        override suspend fun deleteItem(id: Long, type: String) {
+            items.removeAll { it.id == id && it.type == type }
+            _itemsFlow.value = items.toList()
+        }
+
+        override suspend fun clearAll() {
+            items.clear()
+            _itemsFlow.value = emptyList()
+        }
+    }
 
     private class FakePostRepository(
         val postType: PostType = PostType.Answer,
@@ -228,5 +255,31 @@ class PostViewModelTest {
 
         val unfollowEffect = viewModel.effect.filterIsInstance<PostEffect.ShowMessage>().first()
         assertEquals("已取消关注", unfollowEffect.message)
+    }
+
+    @Test
+    fun testAddToWatchLaterSuccessEmitsToast() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        val watchLaterRepo = FakeWatchLaterRepository()
+        val viewModel = PostViewModel(
+            Application(),
+            12345L,
+            PostType.Answer,
+            repo,
+            watchLaterRepository = watchLaterRepo,
+            defaultDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        viewModel.onEvent(PostEvent.AddToWatchLater)
+        advanceUntilIdle()
+
+        assertEquals(1, watchLaterRepo.items.size)
+        assertEquals(12345L, watchLaterRepo.items[0].id)
+        assertEquals("answer", watchLaterRepo.items[0].type)
+        assertEquals("Test Post", watchLaterRepo.items[0].title)
+
+        val effect = viewModel.effect.filterIsInstance<PostEffect.ShowMessage>().first()
+        assertEquals("已添加到稍后再看", effect.message)
     }
 }

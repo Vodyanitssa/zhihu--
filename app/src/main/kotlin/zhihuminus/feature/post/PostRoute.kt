@@ -13,6 +13,7 @@ import com.zhihuminus.core.platform.rememberImageSharer
 import com.zhihuminus.core.platform.rememberPlainTextClipboard
 import com.zhihuminus.core.platform.rememberShareText
 import com.zhihuminus.core.platform.rememberUserMessageSink
+import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
@@ -46,6 +47,7 @@ fun PostRoute(
             postId = destination.id,
             postType = destination.type,
             repository = repository,
+            watchLaterRepository = LocalWatchLaterRepository.getInstance(context),
         )
     }
 

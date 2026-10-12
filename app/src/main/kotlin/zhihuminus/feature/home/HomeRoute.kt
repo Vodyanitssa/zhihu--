@@ -12,6 +12,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
@@ -24,6 +25,7 @@ import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.core.state.rememberUnreadNotificationCount
+import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.LocalNavigator
@@ -51,12 +53,15 @@ fun HomeRoute(
     }
 
     val account = rememberAccountSettingsAccountState().value
+    val context = LocalContext.current
+    val watchLaterRepository = remember(context) { LocalWatchLaterRepository.getInstance(context) }
 
     val viewModel: HomeViewModel = viewModel {
         HomeViewModel(
             repository = repository,
             autoRefreshOnStartup = autoRefreshOnStartup,
             initialIsLoggedIn = account.login,
+            watchLaterRepository = watchLaterRepository,
         )
     }
 

@@ -274,6 +274,9 @@ fun PostScreen(
                                 onEvent(PostEvent.DismissActionsMenu)
                                 showExportDialog = true
                             },
+                            onAddToWatchLater = {
+                                onEvent(PostEvent.AddToWatchLater)
+                            },
                         )
 
                         // Export Dialog

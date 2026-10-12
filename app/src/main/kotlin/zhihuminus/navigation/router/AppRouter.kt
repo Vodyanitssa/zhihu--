@@ -7,6 +7,7 @@ import com.zhihuminus.navigation.Home
 import com.zhihuminus.navigation.MainTabs
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.TopLevelDestination
+import com.zhihuminus.navigation.WatchLater
 import io.ktor.http.Url
 
 /**
@@ -97,5 +98,6 @@ fun TopLevelDestination.toAppUrl(): String? = when (this) {
     Home -> buildAppUrl("feed")
     Follow -> buildAppUrl("tab", "follow")
     Daily -> buildAppUrl("tab", "daily")
+    WatchLater -> buildAppUrl("tab", "watch_later")
     else -> null
 }

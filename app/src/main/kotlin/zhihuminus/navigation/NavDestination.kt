@@ -108,6 +108,15 @@ data object Daily : TopLevelDestination {
         get() = "Daily"
 }
 
+/**
+ * 稍后再看顶层 tab 目标。
+ */
+@Serializable
+data object WatchLater : TopLevelDestination {
+    override val name: String
+        get() = "WatchLater"
+}
+
 @Serializable
 data object Notification : NavDestination {
     @Serializable
