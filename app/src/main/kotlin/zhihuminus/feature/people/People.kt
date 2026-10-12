@@ -198,7 +198,7 @@ fun resolvePeopleInitialSelection(jumpTo: String): PeopleInitialSelection = when
 enum class PeopleSubscriptionTab(
     val title: String,
 ) {
-    Columns("我订阅的专栏"),
+    Columns("订阅的专栏"),
     Topics("关注的话题"),
     Questions("关注的问题"),
     Collections("关注的收藏夹"),

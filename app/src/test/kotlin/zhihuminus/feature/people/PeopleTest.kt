@@ -329,7 +329,7 @@ class PeopleTest {
     @Test
     fun testPeopleSubscriptionTabTitles() {
         assertEquals(4, PeopleSubscriptionTab.TITLES.size)
-        assertEquals("我订阅的专栏", PeopleSubscriptionTab.TITLES[0])
+        assertEquals("订阅的专栏", PeopleSubscriptionTab.TITLES[0])
         assertEquals("关注的话题", PeopleSubscriptionTab.TITLES[1])
         assertEquals("关注的问题", PeopleSubscriptionTab.TITLES[2])
         assertEquals("关注的收藏夹", PeopleSubscriptionTab.TITLES[3])
