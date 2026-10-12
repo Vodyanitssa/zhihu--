@@ -48,12 +48,16 @@ internal fun HistoryItemDto.toHistoryItem() = HistoryItem(
     details = data.matrix
         ?.firstOrNull()
         ?.data
-        ?.text ?: data.extra.contentType,
+        ?.text
+        ?.takeIf { it != data.extra.contentType }
+        ?: "",
     authorName = data.content?.authorName,
-    contentTypeLabel = when (data.extra.contentType) {
+    contentTypeLabel = when (data.extra.contentType.lowercase()) {
         "answer" -> "回答"
         "article" -> "文章"
         "pin" -> "想法"
+        "question" -> "问题"
+        "profile" -> "主页"
         else -> data.extra.contentType
     },
     actionUrl = data.action.url,

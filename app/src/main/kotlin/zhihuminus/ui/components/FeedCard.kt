@@ -293,14 +293,7 @@ private fun FeedCardContent(
                 modifier = Modifier.padding(top = 8.dp),
             )
         }
-        val statsText = when {
-            typeLabel != null && !item.details.startsWith("$typeLabel") && item.details.isNotEmpty() ->
-                "$typeLabel · ${item.details}"
-            typeLabel != null && item.details.isEmpty() ->
-                typeLabel
-            else ->
-                item.details
-        }
+        val statsText = formatStatsText(typeLabel, item.details)
         val publishTimeText = item.publishTimeSeconds
             ?.let(::formatDateTime)
         if (statsText.isNotEmpty() || publishTimeText != null) {
@@ -483,4 +476,13 @@ private fun FeedCardSourceLabel(sourceLabel: String?) {
         overflow = TextOverflow.Ellipsis,
         modifier = Modifier.padding(bottom = 6.dp),
     )
+}
+
+internal fun formatStatsText(typeLabel: String?, details: String): String = when {
+    typeLabel != null && !details.startsWith(typeLabel) && details.isNotEmpty() ->
+        "$typeLabel · $details"
+    typeLabel != null && details.isEmpty() ->
+        typeLabel
+    else ->
+        details
 }

@@ -77,4 +77,14 @@ class FeedCardTest {
         assertEquals(120, customConfig.fontSizePercent)
         assertEquals(180, customConfig.lineHeightPercent)
     }
+
+    @Test
+    fun testFormatStatsText() {
+        assertEquals("主页", formatStatsText("主页", ""))
+        assertEquals("主页", formatStatsText("主页", "主页"))
+        assertEquals("主页 · 42 粉丝", formatStatsText("主页", "42 粉丝"))
+        assertEquals("回答 · 10 赞同", formatStatsText("回答", "10 赞同"))
+        assertEquals("回答", formatStatsText("回答", ""))
+        assertEquals("10 赞同", formatStatsText(null, "10 赞同"))
+    }
 }

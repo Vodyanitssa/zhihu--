@@ -26,15 +26,24 @@ fun HistoryCard(
         } else {
             FeedImageLayout.NONE
         }
+        val typeLabel = when (item.contentTypeLabel.lowercase()) {
+            "profile" -> "主页"
+            else -> item.contentTypeLabel
+        }
+        val details = if (item.details.equals("profile", ignoreCase = true) || item.details == item.contentType) {
+            ""
+        } else {
+            item.details
+        }
         FeedDisplayItem(
             title = item.title,
             summary = item.summary,
-            details = item.details,
+            details = details,
             feed = null,
             navDestinationJson = navDest?.toFeedDisplayItemNavDestinationJson(),
             avatarSrc = null,
             authorName = item.authorName,
-            contentTypeLabel = item.contentTypeLabel,
+            contentTypeLabel = typeLabel,
             content = item.actionUrl,
             images = images,
             imageLayout = layout,
