@@ -12,8 +12,8 @@
 #   public *;
 #}
 
-# Uncomment this to preserve the line number information for
-# debugging stack traces.
+# Preserve symbol names and line numbers: retain dead-code shrinking without obfuscating names
+-dontobfuscate
 -keepattributes SourceFile,LineNumberTable
 
 ##
