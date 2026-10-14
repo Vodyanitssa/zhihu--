@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.repository
 
+import com.zhihuminus.core.telemetry.ZaFeedExposureItem
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.flattenFeeds
@@ -7,6 +8,7 @@ import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.RECOMMEND_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
+import com.zhihuminus.feature.home.FeedExposureRecord
 import com.zhihuminus.feature.home.HomeFeedPage
 import com.zhihuminus.feature.home.HomeRepository
 import com.zhihuminus.feature.home.decodeHomeFeedStartupSnapshot
@@ -40,6 +42,21 @@ class ZhihuHomeRepository(
 
     override suspend fun reportContentTouch(untouchedItems: List<Pair<String, String>>) {
         feedApi.reportContentTouch(untouchedItems)
+    }
+
+    override suspend fun reportExposures(records: List<FeedExposureRecord>) {
+        if (records.isEmpty()) return
+        val touches = records.map { it.type to it.id }
+        feedApi.reportContentTouch(touches)
+
+        val zaItems = records.mapNotNull { rec ->
+            rec.attachedInfo?.takeIf { it.isNotBlank() }?.let { att ->
+                ZaFeedExposureItem(attachedInfo = att, cardIndex = rec.index)
+            }
+        }
+        if (zaItems.isNotEmpty()) {
+            feedApi.reportZaExposures(zaItems)
+        }
     }
 
     override suspend fun reportContentRead(type: String, id: String) {

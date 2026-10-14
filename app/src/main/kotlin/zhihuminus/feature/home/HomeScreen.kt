@@ -14,6 +14,10 @@ import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
 import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.derivedStateOf
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -23,6 +27,8 @@ import com.zhihuminus.ui.AccountSettingsAccountState
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -36,6 +42,28 @@ fun HomeScreen(
     onRequestLogin: () -> Unit,
 ) {
     val pullToRefreshState = rememberPullToRefreshState()
+
+    val visibleItems by remember(state.items, listState) {
+        derivedStateOf {
+            val layoutInfo = listState.layoutInfo
+            val visibleInfo = layoutInfo.visibleItemsInfo
+            if (visibleInfo.isEmpty()) {
+                emptyList()
+            } else {
+                val totalItems = state.items
+                visibleInfo.mapNotNull { info ->
+                    totalItems.getOrNull(info.index)
+                }
+            }
+        }
+    }
+
+    LaunchedEffect(visibleItems) {
+        if (visibleItems.isNotEmpty()) {
+            delay(400.milliseconds)
+            onEvent(HomeEvent.ItemsExposed(visibleItems))
+        }
+    }
 
     Box(modifier = Modifier.fillMaxSize()) {
         Scaffold(

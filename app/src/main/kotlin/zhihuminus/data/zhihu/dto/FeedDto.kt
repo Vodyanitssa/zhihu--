@@ -322,6 +322,7 @@ data class CommonFeedDto(
     override val target: FeedTargetDto? = null,
     val brief: String = "<none>",
     val attachedInfo: String = "",
+    val offset: Int = 0,
     val actionCard: Boolean = false,
     val promotionExtra: String? = null,
     val cursor: String = "",

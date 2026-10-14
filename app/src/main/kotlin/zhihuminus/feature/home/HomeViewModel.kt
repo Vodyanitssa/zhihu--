@@ -11,6 +11,7 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
+import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import com.zhihuminus.feature.post.PostType
@@ -49,7 +50,7 @@ class HomeViewModel(
 
     private var nextUrl: String? = null
     private var loadJob: Job? = null
-    private val reportedTouchedItems = hashSetOf<Pair<String, String>>()
+    private val reportedExposureKeys = hashSetOf<String>()
 
     init {
         if (initialIsLoggedIn) {
@@ -75,6 +76,7 @@ class HomeViewModel(
             is HomeEvent.Refresh -> loadFeeds(reset = true)
             is HomeEvent.LoadMore -> loadFeeds(reset = false)
             is HomeEvent.ContentClick -> handleContentClick(event.item)
+            is HomeEvent.ItemsExposed -> handleItemsExposed(event.items)
             is HomeEvent.MarkUninterested -> handleMarkUninterested(event.item)
             is HomeEvent.AddToWatchLater -> handleAddToWatchLater(event.item)
             is HomeEvent.SearchClick -> {
@@ -90,6 +92,37 @@ class HomeViewModel(
             is HomeEvent.RequestLogin -> {}
             is HomeEvent.UpdateUnreadCount -> {
                 uiState = uiState.copy(unreadCount = event.count)
+            }
+        }
+    }
+
+    private fun handleItemsExposed(items: List<FeedDisplayItem>) {
+        val unexposedRecords = mutableListOf<FeedExposureRecord>()
+        for (item in items) {
+            val payload = resolveContentPayload(item) ?: continue
+            val (type, id) = payload
+            val key = "$type:$id"
+            if (reportedExposureKeys.add(key)) {
+                val attachedInfo = (item.feed as? CommonFeedDto)?.attachedInfo?.takeIf { it.isNotBlank() }
+                val index = (item.feed as? CommonFeedDto)?.offset ?: unexposedRecords.size
+                unexposedRecords.add(
+                    FeedExposureRecord(
+                        type = type,
+                        id = id,
+                        attachedInfo = attachedInfo,
+                        index = index,
+                    ),
+                )
+            }
+        }
+        if (unexposedRecords.isNotEmpty()) {
+            viewModelScope.launch {
+                try {
+                    repository.reportExposures(unexposedRecords)
+                } catch (e: Exception) {
+                    if (e is CancellationException) throw e
+                    Log.w("HomeViewModel", "Failed to report exposures", e)
+                }
             }
         }
     }
@@ -183,13 +216,13 @@ class HomeViewModel(
         loadJob?.cancel()
         loadJob = viewModelScope.launch {
             if (reset) {
-                reportedTouchedItems.clear()
+                if (reportedExposureKeys.size > 1000) {
+                    reportedExposureKeys.clear()
+                }
                 uiState = uiState.copy(isRefreshing = true, errorMessage = null)
             } else {
                 uiState = uiState.copy(isLoadingMore = true, errorMessage = null)
             }
-
-            triggerTouchReport()
 
             try {
                 val page = repository.fetchRecommendFeed(nextUrl)
@@ -223,28 +256,19 @@ class HomeViewModel(
         }
     }
 
-    private suspend fun triggerTouchReport() {
-        val currentTouchItems = uiState.items.mapNotNull(::resolveContentPayload)
-        val untouched = currentTouchItems.filter { it !in reportedTouchedItems }
-        if (untouched.isNotEmpty()) {
-            repository.reportContentTouch(untouched)
-            reportedTouchedItems.addAll(untouched)
-        }
-    }
-
     private fun resolveContentPayload(item: FeedDisplayItem): Pair<String, String>? {
         val dest = item.navDestination
         if (dest is PostDestination) {
             val type = when (dest.type) {
                 PostType.Answer -> "answer"
-                PostType.Article -> "article"
+                PostType.Article -> "post"
                 PostType.Pin -> "pin"
             }
             return type to dest.id.toString()
         }
         return when (val target = item.feed?.target) {
             is AnswerTargetDto -> "answer" to target.id.toString()
-            is ArticleTargetDto -> "article" to target.id.toString()
+            is ArticleTargetDto -> "post" to target.id.toString()
             is PinTargetDto -> "pin" to target.id.toString()
             is VideoTargetDto -> "video" to target.id.toString()
             else -> null
@@ -255,7 +279,7 @@ class HomeViewModel(
         val (type, id) = resolveContentPayload(item) ?: return null
         val code = when (type) {
             "answer" -> "1"
-            "article" -> "2"
+            "post", "article" -> "2"
             "video", "zvideo" -> "3"
             "pin" -> "5"
             else -> return null

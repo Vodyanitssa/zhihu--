@@ -8,10 +8,21 @@ data class HomeFeedPage(
     val isEnd: Boolean,
 )
 
+data class FeedExposureRecord(
+    val type: String,
+    val id: String,
+    val attachedInfo: String? = null,
+    val index: Int = 0,
+)
+
 interface HomeRepository {
     suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage
 
     suspend fun reportContentTouch(untouchedItems: List<Pair<String, String>>)
+
+    suspend fun reportExposures(records: List<FeedExposureRecord>) {
+        reportContentTouch(records.map { it.type to it.id })
+    }
 
     suspend fun reportContentRead(type: String, id: String)
 

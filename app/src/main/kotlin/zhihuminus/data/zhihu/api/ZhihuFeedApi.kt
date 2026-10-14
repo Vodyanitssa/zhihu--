@@ -1,7 +1,11 @@
 package com.zhihuminus.data.zhihu.api
 
+import com.zhihuminus.account.DEFAULT_ZHIHU_USER_AGENT
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.environment.postSigned
+import com.zhihuminus.core.telemetry.ZaFeedExposureItem
+import com.zhihuminus.core.telemetry.ZaProtobufBuilder
+import com.zhihuminus.core.telemetry.gzipCompress
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.FeedDto
@@ -13,6 +17,7 @@ import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
 import io.ktor.client.request.header
+import io.ktor.client.request.post
 import io.ktor.client.request.setBody
 import io.ktor.client.statement.bodyAsText
 import io.ktor.http.Parameters
@@ -23,6 +28,7 @@ import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import java.util.UUID
 
 const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
 
@@ -122,6 +128,45 @@ open class ZhihuFeedApi(
             }
         } catch (e: Exception) {
             Log.w("ZhihuFeedApi", "Failed to report content touch", e)
+        }
+    }
+
+    /**
+     * 批量向知乎分析服务（ZA）上报推荐模型卡片曝光（携带 attached_info_bytes）
+     */
+    open suspend fun reportZaExposures(items: List<ZaFeedExposureItem>) {
+        if (items.isEmpty()) return
+        val cookies = environment.authenticatedCookies()
+        val dc0 = cookies["d_c0"] ?: return
+        val zap = cookies["_zap"] ?: UUID.randomUUID().toString()
+
+        try {
+            val rawProto = ZaProtobufBuilder.buildBatchPayload(
+                items = items,
+                clientId = zap,
+                dc0Cookie = dc0,
+                userAgent = DEFAULT_ZHIHU_USER_AGENT,
+            )
+            val gzipped = rawProto.gzipCompress()
+            environment.withAuthenticatedClient { client, _ ->
+                val response = client.post("https://zhihu-web-analytics.zhihu.com/api/v3inv2/za/logs/batch") {
+                    header("X-ZA-Log-Version", ZaProtobufBuilder.LOG_VERSION)
+                    header("X-ZA-Product", "Zhihu")
+                    header("X-ZA-Platform", "DesktopWeb")
+                    header("X-ZA-ClientID", zap)
+                    header("X-ZA-Batch-Size", items.size.toString())
+                    header("Content-Type", "application/x-protobuf")
+                    header("Content-Encoding", "gzip")
+                    header("Origin", "https://www.zhihu.com")
+                    header("Referer", "https://www.zhihu.com/")
+                    setBody(gzipped)
+                }
+                if (!response.status.isSuccess()) {
+                    Log.w("ZhihuFeedApi", "ZA batch exposure report failed with status: ${response.status}")
+                }
+            }
+        } catch (e: Exception) {
+            Log.w("ZhihuFeedApi", "Failed to report ZA exposures", e)
         }
     }
 

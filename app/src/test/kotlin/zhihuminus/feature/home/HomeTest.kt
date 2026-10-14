@@ -105,13 +105,25 @@ class HomeTest {
             }
         }
 
+        val reportedExposures = mutableListOf<FeedExposureRecord>()
+
         override suspend fun reportContentTouch(untouchedItems: List<Pair<String, String>>) {
             touchReportCount += untouchedItems.size
         }
 
+        override suspend fun reportExposures(records: List<FeedExposureRecord>) {
+            reportedExposures.addAll(records)
+            reportContentTouch(records.map { it.type to it.id })
+        }
+
         override suspend fun reportContentRead(type: String, id: String) {
             readReportCount++
+            lastReadType = type
+            lastReadId = id
         }
+
+        var lastReadType: String? = null
+        var lastReadId: String? = null
 
         override suspend fun fetchUnreadNotificationCount(): Int = 5
 
@@ -186,12 +198,66 @@ class HomeTest {
     fun testFakeRepoTouchAndReadTracking() {
         val repo = FakeHomeRepository()
         runBlocking {
-            repo.reportContentTouch(listOf("answer" to "1", "article" to "2"))
+            repo.reportContentTouch(listOf("answer" to "1", "post" to "2"))
             assertEquals(2, repo.touchReportCount)
 
-            repo.reportContentRead("answer", "1")
+            repo.reportContentRead("post", "2")
             assertEquals(1, repo.readReportCount)
+            assertEquals("post", repo.lastReadType)
+            assertEquals("2", repo.lastReadId)
         }
+    }
+
+    @Test
+    fun testItemsExposedReportsTouchAndZaWithCorrectTypes() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        assertEquals(2, viewModel.uiState.items.size)
+
+        // Simulate items exposed on screen
+        viewModel.onEvent(HomeEvent.ItemsExposed(viewModel.uiState.items))
+        advanceUntilIdle()
+
+        assertEquals(2, repo.reportedExposures.size)
+        assertEquals(2, repo.touchReportCount)
+
+        // Item 1 is an Answer -> "answer"
+        assertEquals("answer", repo.reportedExposures[0].type)
+        assertEquals("1001", repo.reportedExposures[0].id)
+
+        // Item 2 is an Article -> MUST be "post" for Zhihu API
+        assertEquals("post", repo.reportedExposures[1].type)
+        assertEquals("2002", repo.reportedExposures[1].id)
+
+        // Re-exposing the same items should NOT report them again (deduplication)
+        viewModel.onEvent(HomeEvent.ItemsExposed(viewModel.uiState.items))
+        advanceUntilIdle()
+        assertEquals(2, repo.reportedExposures.size)
+        assertEquals(2, repo.touchReportCount)
+    }
+
+    @Test
+    fun testContentClickReportsReadWithPostForArticle() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        val articleItem = viewModel.uiState.items.first { it.title == "Item 2" }
+
+        viewModel.onEvent(HomeEvent.ContentClick(articleItem))
+        advanceUntilIdle()
+
+        assertEquals(1, repo.readReportCount)
+        assertEquals("post", repo.lastReadType)
+        assertEquals("2002", repo.lastReadId)
     }
 
     @Test

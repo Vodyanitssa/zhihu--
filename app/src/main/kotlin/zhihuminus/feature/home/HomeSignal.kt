@@ -12,6 +12,10 @@ sealed interface HomeEvent {
         val item: FeedDisplayItem,
     ) : HomeEvent
 
+    data class ItemsExposed(
+        val items: List<FeedDisplayItem>,
+    ) : HomeEvent
+
     data object SearchClick : HomeEvent
 
     data object AvatarClick : HomeEvent
