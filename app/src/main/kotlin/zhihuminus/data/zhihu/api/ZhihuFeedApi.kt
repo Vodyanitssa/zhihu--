@@ -30,7 +30,8 @@ import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import java.util.UUID
 
-const val FEED_INCLUDE = "data[*].content,excerpt,headline,target.author.badge_v2"
+const val FEED_INCLUDE =
+    "data[*].content,excerpt,headline,target.author.badge_v2,target.author.is_following,target.author.is_followed"
 
 /** 桌面 Web v3 推荐流首页 URL；续页用响应里的 paging.next。 */
 const val RECOMMEND_FEED_URL =

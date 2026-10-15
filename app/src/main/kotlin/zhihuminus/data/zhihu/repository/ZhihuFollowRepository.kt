@@ -15,10 +15,11 @@ class ZhihuFollowRepository(
 ) : FollowRepository {
     override suspend fun fetchFollowFeed(nextUrl: String?): FollowFeedPage {
         val feedPage = api.fetchFeedPage(url = nextUrl ?: MOMENTS_FEED_URL, include = "")
-        feedPage.items.forEach { feed ->
+        val flattenedItems = feedPage.items.flattenFeeds()
+        flattenedItems.forEach { feed ->
             feed.target?.let { postCache.putFromFeed(it) }
         }
-        val displayItems = feedPage.items.flattenFeeds().map { feed ->
+        val displayItems = flattenedItems.map { feed ->
             val item = feed.toDisplayItem()
             val target = feed.target
             if (feed.sourceLabel != null && target?.detailsText != null) {

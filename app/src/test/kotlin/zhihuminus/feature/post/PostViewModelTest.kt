@@ -51,16 +51,17 @@ class PostViewModelTest {
     private class FakePostRepository(
         val postType: PostType = PostType.Answer,
         var shouldFail: Boolean = false,
+        initialAuthor: Author? = null,
     ) : PostRepository {
         var voteCallCount = 0
         var lastVoteKey = ""
-        var isAuthorFollowed = false
+        var isAuthorFollowed = initialAuthor?.isFollowing ?: false
 
         val samplePost = Post(
             id = 12345L,
             type = postType,
             title = "Test Post",
-            author = Author(
+            author = initialAuthor ?: Author(
                 id = "auth1",
                 name = "Author One",
                 avatarUrl = "",
@@ -113,9 +114,17 @@ class PostViewModelTest {
             return Collection(id = "new_col", title = title, isPublic = isPublic)
         }
 
+        var lastFollowedToken = ""
+        var lastCachedPost: Post? = null
+
         override suspend fun followMember(urlToken: String, follow: Boolean) {
             if (shouldFail) throw RuntimeException("Follow failed")
             isAuthorFollowed = follow
+            lastFollowedToken = urlToken
+        }
+
+        override suspend fun putCachedPost(post: Post) {
+            lastCachedPost = post
         }
 
         override suspend fun recordHistory(postType: PostType, id: Long) {}
@@ -255,6 +264,29 @@ class PostViewModelTest {
 
         val unfollowEffect = viewModel.effect.filterIsInstance<PostEffect.ShowMessage>().first()
         assertEquals("已取消关注", unfollowEffect.message)
+    }
+
+    @Test
+    fun testFollowAuthorFallsBackToIdAndCachesPost() = runTest(testDispatcher) {
+        val repo = FakePostRepository(
+            postType = PostType.Answer,
+            initialAuthor = Author(
+                id = "user_fallback_id",
+                name = "Author Fallback",
+                avatarUrl = "",
+                urlToken = "",
+                isFollowing = false,
+            ),
+        )
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onEvent(PostEvent.FollowAuthor)
+        advanceUntilIdle()
+
+        assertEquals("user_fallback_id", repo.lastFollowedToken)
+        assertEquals(true, repo.isAuthorFollowed)
+        assertEquals(true, repo.lastCachedPost?.author?.isFollowing)
     }
 
     @Test

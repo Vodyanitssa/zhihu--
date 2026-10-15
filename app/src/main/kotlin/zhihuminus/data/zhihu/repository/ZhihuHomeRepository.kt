@@ -29,10 +29,11 @@ class ZhihuHomeRepository(
 ) : HomeRepository {
     override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
         val feedPage = feedApi.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
-        feedPage.items.forEach { item ->
+        val flattenedItems = feedPage.items.flattenFeeds()
+        flattenedItems.forEach { item ->
             item.target?.let { postCache.putFromFeed(it) }
         }
-        val displayItems = feedPage.items.flattenFeeds().map { it.toDisplayItem() }
+        val displayItems = flattenedItems.map { it.toDisplayItem() }
         return HomeFeedPage(
             items = displayItems,
             nextUrl = feedPage.nextUrl,
@@ -71,7 +72,7 @@ class ZhihuHomeRepository(
 
     override suspend fun loadStartupSnapshot(): List<FeedDisplayItem> = withContext(Dispatchers.Default) {
         val file = startupCacheFile ?: return@withContext emptyList()
-        runCatching {
+        val items = runCatching {
             if (SystemFileSystem.exists(file)) {
                 SystemFileSystem.source(file).buffered().use { source ->
                     decodeHomeFeedStartupSnapshot(source.readString())
@@ -80,6 +81,10 @@ class ZhihuHomeRepository(
                 emptyList()
             }
         }.getOrDefault(emptyList())
+        items.forEach { displayItem ->
+            displayItem.feed?.target?.let { target -> postCache.putFromFeed(target) }
+        }
+        items
     }
 
     override suspend fun saveStartupSnapshot(items: List<FeedDisplayItem>) {

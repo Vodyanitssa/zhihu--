@@ -4,6 +4,8 @@ import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
 import com.zhihuminus.data.zhihu.dto.FeedRelationshipDto
+import com.zhihuminus.data.zhihu.dto.PinContentItemDto
+import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.feature.post.Post
@@ -155,5 +157,82 @@ class PostContentCacheTest {
         val questionTarget = QuestionTargetDto(id = 333L, _title = "Question Only")
         cache.putFromFeed(questionTarget)
         assertNull(cache.get(PostType.Answer, 333L))
+    }
+
+    @Test
+    fun testPutFromFeedPin() = runTest {
+        val cache = MemoryPostContentCache()
+        val pinTarget = PinTargetDto(
+            id = 555L,
+            contentHtml = "<div><p>Pin body text</p></div>",
+            author = FeedAuthorDto(id = "pinAuthor", name = "Pin Author", avatarUrl = "https://example.com/p.jpg", isFollowing = true),
+            likeCount = 15,
+            commentCount = 3,
+            content = listOf(
+                PinContentItemDto(
+                    type = "link_card",
+                    url = "https://example.com/link",
+                    dataContentId = "card1",
+                    dataContentType = "link",
+                ),
+            ),
+        )
+
+        cache.putFromFeed(pinTarget)
+
+        val cached = cache.get(PostType.Pin, 555L)
+        assertNotNull(cached)
+        assertEquals(555L, cached?.id)
+        assertEquals(PostType.Pin, cached?.type)
+        assertEquals(true, cached?.author?.isFollowing)
+        assertEquals("Pin Author", cached?.author?.name)
+        assertEquals(1, cached?.linkCards?.size)
+        assertEquals("https://example.com/link", cached?.linkCards?.first()?.url)
+    }
+
+    @Test
+    fun testUpdateAuthorFollowing() = runTest {
+        val cache = MemoryPostContentCache()
+        val post1 = Post(
+            id = 101L,
+            type = PostType.Answer,
+            title = "A1",
+            author = Author(id = "user1", name = "User 1", avatarUrl = "", urlToken = "token_user_1", isFollowing = false),
+            content = emptyList(),
+            voteCount = 0,
+            commentCount = 0,
+        )
+        val post2 = Post(
+            id = 102L,
+            type = PostType.Article,
+            title = "A2",
+            author = Author(id = "user1", name = "User 1", avatarUrl = "", urlToken = "token_user_1", isFollowing = false),
+            content = emptyList(),
+            voteCount = 0,
+            commentCount = 0,
+        )
+        val post3 = Post(
+            id = 103L,
+            type = PostType.Answer,
+            title = "A3",
+            author = Author(id = "user2", name = "User 2", avatarUrl = "", urlToken = "token_user_2", isFollowing = false),
+            content = emptyList(),
+            voteCount = 0,
+            commentCount = 0,
+        )
+        cache.put(post1)
+        cache.put(post2)
+        cache.put(post3)
+
+        // Update following for user1 by urlToken
+        cache.updateAuthorFollowing("token_user_1", true)
+        assertEquals(true, cache.get(PostType.Answer, 101L)?.author?.isFollowing)
+        assertEquals(true, cache.get(PostType.Article, 102L)?.author?.isFollowing)
+        assertEquals(false, cache.get(PostType.Answer, 103L)?.author?.isFollowing)
+
+        // Update following for user1 by id to false
+        cache.updateAuthorFollowing("user1", false)
+        assertEquals(false, cache.get(PostType.Answer, 101L)?.author?.isFollowing)
+        assertEquals(false, cache.get(PostType.Article, 102L)?.author?.isFollowing)
     }
 }

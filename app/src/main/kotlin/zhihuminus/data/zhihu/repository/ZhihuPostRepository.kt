@@ -112,6 +112,11 @@ class ZhihuPostRepository(
 
     override suspend fun followMember(urlToken: String, follow: Boolean) {
         if (follow) peopleApi.followMember(urlToken) else peopleApi.unfollowMember(urlToken)
+        postCache.updateAuthorFollowing(urlToken, follow)
+    }
+
+    override suspend fun putCachedPost(post: Post) {
+        postCache.put(post)
     }
 
     override suspend fun recordHistory(postType: PostType, id: Long) {

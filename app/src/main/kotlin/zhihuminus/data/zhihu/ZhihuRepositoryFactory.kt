@@ -114,6 +114,7 @@ class ZhihuRepositoryFactory(
         ZhihuPeopleRepository(
             api = peopleApi,
             historyApi = historyApi,
+            postCache = postCache,
         )
 
     fun createSearchRepository(

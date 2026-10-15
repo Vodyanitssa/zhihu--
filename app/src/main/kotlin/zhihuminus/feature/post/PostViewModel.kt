@@ -468,14 +468,19 @@ class PostViewModel(
         val loadState = uiState.loadState as? PostLoadState.Success ?: return
         val author = loadState.post.author
         val newFollowing = !author.isFollowing
+        val targetToken = author.urlToken.takeIf { it.isNotBlank() } ?: author.id
+        if (targetToken.isBlank()) return
+
+        val updatedPost = loadState.post.copy(author = author.copy(isFollowing = newFollowing))
 
         // Optimistic update
-        uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(author = author.copy(isFollowing = newFollowing))))
+        uiState = uiState.copy(loadState = loadState.copy(post = updatedPost))
 
         viewModelScope.launch {
             try {
                 withContext(defaultDispatcher) {
-                    repository.followMember(author.urlToken, newFollowing)
+                    repository.followMember(targetToken, newFollowing)
+                    repository.putCachedPost(updatedPost)
                 }
                 sendEffect(PostEffect.ShowMessage(if (newFollowing) "已关注" else "已取消关注"))
             } catch (e: Exception) {

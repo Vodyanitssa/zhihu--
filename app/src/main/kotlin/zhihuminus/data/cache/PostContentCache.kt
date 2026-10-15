@@ -5,8 +5,10 @@ import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
 import com.zhihuminus.data.zhihu.dto.FeedTargetDto
+import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.feature.post.Post
+import com.zhihuminus.feature.post.PostLinkCard
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.post.VoteUpState
 import kotlinx.coroutines.sync.Mutex
@@ -25,6 +27,11 @@ interface PostContentCache {
     suspend fun put(post: Post)
 
     suspend fun putFromFeed(target: FeedTargetDto)
+
+    suspend fun updateAuthorFollowing(
+        urlTokenOrId: String,
+        isFollowing: Boolean,
+    )
 
     suspend fun clear()
 
@@ -77,6 +84,27 @@ class MemoryPostContentCache(
     override suspend fun putFromFeed(target: FeedTargetDto) {
         val post = target.toCachedPost() ?: return
         put(post)
+    }
+
+    override suspend fun updateAuthorFollowing(
+        urlTokenOrId: String,
+        isFollowing: Boolean,
+    ) {
+        if (urlTokenOrId.isBlank()) return
+        mutex.withLock {
+            val matching = entries.mapNotNull { (key, entry) ->
+                val author = entry.post.author
+                if (author.urlToken == urlTokenOrId || author.id == urlTokenOrId) {
+                    key to entry
+                } else {
+                    null
+                }
+            }
+            for ((key, entry) in matching) {
+                val updatedPost = entry.post.copy(author = entry.post.author.copy(isFollowing = isFollowing))
+                entries[key] = Entry(updatedPost, entry.cachedAt)
+            }
+        }
     }
 
     override suspend fun clear() = mutex.withLock { entries.clear() }
@@ -153,6 +181,47 @@ private fun FeedTargetDto.toCachedPost(): Post? = when (this) {
                 ipInfo = null,
                 excerpt = excerpt,
                 coverUrl = imageUrl?.takeIf { it.isNotBlank() },
+            )
+        }
+    }
+
+    is PinTargetDto -> {
+        if (contentHtml.isBlank()) {
+            null
+        } else {
+            val author = author.toAuthor()
+            val firstP = contentHtml.indexOf("<p>")
+            val titleText = if (firstP > 0 && contentHtml.startsWith("<div>")) {
+                contentHtml
+                    .substring("<div>".length, firstP)
+                    .trimEnd(' ', '|')
+                    .takeIf { it.isNotBlank() }
+            } else {
+                null
+            }
+            val parsed = parseContent(if (titleText != null) contentHtml.removeRange(0, firstP) else contentHtml)
+            val linkCards = content
+                .filter { it.type == "link_card" && !it.url.isNullOrBlank() }
+                .map { item ->
+                    PostLinkCard(
+                        dataContentId = item.dataContentId.orEmpty(),
+                        dataContentType = item.dataContentType.orEmpty(),
+                        url = item.url!!,
+                    )
+                }
+            Post(
+                id = id,
+                type = PostType.Pin,
+                title = titleText ?: "${author.name}的想法",
+                author = author,
+                content = parsed,
+                voteCount = likeCount,
+                commentCount = commentCount,
+                voteState = VoteUpState.Neutral,
+                createdAt = created,
+                updatedAt = updated,
+                excerpt = excerptTitle,
+                linkCards = linkCards,
             )
         }
     }

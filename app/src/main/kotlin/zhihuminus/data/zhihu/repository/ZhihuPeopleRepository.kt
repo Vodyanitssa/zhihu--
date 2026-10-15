@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.flattenFeeds
 import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
@@ -25,6 +26,7 @@ import org.jsoup.Jsoup
 class ZhihuPeopleRepository(
     private val api: ZhihuPeopleApi,
     private val historyApi: ZhihuHistoryApi? = null,
+    private val postCache: PostContentCache = PostContentCache,
 ) : PeopleRepository {
     override suspend fun getProfile(userTokenOrId: String): PeopleProfile {
         val raw = api.fetchMemberProfile(userTokenOrId)
@@ -59,9 +61,17 @@ class ZhihuPeopleRepository(
         )
     }
 
-    override suspend fun follow(urlToken: String): Int? = api.followMember(urlToken)
+    override suspend fun follow(urlToken: String): Int? {
+        val result = api.followMember(urlToken)
+        postCache.updateAuthorFollowing(urlToken, true)
+        return result
+    }
 
-    override suspend fun unfollow(urlToken: String): Int? = api.unfollowMember(urlToken)
+    override suspend fun unfollow(urlToken: String): Int? {
+        val result = api.unfollowMember(urlToken)
+        postCache.updateAuthorFollowing(urlToken, false)
+        return result
+    }
 
     override suspend fun block(urlToken: String) {
         api.blockMember(urlToken)

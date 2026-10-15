@@ -66,6 +66,11 @@ interface PostRepository {
     suspend fun followMember(urlToken: String, follow: Boolean)
 
     /**
+     * 更新或写入本地缓存的内容
+     */
+    suspend fun putCachedPost(post: Post) {}
+
+    /**
      * 记录阅读历史并标记已读
      * @param postType 内容类型
      * @param id 内容 ID
