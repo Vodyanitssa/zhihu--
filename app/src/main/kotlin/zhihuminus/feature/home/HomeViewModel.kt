@@ -104,7 +104,7 @@ class HomeViewModel(
             val key = "$type:$id"
             if (reportedExposureKeys.add(key)) {
                 val attachedInfo = (item.feed as? CommonFeedDto)?.attachedInfo?.takeIf { it.isNotBlank() }
-                val index = (item.feed as? CommonFeedDto)?.offset ?: unexposedRecords.size
+                val index = (item.feed as? CommonFeedDto)?.offset?.takeIf { it in 0L..100000L }?.toInt() ?: unexposedRecords.size
                 unexposedRecords.add(
                     FeedExposureRecord(
                         type = type,

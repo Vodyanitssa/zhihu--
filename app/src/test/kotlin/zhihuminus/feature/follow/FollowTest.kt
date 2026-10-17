@@ -3,8 +3,12 @@ package com.zhihuminus.feature.follow
 import com.zhihuminus.data.FakeZhihuApiEnvironment
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
+import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
+import com.zhihuminus.data.zhihu.dto.CommonFeedDto
+import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowingUserActorDto
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
+import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.data.zhihu.repository.ZhihuFollowRepository
 import com.zhihuminus.navigation.Person
 import kotlinx.coroutines.runBlocking
@@ -135,5 +139,45 @@ class FollowTest {
         assertEquals("Test Author", user.name)
         assertEquals("https://example.com/author.jpg", user.avatarUrl)
         assertEquals(3, user.unreadCount)
+    }
+
+    @Test
+    fun testZhihuFollowRepositoryWithLargeOffsetFeedItem() = runBlocking {
+        val question = QuestionTargetDto(
+            id = 2038200491411236835L,
+            _title = "阶层为什么会固化？",
+            url = "https://api.zhihu.com/questions/2038200491411236835",
+            type = "question",
+        )
+        val answer = AnswerTargetDto(
+            id = 2094736201873887817L,
+            url = "https://api.zhihu.com/answers/2094736201873887817",
+            question = question,
+            voteupCount = 70,
+            commentCount = 4,
+        )
+        val feed = CommonFeedDto(
+            id = "0_1792212679113668507_1792204029303_3",
+            verb = "MEMBER_ANSWER_QUESTION",
+            offset = 1792204029303L,
+            actionText = "Thoughts Memo回答了问题",
+            target = answer,
+        )
+        val fakeApi = object : ZhihuFeedApi(FakeZhihuApiEnvironment) {
+            override suspend fun fetchFeedPage(url: String, include: String): FeedPage = FeedPage(
+                items = listOf(feed),
+                nextUrl = "https://www.zhihu.com/api/v3/moments?offset=1792204029303",
+                isEnd = false,
+            )
+        }
+        val repository = ZhihuFollowRepository(fakeApi)
+        val page = repository.fetchFollowFeed(null)
+
+        assertEquals(1, page.items.size)
+        val item = page.items.first()
+        assertEquals("阶层为什么会固化？", item.title)
+        assertEquals("Thoughts Memo回答了问题", item.sourceLabel)
+        assertEquals("回答 · 70 赞同 · 4 评论", item.details)
+        assertFalse(page.isEnd)
     }
 }
