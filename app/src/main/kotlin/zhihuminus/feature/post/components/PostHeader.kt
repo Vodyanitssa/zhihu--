@@ -107,17 +107,13 @@ fun PostHeader(
         )
         Spacer(modifier = Modifier.width(12.dp))
         Column(modifier = Modifier.weight(1f)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(
-                    text = author.name,
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = FontWeight.Bold,
-                    maxLines = 1,
-                    overflow = TextOverflow.Ellipsis,
-                    modifier = Modifier.weight(1f, fill = false),
-                )
-                Spacer(modifier = Modifier.width(8.dp))
-            }
+            Text(
+                text = author.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+            )
             if (author.headline.isNotBlank()) {
                 Text(
                     text = author.headline,
@@ -128,7 +124,7 @@ fun PostHeader(
                 )
             }
         }
-        Spacer(modifier = Modifier.weight(1f))
+        Spacer(modifier = Modifier.width(12.dp))
         // Follow button
         Surface(
             shape = RoundedCornerShape(16.dp),
