@@ -30,16 +30,11 @@ object AstParser {
         }
     }
 
+    private val MULTI_NEWLINE_REGEX = Regex("(<br\\s*/?>|\\r?\\n)+", RegexOption.IGNORE_CASE)
+
     fun parseInline(text: String): List<InlineNode> {
         if (text.isBlank()) return emptyList()
-        val normalized = if (text.contains('\n') &&
-            !text.contains("<br", ignoreCase = true) &&
-            !text.contains("<p", ignoreCase = true)
-        ) {
-            text.replace("\r\n", "\n").replace("\n", "<br>")
-        } else {
-            text
-        }
+        val normalized = text.replace(MULTI_NEWLINE_REGEX, "<br/>")
         val document = Jsoup.parseBodyFragment(normalized)
         val bodyNodes = document.body().childNodes()
         val result = mutableListOf<InlineNode>()
