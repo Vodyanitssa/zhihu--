@@ -150,7 +150,7 @@ private fun FeedTargetDto.toCachedPost(): Post? = when (this) {
                 isFaved = relationship?.isFollowing,
                 createdAt = createdTime,
                 updatedAt = updatedTime,
-                ipInfo = null,
+                ipInfo = ipInfo ?: author?.ipInfo,
                 excerpt = excerpt.orEmpty(),
                 questionId = question.id,
             )
@@ -178,7 +178,7 @@ private fun FeedTargetDto.toCachedPost(): Post? = when (this) {
                 isFaved = null,
                 createdAt = createdTime,
                 updatedAt = updatedTime,
-                ipInfo = null,
+                ipInfo = ipInfo ?: author?.ipInfo,
                 excerpt = excerpt,
                 coverUrl = imageUrl?.takeIf { it.isNotBlank() },
             )
@@ -220,6 +220,7 @@ private fun FeedTargetDto.toCachedPost(): Post? = when (this) {
                 voteState = VoteUpState.Neutral,
                 createdAt = created,
                 updatedAt = updated,
+                ipInfo = ipInfo ?: author.ipInfo,
                 excerpt = excerptTitle,
                 linkCards = linkCards,
             )
@@ -240,5 +241,6 @@ private fun FeedAuthorDto?.toAuthor(): Author = if (this == null) {
         urlToken = urlToken.orEmpty(),
         badgeText = badgeV2?.detailBadges?.firstOrNull()?.description ?: badge?.firstOrNull()?.description,
         isFollowing = isFollowing,
+        ipInfo = ipInfo,
     )
 }

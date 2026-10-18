@@ -97,4 +97,28 @@ class FeedDtoSerializationTest {
         assertEquals("阶层为什么会固化？", target.title)
         assertEquals("Thoughts Memo", target.author?.name)
     }
+
+    @Test
+    fun testAnswerTargetDtoWithIpInfoDeserialization() {
+        val json =
+            """
+            {
+              "id": "12345",
+              "type": "answer",
+              "question": {
+                "id": "67890",
+                "title": "测试问题"
+              },
+              "author": {
+                "id": "auth1",
+                "name": "作者名",
+                "ip_info": "IP 属地浙江"
+              },
+              "ip_info": "IP 属地浙江"
+            }
+            """.trimIndent()
+        val answerTarget = ZhihuJson.decodeFromString<AnswerTargetDto>(json)
+        assertEquals("IP 属地浙江", answerTarget.ipInfo)
+        assertEquals("IP 属地浙江", answerTarget.author?.ipInfo)
+    }
 }

@@ -49,7 +49,8 @@ object PictureRenderer {
         }
         val voteText = "${post.voteCount} 赞"
         val commentText = "${post.commentCount} 评论"
-        val timeText = formatDateTime(post.createdAt)
+        val timeText = if (post.createdAt > 0) formatDateTime(post.createdAt) else ""
+        val formattedIpInfo = post.ipInfo?.takeIf { it.isNotBlank() }?.let { "IP 属地：${it.trim()}" }
         val fontSizePx = 16 * readingSettings.fontSizePercent / 100
         val lineHeightRatio = readingSettings.lineHeightPercent / 100f
         val titleSizePx = 24 * readingSettings.fontSizePercent / 100
@@ -90,6 +91,7 @@ object PictureRenderer {
             |<span class="post-type">$typeLabel</span>
             | · $voteText · $commentText
             |${if (timeText.isNotEmpty()) " · $timeText" else ""}
+            |${if (!formattedIpInfo.isNullOrBlank()) " · $formattedIpInfo" else ""}
             |</div>
             |</div>
             |$bodyHtml

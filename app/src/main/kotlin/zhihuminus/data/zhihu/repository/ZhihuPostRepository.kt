@@ -26,6 +26,8 @@ import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.jsonPrimitive
 import kotlin.coroutines.cancellation.CancellationException
 
 class ZhihuPostRepository(
@@ -144,7 +146,7 @@ class ZhihuPostRepository(
             isFaved = dto.reaction?.relation?.faved,
             createdAt = dto.createdTime,
             updatedAt = dto.updatedTime,
-            ipInfo = dto.ipInfo,
+            ipInfo = dto.ipInfo ?: dto.author.ipInfo,
             excerpt = dto.excerpt,
             questionId = dto.question.id,
         )
@@ -164,7 +166,7 @@ class ZhihuPostRepository(
             isFaved = dto.reaction?.relation?.faved,
             createdAt = dto.created,
             updatedAt = dto.updated,
-            ipInfo = dto.ipInfo,
+            ipInfo = dto.ipInfo ?: dto.author.ipInfo,
             excerpt = dto.excerpt.ifEmpty { dto.excerptTitle },
             topics = dto.topics.map { PostTopic(id = it.id, name = it.name) },
             coverUrl = dto.imageUrl?.takeIf { it.isNotBlank() },
@@ -214,6 +216,10 @@ class ZhihuPostRepository(
                 )
             }
         val author = dto.author.toAuthor()
+        val virtualsIp = dto.virtuals
+            ?.get("ip_info")
+            ?.jsonPrimitive
+            ?.contentOrNull
         return Post(
             id = dto.id.toLong(),
             type = PostType.Pin,
@@ -225,6 +231,7 @@ class ZhihuPostRepository(
             voteState = if (isLiked) VoteUpState.Up else VoteUpState.Neutral,
             createdAt = dto.created,
             updatedAt = dto.updated,
+            ipInfo = dto.ipInfo ?: dto.author.ipInfo ?: virtualsIp,
             excerpt = dto.excerptTitle,
             topics = dto.topics?.map { PostTopic(id = it.id, name = it.name) }.orEmpty(),
             poll = poll,
@@ -240,5 +247,6 @@ class ZhihuPostRepository(
         urlToken = urlToken,
         badgeText = badgeV2?.detailBadges?.firstOrNull()?.description,
         isFollowing = isFollowing,
+        ipInfo = ipInfo,
     )
 }

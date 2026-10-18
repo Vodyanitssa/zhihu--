@@ -90,6 +90,7 @@ data class AnswerTargetDto(
     val segmentInfos: List<SegmentInfoParagraph> = emptyList(),
     @Serializable(with = BooleanCompatSerializer::class)
     val allowSegmentInteraction: Boolean = false,
+    val ipInfo: String? = null,
 ) : FeedTargetDto {
     override val detailsText = "回答 · $voteupCount 赞同 · $commentCount 评论"
     override val title: String
@@ -141,6 +142,7 @@ data class ArticleTargetDto(
     val voting: Int? = null,
     val thumbnail: String? = null,
     val imageUrl: String? = null,
+    val ipInfo: String? = null,
 ) : FeedTargetDto {
     constructor(
         id: Long,
@@ -206,6 +208,7 @@ data class PinTargetDto(
     val updated: Long = 0,
     val reactionCount: Int = 0,
     val favoriteCount: Int = 0,
+    val ipInfo: String? = null,
 ) : FeedTargetDto {
     override val detailsText = "想法 · $likeCount 赞 · $commentCount 评论"
     override val title: String
@@ -402,6 +405,7 @@ data class FeedAuthorDto(
     val isFollowed: Boolean = false,
     val badge: List<FeedBadgeDto>? = null,
     val badgeV2: MemberBadgeV2Dto? = null,
+    val ipInfo: String? = null,
 )
 
 val FeedTargetDto.questionAuthor: FeedAuthorDto?

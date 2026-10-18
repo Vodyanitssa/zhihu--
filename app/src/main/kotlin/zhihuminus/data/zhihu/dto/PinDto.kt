@@ -17,6 +17,7 @@ data class PinDto(
     val contentHtml: String = "",
     val virtuals: JsonObject? = null,
     val bottomPoll: PinBottomPollDto? = null,
+    val ipInfo: String? = null,
 )
 
 @Serializable

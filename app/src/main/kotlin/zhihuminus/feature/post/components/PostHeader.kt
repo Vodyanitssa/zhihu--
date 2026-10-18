@@ -154,17 +154,16 @@ fun PostHeader(
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp),
     ) {
-        val createdTime = formatDateTime(createdAt)
-        var timeText = "发布于 $createdTime"
-        if (updatedAt > 0 && updatedAt != createdAt) {
-            val updatedTime = formatDateTime(updatedAt)
-            timeText += " · 编辑于 $updatedTime"
-        }
         val infoText = buildString {
-            if (timeText.isNotBlank()) append(timeText)
+            if (createdAt > 0) {
+                append("发布于 ${formatDateTime(createdAt)}")
+                if (updatedAt > 0 && updatedAt != createdAt) {
+                    append(" · 编辑于 ${formatDateTime(updatedAt)}")
+                }
+            }
             if (!ipInfo.isNullOrBlank()) {
                 if (isNotEmpty()) append(" · ")
-                append(ipInfo)
+                append("IP 属地：${ipInfo.trim()}")
             }
         }
         if (infoText.isNotBlank()) {

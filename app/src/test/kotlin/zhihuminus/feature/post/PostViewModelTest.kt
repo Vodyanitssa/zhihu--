@@ -75,11 +75,14 @@ class PostViewModelTest {
             isFaved = false,
         )
 
-        override suspend fun getPost(type: PostType, id: Long): Post = samplePost.copy(
-            author = samplePost.author.copy(isFollowing = isAuthorFollowed),
+        var cachedPost: Post? = null
+        var freshPost: Post? = null
+
+        override suspend fun getPost(type: PostType, id: Long): Post = (freshPost ?: samplePost).copy(
+            author = (freshPost ?: samplePost).author.copy(isFollowing = isAuthorFollowed),
         )
 
-        override suspend fun getCachedPost(type: PostType, id: Long): Post? = null
+        override suspend fun getCachedPost(type: PostType, id: Long): Post? = cachedPost
 
         override suspend fun vote(postType: PostType, id: Long, vote: String): Int {
             if (shouldFail) throw RuntimeException("Vote failed")
@@ -313,5 +316,25 @@ class PostViewModelTest {
 
         val effect = viewModel.effect.filterIsInstance<PostEffect.ShowMessage>().first()
         assertEquals("已添加到稍后再看", effect.message)
+    }
+
+    @Test
+    fun testCachedPostWithoutIpInfoRefreshesInBackground() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.cachedPost = repo.samplePost.copy(ipInfo = null)
+        repo.freshPost = repo.samplePost.copy(ipInfo = "IP 属地上海")
+
+        val viewModel = PostViewModel(
+            Application(),
+            12345L,
+            PostType.Answer,
+            repo,
+            defaultDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.loadState
+        assertTrue(state is PostLoadState.Success)
+        assertEquals("IP 属地上海", state.post.ipInfo)
     }
 }

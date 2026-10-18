@@ -12,7 +12,6 @@ import com.zhihuminus.core.util.Log
 import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.collection.Collection
-import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.watchlater.WatchLaterItem
 import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import kotlinx.coroutines.CancellationException
@@ -239,6 +238,19 @@ class PostViewModel(
             val post = if (cached != null) {
                 yield()
                 applyPost(cached)
+                if (cached.ipInfo.isNullOrBlank()) {
+                    viewModelScope.launch {
+                        try {
+                            val fresh = withContext(defaultDispatcher) {
+                                repository.getPost(postType, postId)
+                            }
+                            applyPost(fresh)
+                        } catch (e: Exception) {
+                            if (e is CancellationException) throw e
+                            Log.w("PostViewModel", "Background refresh for post details failed", e)
+                        }
+                    }
+                }
                 cached
             } else {
                 // Only show loading if not already displaying content (avoids dialog flicker on refresh)
@@ -277,10 +289,17 @@ class PostViewModel(
     }
 
     private fun applyPost(post: Post) {
+        val currentBar = uiState.bottomBarState
+        val currentVote = (uiState.loadState as? PostLoadState.Success)?.post?.voteState
+        val voteState = if (currentBar.voteUpState != VoteUpState.Neutral && currentBar.voteUpState != currentVote) {
+            currentBar.voteUpState
+        } else {
+            post.voteState
+        }
         uiState = uiState.copy(
             loadState = PostLoadState.Success(post),
-            bottomBarState = PostBottomBarState(
-                voteUpState = post.voteState,
+            bottomBarState = currentBar.copy(
+                voteUpState = voteState,
                 voteUpCount = post.voteCount,
                 commentCount = post.commentCount,
             ),

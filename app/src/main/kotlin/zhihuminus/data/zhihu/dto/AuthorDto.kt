@@ -11,6 +11,7 @@ data class AuthorDto(
     val urlToken: String = "",
     val badgeV2: BadgeV2Dto? = null,
     val isFollowing: Boolean = false,
+    val ipInfo: String? = null,
 )
 
 @Serializable

@@ -191,6 +191,22 @@ class PostContentCacheTest {
     }
 
     @Test
+    fun testPutFromFeedPreservesIpInfo() = runTest {
+        val cache = MemoryPostContentCache()
+        val answerWithIp = AnswerTargetDto(
+            id = 1001L,
+            content = "<p>Answer content</p>",
+            question = QuestionTargetDto(id = 2001L, _title = "Q"),
+            author = FeedAuthorDto(id = "a1", name = "Author", avatarUrl = "", ipInfo = "IP 属地北京"),
+        )
+        cache.putFromFeed(answerWithIp)
+        val cached = cache.get(PostType.Answer, 1001L)
+        assertNotNull(cached)
+        assertEquals("IP 属地北京", cached?.ipInfo)
+        assertEquals("IP 属地北京", cached?.author?.ipInfo)
+    }
+
+    @Test
     fun testUpdateAuthorFollowing() = runTest {
         val cache = MemoryPostContentCache()
         val post1 = Post(

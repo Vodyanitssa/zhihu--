@@ -33,6 +33,7 @@ data class Author(
     val urlToken: String = "",
     val badgeText: String? = null,
     val isFollowing: Boolean = false,
+    val ipInfo: String? = null,
 )
 
 data class Post(
