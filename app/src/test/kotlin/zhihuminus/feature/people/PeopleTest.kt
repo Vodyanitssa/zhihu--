@@ -720,4 +720,55 @@ class PeopleTest {
         assertEquals(8, profile.pinsCount)
         assertEquals(3, profile.questionCount)
     }
+
+    @Test
+    fun testMemberProfileDtoExtendedFields() {
+        val json =
+            """
+            {
+                "id": "member-456",
+                "name": "多才多艺的大V",
+                "headline": "一句话签名",
+                "description": "这是详细的个人简介\n第二行介绍",
+                "ip_info": "IP 属地北京",
+                "voteup_count": 88888,
+                "thanked_count": 1234,
+                "favorited_count": 5678,
+                "is_following": true,
+                "is_followed": true,
+                "gender": 1
+            }
+            """.trimIndent()
+        val dto = ZhihuJson.decodeFromString<MemberProfileDto>(json)
+        assertEquals("member-456", dto.id)
+        assertEquals("多才多艺的大V", dto.name)
+        assertEquals("一句话签名", dto.headline)
+        assertEquals("这是详细的个人简介\n第二行介绍", dto.description)
+        assertEquals("IP 属地北京", dto.ipInfo)
+        assertEquals(88888, dto.voteupCount)
+        assertEquals(1234, dto.thankedCount)
+        assertEquals(5678, dto.favoritedCount)
+        assertTrue(dto.isFollowing)
+        assertTrue(dto.isFollowed)
+        assertEquals(1, dto.gender)
+
+        val profile = PeopleProfile(
+            id = dto.id,
+            name = dto.name,
+            headline = dto.headline,
+            description = dto.description,
+            ipInfo = dto.ipInfo,
+            voteupCount = dto.voteupCount,
+            thankedCount = dto.thankedCount,
+            favoritedCount = dto.favoritedCount,
+            isFollowing = dto.isFollowing,
+            isFollowed = dto.isFollowed,
+            gender = dto.gender,
+        )
+        assertEquals("这是详细的个人简介\n第二行介绍", profile.description)
+        assertEquals("IP 属地北京", profile.ipInfo)
+        assertEquals(88888, profile.voteupCount)
+        assertTrue(profile.isFollowing)
+        assertTrue(profile.isFollowed)
+    }
 }

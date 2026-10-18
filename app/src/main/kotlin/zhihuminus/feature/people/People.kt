@@ -24,7 +24,14 @@ data class PeopleProfile(
     val pinsCount: Int = 0,
     val questionCount: Int = 0,
     val isFollowing: Boolean = false,
+    val isFollowed: Boolean = false,
     val isBlocking: Boolean = false,
+    val voteupCount: Int = 0,
+    val thankedCount: Int = 0,
+    val favoritedCount: Int = 0,
+    val ipInfo: String = "",
+    val description: String = "",
+    val gender: Int = -1,
 ) {
     val userTokenOrId: String
         get() = urlToken.takeIf { it.isNotBlank() } ?: id

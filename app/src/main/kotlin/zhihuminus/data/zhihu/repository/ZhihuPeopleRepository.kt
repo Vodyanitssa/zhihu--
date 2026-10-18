@@ -57,7 +57,14 @@ class ZhihuPeopleRepository(
             pinsCount = raw.pinsCount,
             questionCount = raw.questionCount,
             isFollowing = raw.isFollowing,
+            isFollowed = raw.isFollowed,
             isBlocking = raw.isBlocking,
+            voteupCount = raw.voteupCount,
+            thankedCount = raw.thankedCount,
+            favoritedCount = raw.favoritedCount,
+            ipInfo = raw.ipInfo,
+            description = raw.description,
+            gender = raw.gender,
         )
     }
 
