@@ -136,6 +136,7 @@ fun NotificationItemView(
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             maxLines = 4,
                             overflow = TextOverflow.Ellipsis,
+                            applyTypographyConfig = false,
                         )
                     }
 

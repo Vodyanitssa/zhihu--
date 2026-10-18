@@ -3,6 +3,8 @@ package com.zhihuminus.core.content.renderer
 import android.content.Context
 import android.graphics.Bitmap
 import com.zhihuminus.core.platform.PictureExportWebView
+import com.zhihuminus.core.settings.AndroidAppSettingsRepository
+import com.zhihuminus.core.settings.model.ReadingSettings
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostType
@@ -20,7 +22,8 @@ object PictureRenderer {
      * @return 渲染结果，包含 Bitmap 和建议的文件名。调用方负责回收 Bitmap。
      */
     suspend fun render(context: Context, post: Post): RenderResult {
-        val htmlContent = buildHtmlContent(post)
+        val readingSettings = AndroidAppSettingsRepository.getInstance(context).current.reading
+        val htmlContent = buildHtmlContent(post, readingSettings)
         val webView = PictureExportWebView(context)
         var prepared: com.zhihuminus.core.platform.PreparedWebView? = null
         try {
@@ -37,7 +40,7 @@ object PictureRenderer {
         val displayName: String,
     )
 
-    private fun buildHtmlContent(post: Post): String {
+    private fun buildHtmlContent(post: Post, readingSettings: ReadingSettings = ReadingSettings()): String {
         val bodyHtml = HtmlRenderer.render(post.content)
         val typeLabel = when (post.type) {
             PostType.Answer -> "回答"
@@ -47,6 +50,10 @@ object PictureRenderer {
         val voteText = "${post.voteCount} 赞"
         val commentText = "${post.commentCount} 评论"
         val timeText = formatDateTime(post.createdAt)
+        val fontSizePx = 16 * readingSettings.fontSizePercent / 100
+        val lineHeightRatio = readingSettings.lineHeightPercent / 100f
+        val titleSizePx = 24 * readingSettings.fontSizePercent / 100
+        val codeSizePx = 14 * readingSettings.fontSizePercent / 100
 
         return """
             |<!DOCTYPE html>
@@ -55,16 +62,16 @@ object PictureRenderer {
             |<meta charset="UTF-8"/>
             |<meta name="viewport" content="width=device-width,initial-scale=1"/>
             |<style>
-            |body{max-width:680px;margin:0 auto;padding:24px 16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;line-height:1.8;font-size:16px}
+            |body{max-width:680px;margin:0 auto;padding:24px 16px;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;color:#1a1a1a;line-height:$lineHeightRatio;font-size:${fontSizePx}px}
             |.post-header{margin-bottom:24px;border-bottom:1px solid #eee;padding-bottom:16px}
-            |.post-title{font-size:24px;font-weight:700;margin:0 0 12px;line-height:1.4}
+            |.post-title{font-size:${titleSizePx}px;font-weight:700;margin:0 0 12px;line-height:1.3}
             |.post-meta{font-size:14px;color:#8590a6}
             |.post-meta strong{color:#1a1a1a}
             |.post-type{display:inline-block;background:#f0f7ff;color:#175199;padding:2px 8px;border-radius:4px;font-size:12px;margin-left:8px}
             |img{max-width:100%;height:auto}
             |.emoji{display:inline-block;width:1.3em;height:1.3em;vertical-align:text-bottom}
             |pre{background:#f6f8fa;padding:16px;border-radius:6px;overflow-x:auto}
-            |code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:14px}
+            |code{font-family:"SFMono-Regular",Consolas,"Liberation Mono",Menlo,monospace;font-size:${codeSizePx}px}
             |blockquote{border-left:3px solid #ddd;margin:0;padding:8px 16px;color:#666}
             |table{border-collapse:collapse;width:100%}
             |th,td{border:1px solid #ddd;padding:8px;text-align:left}

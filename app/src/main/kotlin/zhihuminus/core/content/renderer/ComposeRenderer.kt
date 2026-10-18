@@ -105,7 +105,14 @@ fun InlineNodes(
     color: Color = Color.Unspecified,
     maxLines: Int = Int.MAX_VALUE,
     overflow: TextOverflow = TextOverflow.Clip,
+    applyTypographyConfig: Boolean = true,
 ) {
+    val typographyConfig = LocalContentTypographyConfig.current
+    val effectiveStyle = if (applyTypographyConfig && typographyConfig.enabled) {
+        typographyConfig.scaleStyle(style)
+    } else {
+        style
+    }
     var activeFootnote by remember { mutableStateOf<InlineNode.Footnote?>(null) }
     val openInApp = rememberInAppLinkOpener()
     val linkStyle = TextLinkStyles(
@@ -125,7 +132,7 @@ fun InlineNodes(
     val codeStyle = MaterialTheme.colorScheme.surfaceVariant
     // 行内公式与表情的 InlineTextContent；公式的尺寸解析与占位符构建在 FormulaManager。
     // BoxWithConstraints 提供可用宽度：超宽公式强制占满可用宽度、高度等比缩放
-    val emSize = with(LocalDensity.current) { style.fontSize.takeOrElse { 16.sp }.toDp() }
+    val emSize = with(LocalDensity.current) { effectiveStyle.fontSize.takeOrElse { 16.sp }.toDp() }
     val text = buildAnnotatedString {
         fun appendNode(node: InlineNode) {
             when (node) {
@@ -189,7 +196,7 @@ fun InlineNodes(
         Text(
             text = text,
             modifier = modifier,
-            style = style,
+            style = effectiveStyle,
             color = color,
             maxLines = maxLines,
             overflow = overflow,
@@ -339,21 +346,31 @@ fun RenderContentNode(
     when (node) {
         is ContentNode.Paragraph -> {
             if (node.content.isNotEmpty()) {
-                InlineNodes(node.content)
+                InlineNodes(
+                    nodes = node.content,
+                    style = MaterialTheme.typography.bodyLarge,
+                )
             }
         }
 
         is ContentNode.Heading -> {
+            val baseStyle = when (node.level) {
+                1 -> MaterialTheme.typography.headlineLarge
+                2 -> MaterialTheme.typography.headlineMedium
+                3 -> MaterialTheme.typography.headlineSmall
+                4 -> MaterialTheme.typography.titleLarge
+                5 -> MaterialTheme.typography.titleMedium
+                else -> MaterialTheme.typography.titleSmall
+            }
+            val typographyConfig = LocalContentTypographyConfig.current
+            val effectiveStyle = if (typographyConfig.enabled) {
+                typographyConfig.scaleStyle(baseStyle, maxLineHeight = 1.3f)
+            } else {
+                baseStyle
+            }
             Text(
                 text = node.content,
-                style = when (node.level) {
-                    1 -> MaterialTheme.typography.headlineLarge
-                    2 -> MaterialTheme.typography.headlineMedium
-                    3 -> MaterialTheme.typography.headlineSmall
-                    4 -> MaterialTheme.typography.titleLarge
-                    5 -> MaterialTheme.typography.titleMedium
-                    else -> MaterialTheme.typography.titleSmall
-                },
+                style = effectiveStyle,
                 fontWeight = FontWeight.Bold,
             )
         }
@@ -505,6 +522,13 @@ private fun Code(node: ContentNode.Code) {
         HorizontalDivider(thickness = 1.dp)
 
         // 代码内容
+        val typographyConfig = LocalContentTypographyConfig.current
+        val baseCodeStyle = MaterialTheme.typography.bodyMedium
+        val effectiveCodeStyle = if (typographyConfig.enabled) {
+            typographyConfig.scaleStyle(baseCodeStyle, maxLineHeight = 1.4f)
+        } else {
+            baseCodeStyle
+        }
         SelectionContainer {
             Row(
                 modifier = Modifier
@@ -513,7 +537,7 @@ private fun Code(node: ContentNode.Code) {
             ) {
                 Text(
                     text = node.content,
-                    style = MaterialTheme.typography.bodyMedium,
+                    style = effectiveCodeStyle,
                     fontFamily = CodeFontFamily,
                     softWrap = false,
                 )
@@ -539,7 +563,10 @@ private fun Quote(node: ContentNode.Quote) {
                 )
             }.padding(start = 12.dp),
     ) {
-        InlineNodes(node.content)
+        InlineNodes(
+            nodes = node.content,
+            style = MaterialTheme.typography.bodyMedium,
+        )
     }
 }
 
@@ -567,11 +594,18 @@ private fun Image(
         )
     }
     node.caption?.let {
+        val typographyConfig = LocalContentTypographyConfig.current
+        val baseStyle = MaterialTheme.typography.bodySmall
+        val effectiveStyle = if (typographyConfig.enabled) {
+            typographyConfig.scaleStyle(baseStyle, maxLineHeight = 1.3f)
+        } else {
+            baseStyle
+        }
         Text(
             text = it,
             modifier = Modifier.fillMaxWidth(),
             textAlign = TextAlign.Center,
-            style = MaterialTheme.typography.bodySmall,
+            style = effectiveStyle,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )
     }
@@ -637,11 +671,18 @@ private fun Video(node: ContentNode.Video) {
         }
 
         node.caption?.let { caption ->
+            val typographyConfig = LocalContentTypographyConfig.current
+            val baseStyle = MaterialTheme.typography.bodySmall
+            val effectiveStyle = if (typographyConfig.enabled) {
+                typographyConfig.scaleStyle(baseStyle, maxLineHeight = 1.3f)
+            } else {
+                baseStyle
+            }
             Text(
                 text = caption,
                 modifier = Modifier.fillMaxWidth(),
                 textAlign = TextAlign.Center,
-                style = MaterialTheme.typography.bodySmall,
+                style = effectiveStyle,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )
         }
@@ -654,6 +695,13 @@ private fun Listing(
     depth: Int = 0,
 ) {
     val indent = 16.dp * depth
+    val typographyConfig = LocalContentTypographyConfig.current
+    val baseLabelStyle = MaterialTheme.typography.bodyLarge
+    val effectiveLabelStyle = if (typographyConfig.enabled) {
+        typographyConfig.scaleStyle(baseLabelStyle)
+    } else {
+        baseLabelStyle
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -670,11 +718,12 @@ private fun Listing(
                     ) {
                         Text(
                             text = if (node.isSorted) "${index + 1}." else "•",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = effectiveLabelStyle,
                             modifier = Modifier.alignByBaseline(),
                         )
                         InlineNodes(
                             nodes = item.content,
+                            style = MaterialTheme.typography.bodyLarge,
                             modifier = Modifier
                                 .weight(1f)
                                 .alignByBaseline(),
@@ -692,7 +741,7 @@ private fun Listing(
                     ) {
                         Text(
                             text = if (node.isSorted) "${index + 1}." else "•",
-                            style = MaterialTheme.typography.bodyLarge,
+                            style = effectiveLabelStyle,
                             modifier = Modifier.alignByBaseline(),
                         )
                         RenderContentNode(item)
@@ -749,6 +798,17 @@ private fun TableCell(
     isHeader: Boolean,
     modifier: Modifier = Modifier,
 ) {
+    val typographyConfig = LocalContentTypographyConfig.current
+    val baseStyle = if (isHeader) {
+        MaterialTheme.typography.titleSmall
+    } else {
+        MaterialTheme.typography.bodyMedium
+    }
+    val effectiveStyle = if (typographyConfig.enabled) {
+        typographyConfig.scaleStyle(baseStyle, maxLineHeight = 1.3f)
+    } else {
+        baseStyle
+    }
     Text(
         text = text,
         modifier = modifier
@@ -762,7 +822,7 @@ private fun TableCell(
                     Color.Transparent
                 },
             ).padding(horizontal = 10.dp, vertical = 8.dp),
-        style = MaterialTheme.typography.bodyMedium,
+        style = effectiveStyle,
         fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
     )
 }

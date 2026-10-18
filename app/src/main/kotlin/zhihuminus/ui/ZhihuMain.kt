@@ -84,6 +84,8 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
+import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
+import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
 import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
@@ -326,6 +328,7 @@ fun ZhihuMain(
                     onNavigateTopLevel = ::navigateTopLevel,
                 ),
                 LocalFeedCardConfig provides rememberFeedCardConfig(),
+                LocalContentTypographyConfig provides rememberContentTypographyConfig(),
                 LocalTopLevelReselectFlow provides reselectFlow,
             ) {
                 NavHost(

@@ -43,6 +43,7 @@ import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,7 +61,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.renderer.ContentTypographyConfig
 import com.zhihuminus.core.content.renderer.InlineNodes
+import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.data.FeedDisplayItem
@@ -262,16 +265,21 @@ private fun FeedCardContent(
                         .padding(top = 2.dp),
                 ) {
                     if (summaryNodes.isNotEmpty()) {
-                        InlineNodes(
-                            nodes = summaryNodes,
-                            style = MaterialTheme.typography.bodyMedium.copy(
-                                fontSize = 14.sp * fontSizePercent / 100,
-                                lineHeight = 14.sp * fontSizePercent / 100 * lineHeightPercent / 100,
-                            ),
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            maxLines = 4,
-                            overflow = TextOverflow.Ellipsis,
-                        )
+                        val typographyConfig = remember(fontSizePercent, lineHeightPercent) {
+                            ContentTypographyConfig(
+                                fontSizePercent = fontSizePercent,
+                                lineHeightPercent = lineHeightPercent,
+                            )
+                        }
+                        CompositionLocalProvider(LocalContentTypographyConfig provides typographyConfig) {
+                            InlineNodes(
+                                nodes = summaryNodes,
+                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                maxLines = 4,
+                                overflow = TextOverflow.Ellipsis,
+                            )
+                        }
                     }
                 }
                 if (rightThumbnailUrl != null) {

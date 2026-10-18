@@ -102,6 +102,7 @@ fun PrivateMessageBubble(
                         nodes = inlineNodes,
                         style = MaterialTheme.typography.bodyLarge,
                         modifier = Modifier.padding(horizontal = 14.dp, vertical = 10.dp),
+                        applyTypographyConfig = false,
                     )
                 }
             }

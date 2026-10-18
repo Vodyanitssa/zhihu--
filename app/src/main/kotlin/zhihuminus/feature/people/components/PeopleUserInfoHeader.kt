@@ -179,6 +179,7 @@ fun PeopleUserInfoHeader(
                 maxLines = 3,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 4.dp),
+                applyTypographyConfig = false,
             )
         }
 
@@ -201,6 +202,7 @@ fun PeopleUserInfoHeader(
                 maxLines = 6,
                 overflow = TextOverflow.Ellipsis,
                 modifier = Modifier.padding(top = 4.dp),
+                applyTypographyConfig = false,
             )
         }
 
