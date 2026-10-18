@@ -44,20 +44,35 @@ fun ChildCommentSheet(
     isEnd: Boolean,
     onLoadMore: () -> Unit,
     onEvent: (CommentEvent) -> Unit,
+    isLoadingMore: Boolean = false,
     highlightCommentId: String? = null,
 ) {
     val listState = rememberLazyListState()
 
     // 滚动加载更多
-    val shouldLoadMore = remember {
+    val shouldLoadMore by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= layoutInfo.totalItemsCount - 3 && !isLoading && !isEnd
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (visibleItemsInfo.isEmpty()) {
+                false
+            } else {
+                val lastVisible = visibleItemsInfo.last().index
+                lastVisible >= layoutInfo.totalItemsCount - 3
+            }
         }
     }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) onLoadMore()
+    LaunchedEffect(
+        shouldLoadMore,
+        childComments.size,
+        isLoading,
+        isLoadingMore,
+        isEnd,
+    ) {
+        if (shouldLoadMore && !isLoading && !isLoadingMore && !isEnd && childComments.isNotEmpty()) {
+            onLoadMore()
+            delay(50.milliseconds)
+        }
     }
 
     // 深链锚点：定位目标子评论。列表增量加载期间持续尝试（size 变化重启本 effect），最多定位一次
@@ -150,7 +165,7 @@ fun ChildCommentSheet(
                         }
                     }
 
-                    if (isLoading) {
+                    if (isLoading || isLoadingMore) {
                         item(key = "loading") {
                             Box(
                                 modifier = Modifier
@@ -159,6 +174,21 @@ fun ChildCommentSheet(
                                 contentAlignment = Alignment.Center,
                             ) {
                                 CircularProgressIndicator(modifier = Modifier.size(24.dp), strokeWidth = 2.dp)
+                            }
+                        }
+                    } else if (isEnd && childComments.isNotEmpty()) {
+                        item(key = "end_notice") {
+                            Box(
+                                modifier = Modifier
+                                    .fillMaxWidth()
+                                    .padding(16.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(
+                                    text = "没有更多回复了",
+                                    style = MaterialTheme.typography.bodySmall,
+                                    color = MaterialTheme.colorScheme.outline,
+                                )
                             }
                         }
                     }

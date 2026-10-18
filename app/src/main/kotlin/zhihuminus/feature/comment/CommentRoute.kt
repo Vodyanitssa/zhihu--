@@ -277,7 +277,8 @@ fun CommentRoute(
                                         parentComment = parentItem.comment,
                                         childComments = parentItem.children?.map { it.comment } ?: emptyList(),
                                         isLoading = !parentItem.childrenComplete,
-                                        isEnd = viewModel.isChildEnd,
+                                        isLoadingMore = viewModel.uiState.isChildLoadingMore,
+                                        isEnd = parentItem.isChildEnd,
                                         onLoadMore = { viewModel.loadMoreChildComments() },
                                         onEvent = viewModel::onEvent,
                                         highlightCommentId = viewModel.uiState.anchorTargetId

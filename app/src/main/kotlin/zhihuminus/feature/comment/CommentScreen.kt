@@ -30,11 +30,14 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.comment.components.CommentBottomBar
 import com.zhihuminus.feature.comment.components.CommentItemWithPreview
 import com.zhihuminus.feature.comment.components.SortBar
+import kotlinx.coroutines.delay
+import kotlin.time.Duration.Companion.milliseconds
 
 data class CommentItemUiState(
     val comment: Comment,
     val children: List<CommentItemUiState>? = null, // null=未加载子评论, []=已加载无子评论
     val childrenComplete: Boolean = false, // true=通过子评论接口加载的完整列表; false=仅预览数据或加载中占位
+    val isChildEnd: Boolean = false, // 子评论是否已加载到末尾
 )
 
 data class CommentUiState(
@@ -42,6 +45,7 @@ data class CommentUiState(
     val sortOrder: CommentSortOrder = CommentSortOrder.SCORE,
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
+    val isChildLoadingMore: Boolean = false, // 当前子评论列表是否正在加载更多
     val isEnd: Boolean = false,
     val errorMessage: String? = null,
     val activeParentId: String? = null, // 当前打开子sheet的父评论ID
@@ -60,19 +64,28 @@ fun CommentScreen(
     commentInput: String = "",
 ) {
     // 滚动加载更多
-    val shouldLoadMore = remember {
+    val shouldLoadMore by remember {
         derivedStateOf {
             val layoutInfo = listState.layoutInfo
-            val lastVisible = layoutInfo.visibleItemsInfo.lastOrNull()?.index ?: 0
-            lastVisible >= layoutInfo.totalItemsCount - 3 &&
-                !uiState.isLoading &&
-                !uiState.isLoadingMore &&
-                !uiState.isEnd
+            val visibleItemsInfo = layoutInfo.visibleItemsInfo
+            if (visibleItemsInfo.isEmpty()) {
+                false
+            } else {
+                val lastVisible = visibleItemsInfo.last().index
+                lastVisible >= layoutInfo.totalItemsCount - 3
+            }
         }
     }
-    LaunchedEffect(shouldLoadMore.value) {
-        if (shouldLoadMore.value) {
+    LaunchedEffect(
+        shouldLoadMore,
+        uiState.items.size,
+        uiState.isLoading,
+        uiState.isLoadingMore,
+        uiState.isEnd,
+    ) {
+        if (shouldLoadMore && !uiState.isLoading && !uiState.isLoadingMore && !uiState.isEnd && uiState.items.isNotEmpty()) {
             onEvent(CommentEvent.LoadMore)
+            delay(50.milliseconds)
         }
     }
 
@@ -171,6 +184,21 @@ fun CommentScreen(
                                             CircularProgressIndicator(
                                                 modifier = Modifier.size(24.dp),
                                                 strokeWidth = 2.dp,
+                                            )
+                                        }
+                                    }
+                                } else if (uiState.isEnd && uiState.items.isNotEmpty()) {
+                                    item(key = "end_notice") {
+                                        Box(
+                                            modifier = Modifier
+                                                .fillMaxWidth()
+                                                .padding(16.dp),
+                                            contentAlignment = Alignment.Center,
+                                        ) {
+                                            Text(
+                                                text = "没有更多评论了",
+                                                style = MaterialTheme.typography.bodySmall,
+                                                color = MaterialTheme.colorScheme.outline,
                                             )
                                         }
                                     }

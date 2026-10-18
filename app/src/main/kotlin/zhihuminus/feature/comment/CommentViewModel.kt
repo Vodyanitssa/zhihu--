@@ -7,6 +7,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.CoroutineDispatcher
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.async
 import kotlinx.coroutines.channels.Channel
@@ -20,6 +21,7 @@ class CommentViewModel(
     private val contentId: Long,
     private val repository: CommentRepository,
     private val initialCommentId: String? = null,
+    private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
     companion object {
         private const val PAGE_SIZE = 20
@@ -32,7 +34,7 @@ class CommentViewModel(
     val isChildEnd: Boolean
         get() {
             val parentId = uiState.activeParentId ?: return true
-            return childNextUrls.containsKey(parentId) && childNextUrls[parentId] == null
+            return items.find { it.comment.id == parentId }?.isChildEnd ?: false
         }
 
     // 内部可变列表，用于高效操作
@@ -74,8 +76,8 @@ class CommentViewModel(
             try {
                 // 锚点解析与首页数据并行拉取，避免串行阻塞首屏；使用 coroutineScope 保证子协程异常能被正常捕获
                 val (anchor, page) = coroutineScope {
-                    val anchorDeferred = async(Dispatchers.Default) { resolveAnchor() }
-                    val pageDeferred = async(Dispatchers.Default) {
+                    val anchorDeferred = async(defaultDispatcher) { resolveAnchor() }
+                    val pageDeferred = async(defaultDispatcher) {
                         repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
                     }
                     anchorDeferred.await() to pageDeferred.await()
@@ -83,6 +85,7 @@ class CommentViewModel(
                 items.clear()
                 items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
+                uiState = uiState.copy(isEnd = page.isEnd || page.nextUrl == null)
 
                 var autoOpenRoot: Comment? = null
                 if (anchor != null) {
@@ -114,11 +117,15 @@ class CommentViewModel(
 
     private fun loadMore() {
         val url = nextUrl
-        if (uiState.isLoading || uiState.isLoadingMore || uiState.isEnd || url == null) return
+        if (uiState.isLoading || uiState.isLoadingMore || uiState.isEnd) return
+        if (url == null) {
+            uiState = uiState.copy(isEnd = true)
+            return
+        }
         uiState = uiState.copy(isLoadingMore = true)
         viewModelScope.launch {
             try {
-                val page = withContext(Dispatchers.Default) {
+                val page = withContext(defaultDispatcher) {
                     repository.getNextPage(url)
                 }
                 val existingIds = items.map { it.comment.id }.toSet()
@@ -127,7 +134,7 @@ class CommentViewModel(
                     .map { it.toUiState() }
                 items.addAll(newItems)
                 nextUrl = page.nextUrl
-                uiState = uiState.copy(isLoadingMore = false, isEnd = page.isEnd)
+                uiState = uiState.copy(isLoadingMore = false, isEnd = page.isEnd || page.nextUrl == null)
                 emitState()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -143,12 +150,13 @@ class CommentViewModel(
         uiState = uiState.copy(isLoading = true, errorMessage = null, isEnd = false)
         viewModelScope.launch {
             try {
-                val page = withContext(Dispatchers.Default) {
+                val page = withContext(defaultDispatcher) {
                     repository.getRootComments(contentType, contentId, uiState.sortOrder, 0)
                 }
                 items.clear()
                 items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
+                uiState = uiState.copy(isEnd = page.isEnd || page.nextUrl == null)
                 emitState()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -162,17 +170,18 @@ class CommentViewModel(
 
     private fun changeSortOrder(order: CommentSortOrder) {
         if (uiState.sortOrder == order) return
-        uiState = uiState.copy(sortOrder = order, isLoading = true, errorMessage = null)
+        uiState = uiState.copy(sortOrder = order, isLoading = true, errorMessage = null, isEnd = false)
         nextUrl = null
         items.clear()
         viewModelScope.launch {
             try {
-                val page = withContext(Dispatchers.Default) {
+                val page = withContext(defaultDispatcher) {
                     repository.getRootComments(contentType, contentId, order, 0)
                 }
                 items.clear()
                 items.addAll(page.comments.map { it.toUiState() })
                 nextUrl = page.nextUrl
+                uiState = uiState.copy(isEnd = page.isEnd || page.nextUrl == null)
                 emitState()
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
@@ -189,7 +198,7 @@ class CommentViewModel(
         uiState = uiState.copy(isInputActive = false, replyToComment = null)
         viewModelScope.launch {
             try {
-                val newComment = withContext(Dispatchers.Default) {
+                val newComment = withContext(defaultDispatcher) {
                     repository.submitComment(contentType, contentId, text, replyToCommentId)
                 }
                 items.add(0, newComment.toUiState())
@@ -207,7 +216,7 @@ class CommentViewModel(
         updateCommentLike(commentId, liked = true)
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.likeComment(commentId)
                 }
                 sendEffect(CommentEffect.ShowMessage("已点赞"))
@@ -223,7 +232,7 @@ class CommentViewModel(
         updateCommentLike(commentId, liked = false)
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.unlikeComment(commentId)
                 }
                 sendEffect(CommentEffect.ShowMessage("已取消点赞"))
@@ -248,7 +257,7 @@ class CommentViewModel(
     private fun deleteComment(commentId: String) {
         viewModelScope.launch {
             try {
-                withContext(Dispatchers.Default) {
+                withContext(defaultDispatcher) {
                     repository.deleteComment(commentId)
                 }
                 removeFromTree(items, commentId)
@@ -270,18 +279,23 @@ class CommentViewModel(
 
         // 完整列表未加载过：无数据时先占位显示 loading；已有预览数据则保留展示、增量刷新
         if (existing?.children == null) {
-            updateItemChildren(comment.id, emptyList(), complete = false)
+            updateItemChildren(comment.id, emptyList(), complete = false, isEnd = false)
         }
         childNextUrls[comment.id] = null
 
         viewModelScope.launch {
             try {
-                val page = withContext(Dispatchers.Default) {
+                val page = withContext(defaultDispatcher) {
                     repository.getChildComments(comment.id, 0)
                 }
                 val childItems = page.comments.map { it.toUiState() }
-                updateItemChildren(comment.id, childItems, complete = true)
                 childNextUrls[comment.id] = page.nextUrl
+                updateItemChildren(
+                    parentId = comment.id,
+                    children = childItems,
+                    complete = true,
+                    isEnd = page.isEnd || page.nextUrl == null,
+                )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 sendEffect(CommentEffect.ShowMessage("加载子评论失败: ${friendlyErrorMessage(e)}"))
@@ -291,27 +305,45 @@ class CommentViewModel(
 
     fun loadMoreChildComments() {
         val parentId = uiState.activeParentId ?: return
-        val url = childNextUrls[parentId] ?: return
-
+        if (uiState.isChildLoadingMore) return
         val parentItem = items.find { it.comment.id == parentId } ?: return
+        if (parentItem.isChildEnd) return
+        val url = childNextUrls[parentId]
+        if (url == null) {
+            updateItemChildren(
+                parentId = parentId,
+                children = parentItem.children ?: emptyList(),
+                complete = true,
+                isEnd = true,
+            )
+            return
+        }
         val children = parentItem.children ?: return
-        // 检查是否已有加载更多（通过判断 children 是否包含重复项）
-        if (children.isEmpty()) return // 还在初次加载中
+        // 检查是否已有加载更多
+        if (children.isEmpty() && !parentItem.childrenComplete) return // 还在初次加载中
 
+        uiState = uiState.copy(isChildLoadingMore = true)
         viewModelScope.launch {
             try {
-                val page = withContext(Dispatchers.Default) {
+                val page = withContext(defaultDispatcher) {
                     repository.getNextPage(url)
                 }
                 val existingIds = children.map { it.comment.id }.toSet()
                 val newItems = page.comments
                     .filter { it.id !in existingIds }
                     .map { it.toUiState() }
-                updateItemChildren(parentId, children + newItems, complete = true)
                 childNextUrls[parentId] = page.nextUrl
+                updateItemChildren(
+                    parentId = parentId,
+                    children = children + newItems,
+                    complete = true,
+                    isEnd = page.isEnd || page.nextUrl == null,
+                )
             } catch (e: Exception) {
                 if (e is CancellationException) throw e
                 sendEffect(CommentEffect.ShowMessage("加载更多子评论失败: ${friendlyErrorMessage(e)}"))
+            } finally {
+                uiState = uiState.copy(isChildLoadingMore = false)
             }
         }
     }
@@ -380,15 +412,21 @@ class CommentViewModel(
     /**
      * 更新指定父评论的 children 列表。
      * @param complete 本次写入的是否为子评论接口返回的完整列表
+     * @param isEnd 是否已拉取完所有子评论
      */
     private fun updateItemChildren(
         parentId: String,
         children: List<CommentItemUiState>,
         complete: Boolean,
+        isEnd: Boolean = false,
     ) {
         for (i in items.indices) {
             if (items[i].comment.id == parentId) {
-                items[i] = items[i].copy(children = children, childrenComplete = complete)
+                items[i] = items[i].copy(
+                    children = children,
+                    childrenComplete = complete,
+                    isChildEnd = isEnd,
+                )
                 emitState()
                 return
             }
