@@ -31,7 +31,6 @@ import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.sizeIn
@@ -115,7 +114,6 @@ fun FeedCard(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     onAuthorClick: (() -> Unit)? = null,
-    maxHeight: Dp = 240.dp,
     horizontalPadding: Dp = 16.dp,
     showSourceLabel: Boolean = false,
     fontSizePercent: Int = LocalFeedCardConfig.current.fontSizePercent,
@@ -123,14 +121,9 @@ fun FeedCard(
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit = { _ -> },
 ) {
     var showMenu by remember { mutableStateOf(false) }
-    val hasGalleryImages = item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()
 
     Box(modifier = modifier.fillMaxWidth()) {
-        Column(
-            modifier = Modifier
-                .fillMaxWidth()
-                .then(if (hasGalleryImages) Modifier else Modifier.heightIn(max = maxHeight)),
-        ) {
+        Column(modifier = Modifier.fillMaxWidth()) {
             Column(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -250,88 +243,86 @@ private fun FeedCardContent(
             ?.flatMap { AstParser.parseInline(it) }
             .orEmpty()
     }
-    Column {
-        val showRightThumbnail = item.imageLayout == FeedImageLayout.RIGHT_THUMBNAIL && item.images.isNotEmpty()
-        val rightThumbnailUrl = if (showRightThumbnail) item.images.first() else null
+    val showRightThumbnail = item.imageLayout == FeedImageLayout.RIGHT_THUMBNAIL && item.images.isNotEmpty()
+    val rightThumbnailUrl = if (showRightThumbnail) item.images.first() else null
 
-        if (summaryNodes.isNotEmpty() || rightThumbnailUrl != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
+    if (summaryNodes.isNotEmpty() || rightThumbnailUrl != null) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            verticalAlignment = Alignment.Top,
+        ) {
+            Box(
+                modifier = Modifier
+                    .weight(1f)
+                    .padding(top = 2.dp),
             ) {
-                Box(
-                    modifier = Modifier
-                        .weight(1f)
-                        .padding(top = 2.dp),
-                ) {
-                    if (summaryNodes.isNotEmpty()) {
-                        val typographyConfig = remember(fontSizePercent, lineHeightPercent) {
-                            ContentTypographyConfig(
-                                fontSizePercent = fontSizePercent,
-                                lineHeightPercent = lineHeightPercent,
-                            )
-                        }
-                        CompositionLocalProvider(LocalContentTypographyConfig provides typographyConfig) {
-                            InlineNodes(
-                                nodes = summaryNodes,
-                                style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                maxLines = 4,
-                                overflow = TextOverflow.Ellipsis,
-                            )
-                        }
+                if (summaryNodes.isNotEmpty()) {
+                    val typographyConfig = remember(fontSizePercent, lineHeightPercent) {
+                        ContentTypographyConfig(
+                            fontSizePercent = fontSizePercent,
+                            lineHeightPercent = lineHeightPercent,
+                        )
+                    }
+                    CompositionLocalProvider(LocalContentTypographyConfig provides typographyConfig) {
+                        InlineNodes(
+                            nodes = summaryNodes,
+                            style = MaterialTheme.typography.bodyMedium.copy(fontSize = 14.sp),
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            maxLines = 4,
+                            overflow = TextOverflow.Ellipsis,
+                        )
                     }
                 }
-                if (rightThumbnailUrl != null) {
-                    Spacer(modifier = Modifier.width(12.dp))
-                    AsyncImage(
-                        model = rightThumbnailUrl,
-                        contentDescription = "Thumbnail",
-                        modifier = Modifier
-                            .sizeIn(maxHeight = 80.dp, maxWidth = 120.dp)
-                            .clip(RoundedCornerShape(8.dp)),
-                        contentScale = ContentScale.Crop,
-                    )
-                }
+            }
+            if (rightThumbnailUrl != null) {
+                Spacer(modifier = Modifier.width(12.dp))
+                AsyncImage(
+                    model = rightThumbnailUrl,
+                    contentDescription = "Thumbnail",
+                    modifier = Modifier
+                        .sizeIn(maxHeight = 80.dp, maxWidth = 120.dp)
+                        .clip(RoundedCornerShape(8.dp)),
+                    contentScale = ContentScale.Crop,
+                )
             }
         }
-        if (item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()) {
-            FeedGalleryImages(
-                images = item.images,
-                modifier = Modifier.padding(top = 8.dp),
-            )
-        }
-        val statsText = formatStatsText(typeLabel, item.details)
-        val publishTimeText = item.publishTimeSeconds
-            ?.let(::formatDateTime)
-        if (statsText.isNotEmpty() || publishTimeText != null) {
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(top = 8.dp),
-                verticalAlignment = Alignment.CenterVertically,
-            ) {
-                if (statsText.isNotEmpty()) {
-                    Text(
-                        text = statsText,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                        overflow = TextOverflow.Ellipsis,
-                        modifier = Modifier.weight(1f),
-                    )
-                } else {
-                    Spacer(Modifier.weight(1f))
-                }
-                publishTimeText?.let { time ->
-                    Spacer(Modifier.width(6.dp))
-                    Text(
-                        text = time,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
+    }
+    if (item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()) {
+        FeedGalleryImages(
+            images = item.images,
+            modifier = Modifier.padding(top = 8.dp),
+        )
+    }
+    val statsText = formatStatsText(typeLabel, item.details)
+    val publishTimeText = item.publishTimeSeconds
+        ?.let(::formatDateTime)
+    if (statsText.isNotEmpty() || publishTimeText != null) {
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 8.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            if (statsText.isNotEmpty()) {
+                Text(
+                    text = statsText,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                    overflow = TextOverflow.Ellipsis,
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Spacer(Modifier.weight(1f))
+            }
+            publishTimeText?.let { time ->
+                Spacer(Modifier.width(6.dp))
+                Text(
+                    text = time,
+                    style = MaterialTheme.typography.labelMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    maxLines = 1,
+                )
             }
         }
     }
