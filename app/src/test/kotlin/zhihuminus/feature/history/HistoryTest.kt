@@ -8,7 +8,7 @@ import com.zhihuminus.data.zhihu.dto.HistoryHeaderDto
 import com.zhihuminus.data.zhihu.dto.HistoryItemDto
 import com.zhihuminus.data.zhihu.dto.HistoryMatrixDataDto
 import com.zhihuminus.data.zhihu.dto.HistoryMatrixItemDto
-import com.zhihuminus.data.zhihu.repository.toHistoryItem
+import com.zhihuminus.data.zhihu.mapper.toHistoryItem
 import kotlin.test.Test
 import kotlin.test.assertEquals
 

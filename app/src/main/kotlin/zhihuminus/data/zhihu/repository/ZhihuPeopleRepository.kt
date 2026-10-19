@@ -3,16 +3,20 @@ package com.zhihuminus.data.zhihu.repository
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.cache.PostContentCache
-import com.zhihuminus.data.flattenFeeds
-import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
 import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
-import com.zhihuminus.data.zhihu.dto.MemberItemDto
-import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
+import com.zhihuminus.data.zhihu.mapper.PeopleMapper
+import com.zhihuminus.data.zhihu.mapper.flattenFeeds
+import com.zhihuminus.data.zhihu.mapper.toDisplayItem
+import com.zhihuminus.data.zhihu.mapper.toDomain
+import com.zhihuminus.data.zhihu.mapper.toFollowedQuestion
+import com.zhihuminus.data.zhihu.mapper.toFollowedTopic
+import com.zhihuminus.data.zhihu.mapper.toPeopleColumnItem
+import com.zhihuminus.data.zhihu.mapper.toPeopleCreationItem
+import com.zhihuminus.data.zhihu.mapper.toPeopleMemberItem
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.people.FollowedQuestion
 import com.zhihuminus.feature.people.FollowedTopic
-import com.zhihuminus.feature.people.GithubSocialUiState
 import com.zhihuminus.feature.people.PeopleColumnItem
 import com.zhihuminus.feature.people.PeopleCreationItem
 import com.zhihuminus.feature.people.PeopleMemberItem
@@ -20,8 +24,6 @@ import com.zhihuminus.feature.people.PeoplePage
 import com.zhihuminus.feature.people.PeopleProfile
 import com.zhihuminus.feature.people.PeopleRepository
 import com.zhihuminus.feature.people.PeopleSortOrder
-import com.zhihuminus.feature.post.PostType
-import org.jsoup.Jsoup
 
 class ZhihuPeopleRepository(
     private val api: ZhihuPeopleApi,
@@ -39,33 +41,7 @@ class ZhihuPeopleRepository(
             Log.e("ZhihuPeopleRepository", "Failed to load optional profile detail", it)
         }.getOrNull()
 
-        val social = detail?.socialMedias?.firstNotNullOfOrNull { it.toGithubSocialUiState() }
-            ?: raw.socialMedias.firstNotNullOfOrNull { it.toGithubSocialUiState() }
-        return PeopleProfile(
-            id = raw.id,
-            urlToken = raw.urlToken ?: "",
-            name = raw.name,
-            avatarUrl = raw.avatarUrl,
-            headline = raw.headline,
-            officialBadge = raw.badgeV2?.toOfficialBadge(),
-            officialBadgeDetails = raw.badgeV2?.toOfficialBadgeDetails().orEmpty(),
-            githubSocial = social,
-            followerCount = raw.followerCount,
-            followingCount = raw.followingCount,
-            answerCount = raw.answerCount,
-            articleCount = raw.articlesCount,
-            pinsCount = raw.pinsCount,
-            questionCount = raw.questionCount,
-            isFollowing = raw.isFollowing,
-            isFollowed = raw.isFollowed,
-            isBlocking = raw.isBlocking,
-            voteupCount = raw.voteupCount,
-            thankedCount = raw.thankedCount,
-            favoritedCount = raw.favoritedCount,
-            ipInfo = raw.ipInfo,
-            description = raw.description,
-            gender = raw.gender,
-        )
+        return PeopleMapper.toProfile(raw, detail)
     }
 
     override suspend fun follow(urlToken: String): Int? {
@@ -95,21 +71,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleCreationItem> {
         val dto = api.fetchMemberAnswers(userTokenOrId, sortBy.key, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                val thumbnail = it.thumbnail?.takeIf { s -> s.isNotBlank() }
-                PeopleCreationItem(
-                    id = it.id,
-                    type = PostType.Answer,
-                    title = it.question.title,
-                    summary = it.excerpt,
-                    details = "回答 · ${it.voteupCount} 赞同 · ${it.commentCount} 评论",
-                    authorName = it.author.name,
-                    authorBio = it.author.headline,
-                    avatarUrl = it.author.avatarUrl,
-                    publishTimeSeconds = it.createdTime.takeIf { t -> t > 0 },
-                    images = listOfNotNull(thumbnail),
-                )
-            },
+            items = dto.items.map { it.toPeopleCreationItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -122,21 +84,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleCreationItem> {
         val dto = api.fetchMemberArticles(userTokenOrId, sortBy.key, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                val thumbnail = (it.thumbnail ?: it.imageUrl)?.takeIf { s -> s.isNotBlank() }
-                PeopleCreationItem(
-                    id = it.id,
-                    type = PostType.Article,
-                    title = it.title,
-                    summary = it.excerpt,
-                    details = "文章 · ${it.voteupCount} 赞同 · ${it.commentCount} 评论",
-                    authorName = it.author.name,
-                    authorBio = it.author.headline,
-                    avatarUrl = it.author.avatarUrl,
-                    publishTimeSeconds = it.created.takeIf { t -> t > 0 },
-                    images = listOfNotNull(thumbnail),
-                )
-            },
+            items = dto.items.map { it.toPeopleCreationItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -169,26 +117,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleCreationItem> {
         val dto = api.fetchMemberPins(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                val text = it.excerptTitle.takeIf { s -> s.isNotBlank() }?.let { s -> Jsoup.parse(s).text() }
-                    ?: it.contentHtml.takeIf { s -> s.isNotBlank() }?.let { s -> Jsoup.parse(s).text() }
-                    ?: ""
-                val images = it.content
-                    .filter { c -> c.type == "image" }
-                    .mapNotNull { c -> c.thumbnail?.takeIf { s -> s.isNotBlank() } ?: c.url?.takeIf { s -> s.isNotBlank() } }
-                PeopleCreationItem(
-                    id = it.id.toLongOrNull() ?: 0L,
-                    type = PostType.Pin,
-                    title = "",
-                    summary = text,
-                    details = "想法 · ${it.likeCount} 赞 · ${it.commentCount} 评论",
-                    authorName = it.author.name,
-                    authorBio = it.author.headline,
-                    avatarUrl = it.author.avatarUrl,
-                    publishTimeSeconds = it.created.takeIf { t -> t > 0 },
-                    images = images,
-                )
-            },
+            items = dto.items.map { it.toPeopleCreationItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -212,27 +141,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<FollowedQuestion> {
         val dto = api.fetchMemberQuestions(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                FollowedQuestion(
-                    id = it.id,
-                    title = it.title,
-                    type = it.type,
-                    url = it.url,
-                    questionType = it.questionType,
-                    created = it.created,
-                    updatedTime = it.updatedTime,
-                    answerCount = it.answerCount,
-                    followerCount = it.followerCount,
-                    authorName = it.author?.name.orEmpty(),
-                    avatarUrl = it.author?.avatarUrl.orEmpty(),
-                    excerpt = it.excerpt.ifEmpty {
-                        it.detail
-                            .takeIf { d -> d.isNotBlank() }
-                            ?.let { d -> Jsoup.parse(d).text() }
-                            .orEmpty()
-                    },
-                )
-            },
+            items = dto.items.map { it.toFollowedQuestion() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -244,16 +153,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleColumnItem> {
         val dto = api.fetchMemberColumns(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                PeopleColumnItem(
-                    id = it.id,
-                    title = it.title,
-                    description = it.description,
-                    articleCount = it.articlesCount,
-                    followerCount = it.followerCount.coerceAtLeast(it.followers),
-                    url = it.url,
-                )
-            },
+            items = dto.items.map { it.toPeopleColumnItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -289,16 +189,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<PeopleColumnItem> {
         val dto = api.fetchMemberFollowingColumns(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                PeopleColumnItem(
-                    id = it.id,
-                    title = it.title,
-                    description = it.description,
-                    articleCount = it.articlesCount,
-                    followerCount = it.followerCount.coerceAtLeast(it.followers),
-                    url = it.url,
-                )
-            },
+            items = dto.items.map { it.toPeopleColumnItem() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -310,13 +201,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<FollowedTopic> {
         val dto = api.fetchMemberFollowingTopics(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                FollowedTopic(
-                    id = it.displayId,
-                    name = it.displayName,
-                    avatarUrl = it.displayAvatarUrl,
-                )
-            },
+            items = dto.items.map { it.toFollowedTopic() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -328,27 +213,7 @@ class ZhihuPeopleRepository(
     ): PeoplePage<FollowedQuestion> {
         val dto = api.fetchMemberFollowingQuestions(userTokenOrId, nextUrl)
         return PeoplePage(
-            items = dto.items.map {
-                FollowedQuestion(
-                    id = it.id,
-                    title = it.title,
-                    type = it.type,
-                    url = it.url,
-                    questionType = it.questionType,
-                    created = it.created,
-                    updatedTime = it.updatedTime,
-                    answerCount = it.answerCount,
-                    followerCount = it.followerCount,
-                    authorName = it.author?.name.orEmpty(),
-                    avatarUrl = it.author?.avatarUrl.orEmpty(),
-                    excerpt = it.excerpt.ifEmpty {
-                        it.detail
-                            .takeIf { d -> d.isNotBlank() }
-                            ?.let { d -> Jsoup.parse(d).text() }
-                            .orEmpty()
-                    },
-                )
-            },
+            items = dto.items.map { it.toFollowedQuestion() },
             nextUrl = dto.nextUrl,
             isEnd = dto.isEnd,
         )
@@ -366,37 +231,3 @@ class ZhihuPeopleRepository(
         )
     }
 }
-
-fun MemberSocialMediaDto.toGithubSocialUiState(): GithubSocialUiState? {
-    if (!title.startsWith("GitHub", ignoreCase = true)) return null
-    val starCount = modules
-        .firstOrNull { it.title.equals("stars", ignoreCase = true) }
-        ?.value
-        ?.takeIf { it.isNotBlank() } ?: return null
-    val profileLink = link.takeIf { it.isNotBlank() } ?: return null
-    val profileUrl = if (profileLink.startsWith("zhihu://", ignoreCase = true)) {
-        val username = title.substringAfter('·', "").trim().takeIf { it.isNotBlank() } ?: return null
-        "https://github.com/$username"
-    } else {
-        profileLink
-    }
-    return GithubSocialUiState(
-        title = title,
-        starCount = starCount,
-        profileUrl = profileUrl,
-        iconUrl = icon.takeIf { it.isNotBlank() },
-    )
-}
-
-fun MemberItemDto.toPeopleMemberItem(): PeopleMemberItem = PeopleMemberItem(
-    id = id,
-    urlToken = urlToken ?: "",
-    name = name,
-    avatarUrl = avatarUrl,
-    headline = headline,
-    officialBadge = badgeV2?.toOfficialBadge(),
-    answerCount = answerCount,
-    articleCount = articlesCount,
-    followerCount = followerCount,
-    isFollowing = isFollowing,
-)

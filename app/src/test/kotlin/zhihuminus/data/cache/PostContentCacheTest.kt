@@ -181,13 +181,42 @@ class PostContentCacheTest {
         cache.putFromFeed(pinTarget)
 
         val cached = cache.get(PostType.Pin, 555L)
-        assertNotNull(cached)
         assertEquals(555L, cached?.id)
         assertEquals(PostType.Pin, cached?.type)
+        assertEquals("Pin Author的想法", cached?.title)
         assertEquals(true, cached?.author?.isFollowing)
         assertEquals("Pin Author", cached?.author?.name)
         assertEquals(1, cached?.linkCards?.size)
         assertEquals("https://example.com/link", cached?.linkCards?.first()?.url)
+    }
+
+    @Test
+    fun testPutFromFeedPinTargetWithTrailingBrTitle() = runTest {
+        val cache = MemoryPostContentCache()
+        val pinTarget = PinTargetDto(
+            id = 556L,
+            contentHtml = "<div>关于 Anthropic 的研究数据<br/><p>正文内容说明</p></div>",
+            author = FeedAuthorDto(id = "pinAuthor", name = "Pin Author", avatarUrl = "https://example.com/p.jpg"),
+        )
+        cache.putFromFeed(pinTarget)
+        val cached = cache.get(PostType.Pin, 556L)
+        assertNotNull(cached)
+        assertEquals("关于 Anthropic 的研究数据", cached?.title)
+        assertEquals(1, cached?.content?.size)
+    }
+
+    @Test
+    fun testPutFromFeedPinTargetWithPipeTitle() = runTest {
+        val cache = MemoryPostContentCache()
+        val pinTarget = PinTargetDto(
+            id = 557L,
+            contentHtml = "<div>1/3 | <p>正文内容说明</p></div>",
+            author = FeedAuthorDto(id = "pinAuthor", name = "Pin Author", avatarUrl = "https://example.com/p.jpg"),
+        )
+        cache.putFromFeed(pinTarget)
+        val cached = cache.get(PostType.Pin, 557L)
+        assertNotNull(cached)
+        assertEquals("1/3", cached?.title)
     }
 
     @Test

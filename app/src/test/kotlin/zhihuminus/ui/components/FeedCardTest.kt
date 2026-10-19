@@ -1,12 +1,12 @@
 package com.zhihuminus.ui.components
 
 import com.zhihuminus.data.FeedImageLayout
-import com.zhihuminus.data.resolveFeedImages
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.PinContentItemDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.mapper.resolveFeedImages
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNull

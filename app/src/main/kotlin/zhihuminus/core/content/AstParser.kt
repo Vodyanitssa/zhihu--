@@ -220,12 +220,17 @@ object AstParser {
         }
 
         "div" -> {
-            buildList {
+            val blocks = buildList {
                 element.children().forEach {
                     if (it.tagName() == "p" || it.tagName() == "pre") {
                         addAll(parseBlock(it))
                     }
                 }
+            }
+            if (blocks.isEmpty() && element.text().isNotBlank()) {
+                listOf(ContentNode.Paragraph(content = parseInline(element)))
+            } else {
+                blocks
             }
         }
 

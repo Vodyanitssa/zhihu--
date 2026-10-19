@@ -2,7 +2,7 @@ package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
 import com.zhihuminus.data.zhihu.dto.HistoryDeletePairDto
-import com.zhihuminus.data.zhihu.dto.HistoryItemDto
+import com.zhihuminus.data.zhihu.mapper.toHistoryItem
 import com.zhihuminus.feature.history.HistoryDeletePair
 import com.zhihuminus.feature.history.HistoryItem
 import com.zhihuminus.feature.history.HistoryPageResult
@@ -41,27 +41,3 @@ class ZhihuHistoryRepository(
         const val DEFAULT_HISTORY_URL = "https://api.zhihu.com/unify-consumption/read_history?offset=0&limit=10"
     }
 }
-
-internal fun HistoryItemDto.toHistoryItem() = HistoryItem(
-    title = data.header.title,
-    summary = data.content?.summary ?: "",
-    details = data.matrix
-        ?.firstOrNull()
-        ?.data
-        ?.text
-        ?.takeIf { it != data.extra.contentType }
-        ?: "",
-    authorName = data.content?.authorName,
-    contentTypeLabel = when (data.extra.contentType.lowercase()) {
-        "answer" -> "回答"
-        "article" -> "文章"
-        "pin" -> "想法"
-        "question" -> "问题"
-        "profile" -> "主页"
-        else -> data.extra.contentType
-    },
-    actionUrl = data.action.url,
-    contentToken = data.extra.contentToken,
-    contentType = data.extra.contentType,
-    coverImage = data.content?.coverImage?.takeIf { it.isNotBlank() },
-)

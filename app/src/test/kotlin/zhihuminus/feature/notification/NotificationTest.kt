@@ -21,8 +21,8 @@ import com.zhihuminus.data.zhihu.dto.NotificationTimelineItemDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessageDto
 import com.zhihuminus.data.zhihu.dto.PrivateMessagePluginDto
 import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
+import com.zhihuminus.data.zhihu.mapper.toDomain
 import com.zhihuminus.data.zhihu.repository.ZhihuNotificationRepository
-import com.zhihuminus.data.zhihu.repository.toDomain
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
 import kotlinx.coroutines.runBlocking

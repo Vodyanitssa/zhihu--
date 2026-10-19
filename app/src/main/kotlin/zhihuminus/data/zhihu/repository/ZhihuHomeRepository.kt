@@ -3,11 +3,11 @@ package com.zhihuminus.data.zhihu.repository
 import com.zhihuminus.core.telemetry.ZaFeedExposureItem
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.cache.PostContentCache
-import com.zhihuminus.data.flattenFeeds
-import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.RECOMMEND_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
+import com.zhihuminus.data.zhihu.mapper.flattenFeeds
+import com.zhihuminus.data.zhihu.mapper.toDisplayItem
 import com.zhihuminus.feature.home.FeedExposureRecord
 import com.zhihuminus.feature.home.HomeFeedPage
 import com.zhihuminus.feature.home.HomeRepository

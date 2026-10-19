@@ -1,10 +1,10 @@
 package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.cache.PostContentCache
-import com.zhihuminus.data.flattenFeeds
-import com.zhihuminus.data.toDisplayItem
 import com.zhihuminus.data.zhihu.api.MOMENTS_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
+import com.zhihuminus.data.zhihu.mapper.flattenFeeds
+import com.zhihuminus.data.zhihu.mapper.toDisplayItem
 import com.zhihuminus.feature.follow.FollowFeedPage
 import com.zhihuminus.feature.follow.FollowRepository
 import com.zhihuminus.feature.follow.FollowingUser

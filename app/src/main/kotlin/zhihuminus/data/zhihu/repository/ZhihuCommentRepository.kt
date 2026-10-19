@@ -1,18 +1,15 @@
 package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuCommentApi
-import com.zhihuminus.data.zhihu.dto.AuthorDto
-import com.zhihuminus.data.zhihu.dto.CommentDto
-import com.zhihuminus.data.zhihu.dto.CommentsPageDto
+import com.zhihuminus.data.zhihu.mapper.toComment
+import com.zhihuminus.data.zhihu.mapper.toCommentPage
 import com.zhihuminus.feature.comment.Comment
-import com.zhihuminus.feature.comment.CommentAuthor
 import com.zhihuminus.feature.comment.CommentContentType
 import com.zhihuminus.feature.comment.CommentPage
 import com.zhihuminus.feature.comment.CommentRepository
 import com.zhihuminus.feature.comment.CommentSortOrder
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
-import kotlinx.serialization.json.jsonPrimitive
 
 class ZhihuCommentRepository(
     private val api: ZhihuCommentApi,
@@ -29,22 +26,22 @@ class ZhihuCommentRepository(
         }
         val contentType = type.toApiType()
         val page = api.getRootComments(contentType, id, orderParam, offset)
-        return page.toDomain()
+        return page.toCommentPage()
     }
 
     override suspend fun getNextPage(nextUrl: String): CommentPage {
         val page = api.fetchCommentsPage(nextUrl)
-        return page.toDomain()
+        return page.toCommentPage()
     }
 
     override suspend fun getChildComments(commentId: String, offset: Int): CommentPage {
         val page = api.getChildComments(commentId, offset)
-        return page.toDomain()
+        return page.toCommentPage()
     }
 
     override suspend fun getComment(commentId: String): Comment {
         val dto = api.getComment(commentId)
-        return dto.toDomain()
+        return dto.toComment()
     }
 
     override suspend fun submitComment(
@@ -60,7 +57,7 @@ class ZhihuCommentRepository(
             replyToCommentId?.let { put("reply_comment_id", JsonPrimitive(it)) }
         }
         val dto = api.submitComment(url, body)
-        return dto.toDomain()
+        return dto.toComment()
     }
 
     override suspend fun likeComment(commentId: String) {
@@ -74,12 +71,6 @@ class ZhihuCommentRepository(
     override suspend fun deleteComment(commentId: String) {
         api.deleteComment(commentId)
     }
-
-    private fun CommentsPageDto.toDomain(): CommentPage = CommentPage(
-        comments = data.map { it.toDomain() },
-        isEnd = paging?.hasMore != true,
-        nextUrl = paging?.nextUrl,
-    )
 
     private fun buildSubmitCommentUrl(type: CommentContentType, id: Long): String {
         val path = when (type) {
@@ -97,35 +88,6 @@ class ZhihuCommentRepository(
         CommentContentType.Pin -> "pin"
         CommentContentType.Question -> "question"
     }
-
-    private fun CommentDto.toDomain(): Comment = Comment(
-        id = id,
-        content = content,
-        author = author.toDomain(),
-        createdAt = createdTime,
-        likeCount = likeCount,
-        liked = liked,
-        canDelete = canDelete,
-        isAuthor = isAuthor,
-        childCommentCount = childCommentCount,
-        childComments = childComments.map { it.toDomain() },
-        replyToAuthor = replyToAuthor?.toDomain(),
-        commentTags = commentTag.map { it.text }.filter { it.isNotEmpty() },
-        authorTag = authorTag
-            .firstOrNull()
-            ?.get("text")
-            ?.jsonPrimitive
-            ?.content,
-        replyRootCommentId = replyRootCommentId,
-    )
-
-    private fun AuthorDto.toDomain(): CommentAuthor = CommentAuthor(
-        id = id,
-        name = name,
-        avatarUrl = avatarUrl,
-        urlToken = urlToken,
-        headline = headline,
-    )
 }
 
 private fun String.escapeHtml(): String =

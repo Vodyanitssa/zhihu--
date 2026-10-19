@@ -102,4 +102,13 @@ class AstParserTest {
         assertTrue(!htmlWithoutUrl.contains("<a href="))
         assertTrue(htmlWithoutUrl.contains("[2]</sup>"))
     }
+
+    @Test
+    fun testParseContentDivWithoutPFallback() {
+        val html = "<div>直接纯文本想法<br/>第二行</div>"
+        val content = AstParser.parseContent(html)
+        assertEquals(1, content.size)
+        val paragraph = assertIs<ContentNode.Paragraph>(content.first())
+        assertTrue(paragraph.content.any { it is InlineNode.LineBreak })
+    }
 }

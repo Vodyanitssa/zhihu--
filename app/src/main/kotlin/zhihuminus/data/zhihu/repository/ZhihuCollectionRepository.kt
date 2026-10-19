@@ -1,15 +1,10 @@
 package com.zhihuminus.data.zhihu.repository
 
-import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.navDestination
-import com.zhihuminus.data.resolveFeedImages
-import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
-import com.zhihuminus.data.zhihu.dto.CollectionDto
-import com.zhihuminus.data.zhihu.dto.CollectionItemDto
+import com.zhihuminus.data.zhihu.mapper.toDomain
+import com.zhihuminus.data.zhihu.mapper.toFeedDisplayItem
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.collection.CollectionContentPageResult
-import com.zhihuminus.feature.collection.CollectionCreator
 import com.zhihuminus.feature.collection.CollectionRepository
 import com.zhihuminus.feature.collection.CollectionsPageResult
 
@@ -54,50 +49,4 @@ class ZhihuCollectionRepository(
     override suspend fun removeFromCollection(type: String, id: Long, collectionId: String) {
         api.removeFromCollection(type, id, collectionId)
     }
-}
-
-fun CollectionDto.toDomain(): Collection = Collection(
-    id = id,
-    isFavorited = isFavorited,
-    type = type,
-    title = title,
-    isPublic = isPublic,
-    url = url,
-    description = description,
-    followerCount = followerCount,
-    answerCount = answerCount,
-    itemCount = itemCount,
-    likeCount = likeCount,
-    viewCount = viewCount,
-    commentCount = commentCount,
-    isFollowing = isFollowing,
-    isLiking = isLiking,
-    createdTime = createdTime,
-    updatedTime = updatedTime,
-    creator = creator?.let {
-        CollectionCreator(
-            id = it.id,
-            name = it.name,
-            avatarUrl = it.avatarUrl,
-            headline = it.headline,
-        )
-    },
-    isDefault = isDefault,
-)
-
-fun CollectionItemDto.toFeedDisplayItem(): FeedDisplayItem {
-    val (images, layout) = content.resolveFeedImages()
-    return FeedDisplayItem(
-        title = content.title,
-        summary = content.excerpt,
-        details = content.detailsText,
-        navDestinationJson = content.navDestination?.toFeedDisplayItemNavDestinationJson(),
-        feed = null,
-        authorName = content.author?.name,
-        avatarSrc = content.author?.avatarUrl,
-        contentTypeLabel = content.description(),
-        publishTimeSeconds = content.createdTime.takeIf { it > 0 },
-        images = images,
-        imageLayout = layout,
-    )
 }

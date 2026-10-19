@@ -16,8 +16,8 @@ import com.zhihuminus.data.zhihu.dto.MemberProfileDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaDto
 import com.zhihuminus.data.zhihu.dto.MemberSocialMediaModuleDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.mapper.toGithubSocialUiState
 import com.zhihuminus.data.zhihu.repository.ZhihuPeopleRepository
-import com.zhihuminus.data.zhihu.repository.toGithubSocialUiState
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Person
