@@ -61,8 +61,8 @@ fun TopicHeader(
                 when {
                     detail != null -> Text(
                         listOfNotNull(
-                            detail.viewCount.takeIf { it > 0 }?.let { "${formatCount(it)}浏览" },
-                            detail.discussCount.takeIf { it > 0 }?.let { "${formatCount(it)}讨论" },
+                            detail.viewCount.takeIf { it > 0 }?.let { "${formatCount(it)} 浏览" },
+                            detail.discussCount.takeIf { it > 0 }?.let { "${formatCount(it)} 讨论" },
                         ).joinToString(" · "),
                         style = MaterialTheme.typography.labelMedium,
                     )

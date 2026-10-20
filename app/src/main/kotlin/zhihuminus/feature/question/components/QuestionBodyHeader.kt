@@ -58,6 +58,7 @@ import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.renderer.RenderContentNodes
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.question.QuestionDetail
 import com.zhihuminus.feature.question.QuestionEvent
 import com.zhihuminus.feature.question.QuestionSort
@@ -98,14 +99,14 @@ internal fun QuestionHeaderSection(
                 horizontalArrangement = Arrangement.spacedBy(16.dp),
                 verticalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                StatItem(icon = Icons.Outlined.Visibility, text = "$visitCount 浏览")
-                StatItem(icon = Icons.Outlined.ChatBubbleOutline, text = "$commentCount 评论")
-                StatItem(icon = Icons.Outlined.FavoriteBorder, text = "$followerCount 关注")
+                StatItem(icon = Icons.Outlined.Visibility, text = "${formatCount(visitCount)} 浏览")
+                StatItem(icon = Icons.Outlined.ChatBubbleOutline, text = "${formatCount(commentCount)} 评论")
+                StatItem(icon = Icons.Outlined.FavoriteBorder, text = "${formatCount(followerCount)} 关注")
             }
             OutlinedButton(onClick = onShowComments) {
                 Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
                 Spacer(Modifier.width(8.dp))
-                Text("$commentCount")
+                Text(formatCount(commentCount))
             }
         }
     }
@@ -215,7 +216,7 @@ internal fun QuestionBodyHeader(
                         verticalAlignment = Alignment.CenterVertically,
                     ) {
                         Text(
-                            text = "${detail.answerCount} 回答",
+                            text = "${formatCount(detail.answerCount)} 回答",
                             style = MaterialTheme.typography.titleMedium,
                             fontWeight = FontWeight.Medium,
                         )

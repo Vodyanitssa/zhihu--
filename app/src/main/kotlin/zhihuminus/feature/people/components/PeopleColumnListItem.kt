@@ -12,6 +12,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.people.PeopleColumnItem
 
 @Composable
@@ -43,7 +44,7 @@ fun PeopleColumnListItem(
                 )
             }
             Text(
-                text = "${column.articleCount} 文章 · ${column.followerCount} 关注",
+                text = "${formatCount(column.articleCount)} 文章 · ${formatCount(column.followerCount)} 关注",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                 modifier = Modifier.padding(top = 4.dp),

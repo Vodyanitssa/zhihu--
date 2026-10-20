@@ -39,6 +39,7 @@ import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.unit.dp
 import com.materialkolor.ktx.harmonize
 import com.zhihuminus.R
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.post.VoteUpState
@@ -100,7 +101,7 @@ fun PostBottomBar(
                     )
                     Spacer(modifier = Modifier.width(4.dp))
                     Text(
-                        text = state.voteUpCount.toString(),
+                        text = formatCount(state.voteUpCount),
                         color = upContentColor,
                         style = MaterialTheme.typography.titleMedium,
                     )
@@ -200,7 +201,7 @@ fun PostBottomBar(
             ) {
                 Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
                 Spacer(modifier = Modifier.width(4.dp))
-                Text(text = "${state.commentCount}", style = MaterialTheme.typography.titleMedium)
+                Text(text = formatCount(state.commentCount), style = MaterialTheme.typography.titleMedium)
             }
 
             IconButton(

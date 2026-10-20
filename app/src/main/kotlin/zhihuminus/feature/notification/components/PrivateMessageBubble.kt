@@ -27,7 +27,7 @@ import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.InlineNode
 import com.zhihuminus.core.content.renderer.InlineNodes
-import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.formatChatTime
 import com.zhihuminus.feature.notification.PrivateMessage
 
 @Composable
@@ -62,7 +62,7 @@ fun PrivateMessageBubble(
         ) {
             if (showTimestamp && message.createdTime > 0) {
                 Text(
-                    text = formatDateTime(message.createdTime),
+                    text = formatChatTime(message.createdTime),
                     style = MaterialTheme.typography.labelSmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                     modifier = Modifier.padding(bottom = 6.dp),

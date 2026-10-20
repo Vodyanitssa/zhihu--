@@ -28,6 +28,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import kotlinx.coroutines.delay
@@ -132,7 +133,7 @@ fun ChildCommentSheet(
                         Column {
                             Spacer(modifier = Modifier.height(10.dp))
                             Text(
-                                text = "回复 ${parentComment.childCommentCount}",
+                                text = "回复 ${formatCount(parentComment.childCommentCount)}",
                                 style = MaterialTheme.typography.titleMedium,
                                 color = MaterialTheme.colorScheme.onSurfaceVariant,
                                 modifier = Modifier.padding(bottom = 8.dp),

@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.mapper
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
@@ -21,7 +22,7 @@ object TopicMapper {
                     summary = target.plainContent
                         .ifBlank { target.excerpt.ifBlank { target.content } }
                         .takeIf(String::isNotBlank),
-                    details = "想法 · ${target.counter.applaud} 赞 · ${target.counter.comment} 评论",
+                    details = "想法 · ${formatCount(target.counter.applaud)} 赞 · ${formatCount(target.counter.comment)} 评论",
                     feed = null,
                     navDestinationJson = PostDestination(
                         type = PostType.Pin,

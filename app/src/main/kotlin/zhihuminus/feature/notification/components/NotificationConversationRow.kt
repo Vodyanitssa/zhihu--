@@ -27,6 +27,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.feature.notification.NotificationTimelineItem
 
 @Composable
@@ -101,5 +102,3 @@ fun NotificationConversationRow(
         }
     }
 }
-
-private fun formatUnreadCount(count: Int): String = if (count > 99) "99+" else count.toString()

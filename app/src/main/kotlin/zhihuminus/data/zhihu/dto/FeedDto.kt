@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.dto
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.common.BooleanCompatSerializer
 import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
@@ -92,7 +93,7 @@ data class AnswerTargetDto(
     val allowSegmentInteraction: Boolean = false,
     val ipInfo: String? = null,
 ) : FeedTargetDto {
-    override val detailsText = "回答 · $voteupCount 赞同 · $commentCount 评论"
+    override val detailsText = "回答 · ${formatCount(voteupCount)} 赞同 · ${formatCount(commentCount)} 评论"
     override val title: String
         get() = question.title
 }
@@ -109,7 +110,7 @@ data class VideoTargetDto(
     val description: String = "",
     override val excerpt: String = "",
 ) : FeedTargetDto {
-    override val detailsText = "视频 · $voteCount 赞 · $commentCount 评论"
+    override val detailsText = "视频 · ${formatCount(voteCount)} 赞 · ${formatCount(commentCount)} 评论"
 
     override val createdTime: Long
         get() = -1
@@ -181,7 +182,7 @@ data class ArticleTargetDto(
         voting = voting,
     )
 
-    override val detailsText = "文章 · $voteupCount 赞 · $commentCount 评论"
+    override val detailsText = "文章 · ${formatCount(voteupCount)} 赞 · ${formatCount(commentCount)} 评论"
 
     override val excerpt: String
         get() = rawExcerpt.ifEmpty { excerptTitle }
@@ -210,7 +211,7 @@ data class PinTargetDto(
     val favoriteCount: Int = 0,
     val ipInfo: String? = null,
 ) : FeedTargetDto {
-    override val detailsText = "想法 · $likeCount 赞 · $commentCount 评论"
+    override val detailsText = "想法 · ${formatCount(likeCount)} 赞 · ${formatCount(commentCount)} 评论"
     override val title: String
         get() = "想法"
     override val excerpt: String?
@@ -250,7 +251,7 @@ data class QuestionTargetDto(
     override val title: String
         get() = _title ?: _name.orEmpty()
 
-    override val detailsText = "问题 · $followerCount 关注 · $answerCount 回答"
+    override val detailsText = "问题 · ${formatCount(followerCount)} 关注 · ${formatCount(answerCount)} 回答"
 
     override val updatedTime: Long
         get() = -1

@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.notification
 
+import com.zhihuminus.core.util.formatShortDate
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
@@ -131,9 +132,7 @@ data class NotificationTimelineItem(
 
     fun notificationListDate(): String {
         val epochSeconds = created.takeIf { it > 0 } ?: createdStr.toLongOrNull()
-            ?: return createdStr
-        val dateTime = Instant.fromEpochSeconds(epochSeconds).toLocalDateTime(TimeZone.currentSystemDefault())
-        return "${dateTime.month.number.toString().padStart(2, '0')}-${dateTime.day.toString().padStart(2, '0')}"
+        return epochSeconds?.let(::formatShortDate) ?: createdStr
     }
 
     fun invitationTime(): String {

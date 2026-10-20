@@ -88,17 +88,17 @@ fun PeopleListItem(
                 modifier = Modifier.padding(top = 2.dp),
             ) {
                 Text(
-                    text = "${formatCount(people.answerCount.toLong())} 回答",
+                    text = "${formatCount(people.answerCount)} 回答",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${formatCount(people.articleCount.toLong())} 文章",
+                    text = "${formatCount(people.articleCount)} 文章",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = "${formatCount(people.followerCount.toLong())} 粉丝",
+                    text = "${formatCount(people.followerCount)} 粉丝",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

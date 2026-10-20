@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.mapper
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.FollowedQuestionDto
@@ -99,7 +100,7 @@ object PeopleMapper {
             type = PostType.Answer,
             title = dto.question.title,
             summary = dto.excerpt,
-            details = "回答 · ${dto.voteupCount} 赞同 · ${dto.commentCount} 评论",
+            details = "回答 · ${formatCount(dto.voteupCount)} 赞同 · ${formatCount(dto.commentCount)} 评论",
             authorName = dto.author.name,
             authorBio = dto.author.headline,
             avatarUrl = dto.author.avatarUrl,
@@ -115,7 +116,7 @@ object PeopleMapper {
             type = PostType.Article,
             title = dto.title,
             summary = dto.excerpt,
-            details = "文章 · ${dto.voteupCount} 赞同 · ${dto.commentCount} 评论",
+            details = "文章 · ${formatCount(dto.voteupCount)} 赞同 · ${formatCount(dto.commentCount)} 评论",
             authorName = dto.author.name,
             authorBio = dto.author.headline,
             avatarUrl = dto.author.avatarUrl,
@@ -136,7 +137,7 @@ object PeopleMapper {
             type = PostType.Pin,
             title = "",
             summary = text,
-            details = "想法 · ${dto.likeCount} 赞 · ${dto.commentCount} 评论",
+            details = "想法 · ${formatCount(dto.likeCount)} 赞 · ${formatCount(dto.commentCount)} 评论",
             authorName = dto.author.name,
             authorBio = dto.author.headline,
             avatarUrl = dto.author.avatarUrl,

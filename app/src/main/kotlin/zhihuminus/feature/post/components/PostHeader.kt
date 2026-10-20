@@ -177,7 +177,7 @@ fun PostHeader(
         if (voteCount > 0) {
             Spacer(modifier = Modifier.height(4.dp))
             Text(
-                text = "${formatCount(voteCount.toLong())} 人赞同",
+                text = "${formatCount(voteCount)} 人赞同",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

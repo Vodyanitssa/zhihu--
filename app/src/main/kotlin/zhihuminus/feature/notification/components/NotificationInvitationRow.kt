@@ -24,6 +24,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.state.formatUnreadCount
 import com.zhihuminus.feature.notification.NotificationColumnHead
 
 @Composable
@@ -75,5 +76,3 @@ fun NotificationInvitationRow(
         }
     }
 }
-
-private fun formatUnreadCount(count: Int): String = if (count > 99) "99+" else count.toString()

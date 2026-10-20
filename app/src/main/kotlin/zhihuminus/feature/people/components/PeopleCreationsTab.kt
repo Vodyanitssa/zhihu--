@@ -22,6 +22,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.feature.people.PeopleCreationItem
@@ -55,10 +56,26 @@ fun PeopleCreationsTab(
             PeopleCreationTab.entries.forEach { tab ->
                 val isSelected = state.selectedCreationTab == tab
                 val countText = when (tab) {
-                    PeopleCreationTab.Answers -> if (state.profile.answerCount > 0) " (${state.profile.answerCount})" else ""
-                    PeopleCreationTab.Articles -> if (state.profile.articleCount > 0) " (${state.profile.articleCount})" else ""
-                    PeopleCreationTab.Pins -> if (state.profile.pinsCount > 0) " (${state.profile.pinsCount})" else ""
-                    PeopleCreationTab.Questions -> if (state.profile.questionCount > 0) " (${state.profile.questionCount})" else ""
+                    PeopleCreationTab.Answers ->
+                        state.profile.answerCount
+                            .takeIf { it > 0 }
+                            ?.let { " (${formatCount(it)})" }
+                            .orEmpty()
+                    PeopleCreationTab.Articles ->
+                        state.profile.articleCount
+                            .takeIf { it > 0 }
+                            ?.let { " (${formatCount(it)})" }
+                            .orEmpty()
+                    PeopleCreationTab.Pins ->
+                        state.profile.pinsCount
+                            .takeIf { it > 0 }
+                            ?.let { " (${formatCount(it)})" }
+                            .orEmpty()
+                    PeopleCreationTab.Questions ->
+                        state.profile.questionCount
+                            .takeIf { it > 0 }
+                            ?.let { " (${formatCount(it)})" }
+                            .orEmpty()
                     else -> ""
                 }
                 val bg by animateColorAsState(

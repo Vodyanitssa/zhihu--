@@ -44,7 +44,8 @@ import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.RenderContentNodes
-import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.formatCount
+import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import com.zhihuminus.navigation.LocalNavigator
@@ -161,7 +162,7 @@ fun CommentItem(
         ) {
             // 时间
             val formattedTime = remember(comment.createdAt) {
-                formatDateTime(comment.createdAt)
+                formatRelativeTime(comment.createdAt)
             }
             Text(
                 text = formattedTime,
@@ -255,16 +256,18 @@ fun CommentItem(
                         MaterialTheme.colorScheme.onSurfaceVariant
                     },
                 )
-                Spacer(modifier = Modifier.width(4.dp))
-                Text(
-                    text = comment.likeCount.toString(),
-                    fontSize = 12.sp,
-                    color = if (comment.liked) {
-                        MaterialTheme.colorScheme.primary
-                    } else {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    },
-                )
+                if (comment.likeCount > 0) {
+                    Spacer(modifier = Modifier.width(4.dp))
+                    Text(
+                        text = formatCount(comment.likeCount),
+                        fontSize = 12.sp,
+                        color = if (comment.liked) {
+                            MaterialTheme.colorScheme.primary
+                        } else {
+                            MaterialTheme.colorScheme.onSurfaceVariant
+                        },
+                    )
+                }
             }
         }
     }

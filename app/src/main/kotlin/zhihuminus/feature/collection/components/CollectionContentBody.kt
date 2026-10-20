@@ -10,7 +10,8 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.util.fastJoinToString
-import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.formatCount
+import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.collection.Collection
@@ -44,10 +45,10 @@ fun CollectionContentBody(
             if (showStatsHeader && collection != null) {
                 item {
                     val stats = listOfNotNull(
-                        collection.itemCount.let { "$it 条收藏" },
-                        collection.likeCount.let { "$it 个赞同" },
-                        collection.commentCount.let { "$it 条评论" },
-                        collection.updatedTime.takeIf { it > 0 }?.let { "${formatDateTime(it)} 更新" },
+                        collection.itemCount.let { "${formatCount(it)} 条收藏" },
+                        collection.likeCount.let { "${formatCount(it)} 个赞同" },
+                        collection.commentCount.let { "${formatCount(it)} 条评论" },
+                        collection.updatedTime.takeIf { it > 0 }?.let { "更新于 ${formatRelativeTime(it)}" },
                     )
                     Text(
                         text = stats.fastJoinToString(" · "),

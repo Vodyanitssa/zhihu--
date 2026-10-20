@@ -46,6 +46,13 @@ fun NotificationItemView(
     } else {
         MaterialTheme.colorScheme.primaryContainer.copy(alpha = 0.1f)
     }
+    val timeText = remember(notification.created, notification.createdStr) {
+        notification.created
+            .takeIf { it > 0 }
+            ?.let(::formatRelativeTime)
+            .orEmpty()
+            .ifBlank { notification.createdStr }
+    }
 
     Surface(
         modifier = modifier
@@ -103,11 +110,13 @@ fun NotificationItemView(
                             modifier = Modifier.weight(1f, fill = false),
                         )
                         Spacer(modifier = Modifier.width(8.dp))
-                        Text(
-                            text = formatRelativeTime(notification.created),
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
+                        if (timeText.isNotBlank()) {
+                            Text(
+                                text = timeText,
+                                style = MaterialTheme.typography.bodySmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
                     }
                     notification.content?.subTitle?.takeIf { it.isNotBlank() }?.let { subtitle ->
                         Spacer(modifier = Modifier.height(4.dp))

@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.collection
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 
 data class CollectionCreator(
@@ -67,4 +68,4 @@ interface CollectionRepository {
 }
 
 val Collection.subtitleText: String
-    get() = "$itemCount 内容·${if (isPublic) "公开" else "仅自己可见"}"
+    get() = "${formatCount(itemCount)} 内容·${if (isPublic) "公开" else "仅自己可见"}"

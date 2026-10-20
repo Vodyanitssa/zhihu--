@@ -35,6 +35,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.materialkolor.ktx.harmonize
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.collection.Collection
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -167,7 +168,7 @@ private fun CollectionItem(
                     )
                 }
                 Text(
-                    text = "${collection.itemCount} 篇内容",
+                    text = "${formatCount(collection.itemCount)} 篇内容",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.7f),
                     modifier = Modifier.padding(top = 2.dp),

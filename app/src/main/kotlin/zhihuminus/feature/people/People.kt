@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.people
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.OfficialBadge
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
@@ -76,7 +77,7 @@ data class FollowedQuestion(
     ): FeedDisplayItem = FeedDisplayItem(
         title = title,
         summary = excerpt.takeIf { it.isNotBlank() },
-        details = "问题 · $followerCount 关注 · $answerCount 回答",
+        details = "问题 · ${formatCount(followerCount)} 关注 · ${formatCount(answerCount)} 回答",
         avatarSrc = avatarUrl.ifEmpty { fallbackAvatarUrl.orEmpty() }.takeIf { it.isNotBlank() },
         authorName = authorName.ifEmpty { fallbackAuthorName.orEmpty() }.takeIf { it.isNotBlank() },
         contentTypeLabel = "问题",

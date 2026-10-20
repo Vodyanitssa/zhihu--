@@ -9,6 +9,7 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.collection.Collection
 
 @Composable
@@ -28,7 +29,7 @@ fun PeopleCollectionListItem(
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = "${collection.answerCount} 内容 · ${collection.followerCount} 关注",
+            text = "${formatCount(collection.answerCount)} 内容 · ${formatCount(collection.followerCount)} 关注",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),

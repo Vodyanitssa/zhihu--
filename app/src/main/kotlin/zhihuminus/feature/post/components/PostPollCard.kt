@@ -21,6 +21,7 @@ import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.post.PostPoll
 import com.zhihuminus.feature.post.PostPollOption
 
@@ -138,7 +139,7 @@ private fun PollResultRow(
                 Spacer(modifier = Modifier.width(8.dp))
             }
             Text(
-                text = "${option.votingCount} 票",
+                text = "${formatCount(option.votingCount)} 票",
                 style = MaterialTheme.typography.bodySmall,
                 color = MaterialTheme.colorScheme.onSurfaceVariant,
             )

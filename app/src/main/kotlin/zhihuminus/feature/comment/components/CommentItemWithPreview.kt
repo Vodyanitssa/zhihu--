@@ -20,6 +20,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.comment.CommentEvent
 import com.zhihuminus.feature.comment.CommentItemUiState
 
@@ -77,7 +78,7 @@ fun CommentItemWithPreview(
                         )
                         Spacer(modifier = Modifier.width(4.dp))
                         Text(
-                            text = "查看 $totalCount 条回复",
+                            text = "查看 ${formatCount(totalCount)} 条回复",
                             fontSize = 12.sp,
                             lineHeight = 12.sp,
                         )

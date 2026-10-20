@@ -64,7 +64,7 @@ import com.zhihuminus.core.content.renderer.ContentTypographyConfig
 import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.settings.LocalAppSettings
-import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
 import org.jsoup.Jsoup
@@ -295,7 +295,9 @@ private fun FeedCardContent(
     }
     val statsText = formatStatsText(typeLabel, item.details)
     val publishTimeText = item.publishTimeSeconds
-        ?.let(::formatDateTime)
+        ?.takeIf { it > 0 }
+        ?.let(::formatRelativeTime)
+        ?.takeIf(String::isNotEmpty)
     if (statsText.isNotEmpty() || publishTimeText != null) {
         Row(
             modifier = Modifier

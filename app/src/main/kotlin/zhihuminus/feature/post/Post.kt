@@ -1,6 +1,7 @@
 package com.zhihuminus.feature.post
 
 import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.util.formatCount
 
 enum class VoteUpState(
     val key: String,
@@ -99,7 +100,7 @@ data class PostPoll(
             append(voteState)
             if (isVoted || memberCount > 0) {
                 append("，")
-                append(memberCount)
+                append(formatCount(memberCount))
                 append(" 人参与")
             }
             if (validity != null) {

@@ -1,5 +1,6 @@
 package com.zhihuminus.data.zhihu.mapper
 
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
@@ -30,7 +31,7 @@ object ColumnMapper {
                 .orEmpty()
                 .ifEmpty { dto.excerptTitle.orEmpty() }
                 .takeIf { it.isNotBlank() },
-            details = "文章 · ${dto.voteupCount} 赞 · ${dto.commentCount} 评论",
+            details = "文章 · ${formatCount(dto.voteupCount)} 赞 · ${formatCount(dto.commentCount)} 评论",
             navDestinationJson = nav.toFeedDisplayItemNavDestinationJson(),
             avatarSrc = dto.author?.avatarUrl,
             authorName = dto.author?.name ?: "未知作者",

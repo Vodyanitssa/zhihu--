@@ -59,6 +59,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.Velocity
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.feature.people.components.EmptyHint
 import com.zhihuminus.feature.people.components.PeopleCollectionListItem
@@ -447,8 +448,8 @@ fun PeopleScreen(
 
     activeUserListType?.let { type ->
         val title = when (type) {
-            PeopleUserListType.Following -> "关注 (${state.profile.followingCount})"
-            PeopleUserListType.Followers -> "粉丝 (${state.profile.followerCount})"
+            PeopleUserListType.Following -> "关注 (${formatCount(state.profile.followingCount)})"
+            PeopleUserListType.Followers -> "粉丝 (${formatCount(state.profile.followerCount)})"
         }
         val listState = when (type) {
             PeopleUserListType.Following -> state.followingState

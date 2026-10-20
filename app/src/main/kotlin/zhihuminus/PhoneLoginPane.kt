@@ -313,7 +313,7 @@ internal fun PhoneLoginPane(activity: LoginActivity) {
                 } else {
                     Text(
                         if (resendSeconds > 0) {
-                            "${resendSeconds}s"
+                            "$resendSeconds 秒"
                         } else {
                             "发送验证码"
                         },

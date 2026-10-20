@@ -5,6 +5,7 @@ import android.graphics.Bitmap
 import com.zhihuminus.core.platform.PictureExportWebView
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.core.settings.model.ReadingSettings
+import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatDateTime
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostType
@@ -47,8 +48,8 @@ object PictureRenderer {
             PostType.Article -> "文章"
             PostType.Pin -> "想法"
         }
-        val voteText = "${post.voteCount} 赞"
-        val commentText = "${post.commentCount} 评论"
+        val voteText = "${formatCount(post.voteCount)} 赞"
+        val commentText = "${formatCount(post.commentCount)} 评论"
         val timeText = if (post.createdAt > 0) formatDateTime(post.createdAt) else ""
         val formattedIpInfo = post.ipInfo?.takeIf { it.isNotBlank() }?.let { "IP 属地：${it.trim()}" }
         val fontSizePx = 16 * readingSettings.fontSizePercent / 100

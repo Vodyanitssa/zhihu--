@@ -35,7 +35,7 @@ fun PeopleStatItem(
             .padding(horizontal = 8.dp, vertical = 2.dp),
     ) {
         Text(
-            text = formatCount(value.toLong()),
+            text = formatCount(value),
             style = MaterialTheme.typography.titleMedium,
             fontWeight = FontWeight.Bold,
         )
