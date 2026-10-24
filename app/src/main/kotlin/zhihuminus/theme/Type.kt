@@ -26,8 +26,8 @@ import androidx.compose.ui.unit.sp
 import com.zhihuminus.R
 
 // 内置等宽字体，保证行内代码与代码块在不同设备上显示一致。
-// Noto Sans Mono 仅覆盖拉丁等字符，中文字符会回退到系统字体渲染。
-val CodeFontFamily = FontFamily(Font(R.font.noto_sans_mono_regular))
+// Maple Mono 仅覆盖拉丁等字符，中文字符会回退到系统字体渲染。
+val CodeFontFamily = FontFamily(Font(R.font.maple_mono_normal_nl_regular))
 
 // Set of Material typography styles to start with
 val Typography = Typography(
