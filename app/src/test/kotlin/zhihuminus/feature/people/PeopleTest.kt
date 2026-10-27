@@ -239,7 +239,7 @@ class PeopleTest {
         assertEquals("创作", PeoplePrimaryTab.TITLES[0])
         assertEquals("动态", PeoplePrimaryTab.TITLES[1])
         assertEquals("收藏", PeoplePrimaryTab.TITLES[2])
-        assertEquals("关注订阅", PeoplePrimaryTab.TITLES[3])
+        assertEquals("订阅", PeoplePrimaryTab.TITLES[3])
     }
 
     @Test
@@ -298,6 +298,9 @@ class PeopleTest {
         val subSelection = resolvePeopleInitialSelection("关注订阅")
         assertEquals(PeoplePrimaryTab.FollowingSubscriptions, subSelection.primaryTab)
 
+        val subSelectionAlias = resolvePeopleInitialSelection("订阅")
+        assertEquals(PeoplePrimaryTab.FollowingSubscriptions, subSelectionAlias.primaryTab)
+
         val followingSelection = resolvePeopleInitialSelection("关注")
         assertEquals(PeoplePrimaryTab.Activities, followingSelection.primaryTab)
         assertEquals(PeopleUserListType.Following, followingSelection.initialUserListType)
@@ -316,7 +319,7 @@ class PeopleTest {
         assertEquals("创作", PeoplePrimaryTab.TITLES[0])
         assertEquals("动态", PeoplePrimaryTab.TITLES[1])
         assertEquals("收藏", PeoplePrimaryTab.TITLES[2])
-        assertEquals("关注订阅", PeoplePrimaryTab.TITLES[3])
+        assertEquals("订阅", PeoplePrimaryTab.TITLES[3])
 
         assertEquals(5, PeopleCreationTab.TITLES.size)
         assertEquals("回答", PeopleCreationTab.TITLES[0])
@@ -345,6 +348,7 @@ class PeopleTest {
         assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "动态")))
         assertEquals(2, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "收藏")))
         assertEquals(3, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "关注订阅")))
+        assertEquals(3, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "订阅")))
         assertEquals(1, peopleScreenInitialPage(Person(id = "1", urlToken = "u1", jumpTo = "nonexistent")))
     }
 

@@ -147,7 +147,7 @@ enum class PeoplePrimaryTab(
     Creations("创作"),
     Activities("动态"),
     Collections("收藏"),
-    FollowingSubscriptions("关注订阅"),
+    FollowingSubscriptions("订阅"),
     ;
 
     companion object {
@@ -197,7 +197,7 @@ fun resolvePeopleInitialSelection(jumpTo: String): PeopleInitialSelection = when
     "创作" -> PeopleInitialSelection(PeoplePrimaryTab.Creations, PeopleCreationTab.Answers)
     "动态" -> PeopleInitialSelection(PeoplePrimaryTab.Activities)
     "收藏" -> PeopleInitialSelection(PeoplePrimaryTab.Collections)
-    "关注订阅" -> PeopleInitialSelection(PeoplePrimaryTab.FollowingSubscriptions)
+    "关注订阅", "订阅" -> PeopleInitialSelection(PeoplePrimaryTab.FollowingSubscriptions)
     "关注" -> PeopleInitialSelection(PeoplePrimaryTab.Activities, initialUserListType = PeopleUserListType.Following)
     "粉丝" -> PeopleInitialSelection(PeoplePrimaryTab.Activities, initialUserListType = PeopleUserListType.Followers)
     else -> PeopleInitialSelection(PeoplePrimaryTab.Activities)

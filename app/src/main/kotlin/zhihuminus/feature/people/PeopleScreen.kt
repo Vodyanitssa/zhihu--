@@ -347,16 +347,16 @@ fun PeopleScreen(
                                     primaryPagerState.animateScrollToPage(index)
                                 }
                             },
-                            text = {
-                                Text(
-                                    text = tab.title,
-                                    style = MaterialTheme.typography.titleMedium,
-                                    maxLines = 1,
-                                    overflow = TextOverflow.Ellipsis,
-                                    fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
-                                )
-                            },
-                        )
+                        ) {
+                            Text(
+                                text = tab.title,
+                                style = MaterialTheme.typography.titleMedium,
+                                maxLines = 1,
+                                overflow = TextOverflow.Ellipsis,
+                                fontWeight = androidx.compose.ui.text.font.FontWeight.Bold,
+                                modifier = Modifier.padding(horizontal = 8.dp, vertical = 14.dp),
+                            )
+                        }
                     }
                 }
 
