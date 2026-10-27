@@ -87,14 +87,13 @@ fun PostHeader(
             .padding(horizontal = 16.dp, vertical = 12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        AsyncImage(
-            model = author.avatarUrl,
-            contentDescription = author.name,
+        val canNavigateToAuthor = author.id.isNotBlank() || author.urlToken.isNotBlank()
+        Row(
             modifier = Modifier
-                .size(40.dp)
-                .clip(CircleShape)
+                .weight(1f)
+                .clip(RoundedCornerShape(8.dp))
                 .then(
-                    if (author.id.isNotBlank() || author.urlToken.isNotBlank()) {
+                    if (canNavigateToAuthor) {
                         Modifier.clickable {
                             navigator.onNavigate(
                                 Person(id = author.id, urlToken = author.urlToken, name = author.name),
@@ -104,24 +103,33 @@ fun PostHeader(
                         Modifier
                     },
                 ),
-        )
-        Spacer(modifier = Modifier.width(12.dp))
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = author.name,
-                style = MaterialTheme.typography.titleMedium,
-                fontWeight = FontWeight.Bold,
-                maxLines = 1,
-                overflow = TextOverflow.Ellipsis,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            AsyncImage(
+                model = author.avatarUrl,
+                contentDescription = author.name,
+                modifier = Modifier
+                    .size(40.dp)
+                    .clip(CircleShape),
             )
-            if (author.headline.isNotBlank()) {
+            Spacer(modifier = Modifier.width(12.dp))
+            Column(modifier = Modifier.weight(1f)) {
                 Text(
-                    text = author.headline,
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    text = author.name,
+                    style = MaterialTheme.typography.titleMedium,
+                    fontWeight = FontWeight.Bold,
                     maxLines = 1,
                     overflow = TextOverflow.Ellipsis,
                 )
+                if (author.headline.isNotBlank()) {
+                    Text(
+                        text = author.headline,
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        maxLines = 1,
+                        overflow = TextOverflow.Ellipsis,
+                    )
+                }
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
