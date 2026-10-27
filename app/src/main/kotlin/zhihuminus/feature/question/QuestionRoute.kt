@@ -8,7 +8,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.viewmodel.compose.viewModel
-import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.extractAllImageUrls
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.platform.rememberExternalUrlOpener
@@ -81,12 +81,7 @@ fun QuestionRoute(
 
     // 详情 AST 只解析一次（见 ViewModel），这里复用节点注册图片预览列表
     LaunchedEffect(viewModel.uiState.contentNodes) {
-        imageViewManager.submitImages(
-            viewModel.uiState.contentNodes
-                .filterIsInstance<ContentNode.Image>()
-                .filter { it.url.isNotBlank() }
-                .map { it.url },
-        )
+        imageViewManager.submitImages(viewModel.uiState.contentNodes.extractAllImageUrls())
     }
 
     CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {

@@ -30,7 +30,6 @@ import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
-import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
@@ -49,10 +48,8 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
@@ -65,7 +62,12 @@ import androidx.core.net.toUri
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clipboardManager
 import com.zhihuminus.core.platform.luoTianYiUrlLauncher
+import com.zhihuminus.core.platform.rememberImageSaver
+import com.zhihuminus.core.platform.rememberImageSharer
 import com.zhihuminus.core.settings.model.ShareActionOption
+import com.zhihuminus.feature.imageview.ImageView
+import com.zhihuminus.feature.imageview.ImageViewActions
+import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.LocalNavigator
@@ -76,9 +78,6 @@ import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.ui.articleHost
 import kotlinx.coroutines.launch
-import me.saket.telephoto.zoomable.coil3.ZoomableAsyncImage
-import me.saket.telephoto.zoomable.rememberZoomableImageState
-import me.saket.telephoto.zoomable.rememberZoomableState
 
 /**
  * 通用分享弹窗内容。
@@ -308,30 +307,22 @@ class OpenImageDialog(
         setContentView(
             ComposeView(context).apply {
                 setContent {
-                    OpenImagePreviewContent(
-                        urls = imageUrls,
-                        initialIndex = initialPage,
-                        onDismiss = { dismiss() },
-                        onOpenInBrowser = { imageUrl ->
-                            luoTianYiUrlLauncher(context, imageUrl.toUri())
-                        },
-                    ) { imageUrl, onClick, onLongClick, onPageSwipeEnabledChange ->
-                        val imageState = rememberZoomableImageState(rememberZoomableState())
-                        LaunchedEffect(imageState) {
-                            snapshotFlow { imageState.zoomableState.zoomFraction }
-                                .collect { zoomFraction ->
-                                    onPageSwipeEnabledChange((zoomFraction ?: 0f) <= 0.01f)
-                                }
+                    val saveImage = rememberImageSaver()
+                    val shareImage = rememberImageSharer()
+                    val manager = remember {
+                        ImageViewManager().apply {
+                            show(imageUrls, initialPage)
                         }
-                        ZoomableAsyncImage(
-                            model = imageUrl,
-                            contentDescription = null,
-                            modifier = Modifier.fillMaxSize(),
-                            state = imageState,
-                            onClick = { onClick() },
-                            onLongClick = onLongClick,
-                        )
                     }
+                    ImageView(
+                        manager = manager,
+                        actions = ImageViewActions(
+                            onSave = { saveImage(it) },
+                            onShare = { shareImage(it) },
+                            onOpenInBrowser = { luoTianYiUrlLauncher(context, it.toUri()) },
+                        ),
+                        onDismiss = { dismiss() },
+                    )
                 }
             },
         )

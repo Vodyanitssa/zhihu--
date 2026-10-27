@@ -1,9 +1,11 @@
 package com.zhihuminus.feature.column
 
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
 import androidx.lifecycle.viewmodel.compose.viewModel
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.core.platform.rememberImageSaver
 import com.zhihuminus.core.platform.rememberImageSharer
@@ -43,19 +45,21 @@ fun ColumnRoute(
         }
     }
 
-    ColumnScreen(
-        columnId = columnId,
-        state = viewModel.uiState,
-        onEvent = viewModel::onEvent,
-        onBack = onBack,
-    )
+    CompositionLocalProvider(LocalImageViewManager provides imageViewManager) {
+        ColumnScreen(
+            columnId = columnId,
+            state = viewModel.uiState,
+            onEvent = viewModel::onEvent,
+            onBack = onBack,
+        )
 
-    ImageView(
-        manager = imageViewManager,
-        actions = ImageViewActions(
-            onSave = { saveImage(it) },
-            onShare = { shareImage(it) },
-            onOpenInBrowser = { openExternalUrl(it) },
-        ),
-    )
+        ImageView(
+            manager = imageViewManager,
+            actions = ImageViewActions(
+                onSave = { saveImage(it) },
+                onShare = { shareImage(it) },
+                onOpenInBrowser = { openExternalUrl(it) },
+            ),
+        )
+    }
 }

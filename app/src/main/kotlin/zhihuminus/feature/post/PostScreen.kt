@@ -35,7 +35,7 @@ import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
-import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.content.extractAllImageUrls
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.collection.components.CollectionDialogComponent
@@ -197,10 +197,7 @@ fun PostScreen(
                     val imageViewManager = LocalImageViewManager.current
                     LaunchedEffect(state.post.content, state.post.coverUrl, isTransitionFinished) {
                         if (isTransitionFinished) {
-                            val contentImages = state.post.content
-                                .filterIsInstance<ContentNode.Image>()
-                                .filter { it.url.isNotBlank() }
-                                .map { it.url }
+                            val contentImages = state.post.content.extractAllImageUrls()
                             val allImages = listOfNotNull(state.post.coverUrl) + contentImages
                             imageViewManager?.submitImages(allImages)
                         }

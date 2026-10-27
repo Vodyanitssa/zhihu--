@@ -107,3 +107,23 @@ sealed interface InlineNode {
 
     data object LineBreak : InlineNode
 }
+
+/**
+ * 递归提取 AST 节点中的所有图片 URL（过滤空白和 data URI）。
+ */
+fun List<ContentNode>.extractAllImageUrls(): List<String> = buildList<String> {
+    fun collectFrom(node: ContentNode) {
+        when (node) {
+            is ContentNode.Image -> {
+                if (node.url.isNotBlank() && !node.url.startsWith("data:")) {
+                    add(node.url)
+                }
+            }
+            is ContentNode.Listing -> {
+                node.items.forEach { collectFrom(it) }
+            }
+            else -> Unit
+        }
+    }
+    this@extractAllImageUrls.forEach { collectFrom(it) }
+}

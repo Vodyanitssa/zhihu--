@@ -33,20 +33,35 @@ open class ImageViewManager {
      */
     fun submitImages(urls: List<String>) {
         _images.clear()
-        _images.addAll(urls)
+        _images.addAll(urls.filter { it.isNotBlank() && !it.startsWith("data:") })
     }
 
     /**
      * 展示指定 URL 的图片预览。
      *
      * Renderer 层的 Image composable 在点击时调用。
-     * 如果 URL 不在已提交的列表中，则忽略。
+     * 如果 URL 已经在已提交列表中，则定位至该索引；
+     * 若未在列表中（如动态内容或遗漏收集），自动追加该单图，确保点击始终有响应。
      */
     open fun show(url: String) {
+        if (url.isBlank() || url.startsWith("data:")) return
         val index = _images.indexOf(url)
         if (index >= 0) {
             _currentIndex = index
+        } else {
+            _images.add(url)
+            _currentIndex = _images.lastIndex
         }
+    }
+
+    /**
+     * 展示多张图片并定位到指定下标。
+     */
+    fun show(urls: List<String>, initialIndex: Int = 0) {
+        val validUrls = urls.filter { it.isNotBlank() && !it.startsWith("data:") }
+        if (validUrls.isEmpty()) return
+        submitImages(validUrls)
+        _currentIndex = initialIndex.coerceIn(0, validUrls.lastIndex)
     }
 
     /**
