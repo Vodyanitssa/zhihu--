@@ -180,6 +180,7 @@ dependencies {
     implementation("com.google.zxing:core:3.5.4")
 
     implementation("androidx.core:core-ktx:1.19.0")
+    implementation("androidx.work:work-runtime-ktx:2.10.0")
     // Lifecycle (JetBrains KMP versions)
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-runtime-compose:$jetbrainsLifecycleVersion")
     implementation("org.jetbrains.androidx.lifecycle:lifecycle-viewmodel-compose:$jetbrainsLifecycleVersion")

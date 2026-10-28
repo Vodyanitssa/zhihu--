@@ -49,6 +49,7 @@ import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.platform.SystemNotificationPresenter
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clearShareImageCache
 import com.zhihuminus.core.platform.clipboardManager
@@ -60,6 +61,8 @@ import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.local.AppRuntimeStore
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
+import com.zhihuminus.feature.notification.NotificationType
+import com.zhihuminus.feature.notification.worker.NotificationScheduler
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.Home
@@ -233,6 +236,12 @@ class MainActivity :
             } else if (isFirstLaunch && !AccountData.data.login) {
                 startLoginActivity()
             }
+        }
+
+        SystemNotificationPresenter.ensureNotificationChannels(this)
+        val appSettingsRepo = AndroidAppSettingsRepository.getInstance(applicationContext)
+        if (NotificationType.entries.any { appSettingsRepo.current.notification.isSystemNotificationEnabled(it) }) {
+            NotificationScheduler.schedulePeriodicSync(this)
         }
 
         ImageLoader

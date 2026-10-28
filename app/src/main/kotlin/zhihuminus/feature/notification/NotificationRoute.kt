@@ -9,6 +9,7 @@ import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberSystemUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.state.UnreadNotificationState
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
@@ -30,6 +31,7 @@ fun NotificationRoute(
         NotificationViewModel(repository)
     }
     val userMessages = rememberUserMessageSink()
+    val openSystemUrl = rememberSystemUrlOpener()
     val lifecycleOwner = LocalLifecycleOwner.current
 
     LaunchedEffect(lifecycleOwner, viewModel) {
@@ -57,8 +59,22 @@ fun NotificationRoute(
         onCategoryClick = onCategoryClick,
         onInvitationClick = onInvitationClick,
         onConversationClick = { notification ->
-            notification.navDestination()?.let(onConversationClick)
-                ?: userMessages.showShortMessage("暂不支持打开此消息")
+            val destination = notification.navDestination()
+            if (destination != null) {
+                onConversationClick(destination)
+            } else {
+                val fallbackUrl = listOf(
+                    notification.content?.targetLink,
+                    notification.content?.subTargetLink,
+                    notification.targetSource?.targetLink,
+                    notification.head?.targetLink,
+                ).firstOrNull { !it.isNullOrBlank() }
+                if (fallbackUrl != null) {
+                    openSystemUrl(fallbackUrl)
+                } else {
+                    userMessages.showShortMessage("暂不支持打开此消息")
+                }
+            }
         },
         showUnreadBadges = com.zhihuminus.core.settings.LocalAppSettings.current.notification.showUnreadBadge,
         modifier = modifier,

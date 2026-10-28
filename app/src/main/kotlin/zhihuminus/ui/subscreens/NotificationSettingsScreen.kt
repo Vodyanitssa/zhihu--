@@ -17,6 +17,10 @@
 
 package com.zhihuminus.ui.subscreens
 
+import android.Manifest
+import android.os.Build
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
@@ -36,10 +40,14 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.platform.SystemNotificationPresenter
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.feature.notification.NotificationType
+import com.zhihuminus.feature.notification.worker.NotificationScheduler
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.ui.components.SettingItemGroup
 import com.zhihuminus.ui.components.SettingItemWithSwitch
@@ -56,6 +64,15 @@ import com.zhihuminus.ui.components.SettingItemWithSwitch
 fun NotificationSettingsScreen(
     setting: String? = null,
 ) {
+    val context = LocalContext.current
+    val userMessages = rememberUserMessageSink()
+    val permissionLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.RequestPermission(),
+    ) { isGranted ->
+        if (!isGranted) {
+            userMessages.showShortMessage("需要通知权限才能接收系统通知")
+        }
+    }
     val navigator = LocalNavigator.current
     val appSettings = LocalAppSettings.current
     val repository = LocalAppSettingsRepository.current
@@ -127,10 +144,19 @@ fun NotificationSettingsScreen(
                         title = { Text(type.displayName) },
                         checked = notificationSettings.isSystemNotificationEnabled(type),
                         onCheckedChange = { checked ->
+                            if (checked && !SystemNotificationPresenter.hasNotificationPermission(context)) {
+                                if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
+                                    permissionLauncher.launch(Manifest.permission.POST_NOTIFICATIONS)
+                                }
+                            }
+                            val updated = notificationSettings.systemNotifications + (type to checked)
                             repository.updateNotification { current ->
-                                current.copy(
-                                    systemNotifications = current.systemNotifications + (type to checked),
-                                )
+                                current.copy(systemNotifications = updated)
+                            }
+                            val hasAnyEnabled = NotificationType.entries.any { updated[it] ?: false }
+                            NotificationScheduler.updateSchedule(context, hasAnyEnabled)
+                            if (hasAnyEnabled) {
+                                SystemNotificationPresenter.ensureNotificationChannels(context)
                             }
                         },
                     )

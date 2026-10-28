@@ -31,6 +31,7 @@ import kotlin.test.assertEquals
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class NotificationTest {
     @Test
@@ -134,12 +135,14 @@ class NotificationTest {
     @Test
     fun testNotificationTypeRegexMatching() {
         assertEquals(NotificationType.LIKE_ANSWER, matchNotificationType("喜欢了你的回答"))
+        assertEquals(NotificationType.UPVOTE_ANSWER, matchNotificationType("赞同了你的回答"))
         assertEquals(NotificationType.LIKE_COMMENT, matchNotificationType("喜欢了你的评论"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了你的评论"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了回答下你的评论"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了文章下你的评论"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了回答下的所有人"))
         assertEquals(NotificationType.REPLY_COMMENT, matchNotificationType("回复了文章下的所有人"))
+        assertEquals(NotificationType.FOLLOW_USER, matchNotificationType("关注了你"))
         assertEquals(NotificationType.INVITE_ANSWER, matchNotificationType("邀请你回答问题"))
         assertNull(matchNotificationType("其他通知"))
     }
@@ -449,5 +452,16 @@ class NotificationTest {
         assertEquals("99", formatUnreadCount(99))
         assertEquals("99+", formatUnreadCount(100))
         assertEquals("99+", formatUnreadCount(999))
+    }
+
+    @Test
+    fun testNotificationTypeEntriesCompleteness() {
+        val types = NotificationType.entries
+        assertTrue(types.contains(NotificationType.LIKE_ANSWER))
+        assertTrue(types.contains(NotificationType.UPVOTE_ANSWER))
+        assertTrue(types.contains(NotificationType.LIKE_COMMENT))
+        assertTrue(types.contains(NotificationType.REPLY_COMMENT))
+        assertTrue(types.contains(NotificationType.FOLLOW_USER))
+        assertTrue(types.contains(NotificationType.INVITE_ANSWER))
     }
 }

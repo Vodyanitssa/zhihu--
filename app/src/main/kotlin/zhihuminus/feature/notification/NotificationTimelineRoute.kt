@@ -7,6 +7,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberSystemUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
@@ -37,6 +38,7 @@ fun NotificationTimelineRoute(
         )
     }
     val userMessages = rememberUserMessageSink()
+    val openSystemUrl = rememberSystemUrlOpener()
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
@@ -51,8 +53,22 @@ fun NotificationTimelineRoute(
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNotificationClick = { notification ->
-            notification.navDestination()?.let(onDestinationClick)
-                ?: userMessages.showShortMessage("暂不支持打开此通知")
+            val destination = notification.navDestination()
+            if (destination != null) {
+                onDestinationClick(destination)
+            } else {
+                val fallbackUrl = listOf(
+                    notification.content?.targetLink,
+                    notification.content?.subTargetLink,
+                    notification.targetSource?.targetLink,
+                    notification.head?.targetLink,
+                ).firstOrNull { !it.isNullOrBlank() }
+                if (fallbackUrl != null) {
+                    openSystemUrl(fallbackUrl)
+                } else {
+                    userMessages.showShortMessage("暂不支持打开此通知")
+                }
+            }
         },
         onQuestionClick = { notification ->
             notification.target?.id?.toLongOrNull()?.let { questionId ->
@@ -74,7 +90,19 @@ fun NotificationTimelineRoute(
             if (destination != null) {
                 onDestinationClick(destination)
             } else {
-                userMessages.showShortMessage("正在施工")
+                val questionId = notification.target?.id?.toLongOrNull()
+                if (questionId != null) {
+                    onDestinationClick(
+                        Question(
+                            questionId = questionId,
+                            title = notification.target.title.ifBlank {
+                                notification.targetSource?.text.orEmpty()
+                            },
+                        ),
+                    )
+                } else {
+                    userMessages.showShortMessage("无法打开这个问题")
+                }
             }
         },
         modifier = modifier,
