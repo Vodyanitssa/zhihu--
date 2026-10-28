@@ -77,3 +77,17 @@
 -dontwarn org.slf4j.impl.StaticLoggerBinder
 -dontwarn com.google.re2j.Matcher
 -dontwarn com.google.re2j.Pattern
+
+##
+## WorkManager & Room
+##
+-keep class * extends androidx.room.RoomDatabase {
+    <init>();
+}
+-keep class androidx.work.impl.WorkDatabase_Impl {
+    *;
+}
+-keep class * extends androidx.work.ListenableWorker {
+    public <init>(android.content.Context, androidx.work.WorkerParameters);
+}
+
