@@ -354,33 +354,33 @@ object AstParser {
     }
 
     private fun parseTable(element: Element): ContentNode.Table? {
-        val rowElements = element.select("tbody > tr")
+        val rowElements = element.select("tr")
         if (rowElements.isEmpty()) {
             return null
         }
         val rows = rowElements
-            .map { row ->
-                ContentNode.TableRow(
-                    content = row
-                        .children()
-                        .filter {
-                            it.tagName() == "th" || it.tagName() == "td"
-                        }.map { cell ->
-                            ContentNode.TableCell(
-                                content = cell.text(),
-                                isHeader = cell.tagName() == "th",
-                            )
-                        },
-                )
-            }.filter {
-                it.content.isNotEmpty()
+            .mapNotNull { row ->
+                val cells = row
+                    .children()
+                    .filter {
+                        it.tagName() == "th" || it.tagName() == "td"
+                    }.map { cell ->
+                        ContentNode.TableCell(
+                            content = cell.text().trim(),
+                            isHeader = cell.tagName() == "th",
+                        )
+                    }
+                if (cells.isNotEmpty()) ContentNode.TableRow(cells) else null
             }
         if (rows.isEmpty()) {
             return null
         }
-        val header = rows.firstOrNull { row ->
-            row.content.any(ContentNode.TableCell::isHeader)
-        } ?: rows.first()
+        val hasThead = element.selectFirst("thead > tr") != null
+        val header = when {
+            hasThead -> rows.firstOrNull()
+            rows.first().content.all(ContentNode.TableCell::isHeader) -> rows.first()
+            else -> null
+        }
         return ContentNode.Table(
             rows = rows,
             header = header,

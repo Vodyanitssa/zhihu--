@@ -132,15 +132,17 @@ object HtmlRenderer {
     private fun renderTable(node: ContentNode.Table): String = buildString {
         append("<table>")
 
-        // Render the header row in <thead>.
-        append("<thead><tr>")
-        node.header.content.forEach { cell ->
-            append("<th>${escapeHtml(cell.content)}</th>")
+        // Render the header row in <thead> if present.
+        if (node.header != null) {
+            append("<thead><tr>")
+            node.header.content.forEach { cell ->
+                append("<th>${escapeHtml(cell.content)}</th>")
+            }
+            append("</tr></thead>")
         }
-        append("</tr></thead>")
 
         // Render remaining rows in <tbody>, skipping the header if it is
-        // also present in the rows list (the parser always includes it).
+        // also present in the rows list.
         append("<tbody>")
         node.rows.forEach { row ->
             if (row == node.header) return@forEach

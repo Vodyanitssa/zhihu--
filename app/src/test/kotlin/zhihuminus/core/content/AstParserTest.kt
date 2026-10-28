@@ -111,4 +111,96 @@ class AstParserTest {
         val paragraph = assertIs<ContentNode.Paragraph>(content.first())
         assertTrue(paragraph.content.any { it is InlineNode.LineBreak })
     }
+
+    @Test
+    fun testParseTableWithTheadAndTbody() {
+        val html =
+            """
+            <table>
+                <thead>
+                    <tr><th>标题1</th><th>标题2</th></tr>
+                </thead>
+                <tbody>
+                    <tr><td>数据1</td><td>数据2</td></tr>
+                    <tr><td>数据3</td><td>数据4</td></tr>
+                </tbody>
+            </table>
+            """.trimIndent()
+        val nodes = AstParser.parseContent(html)
+        assertEquals(1, nodes.size)
+        val table = assertIs<ContentNode.Table>(nodes.first())
+        assertEquals(3, table.rows.size)
+        val header = table.header
+        requireNotNull(header)
+        assertEquals(2, header.content.size)
+        assertEquals("标题1", header.content[0].content)
+        assertTrue(header.content[0].isHeader)
+        assertEquals("标题2", header.content[1].content)
+        assertTrue(header.content[1].isHeader)
+
+        assertEquals("数据1", table.rows[1].content[0].content)
+        assertEquals(false, table.rows[1].content[0].isHeader)
+    }
+
+    @Test
+    fun testParseTableWithoutHeader() {
+        val html =
+            """
+            <table>
+                <tbody>
+                    <tr><td>A</td><td>B</td></tr>
+                    <tr><td>C</td><td>D</td></tr>
+                </tbody>
+            </table>
+            """.trimIndent()
+        val nodes = AstParser.parseContent(html)
+        assertEquals(1, nodes.size)
+        val table = assertIs<ContentNode.Table>(nodes.first())
+        assertEquals(2, table.rows.size)
+        assertEquals(null, table.header)
+    }
+
+    @Test
+    fun testHtmlRendererTableOutput() {
+        val withHeader = ContentNode.Table(
+            rows = listOf(
+                ContentNode.TableRow(
+                    listOf(
+                        ContentNode.TableCell("Col 1", isHeader = true),
+                        ContentNode.TableCell("Col 2", isHeader = true),
+                    ),
+                ),
+                ContentNode.TableRow(
+                    listOf(
+                        ContentNode.TableCell("Val 1", isHeader = false),
+                        ContentNode.TableCell("Val 2", isHeader = false),
+                    ),
+                ),
+            ),
+            header = ContentNode.TableRow(
+                listOf(
+                    ContentNode.TableCell("Col 1", isHeader = true),
+                    ContentNode.TableCell("Col 2", isHeader = true),
+                ),
+            ),
+        )
+        val htmlWithHeader = HtmlRenderer.render(listOf(withHeader))
+        assertTrue(htmlWithHeader.contains("<thead><tr><th>Col 1</th><th>Col 2</th></tr></thead>"))
+        assertTrue(htmlWithHeader.contains("<tbody><tr><td>Val 1</td><td>Val 2</td></tr></tbody>"))
+
+        val withoutHeader = ContentNode.Table(
+            rows = listOf(
+                ContentNode.TableRow(
+                    listOf(
+                        ContentNode.TableCell("A", isHeader = false),
+                        ContentNode.TableCell("B", isHeader = false),
+                    ),
+                ),
+            ),
+            header = null,
+        )
+        val htmlWithoutHeader = HtmlRenderer.render(listOf(withoutHeader))
+        assertTrue(!htmlWithoutHeader.contains("<thead>"))
+        assertTrue(htmlWithoutHeader.contains("<tbody><tr><td>A</td><td>B</td></tr></tbody>"))
+    }
 }

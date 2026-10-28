@@ -54,7 +54,7 @@ sealed interface ContentNode {
 
     data class Table(
         val rows: List<TableRow>,
-        val header: TableRow,
+        val header: TableRow? = null,
     ) : ContentNode
 
     data class TableRow(

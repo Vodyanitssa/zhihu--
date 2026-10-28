@@ -18,8 +18,10 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.wrapContentWidth
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.appendInlineContent
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.foundation.verticalScroll
@@ -47,9 +49,11 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.drawBehind
+import androidx.compose.ui.draw.drawWithContent
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
@@ -756,36 +760,156 @@ private fun Listing(
 @Composable
 private fun Table(node: ContentNode.Table) {
     val columnCount = node.rows.maxOfOrNull { it.content.size } ?: return
-    val tableWidth = 120.dp * columnCount
+    if (columnCount == 0 || node.rows.isEmpty()) return
 
-    // rows 已经包含 header；这里只需按 isHeader 给单元格设置样式，
-    // 否则 header 会被渲染两次。
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .horizontalScroll(rememberScrollState()),
-    ) {
-        Column(modifier = Modifier.width(tableWidth)) {
-            node.rows.forEachIndexed { rowIndex, row ->
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .height(IntrinsicSize.Min),
-                ) {
-                    repeat(columnCount) { columnIndex ->
-                        val cell = row.content.getOrNull(columnIndex)
-                        TableCell(
-                            text = cell?.content.orEmpty(),
-                            isHeader = cell?.isHeader == true || row == node.header,
-                            modifier = Modifier
-                                .weight(1f)
-                                .fillMaxHeight(),
-                        )
-                    }
+    val maxVisualLenPerColumn = remember(node) {
+        (0 until columnCount).map { colIndex ->
+            node.rows.maxOfOrNull { row ->
+                val text = row.content
+                    .getOrNull(colIndex)
+                    ?.content
+                    .orEmpty()
+                text.fold(0) { count, char ->
+                    count + if (char.code > 127) 2 else 1
                 }
+            } ?: 0
+        }
+    }
 
-                if (rowIndex < node.rows.lastIndex) {
-                    HorizontalDivider(thickness = 0.5.dp)
+    val colMinWidths = remember(maxVisualLenPerColumn) {
+        maxVisualLenPerColumn.map { visualLen ->
+            when {
+                visualLen <= 6 -> 72.dp
+                visualLen <= 24 -> 108.dp
+                else -> 160.dp
+            }
+        }
+    }
+
+    val colWeights = remember(maxVisualLenPerColumn) {
+        maxVisualLenPerColumn.map { visualLen ->
+            when {
+                visualLen <= 6 -> 1.0f
+                visualLen <= 24 -> 1.6f
+                else -> 2.4f
+            }
+        }
+    }
+
+    val totalDesiredMinWidth = remember(colMinWidths) {
+        colMinWidths.fold(0.dp) { acc, dp -> acc + dp }
+    }
+
+    BoxWithConstraints(modifier = Modifier.fillMaxWidth()) {
+        val fitsOnScreen = totalDesiredMinWidth <= maxWidth
+        val scrollState = rememberScrollState()
+        val fadeColor = MaterialTheme.colorScheme.surface
+
+        Box(
+            modifier = Modifier
+                .fillMaxWidth()
+                .clip(RoundedCornerShape(8.dp))
+                .border(
+                    width = 1.dp,
+                    color = MaterialTheme.colorScheme.outlineVariant,
+                    shape = RoundedCornerShape(8.dp),
+                ).background(MaterialTheme.colorScheme.surface)
+                .drawWithContent {
+                    drawContent()
+                    if (!fitsOnScreen) {
+                        val fadeWidth = 20.dp.toPx()
+                        if (scrollState.canScrollBackward) {
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(fadeColor.copy(alpha = 0.9f), Color.Transparent),
+                                    startX = 0f,
+                                    endX = fadeWidth,
+                                ),
+                                size = Size(fadeWidth, size.height),
+                            )
+                        }
+                        if (scrollState.canScrollForward) {
+                            drawRect(
+                                brush = Brush.horizontalGradient(
+                                    colors = listOf(Color.Transparent, fadeColor.copy(alpha = 0.9f)),
+                                    startX = size.width - fadeWidth,
+                                    endX = size.width,
+                                ),
+                                topLeft = Offset(size.width - fadeWidth, 0f),
+                                size = Size(fadeWidth, size.height),
+                            )
+                        }
+                    }
+                },
+        ) {
+            Row(
+                modifier = if (fitsOnScreen) {
+                    Modifier.fillMaxWidth()
+                } else {
+                    Modifier
+                        .fillMaxWidth()
+                        .horizontalScroll(scrollState)
+                },
+            ) {
+                Column(
+                    modifier = if (fitsOnScreen) {
+                        Modifier.fillMaxWidth()
+                    } else {
+                        Modifier.wrapContentWidth()
+                    },
+                ) {
+                    node.rows.forEachIndexed { rowIndex, row ->
+                        val isHeaderRow = row == node.header || (rowIndex == 0 && node.header == null && row.content.all { it.isHeader })
+                        val dataRowIndex = if (node.header != null || (rowIndex == 0 && row.content.all { it.isHeader })) {
+                            rowIndex - 1
+                        } else {
+                            rowIndex
+                        }
+                        val rowBg = when {
+                            isHeaderRow -> MaterialTheme.colorScheme.surfaceContainerHigh
+                            dataRowIndex % 2 == 1 -> MaterialTheme.colorScheme.surfaceContainerHighest.copy(alpha = 0.25f)
+                            else -> Color.Transparent
+                        }
+
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .height(IntrinsicSize.Min)
+                                .background(rowBg),
+                        ) {
+                            repeat(columnCount) { columnIndex ->
+                                if (columnIndex > 0) {
+                                    Box(
+                                        modifier = Modifier
+                                            .width(0.5.dp)
+                                            .fillMaxHeight()
+                                            .background(MaterialTheme.colorScheme.outlineVariant.copy(alpha = 0.5f)),
+                                    )
+                                }
+                                val cell = row.content.getOrNull(columnIndex)
+                                val cellModifier = if (fitsOnScreen) {
+                                    Modifier.weight(colWeights[columnIndex])
+                                } else {
+                                    Modifier.width(colMinWidths[columnIndex])
+                                }.fillMaxHeight()
+
+                                TableCell(
+                                    text = cell?.content.orEmpty(),
+                                    isHeader = cell?.isHeader == true || isHeaderRow,
+                                    modifier = cellModifier,
+                                )
+                            }
+                        }
+
+                        if (rowIndex < node.rows.lastIndex) {
+                            val dividerThickness = if (isHeaderRow) 1.dp else 0.5.dp
+                            val dividerAlpha = if (isHeaderRow) 1f else 0.6f
+                            HorizontalDivider(
+                                thickness = dividerThickness,
+                                color = MaterialTheme.colorScheme.outlineVariant.copy(alpha = dividerAlpha),
+                            )
+                        }
+                    }
                 }
             }
         }
@@ -809,20 +933,16 @@ private fun TableCell(
     } else {
         baseStyle
     }
-    Text(
-        text = text,
+    Box(
         modifier = modifier
-            .border(
-                width = 0.5.dp,
-                color = MaterialTheme.colorScheme.outlineVariant,
-            ).background(
-                if (isHeader) {
-                    MaterialTheme.colorScheme.surfaceVariant
-                } else {
-                    Color.Transparent
-                },
-            ).padding(horizontal = 10.dp, vertical = 8.dp),
-        style = effectiveStyle,
-        fontWeight = if (isHeader) FontWeight.Bold else FontWeight.Normal,
-    )
+            .padding(horizontal = 12.dp, vertical = 9.dp),
+        contentAlignment = Alignment.TopStart,
+    ) {
+        Text(
+            text = text,
+            style = effectiveStyle,
+            fontWeight = if (isHeader) FontWeight.SemiBold else FontWeight.Normal,
+            color = MaterialTheme.colorScheme.onSurface,
+        )
+    }
 }
