@@ -20,7 +20,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.drawBehind
 import androidx.compose.ui.geometry.CornerRadius
 import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.post.PostPoll
 import com.zhihuminus.feature.post.PostPollOption
@@ -34,7 +36,8 @@ fun PostPollCard(
     val showsResult = poll.isVoted || !acceptsVote
     val pollVoterCount = poll.memberCount.takeIf { it > 0 } ?: poll.votingCount
 
-    Spacer(modifier = Modifier.height(16.dp))
+    val density = LocalDensity.current
+    Spacer(modifier = Modifier.height(LocalContentTypographyConfig.current.paragraphSpacing(density)))
     Card(
         modifier = Modifier.fillMaxWidth(),
         colors = CardDefaults.cardColors(

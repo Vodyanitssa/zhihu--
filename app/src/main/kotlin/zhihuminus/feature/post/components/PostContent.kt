@@ -12,6 +12,7 @@ import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.ContentNode
@@ -28,27 +29,21 @@ fun PostContent(
     onEvent: (PostEvent) -> Unit = {},
 ) {
     val inAppLinkOpener = rememberInAppLinkOpener()
-    val pinImages = mutableListOf<ContentNode>()
+    val isPin = post.type == PostType.Pin
+    val pinImages = remember(post.content, isPin) {
+        if (isPin) post.content.filterIsInstance<ContentNode.Image>() else emptyList()
+    }
+    val pinTextNodes = remember(post.content, isPin) {
+        if (isPin) post.content.filterNot { it is ContentNode.Image } else post.content
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
             .padding(horizontal = 16.dp)
             .padding(bottom = 72.dp),
     ) {
-        if (post.type == PostType.Pin) {
-            post.content.forEach { contentNode ->
-                when (contentNode) {
-                    is ContentNode.Image -> {
-                        pinImages += contentNode
-                    }
-
-                    else -> RenderContentNode(contentNode)
-                }
-            }
-        } else {
-            SelectionContainer {
-                RenderContentNodes(post.content)
-            }
+        SelectionContainer {
+            RenderContentNodes(if (isPin) pinTextNodes else post.content)
         }
 
         // Pin image gallery

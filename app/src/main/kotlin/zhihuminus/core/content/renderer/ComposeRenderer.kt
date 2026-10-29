@@ -72,6 +72,7 @@ import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.text.withLink
 import androidx.compose.ui.text.withStyle
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
@@ -332,10 +333,14 @@ private fun FootnoteDialog(
 fun RenderContentNodes(
     nodes: List<ContentNode>,
     modifier: Modifier = Modifier,
+    spacing: Dp? = null,
 ) {
+    val typographyConfig = LocalContentTypographyConfig.current
+    val density = LocalDensity.current
+    val itemSpacing = spacing ?: typographyConfig.paragraphSpacing(density)
     Column(
         modifier = modifier,
-        verticalArrangement = Arrangement.spacedBy(16.dp),
+        verticalArrangement = Arrangement.spacedBy(itemSpacing),
     ) {
         nodes.forEach { node ->
             RenderContentNode(node)

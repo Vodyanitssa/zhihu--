@@ -5,9 +5,15 @@ import androidx.compose.runtime.Immutable
 import androidx.compose.runtime.compositionLocalOf
 import androidx.compose.runtime.remember
 import androidx.compose.ui.text.TextStyle
+import androidx.compose.ui.unit.Density
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
+import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.isSpecified
 import androidx.compose.ui.unit.sp
 import com.zhihuminus.core.settings.LocalAppSettings
+
+private const val PARAGRAPH_SPACING_EM = 0.5f
 
 /**
  * 富文本 AST 渲染排版配置。
@@ -41,6 +47,21 @@ data class ContentTypographyConfig(
             fontSize = scaledFontSize,
             lineHeight = scaledLineHeight,
         )
+    }
+
+    /**
+     * 计算块级内容（段落、标题等）的纵向间距。
+     *
+     * 间距随行高倍率增长：等于当前行距（字号 × 行高倍率 − 字号）再加上半行，
+     * 因此无论用户把行高调到多大，段间距都不会小于行间距。
+     */
+    fun paragraphSpacing(density: Density, baseFontSize: TextUnit = 16.sp): Dp {
+        if (!enabled) return 16.dp
+        val fontScale = fontSizePercent / 100f
+        val lineScale = lineHeightPercent / 100f
+        val base = if (baseFontSize.isSpecified) baseFontSize else 16.sp
+        val spacing = base * fontScale * ((lineScale - 1f).coerceAtLeast(0f) + PARAGRAPH_SPACING_EM)
+        return with(density) { spacing.toDp() }
     }
 
     companion object {
