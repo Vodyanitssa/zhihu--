@@ -215,7 +215,7 @@ fun PostScreen(
                             updatedAt = state.post.updatedAt,
                             ipInfo = state.post.ipInfo,
                             voteCount = state.post.voteCount,
-                            isFollowing = state.post.author.isFollowing,
+                            isFollowing = state.post.author.isFollowing == true,
                             questionId = state.post.questionId,
                             coverUrl = state.post.coverUrl,
                             onCoverClick = { url -> imageViewManager?.show(url) },

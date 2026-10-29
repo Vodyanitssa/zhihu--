@@ -21,6 +21,7 @@ import com.zhihuminus.data.zhihu.dto.PinDto
 import io.ktor.client.call.body
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.booleanOrNull
 import kotlinx.serialization.json.intOrNull
 import kotlinx.serialization.json.jsonPrimitive
 
@@ -53,6 +54,15 @@ open class ZhihuPeopleApi(
             PEOPLE_PROFILE_INCLUDE,
         ) ?: error("用户资料为空")
         return ZhihuJson.decodeJson<MemberProfileDto>(json)
+    }
+
+    open suspend fun fetchMemberFollowingState(userTokenOrId: String): Boolean? {
+        if (userTokenOrId.isBlank()) return null
+        val json = environment.fetchJson(
+            "https://api.zhihu.com/people/$userTokenOrId",
+            PEOPLE_PROFILE_INCLUDE,
+        ) ?: return null
+        return json["is_following"]?.jsonPrimitive?.booleanOrNull
     }
 
     open suspend fun fetchMemberProfileDetail(userTokenOrId: String): MemberProfileDto? {

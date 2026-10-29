@@ -33,7 +33,7 @@ data class Author(
     val avatarUrl: String,
     val urlToken: String = "",
     val badgeText: String? = null,
-    val isFollowing: Boolean = false,
+    val isFollowing: Boolean? = null,
     val ipInfo: String? = null,
 )
 
@@ -128,3 +128,12 @@ data class PostLinkCard(
     val dataContentType: String,
     val url: String,
 )
+
+fun Post.mergeFallbackFrom(previous: Post?): Post {
+    if (previous == null) return this
+    return copy(
+        author = author.copy(isFollowing = author.isFollowing ?: previous.author.isFollowing),
+        isFaved = isFaved ?: previous.isFaved,
+        ipInfo = ipInfo ?: previous.ipInfo,
+    )
+}

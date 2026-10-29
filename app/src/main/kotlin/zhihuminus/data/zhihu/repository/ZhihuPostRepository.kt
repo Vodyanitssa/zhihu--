@@ -44,8 +44,7 @@ class ZhihuPostRepository(
             PostType.Article -> postApi.getArticle(id).toPost()
             PostType.Pin -> postApi.getPin(id).toPost()
         }
-        postCache.put(post)
-        return post
+        return postCache.putAndMerge(post)
     }
 
     override suspend fun getCachedPost(type: PostType, id: Long): Post? =
@@ -103,6 +102,20 @@ class ZhihuPostRepository(
     override suspend fun followMember(urlToken: String, follow: Boolean) {
         if (follow) peopleApi.followMember(urlToken) else peopleApi.unfollowMember(urlToken)
         postCache.updateAuthorFollowing(urlToken, follow)
+    }
+
+    override suspend fun getAuthorFollowing(urlTokenOrId: String): Boolean? {
+        if (urlTokenOrId.isBlank()) return null
+        postCache.getAuthorFollowing(urlTokenOrId)?.let { return it }
+        return try {
+            val known = peopleApi.fetchMemberFollowingState(urlTokenOrId) ?: return null
+            postCache.updateAuthorFollowing(urlTokenOrId, known)
+            known
+        } catch (e: Exception) {
+            if (e is CancellationException) throw e
+            Log.e("ZhihuPostRepository", "Failed to fetch following state for $urlTokenOrId", e)
+            null
+        }
     }
 
     override suspend fun putCachedPost(post: Post) {

@@ -65,6 +65,8 @@ interface PostRepository {
      */
     suspend fun followMember(urlToken: String, follow: Boolean)
 
+    suspend fun getAuthorFollowing(urlTokenOrId: String): Boolean? = null
+
     /**
      * 更新或写入本地缓存的内容
      */

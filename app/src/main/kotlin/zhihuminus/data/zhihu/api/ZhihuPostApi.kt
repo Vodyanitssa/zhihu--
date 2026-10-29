@@ -25,7 +25,7 @@ open class ZhihuPostApi(
         val url = "https://www.zhihu.com/api/v4/answers/$answerId"
         val include =
             "content,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting," +
-                "author.badge_v2,author.is_following,author.is_followed,author.ip_info,segment_infos"
+                "author.badge_v2,author.ip_info,segment_infos"
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch answer $answerId")
         return ZhihuJson.decodeJson(json)
@@ -35,7 +35,7 @@ open class ZhihuPostApi(
         val url = "https://www.zhihu.com/api/v4/articles/$articleId"
         val include =
             "content,topics,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting," +
-                "author.badge_v2,author.is_following,author.is_followed,author.ip_info,segment_infos"
+                "author.badge_v2,author.ip_info,segment_infos"
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch article $articleId")
         return ZhihuJson.decodeJson(json)
@@ -43,7 +43,7 @@ open class ZhihuPostApi(
 
     open suspend fun getPin(pinId: Long): PinDto {
         val url = "https://www.zhihu.com/api/v4/pins/$pinId"
-        val include = "topics,author.badge_v2,author.is_following,author.is_followed,ip_info,author.ip_info"
+        val include = "topics,author.badge_v2,ip_info,author.ip_info"
         val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch pin $pinId")
         return ZhihuJson.decodeJson(json)

@@ -280,4 +280,83 @@ class PostContentCacheTest {
         assertEquals(false, cache.get(PostType.Answer, 101L)?.author?.isFollowing)
         assertEquals(false, cache.get(PostType.Article, 102L)?.author?.isFollowing)
     }
+
+    @Test
+    fun testDetailRefreshKeepsKnownFollowingState() = runTest {
+        val cache = MemoryPostContentCache()
+        val feedPost = createDummyPost(id = 201L).copy(
+            author = Author(
+                id = "author1",
+                name = "Author 1",
+                avatarUrl = "",
+                urlToken = "token_author_1",
+                isFollowing = true,
+            ),
+            ipInfo = null,
+        )
+        cache.put(feedPost)
+
+        val detailPost = feedPost.copy(
+            author = feedPost.author.copy(isFollowing = null),
+            ipInfo = "IP 属地北京",
+        )
+        val merged = cache.putAndMerge(detailPost)
+
+        assertEquals(true, merged.author.isFollowing)
+        assertEquals("IP 属地北京", merged.ipInfo)
+        assertEquals(true, cache.get(PostType.Answer, 201L)?.author?.isFollowing)
+        assertEquals("IP 属地北京", cache.get(PostType.Answer, 201L)?.ipInfo)
+    }
+
+    @Test
+    fun testFeedRefreshKeepsDetailIpInfo() = runTest {
+        val cache = MemoryPostContentCache()
+        val detailPost = createDummyPost(id = 202L).copy(ipInfo = "IP 属地上海")
+        cache.put(detailPost)
+
+        val feedPost = detailPost.copy(ipInfo = null)
+        val merged = cache.putAndMerge(feedPost)
+
+        assertEquals("IP 属地上海", merged.ipInfo)
+    }
+
+    @Test
+    fun testUnknownFollowingFallsBackToAuthorRelationCache() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.updateAuthorFollowing("token_author_2", true)
+
+        val post = createDummyPost(id = 203L).copy(
+            author = Author(
+                id = "author2",
+                name = "Author 2",
+                avatarUrl = "",
+                urlToken = "token_author_2",
+            ),
+        )
+        val merged = cache.putAndMerge(post)
+
+        assertEquals(true, merged.author.isFollowing)
+        assertEquals(true, cache.getAuthorFollowing("token_author_2"))
+        assertEquals(true, cache.getAuthorFollowing("author2"))
+        assertEquals(true, cache.get(PostType.Answer, 203L)?.author?.isFollowing)
+    }
+
+    @Test
+    fun testAuthorRelationTtlExpiry() = runTest {
+        val cache = MemoryPostContentCache(relationTtlMillis = 10L)
+        cache.updateAuthorFollowing("token_author_3", true)
+
+        assertEquals(true, cache.getAuthorFollowing("token_author_3"))
+        Thread.sleep(15L)
+        assertNull(cache.getAuthorFollowing("token_author_3"))
+    }
+
+    @Test
+    fun testClearRemovesAuthorRelations() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.updateAuthorFollowing("token_author_4", true)
+        cache.clear()
+
+        assertNull(cache.getAuthorFollowing("token_author_4"))
+    }
 }

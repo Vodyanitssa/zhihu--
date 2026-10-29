@@ -37,6 +37,8 @@ class PostViewModel(
     private val _effect = Channel<PostEffect>(capacity = Channel.BUFFERED)
     val effect = _effect.receiveAsFlow()
 
+    private val authorRelationRequests = mutableSetOf<String>()
+
     private val shareText: String
         get() {
             val state = uiState.loadState as? PostLoadState.Success ?: return ""
@@ -276,7 +278,7 @@ class PostViewModel(
                     return@launch
                 }
             }
-            applyCollectedState(post)
+            applyCollectedState((uiState.loadState as? PostLoadState.Success)?.post ?: post)
             try {
                 withContext(defaultDispatcher) {
                     repository.recordHistory(postType, postId)
@@ -290,20 +292,48 @@ class PostViewModel(
 
     private fun applyPost(post: Post) {
         val currentBar = uiState.bottomBarState
-        val currentVote = (uiState.loadState as? PostLoadState.Success)?.post?.voteState
+        val previousPost = (uiState.loadState as? PostLoadState.Success)?.post
+        val mergedPost = post.mergeFallbackFrom(previousPost)
+        val currentVote = previousPost?.voteState
         val voteState = if (currentBar.voteUpState != VoteUpState.Neutral && currentBar.voteUpState != currentVote) {
             currentBar.voteUpState
         } else {
-            post.voteState
+            mergedPost.voteState
         }
         uiState = uiState.copy(
-            loadState = PostLoadState.Success(post),
+            loadState = PostLoadState.Success(mergedPost),
             bottomBarState = currentBar.copy(
                 voteUpState = voteState,
-                voteUpCount = post.voteCount,
-                commentCount = post.commentCount,
+                voteUpCount = mergedPost.voteCount,
+                commentCount = mergedPost.commentCount,
             ),
         )
+        resolveAuthorFollowing(mergedPost)
+    }
+
+    private fun resolveAuthorFollowing(post: Post) {
+        if (post.author.isFollowing != null) return
+        val token = post.author.urlToken.ifBlank { post.author.id }
+        if (token.isBlank() || !authorRelationRequests.add(token)) return
+        viewModelScope.launch {
+            try {
+                val known = withContext(defaultDispatcher) {
+                    repository.getAuthorFollowing(token)
+                } ?: return@launch
+                val current = (uiState.loadState as? PostLoadState.Success)?.post ?: return@launch
+                if (current.author.isFollowing != null) return@launch
+                val updatedPost = current.copy(author = current.author.copy(isFollowing = known))
+                uiState = uiState.copy(loadState = PostLoadState.Success(updatedPost))
+                withContext(defaultDispatcher) {
+                    repository.putCachedPost(updatedPost)
+                }
+            } catch (e: Exception) {
+                if (e is CancellationException) throw e
+                Log.w("PostViewModel", "Failed to resolve author following state", e)
+            } finally {
+                authorRelationRequests.remove(token)
+            }
+        }
     }
 
     /**
@@ -486,7 +516,7 @@ class PostViewModel(
     private fun handleFollowAuthor() {
         val loadState = uiState.loadState as? PostLoadState.Success ?: return
         val author = loadState.post.author
-        val newFollowing = !author.isFollowing
+        val newFollowing = author.isFollowing != true
         val targetToken = author.urlToken.takeIf { it.isNotBlank() } ?: author.id
         if (targetToken.isBlank()) return
 

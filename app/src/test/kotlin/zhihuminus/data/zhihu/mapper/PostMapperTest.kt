@@ -53,6 +53,12 @@ class PostMapperTest {
     }
 
     @Test
+    fun testAuthorMissingFollowingIsUnknown() {
+        val author = AuthorDto(id = "author_2", name = "王五", avatarUrl = "").toAuthor()
+        assertNull(author.isFollowing)
+    }
+
+    @Test
     fun testFeedAuthorDtoToAuthor() {
         val nullAuthor: FeedAuthorDto? = null
         val defaultAuthor = nullAuthor.toAuthor()

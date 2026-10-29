@@ -77,10 +77,11 @@ class PostViewModelTest {
 
         var cachedPost: Post? = null
         var freshPost: Post? = null
+        var authorFollowingResult: Boolean? = null
 
-        override suspend fun getPost(type: PostType, id: Long): Post = (freshPost ?: samplePost).copy(
-            author = (freshPost ?: samplePost).author.copy(isFollowing = isAuthorFollowed),
-        )
+        override suspend fun getPost(type: PostType, id: Long): Post = freshPost ?: samplePost
+
+        override suspend fun getAuthorFollowing(urlTokenOrId: String): Boolean? = authorFollowingResult
 
         override suspend fun getCachedPost(type: PostType, id: Long): Post? = cachedPost
 
@@ -336,5 +337,53 @@ class PostViewModelTest {
         val state = viewModel.uiState.loadState
         assertTrue(state is PostLoadState.Success)
         assertEquals("IP 属地上海", state.post.ipInfo)
+    }
+
+    @Test
+    fun testDetailRefreshKeepsCachedFollowingState() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.cachedPost = repo.samplePost.copy(
+            ipInfo = null,
+            author = repo.samplePost.author.copy(isFollowing = true),
+        )
+        repo.freshPost = repo.samplePost.copy(
+            ipInfo = "IP 属地上海",
+            author = repo.samplePost.author.copy(isFollowing = null),
+        )
+
+        val viewModel = PostViewModel(
+            Application(),
+            12345L,
+            PostType.Answer,
+            repo,
+            defaultDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.loadState as PostLoadState.Success
+        assertEquals("IP 属地上海", state.post.ipInfo)
+        assertEquals(true, state.post.author.isFollowing)
+    }
+
+    @Test
+    fun testUnknownFollowingResolvedFromMemberProfile() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.freshPost = repo.samplePost.copy(
+            author = repo.samplePost.author.copy(isFollowing = null),
+        )
+        repo.authorFollowingResult = true
+
+        val viewModel = PostViewModel(
+            Application(),
+            12345L,
+            PostType.Answer,
+            repo,
+            defaultDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.loadState as PostLoadState.Success
+        assertEquals(true, state.post.author.isFollowing)
+        assertEquals(true, repo.lastCachedPost?.author?.isFollowing)
     }
 }

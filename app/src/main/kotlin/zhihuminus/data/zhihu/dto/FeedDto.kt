@@ -402,7 +402,7 @@ data class FeedAuthorDto(
     @OptIn(ExperimentalSerializationApi::class)
     @JsonNames("followerCount")
     val followersCount: Int = 0,
-    val isFollowing: Boolean = false,
+    val isFollowing: Boolean? = null,
     val isFollowed: Boolean = false,
     val badge: List<FeedBadgeDto>? = null,
     val badgeV2: MemberBadgeV2Dto? = null,

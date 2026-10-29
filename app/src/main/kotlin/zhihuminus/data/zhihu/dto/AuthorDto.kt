@@ -10,7 +10,7 @@ data class AuthorDto(
     val avatarUrl: String = "",
     val urlToken: String = "",
     val badgeV2: BadgeV2Dto? = null,
-    val isFollowing: Boolean = false,
+    val isFollowing: Boolean? = null,
     val ipInfo: String? = null,
 )
 
