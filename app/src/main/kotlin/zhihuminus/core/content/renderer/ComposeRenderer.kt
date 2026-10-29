@@ -159,7 +159,7 @@ fun InlineNodes(
                         background = codeStyle,
                     ),
                 ) {
-                    append(" ${node.text} ")
+                    append(node.text)
                 }
 
                 is InlineNode.Formula -> appendInlineContent(node.url, "[公式]")
