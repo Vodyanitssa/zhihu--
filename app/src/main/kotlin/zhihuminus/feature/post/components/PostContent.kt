@@ -1,13 +1,9 @@
 package com.zhihuminus.feature.post.components
 
 import androidx.compose.foundation.clickable
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -16,7 +12,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.content.renderer.RenderContentNode
+import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostEvent
@@ -29,6 +25,7 @@ fun PostContent(
     onEvent: (PostEvent) -> Unit = {},
 ) {
     val inAppLinkOpener = rememberInAppLinkOpener()
+    val imageViewerManager = LocalImageViewManager.current
     val isPin = post.type == PostType.Pin
     val pinImages = remember(post.content, isPin) {
         if (isPin) post.content.filterIsInstance<ContentNode.Image>() else emptyList()
@@ -48,15 +45,10 @@ fun PostContent(
 
         // Pin image gallery
         if (pinImages.isNotEmpty()) {
-            Row(
-                modifier = Modifier
-                    .horizontalScroll(rememberScrollState())
-                    .height(400.dp),
-            ) {
-                pinImages.forEach { image ->
-                    RenderContentNode(image)
-                }
-            }
+            PinImageGallery(
+                images = pinImages,
+                onImageClick = { url -> imageViewerManager?.show(url) },
+            )
         }
 
         // Poll card (Pin only)
