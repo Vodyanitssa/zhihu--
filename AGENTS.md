@@ -24,7 +24,10 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
 - Configuration cache, build cache, and parallel execution are on; local build cache lives in `.gradle/build-cache`.
 - HTTP is Ktor + kotlinx.serialization; there is no Retrofit, Hilt, or Koin. Repositories are wired through `ZhihuRepositoryFactory` and created in Compose with `viewModel {}` / `remember`.
 - Release builds enable R8 shrinking but intentionally keep `-dontobfuscate` + source/line attributes (`app/proguard-rules.pro`) so crash traces stay readable. Don't remove those without reason.
-- `samples/`, `.secret/`, `PLAN.md`, `.memory/`, and `local.properties` are gitignored local-only. `samples/` holds real Zhihu HTML/HAR fixtures for AST/parser work; never make the build depend on any of these.
+- **WorkManager/Room need explicit keep rules.** `androidx.work:work-runtime-ktx` pulls in Room; `proguard-rules.pro` keeps `RoomDatabase`/`WorkDatabase_Impl` constructors and `ListenableWorker(Context, WorkerParameters)`. Removing them makes release builds crash during `InitializationProvider` startup.
+- **System notifications need runtime permission.** `POST_NOTIFICATIONS` is declared in the manifest and requested on API 33+; without it (or with every notification type switched off) `NotificationSyncWorker` silently returns success.
+- **The bundled code font is large.** `res/font/maple_mono_nl_nf_cn_regular.ttf` (Maple Mono CN, built-in CJK monospace) is ~20 MB; check APK size before swapping or adding another font.
+- `samples/`, `.secret/`, `PLAN.md`, `.memory/`, `local.properties`, `.omx/`, `.worktrees/`, and `.codex/autoreview-state.json` are gitignored local-only. `samples/` holds real Zhihu HTML/HAR fixtures for AST/parser work; never make the build depend on any of these.
 
 ## Architecture notes
 
@@ -37,22 +40,45 @@ Android-only fork of [zly2006/zhihu-plus-plus](https://github.com/zly2006/zhihu-
   - `<Name>ViewModel.kt`: MVI ViewModel with Compose-observable state (`mutableStateOf`), `onEvent(event)`, and `Channel<Effect>`.
   - `<Name>Route.kt`: wiring layer that creates the ViewModel, collects effects, and passes pure state + callbacks to Screen.
   - `<Name>Screen.kt`: pure stateless UI; subcomponents in `feature/<name>/components/`.
-  - Exceptions: `imageview` is just domain/manager types (no Screen/ViewModel). `collection` and `notification` contain multiple flows, each with its own Route/Screen/Signal/ViewModel.
+  - Exceptions: `imageview` is a manager + gesture layer rather than a screen flow (`ImageViewManager` collects URLs via `submitImages()` and opens previews via `show()`; `DragToDismissContainer` owns the swipe-down-to-dismiss gesture). `collection` and `notification` contain multiple flows, each with its own Route/Screen/Signal/ViewModel.
+  - `notification` also owns system notifications: `worker/NotificationScheduler` enqueues a 15-minute periodic `NotificationSyncWorker` (network constraint, unique work), `NotificationType` classifies inbox content, and the settings screen turns the schedule on/off. Presentation lives in `core/platform/SystemNotificationPresenter`; tap targets are built from app URLs (`APP_URL_SCHEME` + `toAppUrl`) so notification deep links reuse the normal router.
   - Before migrating a legacy screen or adding a feature module, load `.opencode/skills/feature-migration/SKILL.md` (skill `feature-migration`) for the full contract, anti-patterns, and checklist.
 - **Data layer (`data/zhihu/`)**: Remote DataSources in `api/` (`Zhihu<Name>Api.kt`), `@Serializable` DTOs in `dto/`, DTO↔domain mapping in `mapper/` (recently consolidated — don't reintroduce mappers inside repositories), concrete repositories in `repository/` (`Zhihu<Name>Repository.kt`), and wiring in `ZhihuRepositoryFactory.kt`.
   - DTO fields are camelCase: `data/common/ZhihuJson.kt` recursively converts snake_case API keys to camelCase (but preserves dynamic `cookie`/`cookies` subkeys). Use `ZhihuJson` rather than a fresh `Json` instance.
   - Request signing lives in `data/zhihu/crypto/` (`ZhihuFetchSignature.kt`, `ZseSigner.kt`); call `signFetchRequest()` instead of hand-writing `x-zse-*` headers.
+  - `data/cache/PostContentCache.kt` is a typed in-memory cache of already-mapped `Post` objects (no JSON round-trip). Detail refreshes must merge through `Post.mergeFallbackFrom`: `author.isFollowing` is nullable and an unknown value must never overwrite a known one (Zhihu's single-content endpoints ignore `is_following`), and a cached non-null `coverUrl` wins over the detail value (detail endpoints provide no stable cover).
 - **Core layer (`core/`)**:
   - `environment/`: decoupled runtime environments (`PaginationEnvironment`, `AndroidPaginationEnvironment`, `ZhihuApiEnvironment`) that break data/UI ↔ ViewModel cycles.
-  - `platform/`: Android capabilities (`Clipboard`, `FileExporter`, `PlatformDialogs`, `PlatformAppLauncher`, `UserMessage`, `WebView`).
+  - `platform/`: Android capabilities (`Clipboard`, `FileExporter`, `PlatformDialogs`, `PlatformAppLauncher`, `UserMessage`, `WebView`) plus `SystemNotificationPresenter` (channels, permission check, local notification presentation).
   - `content/`: self-built AST pipeline (`Ast.kt`, `AstParser.kt`) rendered by `core/content/renderer/` (Compose/Html/Picture) — no WebView for articles. Inline AST rendering is also used for private-message bubbles (`AstParser.parseInline`).
-  - `settings/`: JSON-backed app settings; `state/`: app-wide unread state; `telemetry/`: `za` protobuf encoding; `util/`: formatters (`Format.kt`) and error mapping (`FriendlyError.kt`).
+    - Typography is centralized in `ContentTypographyConfig` (`LocalContentTypographyConfig`): font-size/line-height scaling and `paragraphSpacing()`, which derives block gaps from the current line height. Use it instead of hardcoded `Spacer` sizes so all renderers scale together.
+    - Tables (`ContentNode.Table`, nullable `header` from `<thead>`) render with adaptive content-weighted columns, horizontal scroll, Material 3 card styling and zebra rows; paragraph spacing comes from `ContentTypographyConfig`.
+    - Inline code backgrounds are drawn manually in `ComposeRenderer` because `SpanStyle.background` cannot be rounded; keep the existing `drawBehind` path instead of reverting to span backgrounds.
+  - `settings/`: JSON-backed app settings; `state/`: app-wide unread state; `telemetry/`: `za` protobuf encoding; `util/`: formatters (`Format.kt`, including humanized counters/timestamps) and error mapping (`FriendlyError.kt`).
 - **UI patterns**: standard Material 3 `ModalBottomSheet` (no legacy custom sheets); single-sheet navigation with overlay input (e.g. `CommentInputOverlay`) to avoid Dialog/window and nested-sheet gesture conflicts; reusable components in `ui/components/`.
+- **Pin detail galleries**: multiple images render as a horizontally scrollable strip of fixed 4:3 `ContentScale.Crop` thumbnails (`PinImageGallery`); a single image keeps its natural aspect ratio and caption. Image taps go through `LocalImageViewManager.current?.show(url)` so the viewer opens at the right index.
 - `misc/` is dev-only reference material, not build tooling: obfuscated Zhihu `__zse_ck` v4 signing JS + a Tampermonkey cookie hook (the app implements zse96 v2/v3 itself), `install-avd-system-cert.py` for installing a MITM CA on an AVD, and an archived `chrome-zhihu-ad-filter` extension whose rules are stale — current feed ad filtering is the `feed_advert` blocklist in `data/zhihu/api/ZhihuFeedApi.kt`.
 
 ## Conventions
 
-- Conventional commits (`feat:`, `fix:`, `refactor:`, `chore:`).
 - ktlint android style with experimental rules on; exceptions in `.editorconfig` (`max_line_length = 150`, but standard max-line-length and several wrapping rules are disabled). Run `ktlintFormat` before committing.
 - UI copy is Chinese-first and hardcoded in Compose code — do not introduce `stringResource`; the only string resource is `app_name` (`res/values` + `values-zh`).
 - Don't add an AGPL copyright header to new files (existing files keep theirs).
+
+## Commit messages
+
+- First line: `<type>(<scope>): <English summary>` — imperative mood, ≤ 72 characters, no trailing period.
+- Then a blank line, then the detail as a `- ` bullet list (English): one concrete point per bullet, covering behavior changes, public API/data-contract changes, platform/permission/proguard consequences, and tests. Don't just restate the diff.
+- Types: `feat`, `fix`, `refactor`, `perf`, `test`, `docs`, `build`, `chore`. Scope is the module/area touched (`post`, `content`, `notification`, `imageview`, `build`, ...).
+- Keep each commit to one logical change and one scope; split unrelated work instead of piling bullets into one message.
+
+Example:
+
+```
+feat(notification): add background system notifications
+
+- Add work-runtime-ktx and the POST_NOTIFICATIONS runtime permission
+- Sync unread counts every 15 minutes with a network constraint
+- Route notification taps through app URLs so the in-app router handles them
+- Keep WorkManager/Room constructors in proguard rules for release builds
+```
