@@ -1,7 +1,11 @@
 package com.zhihuminus.feature.watchlater
 
+import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.Question
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -17,6 +21,7 @@ import org.junit.After
 import org.junit.Before
 import org.junit.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertNull
 import kotlin.test.assertTrue
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -138,5 +143,31 @@ class WatchLaterViewModelTest {
         assertEquals("作者B", dest.authorName)
         assertEquals("https://avatar.com/b.jpg", dest.avatarSrc)
         assertEquals("watch_later", dest.readingQueueSourceId)
+    }
+
+    @Test
+    fun testFeedDisplayItemMapsToWatchLaterItem() {
+        fun displayItem(destination: NavDestination) = FeedDisplayItem(
+            title = "标题",
+            summary = "摘要",
+            details = "",
+            navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
+            authorName = "作者",
+            avatarSrc = "https://example.com/avatar.jpg",
+            images = listOf("https://example.com/cover.jpg"),
+        )
+
+        val answer = displayItem(PostDestination(type = PostType.Answer, id = 11L)).toWatchLaterItemOrNull()
+        assertEquals(11L, answer?.id)
+        assertEquals("answer", answer?.type)
+        assertEquals("标题", answer?.title)
+        assertEquals("摘要", answer?.excerpt)
+        assertEquals("作者", answer?.authorName)
+        assertEquals("https://example.com/avatar.jpg", answer?.authorAvatar)
+        assertEquals("https://example.com/cover.jpg", answer?.coverImage)
+
+        assertEquals("article", displayItem(PostDestination(type = PostType.Article, id = 12L)).toWatchLaterItemOrNull()?.type)
+        assertEquals("pin", displayItem(PostDestination(type = PostType.Pin, id = 13L)).toWatchLaterItemOrNull()?.type)
+        assertNull(displayItem(Question(questionId = 14L, title = "问题")).toWatchLaterItemOrNull())
     }
 }

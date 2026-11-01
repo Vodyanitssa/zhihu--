@@ -63,6 +63,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.saveable.rememberSaveableStateHolder
@@ -75,6 +76,7 @@ import androidx.compose.ui.input.nestedscroll.NestedScrollSource
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.input.pointer.PointerEventPass
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.IntOffset
 import androidx.compose.ui.unit.dp
 import androidx.navigation.NavBackStackEntry
@@ -86,6 +88,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
+import com.zhihuminus.core.platform.rememberUserMessageSink
+import com.zhihuminus.core.util.friendlyErrorMessage
+import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.collection.CollectionContentRoute
 import com.zhihuminus.feature.collection.CollectionRoute
 import com.zhihuminus.feature.daily.DailyRoute
@@ -100,6 +106,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.search.SearchRoute
 import com.zhihuminus.feature.topic.TopicRoute
 import com.zhihuminus.feature.watchlater.WatchLaterRoute
+import com.zhihuminus.feature.watchlater.toWatchLaterItemOrNull
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
@@ -122,14 +129,17 @@ import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.navigation.WatchLater
 import com.zhihuminus.ui.components.LocalFeedCardConfig
+import com.zhihuminus.ui.components.LocalFeedCardWatchLaterAction
 import com.zhihuminus.ui.components.LocalTopLevelReselectFlow
 import com.zhihuminus.ui.components.rememberFeedCardConfig
 import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
+import kotlinx.coroutines.launch
 import kotlin.reflect.typeOf
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -176,6 +186,26 @@ fun ZhihuMain(
     val autoHideBottomBar = preferenceState.autoHideBottomBar
     val startDestination = preferenceState.startDestination
     var isReadingPlayerExpandedByUser by remember { mutableStateOf(false) }
+
+    val context = LocalContext.current
+    val userMessages = rememberUserMessageSink()
+    val watchLaterScope = rememberCoroutineScope()
+    val watchLaterRepository = remember(context) { LocalWatchLaterRepository.getInstance(context) }
+    val addToWatchLater: (FeedDisplayItem) -> Unit = remember(watchLaterRepository, userMessages, watchLaterScope) {
+        { item ->
+            item.toWatchLaterItemOrNull()?.let { target ->
+                watchLaterScope.launch {
+                    try {
+                        watchLaterRepository.addItem(target)
+                        userMessages.showShortMessage("已添加到稍后再看")
+                    } catch (e: Exception) {
+                        if (e is CancellationException) throw e
+                        userMessages.showShortMessage("添加失败: ${friendlyErrorMessage(e)}")
+                    }
+                }
+            }
+        }
+    }
 
     val navEntry by navController.currentBackStackEntryAsState()
     val showMainNavigation = navEntry?.destination?.hasRoute<MainTabs>() == true
@@ -328,6 +358,7 @@ fun ZhihuMain(
                     onNavigateTopLevel = ::navigateTopLevel,
                 ),
                 LocalFeedCardConfig provides rememberFeedCardConfig(),
+                LocalFeedCardWatchLaterAction provides addToWatchLater,
                 LocalContentTypographyConfig provides rememberContentTypographyConfig(),
                 LocalTopLevelReselectFlow provides reselectFlow,
             ) {

@@ -15,8 +15,8 @@ import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import com.zhihuminus.feature.post.PostType
-import com.zhihuminus.feature.watchlater.WatchLaterItem
 import com.zhihuminus.feature.watchlater.WatchLaterRepository
+import com.zhihuminus.feature.watchlater.toWatchLaterItemOrNull
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
@@ -168,10 +168,8 @@ class HomeViewModel(
     }
 
     private fun handleAddToWatchLater(item: FeedDisplayItem) {
-        val payload = resolveContentPayload(item)
-        val id = payload?.second?.toLongOrNull()
-        val type = payload?.first
-        if (id == null || type == null || type !in setOf("answer", "article", "pin")) {
+        val watchLaterItem = item.toWatchLaterItemOrNull()
+        if (watchLaterItem == null) {
             viewModelScope.launch {
                 _effect.send(HomeEffect.ShowMessage("该条目不支持添加到稍后再看"))
             }
@@ -186,16 +184,6 @@ class HomeViewModel(
         }
         viewModelScope.launch {
             try {
-                val watchLaterItem = WatchLaterItem(
-                    id = id,
-                    type = type,
-                    title = item.title,
-                    excerpt = item.summary.orEmpty(),
-                    authorName = item.authorName,
-                    authorAvatar = item.avatarSrc,
-                    coverImage = item.images.firstOrNull(),
-                    addedAt = System.currentTimeMillis(),
-                )
                 repo.addItem(watchLaterItem)
                 _effect.send(HomeEffect.ShowMessage("已添加到稍后再看"))
             } catch (e: Exception) {

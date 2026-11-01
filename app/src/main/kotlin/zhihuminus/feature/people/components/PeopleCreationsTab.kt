@@ -25,6 +25,7 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
+import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.feature.people.PeopleCreationItem
 import com.zhihuminus.feature.people.PeopleCreationTab
 import com.zhihuminus.feature.people.PeopleEvent
@@ -260,5 +261,6 @@ private fun PeopleCreationItem.toFeedDisplayItem(): FeedDisplayItem {
         publishTimeSeconds = publishTimeSeconds,
         images = images,
         imageLayout = layout,
+        navDestinationJson = toDestination().toFeedDisplayItemNavDestinationJson(),
     )
 }

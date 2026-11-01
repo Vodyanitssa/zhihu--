@@ -38,6 +38,7 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
@@ -67,6 +68,7 @@ import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.FeedImageLayout
+import com.zhihuminus.feature.watchlater.toWatchLaterItemOrNull
 import org.jsoup.Jsoup
 
 /**
@@ -84,6 +86,13 @@ data class FeedCardConfig(
  * 信息流卡片配置的 CompositionLocal，默认为常规标准配置。
  */
 val LocalFeedCardConfig = staticCompositionLocalOf { FeedCardConfig() }
+
+/**
+ * 信息流卡片的全局「加入稍后再看」动作。
+ *
+ * 由主壳注入一次，所有卡片的长按菜单即可复用；为 null 时不展示该菜单项。
+ */
+val LocalFeedCardWatchLaterAction = staticCompositionLocalOf<((FeedDisplayItem) -> Unit)?> { null }
 
 /**
  * 从全局设置中响应式读取并计算 [FeedCardConfig]，供上层容器注入给 [LocalFeedCardConfig]。
@@ -121,6 +130,8 @@ fun FeedCard(
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit = { _ -> },
 ) {
     var showMenu by remember { mutableStateOf(false) }
+    val onAddToWatchLater = LocalFeedCardWatchLaterAction.current
+    val canAddToWatchLater = onAddToWatchLater != null && remember(item) { item.toWatchLaterItemOrNull() != null }
 
     Box(modifier = modifier.fillMaxWidth()) {
         Column(modifier = Modifier.fillMaxWidth()) {
@@ -145,6 +156,9 @@ fun FeedCard(
         FeedCardMenu(
             showMenu = showMenu,
             onShowMenuChange = { showMenu = it },
+            item = item,
+            canAddToWatchLater = canAddToWatchLater,
+            onAddToWatchLater = onAddToWatchLater,
             menuItems = menuItems,
         )
     }
@@ -153,18 +167,30 @@ fun FeedCard(
 /**
  * 信息流卡片的长按菜单。
  *
- * 卡片只负责菜单的展开、收起和通用设置项；页面业务动作由 [menuItems] 直接提供。
+ * 卡片只负责菜单的展开、收起、全局「加入稍后再看」项和通用设置项；页面业务动作由 [menuItems] 直接提供。
  */
 @Composable
 private fun FeedCardMenu(
     showMenu: Boolean,
     onShowMenuChange: (Boolean) -> Unit,
+    item: FeedDisplayItem,
+    canAddToWatchLater: Boolean,
+    onAddToWatchLater: ((FeedDisplayItem) -> Unit)?,
     menuItems: @Composable ColumnScope.(dismissMenu: () -> Unit) -> Unit,
 ) {
     DropdownMenu(
         expanded = showMenu,
         onDismissRequest = { onShowMenuChange(false) },
     ) {
+        if (canAddToWatchLater && onAddToWatchLater != null) {
+            DropdownMenuItem(
+                text = { Text("加入稍后再看") },
+                onClick = {
+                    onShowMenuChange(false)
+                    onAddToWatchLater(item)
+                },
+            )
+        }
         menuItems { onShowMenuChange(false) }
     }
 }
