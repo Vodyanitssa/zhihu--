@@ -135,5 +135,6 @@ fun Post.mergeFallbackFrom(previous: Post?): Post {
         author = author.copy(isFollowing = author.isFollowing ?: previous.author.isFollowing),
         isFaved = isFaved ?: previous.isFaved,
         ipInfo = ipInfo ?: previous.ipInfo,
+        coverUrl = previous.coverUrl ?: coverUrl,
     )
 }

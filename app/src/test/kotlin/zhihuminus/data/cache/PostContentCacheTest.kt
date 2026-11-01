@@ -309,6 +309,21 @@ class PostContentCacheTest {
     }
 
     @Test
+    fun testDetailRefreshKeepsFeedCover() = runTest {
+        val cache = MemoryPostContentCache()
+        val feedCover = "https://picx.zhimg.com/v2-cover.jpg?source=feed"
+        cache.put(createDummyPost(id = 204L, type = PostType.Article).copy(coverUrl = feedCover))
+
+        val detailPost = createDummyPost(id = 204L, type = PostType.Article)
+            .copy(coverUrl = "https://pic1.zhimg.com/v2-cover.jpg")
+        assertEquals(feedCover, cache.putAndMerge(detailPost).coverUrl)
+
+        val detailWithoutCover = createDummyPost(id = 204L, type = PostType.Article).copy(coverUrl = null)
+        assertEquals(feedCover, cache.putAndMerge(detailWithoutCover).coverUrl)
+        assertEquals(feedCover, cache.get(PostType.Article, 204L)?.coverUrl)
+    }
+
+    @Test
     fun testFeedRefreshKeepsDetailIpInfo() = runTest {
         val cache = MemoryPostContentCache()
         val detailPost = createDummyPost(id = 202L).copy(ipInfo = "IP 属地上海")
