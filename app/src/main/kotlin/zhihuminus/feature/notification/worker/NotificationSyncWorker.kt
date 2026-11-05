@@ -14,6 +14,7 @@ import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.feature.notification.NotificationType
 import com.zhihuminus.feature.notification.matchNotificationType
 import com.zhihuminus.navigation.Notification
+import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.router.APP_URL_SCHEME
 import com.zhihuminus.navigation.router.toAppUrl
 
@@ -87,7 +88,16 @@ class NotificationSyncWorker(
                             content != null && content.subTitle == "喜欢了你的评论" -> content.subText
                             else -> content?.text.orEmpty().ifBlank { verb }
                         }
-                        val deepLink = item.navDestination()?.toAppUrl() ?: "$APP_URL_SCHEME://notification"
+                        val deepLink = if (item.isActivityCard()) {
+                            val url = item.activityTargetUrl()
+                            url
+                                ?.takeIf { it.isNotBlank() }
+                                ?.let(::resolveContent)
+                                ?.toAppUrl()
+                                ?: "$APP_URL_SCHEME://notification"
+                        } else {
+                            item.navDestination()?.toAppUrl() ?: "$APP_URL_SCHEME://notification"
+                        }
 
                         SystemNotificationPresenter.showNotification(
                             context = applicationContext,

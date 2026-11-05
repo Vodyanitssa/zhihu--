@@ -17,6 +17,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.feature.notification.components.ActivityNotificationCard
 import com.zhihuminus.feature.notification.components.InvitationAnswerItem
 import com.zhihuminus.feature.notification.components.NotificationItemView
 import com.zhihuminus.ui.components.PaginatedList
@@ -73,6 +74,11 @@ fun NotificationTimelineScreen(
                             modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
                         )
                     }
+
+                    notification.isActivityCard() -> ActivityNotificationCard(
+                        notification = notification,
+                        onClick = { onNotificationClick(notification) },
+                    )
 
                     invitations -> InvitationAnswerItem(
                         notification = notification,

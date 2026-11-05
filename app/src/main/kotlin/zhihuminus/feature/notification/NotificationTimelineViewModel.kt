@@ -47,6 +47,7 @@ class NotificationTimelineViewModel(
 
     private fun shouldShowNotification(notification: NotificationTimelineItem): Boolean {
         if (notification.type == "empty") return true
+        if (notification.isActivityCard()) return true
         if (entryName == "invite") return true
         val content = notification.content ?: return true
         val verb = listOf(content.subTitle, content.title, content.text)

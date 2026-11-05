@@ -111,6 +111,10 @@ object NotificationMapper {
         isDeleted = dto.isDeleted,
         hasVideo = dto.hasVideo,
         image = dto.image,
+        coverUrl = dto.imageDisplayInfo
+            ?.displayImage
+            ?.src
+            ?.takeIf { it.isNotBlank() } ?: dto.image,
         objectId = dto.objectId,
         subTextIsLink = dto.subTextIsLink,
     )

@@ -7,12 +7,12 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
-import com.zhihuminus.core.platform.rememberSystemUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
 import com.zhihuminus.navigation.resolveContent
 
 @Composable
@@ -38,7 +38,7 @@ fun NotificationTimelineRoute(
         )
     }
     val userMessages = rememberUserMessageSink()
-    val openSystemUrl = rememberSystemUrlOpener()
+    val openLink = rememberInAppLinkOpener()
 
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
@@ -53,20 +53,29 @@ fun NotificationTimelineRoute(
         onEvent = viewModel::onEvent,
         onNavigateBack = onNavigateBack,
         onNotificationClick = { notification ->
-            val destination = notification.navDestination()
-            if (destination != null) {
-                onDestinationClick(destination)
+            if (notification.isActivityCard()) {
+                val url = notification.activityTargetUrl()?.takeIf { it.isNotBlank() }
+                when {
+                    url == null -> userMessages.showShortMessage("暂不支持打开此活动")
+                    url.startsWith("http://") || url.startsWith("https://") -> openLink(url)
+                    else -> userMessages.showShortMessage("暂不支持打开此活动")
+                }
             } else {
-                val fallbackUrl = listOf(
-                    notification.content?.targetLink,
-                    notification.content?.subTargetLink,
-                    notification.targetSource?.targetLink,
-                    notification.head?.targetLink,
-                ).firstOrNull { !it.isNullOrBlank() }
-                if (fallbackUrl != null) {
-                    openSystemUrl(fallbackUrl)
+                val destination = notification.navDestination()
+                if (destination != null) {
+                    onDestinationClick(destination)
                 } else {
-                    userMessages.showShortMessage("暂不支持打开此通知")
+                    val fallbackUrl = listOf(
+                        notification.content?.targetLink,
+                        notification.content?.subTargetLink,
+                        notification.targetSource?.targetLink,
+                        notification.head?.targetLink,
+                    ).firstOrNull { !it.isNullOrBlank() }
+                    if (fallbackUrl != null) {
+                        openLink(fallbackUrl)
+                    } else {
+                        userMessages.showShortMessage("暂不支持打开此通知")
+                    }
                 }
             }
         },

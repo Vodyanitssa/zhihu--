@@ -23,11 +23,15 @@ import com.zhihuminus.data.zhihu.dto.PrivateMessagePluginDto
 import com.zhihuminus.data.zhihu.dto.ZhihuMeNotificationsDto
 import com.zhihuminus.data.zhihu.mapper.toDomain
 import com.zhihuminus.data.zhihu.repository.ZhihuNotificationRepository
+import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
+import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.resolveContent
 import kotlinx.coroutines.runBlocking
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertFalse
 import kotlin.test.assertIs
 import kotlin.test.assertNotNull
 import kotlin.test.assertNull
@@ -455,13 +459,96 @@ class NotificationTest {
     }
 
     @Test
-    fun testNotificationTypeEntriesCompleteness() {
-        val types = NotificationType.entries
-        assertTrue(types.contains(NotificationType.LIKE_ANSWER))
-        assertTrue(types.contains(NotificationType.UPVOTE_ANSWER))
-        assertTrue(types.contains(NotificationType.LIKE_COMMENT))
-        assertTrue(types.contains(NotificationType.REPLY_COMMENT))
-        assertTrue(types.contains(NotificationType.FOLLOW_USER))
-        assertTrue(types.contains(NotificationType.INVITE_ANSWER))
+    fun testActivityNotificationHelpers() {
+        val activity = NotificationTimelineItem(
+            cardType = "noti_activity_card",
+            content = NotificationContent(
+                title = "知乎游戏",
+                subTitle = "《原神》7.2 版本创作激励活动已上线！",
+                text = "活动正文",
+                subText = "即日起至 12 月 15 日",
+                abstractText = "查看详情",
+                targetLink = "https://example.com/activity",
+            ),
+            targetSource = NotificationTargetSource(
+                targetLink = "https://example.com/fallback",
+                coverUrl = "https://example.com/cover.jpg",
+            ),
+            head = NotificationHead(targetLink = "https://www.zhihu.com/people/zhi-hu-you-xi"),
+        )
+
+        assertTrue(activity.isActivityCard())
+        assertEquals("知乎游戏", activity.activitySourceName())
+        assertEquals("《原神》7.2 版本创作激励活动已上线！", activity.activityTitle())
+        assertEquals("活动正文", activity.activityDescription())
+        assertEquals("即日起至 12 月 15 日", activity.activityTimeText())
+        assertEquals("查看详情", activity.activityActionText())
+        assertEquals("https://example.com/cover.jpg", activity.activityCoverUrl())
+        assertEquals("https://example.com/activity", activity.activityTargetUrl())
+
+        assertFalse(activity.copy(cardType = "noti_time_slice").isActivityCard())
+    }
+
+    @Test
+    fun testActivityNotificationJsonMappingAndRouting() {
+        val json = ZhihuJson.json.parseToJsonElement(
+            """
+            {
+              "id": "2101283132368480074",
+              "type": "aggregate_notification",
+              "card_type": "noti_activity_card",
+              "head": {
+                "avatar_url": "https://picx.zhimg.com/v2-578e2df5b9d6609b12edf4dba6ec6889_720w.jpg",
+                "target_link": "https://www.zhihu.com/people/zhi-hu-you-xi"
+              },
+              "content": {
+                "title": "知乎游戏",
+                "sub_title": "《原神》7.2 版本创作激励活动已上线！",
+                "text": "《原神》7.2版本「坏灭肇始之时」现已上线！详情戳 &gt;&gt;",
+                "sub_text": "即日起至 12 月 15 日",
+                "abstract_text": "查看详情",
+                "target_link": "https://zhuanlan.zhihu.com/p/2100594837711840379"
+              },
+              "target_source": {
+                "image_display_info": {
+                  "display_image": {
+                    "src": "https://picx.zhimg.com/v2-86a678c3195f7aec7dab3fa70a7b4510.jpg?source=2bcfc003",
+                    "ratio": 0,
+                    "has_video": false
+                  }
+                }
+              }
+            }
+            """.trimIndent(),
+        )
+        val dto = ZhihuJson.decodeJson<NotificationTimelineItemDto>(json)
+        assertEquals("noti_activity_card", dto.cardType)
+        val displayImageSrc = dto.targetSource
+            ?.imageDisplayInfo
+            ?.displayImage
+            ?.src
+        assertEquals(
+            "https://picx.zhimg.com/v2-86a678c3195f7aec7dab3fa70a7b4510.jpg?source=2bcfc003",
+            displayImageSrc,
+        )
+
+        val item = dto.toDomain()
+        assertTrue(item.isActivityCard())
+        assertEquals("知乎游戏", item.activitySourceName())
+        assertEquals("《原神》7.2 版本创作激励活动已上线！", item.activityTitle())
+        assertEquals(
+            "https://picx.zhimg.com/v2-86a678c3195f7aec7dab3fa70a7b4510.jpg?source=2bcfc003",
+            item.activityCoverUrl(),
+        )
+        assertEquals("即日起至 12 月 15 日", item.activityTimeText())
+        assertEquals("查看详情", item.activityActionText())
+        assertEquals("https://zhuanlan.zhihu.com/p/2100594837711840379", item.activityTargetUrl())
+
+        val article = resolveContent(item.activityTargetUrl().orEmpty())
+        assertIs<PostDestination>(article)
+        assertEquals(PostType.Article, article.type)
+
+        // 外链无法被应用内路由解析，应由调用方交给系统浏览器，而不是回退到 head.targetLink。
+        assertNull(resolveContent("https://www.zhihu.com/parker/campaign/2097001186670990002"))
     }
 }

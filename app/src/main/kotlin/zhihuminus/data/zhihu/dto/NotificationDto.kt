@@ -107,8 +107,21 @@ data class NotificationTargetSourceDto(
     val isDeleted: Boolean = false,
     val hasVideo: Boolean = false,
     val image: String = "",
+    val imageDisplayInfo: NotificationImageDisplayInfoDto? = null,
     val objectId: String = "",
     val subTextIsLink: Boolean = false,
+)
+
+@Serializable
+data class NotificationImageDisplayInfoDto(
+    val displayImage: NotificationDisplayImageDto? = null,
+)
+
+@Serializable
+data class NotificationDisplayImageDto(
+    val src: String = "",
+    val ratio: Double = 0.0,
+    val hasVideo: Boolean = false,
 )
 
 @Serializable

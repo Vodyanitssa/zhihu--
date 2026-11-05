@@ -100,6 +100,46 @@ data class NotificationTimelineItem(
             ?: content?.subIcon?.takeIf { it.isNotBlank() }
             ?: ""
 
+    /** 知乎活动助手通知：`card_type` 固定为 `noti_activity_card`。 */
+    fun isActivityCard(): Boolean = cardType == "noti_activity_card"
+
+    /** 活动通知的账号名，官方卡片顶部展示。 */
+    fun activitySourceName(): String =
+        content?.title?.takeIf { it.isNotBlank() }
+            ?: head?.author?.name?.takeIf { it.isNotBlank() }
+            ?: "知乎活动助手"
+
+    /** 活动标题。知乎把活动标题放在 `content.sub_title`，`content.title` 是账号名。 */
+    fun activityTitle(): String =
+        content?.subTitle?.takeIf { it.isNotBlank() }
+            ?: displayTitle()
+
+    /** 活动正文，可能带 HTML，渲染时走 AstParser。 */
+    fun activityDescription(): String =
+        content?.text?.takeIf { it.isNotBlank() }
+            ?: content?.abstractText?.takeIf { it.isNotBlank() }
+            ?: ""
+
+    /** 活动时间/有效期，例如「即日起至 12 月 15 日」。 */
+    fun activityTimeText(): String =
+        content?.subText?.takeIf { it.isNotBlank() } ?: ""
+
+    /** 活动按钮文案，官方为「查看详情」。 */
+    fun activityActionText(): String =
+        content?.abstractText?.takeIf { it.isNotBlank() } ?: "查看详情"
+
+    /** 活动封面大图。 */
+    fun activityCoverUrl(): String? =
+        targetSource?.coverUrl?.takeIf { it.isNotBlank() }
+
+    /**
+     * 活动自身的跳转链接。活动通知的 `head.target_link` 是账号主页，
+     * 不能作为活动目标，否则外链会错误地落到 people 页。
+     */
+    fun activityTargetUrl(): String? =
+        listOf(content?.targetLink, targetSource?.targetLink, content?.subTargetLink)
+            .firstOrNull { !it.isNullOrBlank() }
+
     fun navDestination(): NavDestination? {
         val destinations = listOf(
             content?.targetLink,
@@ -199,6 +239,11 @@ data class NotificationTargetSource(
     val isDeleted: Boolean = false,
     val hasVideo: Boolean = false,
     val image: String = "",
+    /**
+     * 活动通知的封面大图。知乎把图片放在 `image_display_info.display_image.src`，
+     * 普通的 `image` 字段对活动通知为空。
+     */
+    val coverUrl: String = "",
     val objectId: String = "",
     val subTextIsLink: Boolean = false,
 )
