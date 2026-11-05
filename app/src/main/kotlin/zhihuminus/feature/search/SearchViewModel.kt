@@ -5,7 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
@@ -37,7 +38,7 @@ data class SearchUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
     val changingTopicIds: Set<String> = emptySet(),
     val changingPeopleIds: Set<String> = emptySet(),
 ) {
@@ -101,7 +102,7 @@ class SearchViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("SearchViewModel", "Failed to refresh hot search", e)
+                reportFailure("SearchViewModel", "refresh hot search", e)
                 uiState = uiState.copy(isHotSearchLoading = false)
             }
         }
@@ -303,15 +304,13 @@ class SearchViewModel(
                     }
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("SearchViewModel", "Search failed", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("SearchViewModel", "search", e)
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = msg,
+                    errorMessage = error,
                 )
-                _effect.send(SearchEffect.ShowMessage(msg))
+                _effect.send(SearchEffect.ShowMessage(error.userMessage))
             }
         }
     }

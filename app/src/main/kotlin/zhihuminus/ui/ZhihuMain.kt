@@ -88,7 +88,7 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.local.LocalWatchLaterRepository
@@ -136,7 +136,6 @@ import com.zhihuminus.ui.subscreens.AppearanceSettingsScreen
 import com.zhihuminus.ui.subscreens.NotificationSettingsScreen
 import com.zhihuminus.ui.subscreens.OpenSourceLicensesScreen
 import com.zhihuminus.ui.subscreens.SettingsSearchScreen
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.launch
@@ -199,8 +198,8 @@ fun ZhihuMain(
                         watchLaterRepository.addItem(target)
                         userMessages.showShortMessage("已添加到稍后再看")
                     } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        userMessages.showShortMessage("添加失败: ${friendlyErrorMessage(e)}")
+                        val error = reportFailure("ZhihuMain", "add to watch later", e, userAction = "添加")
+                        userMessages.showShortMessage(error.userMessage)
                     }
                 }
             }

@@ -22,13 +22,14 @@ import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.error.AppError
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.topic.TopicDetail
 
 @Composable
 fun TopicHeader(
     detail: TopicDetail?,
-    detailErrorMessage: String?,
+    detailErrorMessage: AppError?,
     topicName: String,
     isFollowingChanging: Boolean,
     onRetryDetail: () -> Unit,
@@ -68,7 +69,7 @@ fun TopicHeader(
                     )
 
                     detailErrorMessage != null -> TextButton(onClick = onRetryDetail) {
-                        Text("话题信息加载失败：$detailErrorMessage，点击重试", color = MaterialTheme.colorScheme.error)
+                        Text("话题信息加载失败: ${detailErrorMessage.userMessage}，点击重试", color = MaterialTheme.colorScheme.error)
                     }
 
                     else -> Text("正在加载话题信息…")

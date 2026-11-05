@@ -19,13 +19,12 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.data.AccountData
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get
 import io.ktor.client.statement.readRawBytes
 import io.ktor.http.HttpHeaders
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -126,8 +125,8 @@ suspend fun saveImageToGallery(
         )
         userMessages.showShortMessage("图片已保存到相册")
     } catch (e: Exception) {
-        if (e is CancellationException) throw e
-        userMessages.showShortMessage("保存失败: ${friendlyErrorMessage(e)}")
+        val error = reportFailure("FileExporter", "save image", e, userAction = "保存")
+        userMessages.showShortMessage(error.userMessage)
     }
 }
 
@@ -177,8 +176,8 @@ suspend fun shareImage(
         }
         context.startActivity(Intent.createChooser(shareIntent, "分享图片"))
     } catch (e: Exception) {
-        if (e is CancellationException) throw e
-        userMessages.showShortMessage("分享失败: ${friendlyErrorMessage(e)}")
+        val error = reportFailure("FileExporter", "share image", e, userAction = "分享")
+        userMessages.showShortMessage(error.userMessage)
     }
 }
 

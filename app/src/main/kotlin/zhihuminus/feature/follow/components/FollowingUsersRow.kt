@@ -26,6 +26,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
+import com.zhihuminus.core.error.AppError
 import com.zhihuminus.feature.follow.FollowingUser
 
 /** 已关注人条目的自然高度（8dp 上下 contentPadding + 4dp 条目 padding + 56dp 头像 + 4dp 间隔 + 18dp 名字）。 */
@@ -34,7 +35,7 @@ val FollowingUsersRowHeight = 102.dp
 @Composable
 fun FollowingUsersRow(
     users: List<FollowingUser>,
-    errorMessage: String?,
+    errorMessage: AppError?,
     onUserClick: (FollowingUser) -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -53,7 +54,7 @@ fun FollowingUsersRow(
                     contentAlignment = Alignment.Center,
                 ) {
                     Text(
-                        text = errorMessage,
+                        text = errorMessage.userMessage,
                         style = MaterialTheme.typography.bodySmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )

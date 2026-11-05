@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import kotlinx.coroutines.CancellationException
@@ -91,12 +91,12 @@ class ColumnViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("ColumnViewModel", "Failed to load column articles", e)
+                val error = reportFailure("ColumnViewModel", "load column articles", e)
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoadingMore = false,
                 )
-                sendEffect(ColumnEffect.ShowMessage("加载失败: ${friendlyErrorMessage(e)}"))
+                sendEffect(ColumnEffect.ShowMessage(error.withPrefix("加载").userMessage))
             }
         }
     }

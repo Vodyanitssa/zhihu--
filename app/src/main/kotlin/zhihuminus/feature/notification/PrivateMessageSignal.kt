@@ -1,5 +1,7 @@
 package com.zhihuminus.feature.notification
 
+import com.zhihuminus.core.error.AppError
+
 data class PrivateMessageUiState(
     val peerId: String = "",
     val peer: NotificationAuthor? = null,
@@ -9,7 +11,7 @@ data class PrivateMessageUiState(
     val isLoadingMore: Boolean = false,
     val isSending: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 sealed interface PrivateMessageEvent {

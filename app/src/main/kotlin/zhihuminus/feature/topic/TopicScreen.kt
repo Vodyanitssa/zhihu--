@@ -17,7 +17,6 @@ import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -30,6 +29,7 @@ import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.feature.topic.components.TopicHeader
 import com.zhihuminus.feature.topic.components.TopicIntroduction
 import com.zhihuminus.navigation.Topic
+import com.zhihuminus.ui.components.ErrorListFooter
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -77,12 +77,10 @@ fun TopicScreen(
                 if (state.errorMessage == null) {
                     ProgressIndicatorFooter(listState)
                 } else {
-                    TextButton(
-                        onClick = { onEvent(TopicEvent.Retry) },
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .padding(8.dp),
-                    ) { Text("加载失败：${state.errorMessage}，点击重试") }
+                    ErrorListFooter(
+                        error = state.errorMessage,
+                        onRetry = { onEvent(TopicEvent.Retry) },
+                    )
                 }
             },
             topContent = {

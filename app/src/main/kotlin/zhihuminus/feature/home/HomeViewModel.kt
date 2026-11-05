@@ -5,7 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
@@ -21,7 +23,6 @@ import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
 import com.zhihuminus.navigation.withReadingQueueSource
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -33,7 +34,7 @@ data class HomeUiState(
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
     val unreadCount: Int = 0,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 class HomeViewModel(
@@ -120,7 +121,6 @@ class HomeViewModel(
                 try {
                     repository.reportExposures(unexposedRecords)
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
                     Log.w("HomeViewModel", "Failed to report exposures", e)
                 }
             }
@@ -187,9 +187,8 @@ class HomeViewModel(
                 repo.addItem(watchLaterItem)
                 _effect.send(HomeEffect.ShowMessage("已添加到稍后再看"))
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("HomeViewModel", "Failed to add to watch later", e)
-                _effect.send(HomeEffect.ShowMessage("添加失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("HomeViewModel", "add to watch later", e)
+                _effect.send(HomeEffect.ShowMessage(error.withPrefix("添加").userMessage))
             }
         }
     }
@@ -231,15 +230,13 @@ class HomeViewModel(
                     repository.saveStartupSnapshot(updatedItems)
                 }
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("HomeViewModel", "Failed to load recommend feeds", e)
-                val friendlyMessage = friendlyErrorMessage(e)
+                val error = reportFailure("HomeViewModel", "load recommend feeds", e)
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = friendlyMessage,
+                    errorMessage = error,
                 )
-                _effect.send(HomeEffect.ShowMessage(friendlyMessage))
+                _effect.send(HomeEffect.ShowMessage(error.userMessage))
             }
         }
     }

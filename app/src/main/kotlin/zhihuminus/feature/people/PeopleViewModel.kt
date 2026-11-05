@@ -5,12 +5,12 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.navigation.Person
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -22,7 +22,7 @@ data class PaginatedTabState<T>(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
     val hasLoaded: Boolean = false,
 )
 
@@ -30,7 +30,7 @@ data class PeopleUiState(
     val profile: PeopleProfile = PeopleProfile(),
     val isLoadingProfile: Boolean = false,
     val isRefreshingProfile: Boolean = false,
-    val profileErrorMessage: String? = null,
+    val profileErrorMessage: AppError? = null,
     val answersSort: PeopleSortOrder = PeopleSortOrder.Voteups,
     val articlesSort: PeopleSortOrder = PeopleSortOrder.Created,
     val answersState: PaginatedTabState<PeopleCreationItem> = PaginatedTabState(),
@@ -150,15 +150,13 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load member profile", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load member profile", e)
                 uiState = uiState.copy(
                     isLoadingProfile = false,
                     isRefreshingProfile = false,
-                    profileErrorMessage = msg,
+                    profileErrorMessage = error,
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载用户信息失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载用户信息").userMessage))
             }
         }
     }
@@ -183,9 +181,8 @@ class PeopleViewModel(
                 )
                 _effect.send(PeopleEffect.ShowMessage(if (!currentFollowing) "已关注" else "已取消关注"))
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to toggle follow", e)
-                _effect.send(PeopleEffect.ShowMessage("操作失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("PeopleViewModel", "toggle follow", e, userAction = "操作")
+                _effect.send(PeopleEffect.ShowMessage(error.userMessage))
             }
         }
     }
@@ -225,13 +222,12 @@ class PeopleViewModel(
                 }
                 _effect.send(PeopleEffect.ShowMessage(if (willFollow) "已关注" else "已取消关注"))
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to toggle item follow", e)
+                val error = reportFailure("PeopleViewModel", "toggle item follow", e)
                 uiState = uiState.copy(
                     followersState = uiState.followersState.copy(items = prevFollowers),
                     followingState = uiState.followingState.copy(items = prevFollowing),
                 )
-                _effect.send(PeopleEffect.ShowMessage(if (willFollow) "关注失败" else "取消关注失败"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix(if (willFollow) "关注" else "取消关注").userMessage))
             } finally {
                 uiState = uiState.copy(changingItemFollowIds = uiState.changingItemFollowIds - targetId)
             }
@@ -256,9 +252,8 @@ class PeopleViewModel(
                 )
                 _effect.send(PeopleEffect.ShowMessage(if (!currentBlocking) "已加入黑名单" else "已移出黑名单"))
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to toggle block", e)
-                _effect.send(PeopleEffect.ShowMessage("操作失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("PeopleViewModel", "toggle block", e, userAction = "操作")
+                _effect.send(PeopleEffect.ShowMessage(error.userMessage))
             }
         }
     }
@@ -413,18 +408,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load answers", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load answers", e)
                 uiState = uiState.copy(
                     answersState = uiState.answersState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载回答失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载回答").userMessage))
             }
         }
     }
@@ -460,18 +453,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load articles", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load articles", e)
                 uiState = uiState.copy(
                     articlesState = uiState.articlesState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载文章失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载文章").userMessage))
             }
         }
     }
@@ -507,18 +498,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load activities", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load activities", e)
                 uiState = uiState.copy(
                     activitiesState = uiState.activitiesState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载动态失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载动态").userMessage))
             }
         }
     }
@@ -554,18 +543,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load pins", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load pins", e)
                 uiState = uiState.copy(
                     pinsState = uiState.pinsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载想法失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载想法").userMessage))
             }
         }
     }
@@ -601,18 +588,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load collections", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load collections", e)
                 uiState = uiState.copy(
                     collectionsState = uiState.collectionsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载收藏失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载收藏").userMessage))
             }
         }
     }
@@ -648,18 +633,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load questions", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load questions", e)
                 uiState = uiState.copy(
                     questionsState = uiState.questionsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载提问失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载提问").userMessage))
             }
         }
     }
@@ -695,18 +678,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load columns", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load columns", e)
                 uiState = uiState.copy(
                     columnsState = uiState.columnsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载专栏失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载专栏").userMessage))
             }
         }
     }
@@ -742,18 +723,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load followers", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load followers", e)
                 uiState = uiState.copy(
                     followersState = uiState.followersState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载粉丝失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载粉丝").userMessage))
             }
         }
     }
@@ -789,18 +768,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load following", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load following", e)
                 uiState = uiState.copy(
                     followingState = uiState.followingState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载关注失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注").userMessage))
             }
         }
     }
@@ -836,18 +813,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load following columns", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load following columns", e)
                 uiState = uiState.copy(
                     followingColumnsState = uiState.followingColumnsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载订阅专栏失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载订阅专栏").userMessage))
             }
         }
     }
@@ -883,18 +858,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load following topics", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load following topics", e)
                 uiState = uiState.copy(
                     followingTopicsState = uiState.followingTopicsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载关注话题失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注话题").userMessage))
             }
         }
     }
@@ -930,18 +903,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load following questions", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load following questions", e)
                 uiState = uiState.copy(
                     followingQuestionsState = uiState.followingQuestionsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载关注问题失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注问题").userMessage))
             }
         }
     }
@@ -977,18 +948,16 @@ class PeopleViewModel(
                     ),
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                Log.e("PeopleViewModel", "Failed to load following collections", e)
-                val msg = friendlyErrorMessage(e)
+                val error = reportFailure("PeopleViewModel", "load following collections", e)
                 uiState = uiState.copy(
                     followingCollectionsState = uiState.followingCollectionsState.copy(
                         isLoading = false,
                         isRefreshing = false,
                         isLoadingMore = false,
-                        errorMessage = msg,
+                        errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage("加载关注收藏夹失败: $msg"))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注收藏夹").userMessage))
             }
         }
     }

@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.async
@@ -88,15 +88,15 @@ class PrivateMessageViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("PrivateMessageVM", "Failed to load private messages for $peerId", e)
+                val error = reportFailure("PrivateMessageViewModel", "load private messages for $peerId", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(PrivateMessageEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(PrivateMessageEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }
@@ -121,9 +121,9 @@ class PrivateMessageViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("PrivateMessageVM", "Failed to send private message", e)
+                val error = reportFailure("PrivateMessageViewModel", "send private message", e)
                 uiState = uiState.copy(isSending = false)
-                _effect.send(PrivateMessageEffect.ShowMessage(friendlyErrorMessage(e)))
+                _effect.send(PrivateMessageEffect.ShowMessage(error.userMessage))
             }
         }
     }

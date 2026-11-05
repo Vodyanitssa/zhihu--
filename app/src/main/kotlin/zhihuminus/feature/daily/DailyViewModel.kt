@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -20,7 +21,7 @@ data class DailyUiState(
     val sections: List<DailySection> = emptyList(),
     val isLoading: Boolean = true,
     val isLoadingMore: Boolean = false,
-    val error: String? = null,
+    val error: AppError? = null,
 )
 
 class DailyViewModel(
@@ -57,10 +58,10 @@ class DailyViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("DailyViewModel", "Failed to load latest daily", e)
+                val error = reportFailure("DailyViewModel", "load latest daily", e)
                 uiState = uiState.copy(
                     isLoading = false,
-                    error = "加载失败: ${friendlyErrorMessage(e)}",
+                    error = error,
                 )
             }
         }
@@ -85,10 +86,10 @@ class DailyViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("DailyViewModel", "Failed to load daily for date $date", e)
+                val error = reportFailure("DailyViewModel", "load daily for date $date", e)
                 uiState = uiState.copy(
                     isLoading = false,
-                    error = "加载失败: ${friendlyErrorMessage(e)}",
+                    error = error,
                 )
             }
         }
@@ -113,9 +114,9 @@ class DailyViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("DailyViewModel", "Failed to load more daily stories", e)
+                val error = reportFailure("DailyViewModel", "load more daily stories", e)
                 uiState = uiState.copy(isLoadingMore = false)
-                _effect.send(DailyEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                _effect.send(DailyEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
             }
         }
     }

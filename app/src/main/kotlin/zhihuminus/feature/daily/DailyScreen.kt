@@ -46,6 +46,7 @@ import com.zhihuminus.core.util.formatDailyDate
 import com.zhihuminus.core.util.twoDigitString
 import com.zhihuminus.feature.daily.components.DailyDateHeader
 import com.zhihuminus.feature.daily.components.DailyStoryCard
+import com.zhihuminus.ui.components.ErrorFullPage
 import kotlinx.coroutines.launch
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
@@ -203,26 +204,11 @@ fun DailyScreen(
                 }
 
                 state.error != null -> {
-                    Box(
+                    ErrorFullPage(
+                        error = state.error,
+                        onRetry = { onEvent(DailyEvent.Refresh) },
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.Center,
-                            modifier = Modifier.padding(24.dp),
-                        ) {
-                            Text(
-                                state.error.orEmpty(),
-                                color = MaterialTheme.colorScheme.error,
-                                style = MaterialTheme.typography.bodyMedium,
-                            )
-                            Spacer(modifier = Modifier.height(16.dp))
-                            TextButton(onClick = { onEvent(DailyEvent.Refresh) }) {
-                                Text("重新加载")
-                            }
-                        }
-                    }
+                    )
                 }
 
                 state.sections.isEmpty() -> {

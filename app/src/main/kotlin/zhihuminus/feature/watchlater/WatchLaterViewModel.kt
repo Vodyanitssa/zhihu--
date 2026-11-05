@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -16,7 +17,7 @@ data class WatchLaterUiState(
     val items: List<WatchLaterItem> = emptyList(),
     val isLoading: Boolean = false,
     val isRefreshing: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 class WatchLaterViewModel(
@@ -72,11 +73,11 @@ class WatchLaterViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("WatchLaterViewModel", "Failed to refresh watch later", e)
+                val error = reportFailure("WatchLaterViewModel", "refresh watch later", e)
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoading = false,
-                    errorMessage = "刷新失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
             }
         }
@@ -90,8 +91,8 @@ class WatchLaterViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("WatchLaterViewModel", "Failed to delete item", e)
-                _effect.send(WatchLaterEffect.ShowMessage("删除失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("WatchLaterViewModel", "delete item", e)
+                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("删除").userMessage))
             }
         }
     }
@@ -104,8 +105,8 @@ class WatchLaterViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("WatchLaterViewModel", "Failed to clear all", e)
-                _effect.send(WatchLaterEffect.ShowMessage("清除失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("WatchLaterViewModel", "clear all", e)
+                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("清除").userMessage))
             }
         }
     }

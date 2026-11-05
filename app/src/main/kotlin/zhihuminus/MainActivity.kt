@@ -49,7 +49,7 @@ import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.SystemNotificationPresenter
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clearShareImageCache
@@ -79,7 +79,6 @@ import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain
 import com.zhihuminus.ui.ArticleHost
 import com.zhihuminus.ui.components.getHighestQualityVideoUrl
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -392,8 +391,8 @@ class MainActivity :
                         },
                     )
                 } catch (e: Exception) {
-                    if (e is CancellationException) throw e
-                    androidUserMessageSink(this@MainActivity).showShortMessage("打开视频失败: ${friendlyErrorMessage(e)}")
+                    val error = reportFailure("MainActivity", "open video", e, userAction = "打开视频")
+                    androidUserMessageSink(this@MainActivity).showShortMessage(error.userMessage)
                 }
             }
             return

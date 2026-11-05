@@ -27,9 +27,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
+import com.zhihuminus.core.error.AppError
 import com.zhihuminus.feature.comment.components.CommentBottomBar
 import com.zhihuminus.feature.comment.components.CommentItemWithPreview
 import com.zhihuminus.feature.comment.components.SortBar
+import com.zhihuminus.ui.components.ErrorFullPage
 import kotlinx.coroutines.delay
 import kotlin.time.Duration.Companion.milliseconds
 
@@ -47,7 +49,7 @@ data class CommentUiState(
     val isLoadingMore: Boolean = false,
     val isChildLoadingMore: Boolean = false, // 当前子评论列表是否正在加载更多
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
     val activeParentId: String? = null, // 当前打开子sheet的父评论ID
     val replyToComment: Comment? = null, // 当前回复的目标评论
     val isInputActive: Boolean = false, // 输入弹窗是否打开
@@ -125,12 +127,11 @@ fun CommentScreen(
                         }
 
                         uiState.errorMessage != null -> {
-                            Box(
+                            ErrorFullPage(
+                                error = uiState.errorMessage,
+                                onRetry = { onEvent(CommentEvent.Refresh) },
                                 modifier = Modifier.fillMaxSize(),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                Text(uiState.errorMessage, color = MaterialTheme.colorScheme.error)
-                            }
+                            )
                         }
 
                         uiState.items.isEmpty() && !uiState.isLoadingMore -> {

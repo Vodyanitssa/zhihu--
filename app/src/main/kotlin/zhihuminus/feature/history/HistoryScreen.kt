@@ -2,7 +2,6 @@ package com.zhihuminus.feature.history
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -19,7 +18,6 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.runtime.Composable
@@ -32,6 +30,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.feature.history.components.HistoryCard
 import com.zhihuminus.feature.history.components.HistoryClearDialog
+import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.PaginatedList
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -121,21 +120,11 @@ fun HistoryScreen(
                 }
 
                 state.errorMessage != null && state.items.isEmpty() -> {
-                    Box(
+                    ErrorFullPage(
+                        error = state.errorMessage,
+                        onRetry = { onEvent(HistoryEvent.Refresh) },
                         modifier = Modifier.fillMaxSize(),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                            Text(
-                                text = state.errorMessage,
-                                color = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.padding(bottom = 8.dp),
-                            )
-                            TextButton(onClick = { onEvent(HistoryEvent.Refresh) }) {
-                                Text("重试")
-                            }
-                        }
-                    }
+                    )
                 }
 
                 state.items.isEmpty() -> {

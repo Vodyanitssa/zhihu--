@@ -7,7 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import kotlinx.coroutines.CancellationException
@@ -95,9 +96,9 @@ class QuestionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load question $questionId", e)
+                val error = reportFailure("QuestionViewModel", "load question", e)
                 uiState = uiState.copy(isLoadingQuestion = false)
-                sendEffect(QuestionEffect.ShowMessage("获取问题详情失败: ${friendlyErrorMessage(e)}"))
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("获取问题详情").userMessage))
             }
         }
     }
@@ -151,8 +152,8 @@ class QuestionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to load question feeds", e)
-                sendEffect(QuestionEffect.ShowMessage("加载失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("QuestionViewModel", "load answers", e)
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("加载").userMessage))
             } finally {
                 // 被取消说明已有新任务接管加载标志，不能在这里清掉
                 if (coroutineContext.isActive) {
@@ -178,10 +179,10 @@ class QuestionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e(TAG, "Failed to toggle follow for question $questionId", e)
+                val error = reportFailure("QuestionViewModel", "toggle follow", e)
                 // 回滚乐观更新
                 uiState = uiState.copy(detail = detail)
-                sendEffect(QuestionEffect.ShowMessage("关注操作失败: ${friendlyErrorMessage(e)}"))
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("关注操作").userMessage))
             }
         }
     }

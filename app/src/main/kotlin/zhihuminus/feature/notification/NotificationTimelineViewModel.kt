@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.core.settings.AppSettingsRepository
-import com.zhihuminus.core.util.Log
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -109,15 +109,15 @@ class NotificationTimelineViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("NotificationTimelineVM", "Failed to load timeline for $entryName", e)
+                val error = reportFailure("NotificationTimelineViewModel", "load timeline for $entryName", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(NotificationTimelineEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(NotificationTimelineEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }
@@ -136,7 +136,7 @@ class NotificationTimelineViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("NotificationTimelineVM", "Failed to mark $entryName as read", e)
+                reportFailure("NotificationTimelineViewModel", "mark $entryName as read", e)
             }
         }
     }

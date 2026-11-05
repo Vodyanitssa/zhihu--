@@ -1,5 +1,7 @@
 package com.zhihuminus.feature.notification
 
+import com.zhihuminus.core.error.AppError
+
 data class NotificationUiState(
     val items: List<NotificationTimelineItem> = emptyList(),
     val unreadCounts: Map<NotificationCategory, Int> = emptyMap(),
@@ -9,7 +11,7 @@ data class NotificationUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 sealed interface NotificationEvent {

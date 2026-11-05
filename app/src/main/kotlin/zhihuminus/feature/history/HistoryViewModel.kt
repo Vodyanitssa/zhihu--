@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.navigation.withReadingQueueSource
 import kotlinx.coroutines.CancellationException
@@ -21,7 +22,7 @@ data class HistoryUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 class HistoryViewModel(
@@ -97,15 +98,15 @@ class HistoryViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Failed to load history", e)
+                val error = reportFailure("HistoryViewModel", "load history", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(HistoryEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(HistoryEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }
@@ -124,8 +125,8 @@ class HistoryViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Failed to delete history item", e)
-                _effect.send(HistoryEffect.ShowMessage("删除失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("HistoryViewModel", "delete history item", e)
+                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("删除").userMessage))
             }
         }
     }
@@ -139,8 +140,8 @@ class HistoryViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("HistoryViewModel", "Failed to clear history", e)
-                _effect.send(HistoryEffect.ShowMessage("清除失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("HistoryViewModel", "clear history", e)
+                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("清除").userMessage))
             }
         }
     }

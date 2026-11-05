@@ -5,8 +5,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -85,15 +85,15 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("NotificationVM", "Failed to load notification overview", e)
+                val error = reportFailure("NotificationViewModel", "load notification overview", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(NotificationEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(NotificationEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }
@@ -117,8 +117,8 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("NotificationVM", "Failed to mark all as read", e)
-                _effect.send(NotificationEffect.ShowMessage("标记已读失败: ${friendlyErrorMessage(e)}"))
+                val error = reportFailure("NotificationViewModel", "mark all as read", e)
+                _effect.send(NotificationEffect.ShowMessage(error.withPrefix("标记已读").userMessage))
             }
         }
     }
@@ -140,7 +140,7 @@ class NotificationViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("NotificationVM", "Failed to mark ${category.entryName} as read", e)
+                reportFailure("NotificationViewModel", "mark ${category.entryName} as read", e)
             }
         }
     }

@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -19,7 +20,7 @@ data class CollectionUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
     val showCreateDialog: Boolean = false,
     val isCreating: Boolean = false,
     val createError: String? = null,
@@ -114,15 +115,15 @@ class CollectionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("CollectionViewModel", "Failed to load collections", e)
+                val error = reportFailure("CollectionViewModel", "load collections", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(CollectionEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(CollectionEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }
@@ -140,10 +141,10 @@ class CollectionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("CollectionViewModel", "Failed to create collection", e)
+                val error = reportFailure("CollectionViewModel", "create collection", e)
                 uiState = uiState.copy(
                     isCreating = false,
-                    createError = friendlyErrorMessage(e),
+                    createError = error.userMessage,
                 )
             }
         }
@@ -171,10 +172,10 @@ class CollectionViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("CollectionViewModel", "Failed to delete collection", e)
+                val error = reportFailure("CollectionViewModel", "delete collection", e)
                 uiState = uiState.copy(
                     isDeleting = false,
-                    deleteError = friendlyErrorMessage(e),
+                    deleteError = error.userMessage,
                 )
             }
         }

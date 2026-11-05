@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.failureMessage
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import kotlinx.coroutines.CancellationException
@@ -23,8 +24,8 @@ data class TopicUiState(
     val ideasSort: TopicIdeasSort = TopicIdeasSort.Hot,
     val isLoading: Boolean = false,
     val isLoadingDetail: Boolean = false,
-    val errorMessage: String? = null,
-    val detailErrorMessage: String? = null,
+    val errorMessage: AppError? = null,
+    val detailErrorMessage: AppError? = null,
     val isEnd: Boolean = false,
     val isFollowingChanging: Boolean = false,
 )
@@ -104,10 +105,10 @@ class TopicViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("TopicViewModel", "Failed to load topic detail", e)
+                val error = reportFailure("TopicViewModel", "load topic detail", e)
                 uiState = uiState.copy(
                     isLoadingDetail = false,
-                    detailErrorMessage = friendlyErrorMessage(e),
+                    detailErrorMessage = error,
                 )
             }
         }
@@ -182,16 +183,16 @@ class TopicViewModel(
                     items = uiState.items + newItems,
                     isEnd = result.isEnd,
                     isLoading = false,
-                    errorMessage = result.error,
+                    errorMessage = result.error?.let { AppError.Unknown(it) },
                 )
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("TopicViewModel", "Failed to load topic feed", e)
+                val error = reportFailure("TopicViewModel", "load topic feed", e)
                 if (generation == requestGeneration) {
                     uiState = uiState.copy(
                         isLoading = false,
-                        errorMessage = friendlyErrorMessage(e),
+                        errorMessage = error,
                     )
                 }
             }
@@ -221,7 +222,7 @@ class TopicViewModel(
                     _effect.send(TopicEffect.ShowMessage(if (following) "已关注话题" else "已取消关注话题"))
                 }.onFailure {
                     uiState = uiState.copy(isFollowingChanging = false)
-                    _effect.send(TopicEffect.ShowMessage("${if (following) "关注" else "取消关注"}失败：${friendlyErrorMessage(it)}"))
+                    _effect.send(TopicEffect.ShowMessage(failureMessage(if (following) "关注" else "取消关注", it).userMessage))
                 }
         }
     }

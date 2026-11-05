@@ -5,8 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
-import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
@@ -22,7 +23,7 @@ data class CollectionContentUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 class CollectionContentViewModel(
@@ -73,8 +74,7 @@ class CollectionContentViewModel(
                     try {
                         repository.getCollection(collectionId)
                     } catch (e: Exception) {
-                        if (e is CancellationException) throw e
-                        Log.e("CollectionContentVM", "Failed to fetch collection details $collectionId", e)
+                        reportFailure("CollectionContentViewModel", "fetch collection details $collectionId", e)
                         uiState.collection
                     }
                 } else {
@@ -106,15 +106,15 @@ class CollectionContentViewModel(
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
-                Log.e("CollectionContentVM", "Failed to load collection items $collectionId", e)
+                val error = reportFailure("CollectionContentViewModel", "load collection items $collectionId", e)
                 uiState = uiState.copy(
                     isLoading = false,
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = "加载失败: ${friendlyErrorMessage(e)}",
+                    errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(CollectionContentEffect.ShowMessage("加载更多失败: ${friendlyErrorMessage(e)}"))
+                    _effect.send(CollectionContentEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
                 }
             }
         }

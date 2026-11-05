@@ -5,12 +5,13 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.withReadingQueueSource
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
@@ -18,12 +19,12 @@ import kotlinx.coroutines.launch
 
 data class FollowUiState(
     val users: List<FollowingUser> = emptyList(),
-    val usersErrorMessage: String? = null,
+    val usersErrorMessage: AppError? = null,
     val items: List<FeedDisplayItem> = emptyList(),
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
-    val errorMessage: String? = null,
+    val errorMessage: AppError? = null,
 )
 
 class FollowViewModel(
@@ -93,9 +94,9 @@ class FollowViewModel(
                     usersErrorMessage = null,
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
+                val error = reportFailure("FollowViewModel", "load following users", e)
                 uiState = uiState.copy(
-                    usersErrorMessage = "加载关注动态失败: ${friendlyErrorMessage(e)}",
+                    usersErrorMessage = error,
                 )
             }
         }
@@ -129,12 +130,12 @@ class FollowViewModel(
                     isLoadingMore = false,
                 )
             } catch (e: Exception) {
-                if (e is CancellationException) throw e
-                val message = "加载关注动态失败: ${friendlyErrorMessage(e)}"
+                val error = reportFailure("FollowViewModel", "load follow feed", e)
+                val message = error.withPrefix("加载关注动态").userMessage
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoadingMore = false,
-                    errorMessage = message,
+                    errorMessage = error,
                 )
                 _effect.send(FollowEffect.ShowMessage(message))
             }

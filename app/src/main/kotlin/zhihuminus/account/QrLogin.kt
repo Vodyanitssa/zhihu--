@@ -49,7 +49,7 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.google.zxing.BarcodeFormat
 import com.google.zxing.qrcode.QRCodeWriter
-import com.zhihuminus.core.error.friendlyErrorMessage
+import com.zhihuminus.core.error.failureMessage
 import com.zhihuminus.data.common.ZHIHU_ME_URL
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
@@ -462,7 +462,7 @@ fun SharedQrLoginPane(
         } catch (e: CancellationException) {
             throw e
         } catch (e: Exception) {
-            statusText = "二维码获取失败：${friendlyErrorMessage(e)}"
+            statusText = failureMessage("二维码获取", e).userMessage
             isWorking = false
         } finally {
             client.close()
