@@ -1,6 +1,5 @@
 package com.zhihuminus.feature.post
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
@@ -12,15 +11,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Button
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -30,13 +26,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.zhihuminus.core.content.extractAllImageUrls
 import com.zhihuminus.core.content.renderer.LocalImageViewManager
+import com.zhihuminus.core.error.AppError
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.feature.collection.components.CollectionDialogComponent
 import com.zhihuminus.feature.comment.CommentContentType
@@ -48,6 +44,7 @@ import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
+import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
 
@@ -59,7 +56,7 @@ sealed interface PostLoadState {
     ) : PostLoadState
 
     data class Error(
-        val message: String?,
+        val error: AppError,
     ) : PostLoadState
 }
 
@@ -156,41 +153,11 @@ fun PostScreen(
                 }
 
                 is PostLoadState.Error -> {
-                    Box(
-                        modifier = Modifier
-                            .fillMaxSize()
-                            .padding(paddingValues),
-                        contentAlignment = Alignment.Center,
-                    ) {
-                        Column(
-                            horizontalAlignment = Alignment.CenterHorizontally,
-                            verticalArrangement = Arrangement.spacedBy(12.dp),
-                            modifier = Modifier.padding(horizontal = 24.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Default.Warning,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.error,
-                                modifier = Modifier.size(48.dp),
-                            )
-                            Text(
-                                text = "加载失败",
-                                style = MaterialTheme.typography.titleMedium,
-                            )
-                            Text(
-                                text = state.message ?: "未知错误",
-                                style = MaterialTheme.typography.bodyMedium,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                textAlign = TextAlign.Center,
-                            )
-                            Button(
-                                onClick = { onEvent(PostEvent.Refresh) },
-                                modifier = Modifier.padding(top = 8.dp),
-                            ) {
-                                Text("重新加载")
-                            }
-                        }
-                    }
+                    ErrorFullPage(
+                        error = state.error,
+                        onRetry = { onEvent(PostEvent.Refresh) },
+                        modifier = Modifier.padding(paddingValues),
+                    )
                 }
 
                 is PostLoadState.Success -> {
