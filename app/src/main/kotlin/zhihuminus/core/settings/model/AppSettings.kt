@@ -54,16 +54,6 @@ enum class StartDestinationOption(
         Daily -> com.zhihuminus.navigation.Daily
         WatchLater -> com.zhihuminus.navigation.WatchLater
     }
-
-    companion object {
-        fun fromTopLevelDestination(destination: TopLevelDestination): StartDestinationOption =
-            when (destination.name) {
-                com.zhihuminus.navigation.Follow.name -> Follow
-                com.zhihuminus.navigation.Daily.name -> Daily
-                com.zhihuminus.navigation.WatchLater.name -> WatchLater
-                else -> Home
-            }
-    }
 }
 
 @Serializable
@@ -82,12 +72,6 @@ enum class ShareActionOption(
     Ask("ask", "询问"),
     CopyLink("copy", "复制链接"),
     SystemShare("share", "Android分享"),
-    ;
-
-    companion object {
-        fun fromId(id: String?): ShareActionOption =
-            entries.firstOrNull { it.id == id } ?: Ask
-    }
 }
 
 private val defaultSystemNotifications: Map<NotificationType, Boolean> =

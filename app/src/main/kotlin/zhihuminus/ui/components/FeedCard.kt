@@ -362,16 +362,12 @@ internal enum class FeedGalleryImageLayout {
     NINE_GRID,
 }
 
-internal typealias PinFeedImageLayout = FeedGalleryImageLayout
-
 internal fun feedGalleryImageLayout(imageCount: Int): FeedGalleryImageLayout? = when (imageCount) {
     0 -> null
     1 -> FeedGalleryImageLayout.SINGLE
     in 2..4 -> FeedGalleryImageLayout.MULTI_ROW
     else -> FeedGalleryImageLayout.NINE_GRID
 }
-
-internal fun pinFeedImageLayout(imageCount: Int): FeedGalleryImageLayout? = feedGalleryImageLayout(imageCount)
 
 @Composable
 private fun FeedGalleryImages(

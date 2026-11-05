@@ -6,10 +6,6 @@ import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
 import com.zhihuminus.core.error.HttpStatusException
-import com.zhihuminus.data.common.ZhihuJson.json
-import kotlinx.serialization.json.int
-import kotlinx.serialization.json.jsonObject
-import kotlinx.serialization.json.jsonPrimitive
 
 fun Context.canSafelyShowDialog(): Boolean {
     val activity = this as? Activity ?: return false
@@ -28,26 +24,6 @@ fun Context.showLoginExpiredDialog(onRelogin: () -> Unit) {
             .setPositiveButton("重新登录") { _, _ -> onRelogin() }
             .setNegativeButton("取消", null)
             .show()
-    }
-}
-
-fun Context.tryShowLoginExpiredDialog(
-    error: HttpStatusException,
-    onRelogin: () -> Unit,
-): Boolean {
-    return try {
-        val body = json.parseToJsonElement(error.bodyText).jsonObject
-        val errorBody = body["error"]?.jsonObject ?: return false
-        if (errorBody["code"]?.jsonPrimitive?.int == 100 &&
-            errorBody["message"]?.jsonPrimitive?.content == "ERR_TICKET_NOT_EXIST"
-        ) {
-            showLoginExpiredDialog(onRelogin)
-            true
-        } else {
-            false
-        }
-    } catch (_: Exception) {
-        false
     }
 }
 

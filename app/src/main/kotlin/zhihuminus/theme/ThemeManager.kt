@@ -41,22 +41,6 @@ object ThemeManager {
     var currentPrimaryColor: Color = Color(0xFF056DE8)
         internal set
 
-    @Composable
-    fun getUseDynamicColor(): Boolean = useDynamicColor.value
-
-    @Composable
-    fun getCustomColor(): Color = Color(customColorInt.intValue)
-
-    @Composable
-    fun getBackgroundColor(): Color = if (isDarkTheme()) {
-        Color(backgroundColorDark.intValue)
-    } else {
-        Color(backgroundColorLight.intValue)
-    }
-
-    @Composable
-    fun getThemeMode(): ThemeMode = themeMode.value
-
     var isDarkTheme: Boolean = false
         internal set
 
@@ -91,14 +75,6 @@ object ThemeManager {
         themeMode = themeMode.value,
     )
 
-    fun setUseDynamicColor(useDynamic: Boolean) {
-        useDynamicColor.value = useDynamic
-    }
-
-    fun setCustomColor(color: Color) {
-        customColorInt.intValue = color.toArgb()
-    }
-
     fun setBackgroundColor(color: Color, isDark: Boolean) {
         val colorInt = color.toArgb()
         if (isDark) {
@@ -106,10 +82,6 @@ object ThemeManager {
         } else {
             backgroundColorLight.intValue = colorInt
         }
-    }
-
-    fun setThemeMode(mode: ThemeMode) {
-        themeMode.value = mode
     }
 }
 

@@ -96,11 +96,4 @@ object AndroidAppSettingsRepository {
             file = File(context.applicationContext.filesDir, "settings.json"),
         ).also { instance = it }
     }
-
-    /**
-     * 仅供测试环境重置单例使用
-     */
-    internal fun setInstanceForTesting(repository: AppSettingsRepository?) {
-        instance = repository
-    }
 }

@@ -295,9 +295,6 @@ object PostMapper {
     }
 }
 
-@Deprecated("Use PostMapper instead", ReplaceWith("PostMapper"))
-typealias PinMapper = PostMapper
-
 fun AnswerDto.toPost(): Post = PostMapper.toPost(this)
 
 fun ArticleDto.toPost(): Post = PostMapper.toPost(this)

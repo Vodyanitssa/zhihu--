@@ -69,9 +69,9 @@ private fun formatThrowable(error: Throwable): AppError = when (error) {
     -> AppError.Timeout("网络连接超时，请检查网络后重试", error)
 
     is UnknownHostException,
-    is java.net.UnknownHostException,
+    is UnknownHostException,
     is ConnectException,
-    is java.net.ConnectException,
+    is ConnectException,
     is ConnectTimeoutException,
     -> AppError.Network("无法连接到服务器，请检查网络设置", error)
 
@@ -96,8 +96,7 @@ private fun formatHttpStatus(error: HttpStatusException): AppError {
     if (serverMessage != null) {
         return AppError.Business(serverMessage, cause = error)
     }
-    val status = error.status.value
-    return when (status) {
+    return when (val status = error.status.value) {
         401 -> AppError.Auth("登录已过期，请重新登录", error)
         403 -> AppError.Http(status, "没有访问权限或内容已被封禁", error)
         404 -> AppError.Http(status, "内容不存在或已被删除", error)

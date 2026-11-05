@@ -20,7 +20,6 @@ import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.ZhihuCookieStorage
 import com.zhihuminus.data.common.ZhihuJson.json
 import com.zhihuminus.feature.home.homeFeedStartupCacheFileNames
-import com.zhihuminus.navigation.NavDestination
 import io.ktor.client.HttpClient
 import io.ktor.client.plugins.UserAgent
 import io.ktor.client.plugins.api.createClientPlugin
@@ -124,8 +123,6 @@ open class AndroidPaginationEnvironment(
             userMessageSink.showError(appError.userMessage)
         }
     }
-
-    override suspend fun postHistoryDestination(destination: NavDestination) = Unit
 
     override fun setPlainTextClipboard(
         label: String,

@@ -62,11 +62,7 @@ class ZhihuTopicRepository(
         val paging = feedResponse.paging
         val rawNext = paging?.next
         val normalizedNext = rawNext?.let(::normalizeTopicPagingUrl)
-        val isEnd = if (rawNext != null && normalizedNext == null) {
-            true
-        } else {
-            paging?.hasMore != true
-        }
+        val isEnd = rawNext != null && normalizedNext == null || paging?.hasMore != true
         val error = if (rawNext != null && normalizedNext == null) {
             "服务端返回了不受信任的分页地址，已停止加载"
         } else {

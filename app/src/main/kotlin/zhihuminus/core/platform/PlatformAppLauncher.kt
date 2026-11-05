@@ -80,11 +80,3 @@ fun rememberShareText(): (String) -> Unit {
         }
     }
 }
-
-@Composable
-fun rememberIsLiteVariant(): Boolean {
-    val context = LocalContext.current
-    return remember(context) { isAndroidLiteVariantPackageName(context.packageName) }
-}
-
-internal fun isAndroidLiteVariantPackageName(packageName: String): Boolean = packageName.endsWith(".lite")

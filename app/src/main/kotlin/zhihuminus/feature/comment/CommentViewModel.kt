@@ -23,10 +23,6 @@ class CommentViewModel(
     private val initialCommentId: String? = null,
     private val defaultDispatcher: CoroutineDispatcher = Dispatchers.Default,
 ) : ViewModel() {
-    companion object {
-        private const val PAGE_SIZE = 20
-    }
-
     var uiState: CommentUiState by mutableStateOf(CommentUiState())
         private set
 

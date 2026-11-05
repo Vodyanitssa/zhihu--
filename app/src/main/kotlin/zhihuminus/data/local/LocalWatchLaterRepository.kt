@@ -109,8 +109,4 @@ object LocalWatchLaterRepository {
             file = File(context.applicationContext.filesDir, "watch_later.json"),
         ).also { instance = it }
     }
-
-    internal fun setInstanceForTesting(repository: WatchLaterRepository?) {
-        instance = repository
-    }
 }

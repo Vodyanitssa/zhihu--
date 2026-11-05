@@ -19,11 +19,6 @@ interface AccountEnvironment {
     fun saveCookies(cookies: Map<String, String>) = Unit
 
     fun logout() = clearAccountSession()
-
-    fun requestRelogin(): Boolean {
-        clearAccountSession()
-        return requestLogin()
-    }
 }
 
 interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
@@ -35,8 +30,6 @@ interface MobileHomeFeedEnvironment : ZhihuApiEnvironment {
 }
 
 interface HistoryEnvironment {
-    fun localHistory(): List<NavDestination> = emptyList()
-
     suspend fun postHistoryDestination(destination: NavDestination) = Unit
 }
 

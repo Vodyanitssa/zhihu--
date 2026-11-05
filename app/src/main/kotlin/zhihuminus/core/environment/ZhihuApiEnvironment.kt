@@ -2,7 +2,6 @@ package com.zhihuminus.core.environment
 
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.util.Log
-import com.zhihuminus.data.executeZhihuAuthenticatedRequest
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
 import com.zhihuminus.data.zhihu.crypto.signZhihuFetchRequest
 import io.ktor.client.HttpClient
@@ -10,7 +9,6 @@ import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.post
 import io.ktor.client.statement.HttpResponse
-import io.ktor.client.statement.bodyAsText
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLProtocol
 import kotlinx.serialization.json.JsonElement
@@ -41,13 +39,6 @@ interface ZhihuApiEnvironment {
             }
             signZhihuFetchRequest(cookies)
         }
-    }
-
-    suspend fun signedGetText(url: String): String = withAuthenticatedClient { client, cookies ->
-        executeZhihuAuthenticatedRequest(client, url) {
-            method = HttpMethod.Get
-            signZhihuFetchRequest(cookies)
-        }.bodyAsText()
     }
 
     suspend fun refreshToken() {

@@ -21,38 +21,36 @@ object SystemNotificationPresenter {
     const val CHANNEL_INVITATIONS = "zhihu_invitations"
 
     fun ensureNotificationChannels(context: Context) {
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-            val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
-                ?: return
+        val notificationManager = context.getSystemService(Context.NOTIFICATION_SERVICE) as? NotificationManager
+            ?: return
 
-            val interactionChannel = NotificationChannel(
-                CHANNEL_INTERACTIONS,
-                "互动消息",
-                NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply {
-                description = "点赞、喜欢、回复与关注通知"
-            }
-
-            val messageChannel = NotificationChannel(
-                CHANNEL_MESSAGES,
-                "私信消息",
-                NotificationManager.IMPORTANCE_HIGH,
-            ).apply {
-                description = "私信会话新消息"
-            }
-
-            val invitationChannel = NotificationChannel(
-                CHANNEL_INVITATIONS,
-                "邀请回答",
-                NotificationManager.IMPORTANCE_DEFAULT,
-            ).apply {
-                description = "问题回答邀请通知"
-            }
-
-            notificationManager.createNotificationChannels(
-                listOf(interactionChannel, messageChannel, invitationChannel),
-            )
+        val interactionChannel = NotificationChannel(
+            CHANNEL_INTERACTIONS,
+            "互动消息",
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = "点赞、喜欢、回复与关注通知"
         }
+
+        val messageChannel = NotificationChannel(
+            CHANNEL_MESSAGES,
+            "私信消息",
+            NotificationManager.IMPORTANCE_HIGH,
+        ).apply {
+            description = "私信会话新消息"
+        }
+
+        val invitationChannel = NotificationChannel(
+            CHANNEL_INVITATIONS,
+            "邀请回答",
+            NotificationManager.IMPORTANCE_DEFAULT,
+        ).apply {
+            description = "问题回答邀请通知"
+        }
+
+        notificationManager.createNotificationChannels(
+            listOf(interactionChannel, messageChannel, invitationChannel),
+        )
     }
 
     fun hasNotificationPermission(context: Context): Boolean = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {

@@ -102,6 +102,3 @@ class ZhihuCookieStorage(
 
     override fun close() = Unit
 }
-
-@Deprecated("Use com.zhihuminus.data.zhihu.dto.PagingDto instead", ReplaceWith("PagingDto", "com.zhihuminus.data.zhihu.dto.PagingDto"))
-typealias ZhihuPaging = com.zhihuminus.data.zhihu.dto.PagingDto

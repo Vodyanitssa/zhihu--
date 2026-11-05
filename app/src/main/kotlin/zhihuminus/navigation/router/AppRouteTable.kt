@@ -323,8 +323,7 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
             host = "tab",
             segmentCounts = 1..1,
             resolve = { args ->
-                val tab = args.segment(0)?.lowercase()
-                when (tab) {
+                when (val tab = args.segment(0)?.lowercase()) {
                     "history" -> RouteResolution.Screen(History)
                     "account" -> RouteResolution.Screen(Account)
                     else -> tab?.let(TAB_DESTINATIONS::get)?.let(RouteResolution::Tab)

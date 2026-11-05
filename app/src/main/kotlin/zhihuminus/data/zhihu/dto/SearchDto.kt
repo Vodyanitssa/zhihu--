@@ -38,8 +38,3 @@ data class HotSearchItemDto(
     val hotShow: String = "",
     val label: String = "",
 )
-
-@Serializable
-data class HotSearchResponseDto(
-    val hotSearchQueries: List<HotSearchItemDto> = emptyList(),
-)

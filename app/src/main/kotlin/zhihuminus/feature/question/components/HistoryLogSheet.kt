@@ -108,12 +108,10 @@ fun HistoryLogSheet(
                                     ): Boolean {
                                         val requestUrl = request?.url?.toString() ?: return false
                                         Log.i(TAG, "shouldOverrideUrlLoading: $requestUrl")
-                                        if (requestUrl.startsWith("https://www.zhihu.com/") ||
-                                            requestUrl.startsWith("https://zhuanlan.zhihu.com/")
-                                        ) {
-                                            return false
-                                        }
-                                        return true
+                                        return !(
+                                            requestUrl.startsWith("https://www.zhihu.com/") ||
+                                                requestUrl.startsWith("https://zhuanlan.zhihu.com/")
+                                        )
                                     }
 
                                     override fun onPageStarted(view: WebView?, url: String?, favicon: Bitmap?) {

@@ -6,7 +6,6 @@ import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 import kotlin.time.Clock
-import kotlin.time.ExperimentalTime
 import kotlin.time.Instant as KotlinInstant
 
 private val timeFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm")
@@ -48,7 +47,6 @@ fun formatDailyDate(dateString: String): String {
     return "${dateString.substring(0, 4)}年${dateString.substring(4, 6)}月${dateString.substring(6, 8)}日"
 }
 
-@OptIn(ExperimentalTime::class)
 fun formatRelativeTime(
     epochSeconds: Long,
     nowEpochSeconds: Long = Clock.System.now().epochSeconds,
@@ -78,7 +76,6 @@ fun formatRelativeTime(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 fun formatChatTime(
     epochSeconds: Long,
     nowEpochSeconds: Long = Clock.System.now().epochSeconds,
@@ -104,7 +101,6 @@ fun formatChatTime(
     }
 }
 
-@OptIn(ExperimentalTime::class)
 fun formatShortDate(
     epochSeconds: Long,
     timeZone: TimeZone = TimeZone.currentSystemDefault(),

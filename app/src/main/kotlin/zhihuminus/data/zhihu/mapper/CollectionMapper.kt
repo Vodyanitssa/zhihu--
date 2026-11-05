@@ -60,6 +60,4 @@ object CollectionMapper {
 
 fun CollectionDto.toDomain(): Collection = CollectionMapper.toCollection(this)
 
-fun CollectionDto.toCollection(): Collection = CollectionMapper.toCollection(this)
-
 fun CollectionItemDto.toFeedDisplayItem(): FeedDisplayItem = CollectionMapper.toFeedDisplayItem(this)

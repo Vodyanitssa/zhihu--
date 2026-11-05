@@ -205,10 +205,8 @@ open class ZhihuFeedApi(
         uninterestedType: String = "less_similar",
         feedDeliverType: String = "Normal",
         sceneCode: String = "RECOMMEND",
-    ): Boolean {
-        if (environment.authenticatedCookies()["d_c0"] == null) return false
-
-        return try {
+    ): Boolean = environment.authenticatedCookies()["d_c0"] != null &&
+        try {
             val response = environment.postSigned("https://www.zhihu.com/api/v4/zrec-feedback/uninterested") {
                 setBody(
                     FormDataContent(
@@ -234,5 +232,4 @@ open class ZhihuFeedApi(
             Log.w("ZhihuFeedApi", "Failed to mark content uninterested", e)
             false
         }
-    }
 }

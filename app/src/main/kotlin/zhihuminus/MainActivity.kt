@@ -60,7 +60,6 @@ import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.local.AppRuntimeStore
-import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93
 import com.zhihuminus.feature.notification.NotificationType
 import com.zhihuminus.feature.notification.worker.NotificationScheduler
 import com.zhihuminus.feature.post.PostType
@@ -442,12 +441,7 @@ class MainActivity :
 
     override fun postHistoryDestination(destination: NavDestination) = Unit
 
-    @Suppress("unused")
     companion object {
-        const val IOS = "5_2.0"
-        const val ANDROID = "4_2.0"
-        const val WEB = "3_2.0"
-        const val ZSE93 = ZHIHU_WEB_ZSE93
         const val TAG = "MainActivity"
     }
 }

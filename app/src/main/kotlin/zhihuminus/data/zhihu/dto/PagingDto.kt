@@ -36,12 +36,3 @@ data class PageResult<T>(
 typealias FeedPage = PageResult<FeedDto>
 typealias HistoryPage = PageResult<HistoryItemDto>
 typealias PeoplePageDto<T> = PageResult<T>
-
-@Deprecated("Use PagingDto instead", ReplaceWith("PagingDto"))
-typealias ZhihuPaging = PagingDto
-
-@Deprecated("Use PagingDto instead", ReplaceWith("PagingDto"))
-typealias ColumnPaging = PagingDto
-
-@Deprecated("Use PagingDto instead", ReplaceWith("PagingDto"))
-typealias TopicPagingDto = PagingDto

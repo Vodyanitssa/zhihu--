@@ -26,6 +26,7 @@ import java.util.Base64
 import java.util.Locale
 import javax.crypto.Mac
 import javax.crypto.spec.SecretKeySpec
+import kotlin.time.Duration.Companion.milliseconds
 
 /**
  * 已上传到知乎图床的图片。
@@ -151,7 +152,7 @@ class ZhihuImageUploadApi(
         var status = fetchImageStatus(client, imageId)
         repeat(POLL_ATTEMPTS - 1) {
             if (status.status == "success") return status
-            delay(POLL_INTERVAL_MILLIS)
+            delay(POLL_INTERVAL_MILLIS.milliseconds)
             status = fetchImageStatus(client, imageId)
         }
         return status

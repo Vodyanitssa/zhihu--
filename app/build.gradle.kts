@@ -202,7 +202,6 @@ dependencies {
     // Compose (AndroidX — icons, tooling, test not available from JetBrains yet)
     implementation(platform("androidx.compose:compose-bom:2026.06.00"))
     implementation("androidx.compose.material:material-icons-extended")
-    implementation("androidx.compose.ui:ui-tooling-preview")
     implementation("com.mikepenz:aboutlibraries-compose-m3:$aboutLibraries")
     debugImplementation("androidx.compose.ui:ui-tooling")
 

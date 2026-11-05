@@ -272,13 +272,6 @@ class AdvertisementFeedDto(
     val ad: Ad,
 ) : FeedDto {
     @Serializable
-    class ExtInfo(
-        val title: String,
-        val description: String,
-        val thumbnail: String? = null,
-    )
-
-    @Serializable
     class Ad(
         val creatives: List<Creative> = emptyList(),
     )
@@ -373,19 +366,6 @@ data class MomentsFeedDto(
 ) : FeedDto {
     override val sourceLabel: String?
         get() = momentDesc.trim().takeIf { it.isNotEmpty() }
-
-    @Serializable
-    class FeedSource(
-        val actionText: String,
-        val actor: FeedSourceActor,
-    )
-
-    @Serializable
-    class FeedSourceActor(
-        val name: String,
-        val id: String,
-        val urlToken: String,
-    )
 }
 
 @Serializable

@@ -80,14 +80,6 @@ data object Account : NavDestination {
     ) : NavDestination
 
     @Serializable
-    data object ReadingSettings : NavDestination
-
-    @Serializable
-    data class SystemAndUpdateSettings(
-        val setting: String = "",
-    ) : NavDestination
-
-    @Serializable
     data class NotificationSettings(
         val setting: String = "",
     ) : NavDestination
