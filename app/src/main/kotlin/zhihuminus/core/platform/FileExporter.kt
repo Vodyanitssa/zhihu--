@@ -19,7 +19,7 @@ import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import androidx.core.content.FileProvider
 import androidx.core.net.toUri
-import com.zhihuminus.core.util.friendlyErrorMessage
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import io.ktor.client.HttpClient
 import io.ktor.client.request.get

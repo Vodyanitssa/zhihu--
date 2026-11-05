@@ -49,6 +49,7 @@ import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.core.platform.SystemNotificationPresenter
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.clearShareImageCache
@@ -57,7 +58,6 @@ import com.zhihuminus.core.platform.startLoginActivity
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
-import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.local.AppRuntimeStore
 import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_ZSE93

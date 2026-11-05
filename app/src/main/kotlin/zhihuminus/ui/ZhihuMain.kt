@@ -88,8 +88,8 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.core.platform.rememberUserMessageSink
-import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.collection.CollectionContentRoute

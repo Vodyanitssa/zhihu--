@@ -5,9 +5,9 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.core.settings.AppSettingsRepository
 import com.zhihuminus.core.util.Log
-import com.zhihuminus.core.util.friendlyErrorMessage
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel

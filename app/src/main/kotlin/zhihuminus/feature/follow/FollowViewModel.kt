@@ -5,7 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.zhihuminus.core.util.friendlyErrorMessage
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Person

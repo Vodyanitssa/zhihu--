@@ -5,7 +5,7 @@ import android.app.AlertDialog
 import android.content.Context
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleOwner
-import com.zhihuminus.core.util.HttpStatusException
+import com.zhihuminus.core.error.HttpStatusException
 import com.zhihuminus.data.common.ZhihuJson.json
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject

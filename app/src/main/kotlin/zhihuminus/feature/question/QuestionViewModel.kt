@@ -7,8 +7,8 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.core.error.friendlyErrorMessage
 import com.zhihuminus.core.util.Log
-import com.zhihuminus.core.util.friendlyErrorMessage
 import com.zhihuminus.data.FeedDisplayItem
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Job

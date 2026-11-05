@@ -1,7 +1,7 @@
 package com.zhihuminus.feature.search
 
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
-import com.zhihuminus.core.util.HttpStatusException
+import com.zhihuminus.core.error.HttpStatusException
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.api.ZhihuSearchApi
