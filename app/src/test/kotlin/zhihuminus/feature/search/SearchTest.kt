@@ -89,14 +89,12 @@ class SearchTest {
 
         override fun isSearchHistoryEnabled(): Boolean = searchHistoryEnabled
 
-        override suspend fun setTopicFollowing(topicId: String, following: Boolean): Result<Unit> {
+        override suspend fun setTopicFollowing(topicId: String, following: Boolean) {
             if (following) followingTopicIds.add(topicId) else followingTopicIds.remove(topicId)
-            return Result.success(Unit)
         }
 
-        override suspend fun setMemberFollowing(urlToken: String, following: Boolean): Result<Unit> {
+        override suspend fun setMemberFollowing(urlToken: String, following: Boolean) {
             if (following) followingMemberTokens.add(urlToken) else followingMemberTokens.remove(urlToken)
-            return Result.success(Unit)
         }
 
         override fun getSearchHistory(): List<String> = historyList.toList()

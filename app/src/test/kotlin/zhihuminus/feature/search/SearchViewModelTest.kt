@@ -63,9 +63,9 @@ class SearchViewModelTest {
 
         override fun isSearchHistoryEnabled(): Boolean = searchHistoryEnabledFlag
 
-        override suspend fun setTopicFollowing(topicId: String, following: Boolean): Result<Unit> = Result.success(Unit)
+        override suspend fun setTopicFollowing(topicId: String, following: Boolean) = Unit
 
-        override suspend fun setMemberFollowing(urlToken: String, following: Boolean): Result<Unit> = Result.success(Unit)
+        override suspend fun setMemberFollowing(urlToken: String, following: Boolean) = Unit
 
         override fun getSearchHistory(): List<String> = emptyList()
 

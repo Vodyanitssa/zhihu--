@@ -80,7 +80,7 @@ class ZhihuTopicRepository(
         )
     }
 
-    override suspend fun setFollowing(topicId: String, following: Boolean): Result<Unit> = runCatching {
+    override suspend fun setFollowing(topicId: String, following: Boolean) {
         api.followTopic(topicId, following)
     }
 }

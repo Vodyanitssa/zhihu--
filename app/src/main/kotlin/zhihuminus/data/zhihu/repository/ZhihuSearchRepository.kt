@@ -177,14 +177,14 @@ class ZhihuSearchRepository(
     override suspend fun setTopicFollowing(
         topicId: String,
         following: Boolean,
-    ): Result<Unit> = runCatching {
+    ) {
         topicApi.followTopic(topicId, following)
     }
 
     override suspend fun setMemberFollowing(
         urlToken: String,
         following: Boolean,
-    ): Result<Unit> = runCatching {
+    ) {
         peopleApi.followMember(urlToken, following)
     }
 

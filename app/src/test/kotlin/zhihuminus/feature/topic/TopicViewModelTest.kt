@@ -42,7 +42,9 @@ class TopicViewModelTest {
             isEnd = true,
         )
 
-        override suspend fun setFollowing(topicId: String, following: Boolean): Result<Unit> = followResult
+        override suspend fun setFollowing(topicId: String, following: Boolean) {
+            followResult.exceptionOrNull()?.let { throw it }
+        }
     }
 
     @BeforeTest

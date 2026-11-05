@@ -7,7 +7,6 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.error.AppError
 import com.zhihuminus.core.error.reportFailure
-import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import com.zhihuminus.navigation.Account
@@ -327,8 +326,12 @@ class SearchViewModel(
         )
 
         viewModelScope.launch {
-            repository.setTopicFollowing(topicId, following).onFailure { error ->
-                Log.w("SearchViewModel", "Toggle topic follow failed", error)
+            try {
+                repository.setTopicFollowing(topicId, following)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportFailure("SearchViewModel", "toggle topic follow", e)
                 uiState = uiState.copy(
                     topicItems = uiState.topicItems.toMutableList().apply {
                         val curIdx = indexOfFirst { it.topic.id == topicId }
@@ -358,8 +361,12 @@ class SearchViewModel(
 
         viewModelScope.launch {
             val token = urlToken.ifBlank { peopleId }
-            repository.setMemberFollowing(token, following).onFailure { error ->
-                Log.w("SearchViewModel", "Toggle people follow failed", error)
+            try {
+                repository.setMemberFollowing(token, following)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportFailure("SearchViewModel", "toggle people follow", e)
                 uiState = uiState.copy(
                     peopleItems = uiState.peopleItems.toMutableList().apply {
                         val curIdx = indexOfFirst { it.people.id == peopleId }

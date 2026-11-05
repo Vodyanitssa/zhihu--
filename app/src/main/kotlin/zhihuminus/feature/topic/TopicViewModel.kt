@@ -6,8 +6,8 @@ import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.zhihuminus.core.error.AppError
-import com.zhihuminus.core.error.failureMessage
 import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.navDestination
 import kotlinx.coroutines.CancellationException
@@ -209,21 +209,28 @@ class TopicViewModel(
         if (uiState.isFollowingChanging || current.isFollowing == following) return
         uiState = uiState.copy(isFollowingChanging = true)
         viewModelScope.launch {
-            repository
-                .setFollowing(topicId, following)
-                .onSuccess {
-                    uiState = uiState.copy(
-                        detail = current.copy(
-                            isFollowing = following,
-                            followersCount = (current.followersCount + if (following) 1 else -1).coerceAtLeast(0),
-                        ),
-                        isFollowingChanging = false,
-                    )
-                    _effect.send(TopicEffect.ShowMessage(if (following) "已关注话题" else "已取消关注话题"))
-                }.onFailure {
-                    uiState = uiState.copy(isFollowingChanging = false)
-                    _effect.send(TopicEffect.ShowMessage(failureMessage(if (following) "关注" else "取消关注", it).userMessage, isError = true))
-                }
+            try {
+                repository.setFollowing(topicId, following)
+                uiState = uiState.copy(
+                    detail = current.copy(
+                        isFollowing = following,
+                        followersCount = (current.followersCount + if (following) 1 else -1).coerceAtLeast(0),
+                    ),
+                    isFollowingChanging = false,
+                )
+                _effect.send(TopicEffect.ShowMessage(if (following) "已关注话题" else "已取消关注话题"))
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                val error = reportFailure("TopicViewModel", "toggle follow", e)
+                uiState = uiState.copy(isFollowingChanging = false)
+                _effect.send(
+                    TopicEffect.ShowMessage(
+                        error.withPrefix(if (following) "关注" else "取消关注").userMessage,
+                        isError = true,
+                    ),
+                )
+            }
         }
     }
 }

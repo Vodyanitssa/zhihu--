@@ -116,12 +116,12 @@ interface SearchRepository {
     suspend fun setTopicFollowing(
         topicId: String,
         following: Boolean,
-    ): Result<Unit>
+    )
 
     suspend fun setMemberFollowing(
         urlToken: String,
         following: Boolean,
-    ): Result<Unit>
+    )
 
     fun getSearchHistory(): List<String>
 

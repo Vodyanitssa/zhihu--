@@ -57,5 +57,5 @@ interface TopicRepository {
         nextUrl: String?,
     ): TopicFeedResult
 
-    suspend fun setFollowing(topicId: String, following: Boolean): Result<Unit>
+    suspend fun setFollowing(topicId: String, following: Boolean)
 }
