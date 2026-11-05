@@ -64,7 +64,7 @@ fun SearchRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is SearchEffect.Navigate -> navigator.onNavigate(effect.destination)
-                is SearchEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is SearchEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is SearchEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
                 is SearchEffect.ClearFocusAndHideKeyboard -> {
                     focusManager.clearFocus(force = true)

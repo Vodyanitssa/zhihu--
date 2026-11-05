@@ -42,6 +42,7 @@ sealed interface HomeEffect {
 
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : HomeEffect
 
     data class OpenExternalUrl(

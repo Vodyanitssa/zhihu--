@@ -29,5 +29,6 @@ sealed interface NotificationEvent {
 sealed interface NotificationEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : NotificationEffect
 }

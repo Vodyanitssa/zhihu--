@@ -55,6 +55,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.NavigationBarItemDefaults
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.ScaffoldDefaults
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
@@ -89,6 +91,7 @@ import androidx.navigation.toRoute
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
 import com.zhihuminus.core.error.reportFailure
+import com.zhihuminus.core.platform.LocalSnackbarHostState
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.local.LocalWatchLaterRepository
@@ -188,6 +191,7 @@ fun ZhihuMain(
 
     val context = LocalContext.current
     val userMessages = rememberUserMessageSink()
+    val snackbarHostState = remember { SnackbarHostState() }
     val watchLaterScope = rememberCoroutineScope()
     val watchLaterRepository = remember(context) { LocalWatchLaterRepository.getInstance(context) }
     val addToWatchLater: (FeedDisplayItem) -> Unit = remember(watchLaterRepository, userMessages, watchLaterScope) {
@@ -291,291 +295,294 @@ fun ZhihuMain(
         }
     }
 
-    Box(modifier = modifier.fillMaxSize()) {
-        Scaffold(
-            modifier = Modifier
-                .fillMaxSize()
-                .nestedScroll(bottomBarScrollConnection),
-            bottomBar = {
-                if (navEntry != null) {
-                    // 页面切换时重置底部导航栏可见状态
-                    LaunchedEffect(navEntry) { isBottomBarVisible = true }
-                    val currentBottomDestination = mainTabPages
-                        .getOrNull(currentTabIndex)
-                        ?.bottomDestination
-                    AnimatedVisibility(
-                        visible = showMainNavigation && (!autoHideBottomBar || isBottomBarVisible),
-                        enter = slideInVertically(tween(200)) { it },
-                        exit = slideOutVertically(tween(200)) { it },
-                    ) {
-                        NavigationBar(
-                            containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
-                            modifier = Modifier.height(
-                                64.dp + bottomPadding,
-                            ),
+    CompositionLocalProvider(LocalSnackbarHostState provides snackbarHostState) {
+        Box(modifier = modifier.fillMaxSize()) {
+            Scaffold(
+                snackbarHost = { SnackbarHost(snackbarHostState) },
+                modifier = Modifier
+                    .fillMaxSize()
+                    .nestedScroll(bottomBarScrollConnection),
+                bottomBar = {
+                    if (navEntry != null) {
+                        // 页面切换时重置底部导航栏可见状态
+                        LaunchedEffect(navEntry) { isBottomBarVisible = true }
+                        val currentBottomDestination = mainTabPages
+                            .getOrNull(currentTabIndex)
+                            ?.bottomDestination
+                        AnimatedVisibility(
+                            visible = showMainNavigation && (!autoHideBottomBar || isBottomBarVisible),
+                            enter = slideInVertically(tween(200)) { it },
+                            exit = slideOutVertically(tween(200)) { it },
                         ) {
-                            @Composable
-                            fun Item(
-                                destination: TopLevelDestination,
-                                label: String,
-                                icon: ImageVector,
+                            NavigationBar(
+                                containerColor = MaterialTheme.colorScheme.surfaceContainerHigh,
+                                modifier = Modifier.height(
+                                    64.dp + bottomPadding,
+                                ),
                             ) {
-                                NavigationBarItem(
-                                    selected = currentBottomDestination == destination,
-                                    onClick = {
-                                        isReadingPlayerExpandedByUser = false
-                                        if (currentBottomDestination != destination) {
-                                            navigateTopLevel(destination)
-                                        } else if (tapToScrollToTopEnabled) {
-                                            reselectFlow.tryEmit(destination)
-                                        }
-                                    },
-                                    label = { Text(label) },
-                                    alwaysShowLabel = true,
-                                    colors = NavigationBarItemDefaults.colors(),
-                                    icon = {
-                                        Icon(icon, contentDescription = label)
-                                    },
-                                    modifier = Modifier.padding(top = 4.dp),
-                                )
-                            }
-
-                            bottomBarItems.forEach { item ->
-                                Item(item.first, item.second, item.third)
-                            }
-                        }
-                    }
-                }
-            },
-        ) { innerPadding ->
-            CompositionLocalProvider(
-                LocalNavigator provides Navigator(
-                    onNavigate = { destination ->
-                        navigate(destination)
-                    },
-                    onNavigateBack = navController::popBackStack,
-                    onNavigateTopLevel = ::navigateTopLevel,
-                ),
-                LocalFeedCardConfig provides rememberFeedCardConfig(),
-                LocalFeedCardWatchLaterAction provides addToWatchLater,
-                LocalContentTypographyConfig provides rememberContentTypographyConfig(),
-                LocalTopLevelReselectFlow provides reselectFlow,
-            ) {
-                NavHost(
-                    navController,
-                    modifier = Modifier.pointerInput(Unit) {
-                        while (true) {
-                            awaitPointerEventScope {
-                                awaitFirstDown(
-                                    requireUnconsumed = false,
-                                    pass = PointerEventPass.Initial,
-                                )
-                                while (
-                                    awaitPointerEvent(PointerEventPass.Final)
-                                        .changes
-                                        .any { it.pressed }
+                                @Composable
+                                fun Item(
+                                    destination: TopLevelDestination,
+                                    label: String,
+                                    icon: ImageVector,
                                 ) {
-                                    // 等手势完成后再重组，避免取消同一次背景点击或滚动。
+                                    NavigationBarItem(
+                                        selected = currentBottomDestination == destination,
+                                        onClick = {
+                                            isReadingPlayerExpandedByUser = false
+                                            if (currentBottomDestination != destination) {
+                                                navigateTopLevel(destination)
+                                            } else if (tapToScrollToTopEnabled) {
+                                                reselectFlow.tryEmit(destination)
+                                            }
+                                        },
+                                        label = { Text(label) },
+                                        alwaysShowLabel = true,
+                                        colors = NavigationBarItemDefaults.colors(),
+                                        icon = {
+                                            Icon(icon, contentDescription = label)
+                                        },
+                                        modifier = Modifier.padding(top = 4.dp),
+                                    )
+                                }
+
+                                bottomBarItems.forEach { item ->
+                                    Item(item.first, item.second, item.third)
                                 }
                             }
-                            if (shouldCompactPlayerOnBackgroundInteraction) {
-                                delay(100.milliseconds)
-                                isReadingPlayerExpandedByUser = false
-                            }
                         }
-                    },
-                    startDestination = MainTabs,
-                    enterTransition = {
-                        slideInHorizontally(
-                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                        ) { it } + fadeIn(animationSpec = tween(durationMillis = 250))
-                    },
-                    exitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                        ) { -it / 4 } + fadeOut(animationSpec = tween(durationMillis = 200, easing = LinearEasing), targetAlpha = 0.5f)
-                    },
-                    popEnterTransition = {
-                        slideInHorizontally(
-                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                        ) { -it / 4 } + fadeIn(animationSpec = tween(durationMillis = 250))
-                    },
-                    popExitTransition = {
-                        slideOutHorizontally(
-                            animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
-                        ) { it } + fadeOut(animationSpec = tween(durationMillis = 250))
-                    },
+                    }
+                },
+            ) { innerPadding ->
+                CompositionLocalProvider(
+                    LocalNavigator provides Navigator(
+                        onNavigate = { destination ->
+                            navigate(destination)
+                        },
+                        onNavigateBack = navController::popBackStack,
+                        onNavigateTopLevel = ::navigateTopLevel,
+                    ),
+                    LocalFeedCardConfig provides rememberFeedCardConfig(),
+                    LocalFeedCardWatchLaterAction provides addToWatchLater,
+                    LocalContentTypographyConfig provides rememberContentTypographyConfig(),
+                    LocalTopLevelReselectFlow provides reselectFlow,
                 ) {
-                    composable<MainTabs> {
-                        MainTabsContent(
-                            currentTabIndex = currentTabIndex,
-                            pages = mainTabPages,
-                            innerPadding = innerPadding,
-                        )
-                    }
-                    composable<Question> { navEntry ->
-                        val question: Question = navEntry.toRoute()
-                        questionContent(question, navEntry)
-                    }
-                    composable<Topic> { navEntry ->
-                        TopicRoute(navEntry.toRoute())
-                    }
-                    composable<Follow> {
-                        FollowRoute(
-                            innerPadding = innerPadding,
-                        )
-                    }
-                    composable<Daily> {
-                        DailyRoute()
-                    }
-                    composable<History> {
-                        val navigator = LocalNavigator.current
-                        HistoryRoute(
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<WatchLater> {
-                        val navigator = LocalNavigator.current
-                        WatchLaterRoute(
-                            innerPadding = innerPadding,
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<Account> {
-                        val navigator = LocalNavigator.current
-                        AccountSettingScreen(
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<Search>(
-                        enterTransition = {
-                            if (initialState.destination.hasRoute<Search>()) {
-                                EnterTransition.None
-                            } else {
-                                fadeIn(animationSpec = tween(durationMillis = 240)) +
-                                    slideInVertically(animationSpec = tween(durationMillis = 280)) { it / 16 } +
-                                    scaleIn(
-                                        animationSpec = tween(durationMillis = 280),
-                                        initialScale = 0.985f,
+                    NavHost(
+                        navController,
+                        modifier = Modifier.pointerInput(Unit) {
+                            while (true) {
+                                awaitPointerEventScope {
+                                    awaitFirstDown(
+                                        requireUnconsumed = false,
+                                        pass = PointerEventPass.Initial,
                                     )
+                                    while (
+                                        awaitPointerEvent(PointerEventPass.Final)
+                                            .changes
+                                            .any { it.pressed }
+                                    ) {
+                                        // 等手势完成后再重组，避免取消同一次背景点击或滚动。
+                                    }
+                                }
+                                if (shouldCompactPlayerOnBackgroundInteraction) {
+                                    delay(100.milliseconds)
+                                    isReadingPlayerExpandedByUser = false
+                                }
                             }
+                        },
+                        startDestination = MainTabs,
+                        enterTransition = {
+                            slideInHorizontally(
+                                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                            ) { it } + fadeIn(animationSpec = tween(durationMillis = 250))
+                        },
+                        exitTransition = {
+                            slideOutHorizontally(
+                                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                            ) { -it / 4 } + fadeOut(animationSpec = tween(durationMillis = 200, easing = LinearEasing), targetAlpha = 0.5f)
+                        },
+                        popEnterTransition = {
+                            slideInHorizontally(
+                                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                            ) { -it / 4 } + fadeIn(animationSpec = tween(durationMillis = 250))
                         },
                         popExitTransition = {
-                            if (targetState.destination.hasRoute<Search>()) {
-                                ExitTransition.None
-                            } else {
-                                fadeOut(animationSpec = tween(durationMillis = 180)) +
-                                    slideOutVertically(animationSpec = tween(durationMillis = 220)) { it / 20 } +
-                                    scaleOut(
-                                        animationSpec = tween(durationMillis = 220),
-                                        targetScale = 0.985f,
-                                    )
-                            }
+                            slideOutHorizontally(
+                                animationSpec = tween(durationMillis = 350, easing = FastOutSlowInEasing),
+                            ) { it } + fadeOut(animationSpec = tween(durationMillis = 250))
                         },
-                    ) { navEntry ->
-                        val search: Search = navEntry.toRoute()
-                        val navigator = LocalNavigator.current
-                        SearchRoute(
-                            search = search,
-                            onBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<Collections> { navEntry ->
-                        val navigator = LocalNavigator.current
-                        val data: Collections = navEntry.toRoute()
-                        CollectionRoute(
-                            urlToken = data.userToken,
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<CollectionContent> { navEntry ->
-                        val navigator = LocalNavigator.current
-                        val content: CollectionContent = navEntry.toRoute()
-                        CollectionContentRoute(
-                            collectionId = content.collectionId,
-                            onNavigateBack = navigator.onNavigateBack,
-                            onDestinationClick = { destination ->
-                                destination?.let(navigator.onNavigate)
+                    ) {
+                        composable<MainTabs> {
+                            MainTabsContent(
+                                currentTabIndex = currentTabIndex,
+                                pages = mainTabPages,
+                                innerPadding = innerPadding,
+                            )
+                        }
+                        composable<Question> { navEntry ->
+                            val question: Question = navEntry.toRoute()
+                            questionContent(question, navEntry)
+                        }
+                        composable<Topic> { navEntry ->
+                            TopicRoute(navEntry.toRoute())
+                        }
+                        composable<Follow> {
+                            FollowRoute(
+                                innerPadding = innerPadding,
+                            )
+                        }
+                        composable<Daily> {
+                            DailyRoute()
+                        }
+                        composable<History> {
+                            val navigator = LocalNavigator.current
+                            HistoryRoute(
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<WatchLater> {
+                            val navigator = LocalNavigator.current
+                            WatchLaterRoute(
+                                innerPadding = innerPadding,
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<Account> {
+                            val navigator = LocalNavigator.current
+                            AccountSettingScreen(
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<Search>(
+                            enterTransition = {
+                                if (initialState.destination.hasRoute<Search>()) {
+                                    EnterTransition.None
+                                } else {
+                                    fadeIn(animationSpec = tween(durationMillis = 240)) +
+                                        slideInVertically(animationSpec = tween(durationMillis = 280)) { it / 16 } +
+                                        scaleIn(
+                                            animationSpec = tween(durationMillis = 280),
+                                            initialScale = 0.985f,
+                                        )
+                                }
                             },
-                        )
-                    }
-                    composable<Person> { navEntry ->
-                        val person: Person = navEntry.toRoute()
-                        val navigator = LocalNavigator.current
-                        PeopleRoute(
-                            person = person,
-                            onNavigate = navigator.onNavigate,
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<Column> { navEntry ->
-                        val column: Column = navEntry.toRoute()
-                        columnContent(column, navEntry)
-                    }
-                    composable<PostDestination>(
-                        typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),
-                    ) { navEntry ->
-                        val destination: PostDestination = navEntry.toRoute()
-                        postContent(destination, navEntry)
-                    }
-                    composable<Notification> {
-                        val navigator = LocalNavigator.current
-                        NotificationRoute(
-                            onNavigateBack = navigator.onNavigateBack,
-                            onCategoryClick = { category ->
-                                navigator.onNavigate(
-                                    Notification.Entry(category.entryName, category.detailTitle),
-                                )
+                            popExitTransition = {
+                                if (targetState.destination.hasRoute<Search>()) {
+                                    ExitTransition.None
+                                } else {
+                                    fadeOut(animationSpec = tween(durationMillis = 180)) +
+                                        slideOutVertically(animationSpec = tween(durationMillis = 220)) { it / 20 } +
+                                        scaleOut(
+                                            animationSpec = tween(durationMillis = 220),
+                                            targetScale = 0.985f,
+                                        )
+                                }
                             },
-                            onInvitationClick = { navigator.onNavigate(Notification.Invitations) },
-                            onConversationClick = { destination -> navigator.onNavigate(destination) },
-                        )
-                    }
-                    composable<Notification.Entry> { navEntry ->
-                        val navigator = LocalNavigator.current
-                        val entry: Notification.Entry = navEntry.toRoute()
-                        NotificationTimelineRoute(
-                            entryName = entry.entryName,
-                            title = entry.title,
-                            onNavigateBack = navigator.onNavigateBack,
-                            onDestinationClick = { destination -> navigator.onNavigate(destination) },
-                        )
-                    }
-                    composable<Notification.Invitations> {
-                        val navigator = LocalNavigator.current
-                        NotificationTimelineRoute(
-                            entryName = "invite",
-                            title = "邀请回答",
-                            onNavigateBack = navigator.onNavigateBack,
-                            onDestinationClick = { destination -> navigator.onNavigate(destination) },
-                        )
-                    }
-                    composable<Notification.Message> { navEntry ->
-                        val navigator = LocalNavigator.current
-                        val destination: Notification.Message = navEntry.toRoute()
-                        PrivateMessageRoute(
-                            destination = destination,
-                            onNavigate = navigator.onNavigate,
-                            onNavigateBack = navigator.onNavigateBack,
-                        )
-                    }
-                    composable<Account.NotificationSettings> { navEntry ->
-                        NotificationSettingsScreen(
-                            setting = navEntry.toRoute<Account.NotificationSettings>().setting,
-                        )
-                    }
-                    composable<Account.AppearanceSettings> { navEntry ->
-                        val args = navEntry.toRoute<Account.AppearanceSettings>()
-                        AppearanceSettingsScreen(
-                            setting = args.setting,
-                            onExit = preferenceState::reload,
-                        )
-                    }
-                    composable<Account.SettingsSearch> {
-                        SettingsSearchScreen()
-                    }
-                    composable<Account.OpenSourceLicenses> {
-                        OpenSourceLicensesScreen()
+                        ) { navEntry ->
+                            val search: Search = navEntry.toRoute()
+                            val navigator = LocalNavigator.current
+                            SearchRoute(
+                                search = search,
+                                onBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<Collections> { navEntry ->
+                            val navigator = LocalNavigator.current
+                            val data: Collections = navEntry.toRoute()
+                            CollectionRoute(
+                                urlToken = data.userToken,
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<CollectionContent> { navEntry ->
+                            val navigator = LocalNavigator.current
+                            val content: CollectionContent = navEntry.toRoute()
+                            CollectionContentRoute(
+                                collectionId = content.collectionId,
+                                onNavigateBack = navigator.onNavigateBack,
+                                onDestinationClick = { destination ->
+                                    destination?.let(navigator.onNavigate)
+                                },
+                            )
+                        }
+                        composable<Person> { navEntry ->
+                            val person: Person = navEntry.toRoute()
+                            val navigator = LocalNavigator.current
+                            PeopleRoute(
+                                person = person,
+                                onNavigate = navigator.onNavigate,
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<Column> { navEntry ->
+                            val column: Column = navEntry.toRoute()
+                            columnContent(column, navEntry)
+                        }
+                        composable<PostDestination>(
+                            typeMap = mapOf(typeOf<PostType>() to PostTypeNavType),
+                        ) { navEntry ->
+                            val destination: PostDestination = navEntry.toRoute()
+                            postContent(destination, navEntry)
+                        }
+                        composable<Notification> {
+                            val navigator = LocalNavigator.current
+                            NotificationRoute(
+                                onNavigateBack = navigator.onNavigateBack,
+                                onCategoryClick = { category ->
+                                    navigator.onNavigate(
+                                        Notification.Entry(category.entryName, category.detailTitle),
+                                    )
+                                },
+                                onInvitationClick = { navigator.onNavigate(Notification.Invitations) },
+                                onConversationClick = { destination -> navigator.onNavigate(destination) },
+                            )
+                        }
+                        composable<Notification.Entry> { navEntry ->
+                            val navigator = LocalNavigator.current
+                            val entry: Notification.Entry = navEntry.toRoute()
+                            NotificationTimelineRoute(
+                                entryName = entry.entryName,
+                                title = entry.title,
+                                onNavigateBack = navigator.onNavigateBack,
+                                onDestinationClick = { destination -> navigator.onNavigate(destination) },
+                            )
+                        }
+                        composable<Notification.Invitations> {
+                            val navigator = LocalNavigator.current
+                            NotificationTimelineRoute(
+                                entryName = "invite",
+                                title = "邀请回答",
+                                onNavigateBack = navigator.onNavigateBack,
+                                onDestinationClick = { destination -> navigator.onNavigate(destination) },
+                            )
+                        }
+                        composable<Notification.Message> { navEntry ->
+                            val navigator = LocalNavigator.current
+                            val destination: Notification.Message = navEntry.toRoute()
+                            PrivateMessageRoute(
+                                destination = destination,
+                                onNavigate = navigator.onNavigate,
+                                onNavigateBack = navigator.onNavigateBack,
+                            )
+                        }
+                        composable<Account.NotificationSettings> { navEntry ->
+                            NotificationSettingsScreen(
+                                setting = navEntry.toRoute<Account.NotificationSettings>().setting,
+                            )
+                        }
+                        composable<Account.AppearanceSettings> { navEntry ->
+                            val args = navEntry.toRoute<Account.AppearanceSettings>()
+                            AppearanceSettingsScreen(
+                                setting = args.setting,
+                                onExit = preferenceState::reload,
+                            )
+                        }
+                        composable<Account.SettingsSearch> {
+                            SettingsSearchScreen()
+                        }
+                        composable<Account.OpenSourceLicenses> {
+                            OpenSourceLicensesScreen()
+                        }
                     }
                 }
             }

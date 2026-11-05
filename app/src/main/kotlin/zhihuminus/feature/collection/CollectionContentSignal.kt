@@ -9,5 +9,6 @@ sealed interface CollectionContentEvent {
 sealed interface CollectionContentEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : CollectionContentEffect
 }

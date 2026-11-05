@@ -36,6 +36,7 @@ sealed interface TopicEvent {
 sealed interface TopicEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : TopicEffect
 
     data class Navigate(

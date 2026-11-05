@@ -16,6 +16,7 @@ sealed interface ColumnEvent {
 sealed interface ColumnEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : ColumnEffect
 
     data class Navigate(

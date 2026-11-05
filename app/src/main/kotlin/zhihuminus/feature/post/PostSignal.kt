@@ -69,6 +69,7 @@ sealed interface PostEffect {
 
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : PostEffect
 
     data class OpenExternalUrl(

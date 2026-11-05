@@ -29,7 +29,7 @@ fun CollectionContentRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is CollectionContentEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is CollectionContentEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
             }
         }
     }

@@ -31,7 +31,7 @@ fun WatchLaterRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is WatchLaterEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is WatchLaterEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is WatchLaterEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }

@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
+import com.zhihuminus.BuildConfig
 import com.zhihuminus.core.error.HttpStatusException
 import com.zhihuminus.core.error.failureMessage
 import com.zhihuminus.core.platform.androidUserMessageSink
@@ -111,18 +112,20 @@ open class AndroidPaginationEnvironment(
             if (context.tryShowLoginExpiredDialog(error, onRelogin = { requestRelogin() })) {
                 return
             }
-            context.showDebugErrorDialog(error, userMessageSink)
+            if (BuildConfig.DEBUG) {
+                context.showDebugErrorDialog(error, userMessageSink)
+            }
         }
         Log.e(tag, "Failed to fetch feeds", error)
         context.mainExecutor.execute {
-            userMessageSink.showShortMessage(failureMessage("加载", error).userMessage)
+            userMessageSink.showError(failureMessage("加载", error).userMessage)
         }
     }
 
     override suspend fun handleMobileHomeFeedFailure(error: Exception) {
         Log.e("AndroidHomeFeedViewModel", "Failed to fetch feeds", error)
         context.mainExecutor.execute {
-            userMessageSink.showShortMessage(failureMessage("安卓端推荐加载", error).userMessage)
+            userMessageSink.showError(failureMessage("安卓端推荐加载", error).userMessage)
         }
     }
 

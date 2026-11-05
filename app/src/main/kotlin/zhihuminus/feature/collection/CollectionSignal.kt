@@ -27,5 +27,6 @@ sealed interface CollectionEvent {
 sealed interface CollectionEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : CollectionEffect
 }

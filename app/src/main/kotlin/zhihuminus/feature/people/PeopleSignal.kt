@@ -74,6 +74,7 @@ sealed interface PeopleEvent {
 sealed interface PeopleEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : PeopleEffect
 
     data class ProfileLoaded(

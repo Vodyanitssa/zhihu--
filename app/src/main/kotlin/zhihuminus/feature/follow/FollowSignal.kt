@@ -24,6 +24,7 @@ sealed interface FollowEffect {
 
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : FollowEffect
 
     data class OpenExternalUrl(

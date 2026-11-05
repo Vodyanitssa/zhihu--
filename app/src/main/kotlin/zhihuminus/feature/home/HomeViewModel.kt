@@ -140,7 +140,7 @@ class HomeViewModel(
             } else if (item.content?.startsWith("http") == true) {
                 _effect.send(HomeEffect.OpenExternalUrl(item.content))
             } else {
-                _effect.send(HomeEffect.ShowMessage("暂不支持打开该内容"))
+                _effect.send(HomeEffect.ShowMessage("暂不支持打开该内容", isError = true))
             }
         }
     }
@@ -149,7 +149,7 @@ class HomeViewModel(
         val payload = resolveUninterestedPayload(item)
         if (payload == null) {
             viewModelScope.launch {
-                _effect.send(HomeEffect.ShowMessage("该条目不支持标记不感兴趣"))
+                _effect.send(HomeEffect.ShowMessage("该条目不支持标记不感兴趣", isError = true))
             }
             return
         }
@@ -162,7 +162,7 @@ class HomeViewModel(
                 repository.saveStartupSnapshot(updatedItems)
                 _effect.send(HomeEffect.ShowMessage("已标记不感兴趣"))
             } else {
-                _effect.send(HomeEffect.ShowMessage("操作失败，请重试"))
+                _effect.send(HomeEffect.ShowMessage("操作失败，请重试", isError = true))
             }
         }
     }
@@ -171,14 +171,14 @@ class HomeViewModel(
         val watchLaterItem = item.toWatchLaterItemOrNull()
         if (watchLaterItem == null) {
             viewModelScope.launch {
-                _effect.send(HomeEffect.ShowMessage("该条目不支持添加到稍后再看"))
+                _effect.send(HomeEffect.ShowMessage("该条目不支持添加到稍后再看", isError = true))
             }
             return
         }
         val repo = watchLaterRepository
         if (repo == null) {
             viewModelScope.launch {
-                _effect.send(HomeEffect.ShowMessage("稍后再看不可用"))
+                _effect.send(HomeEffect.ShowMessage("稍后再看不可用", isError = true))
             }
             return
         }
@@ -188,7 +188,7 @@ class HomeViewModel(
                 _effect.send(HomeEffect.ShowMessage("已添加到稍后再看"))
             } catch (e: Exception) {
                 val error = reportFailure("HomeViewModel", "add to watch later", e)
-                _effect.send(HomeEffect.ShowMessage(error.withPrefix("添加").userMessage))
+                _effect.send(HomeEffect.ShowMessage(error.withPrefix("添加").userMessage, isError = true))
             }
         }
     }
@@ -236,7 +236,7 @@ class HomeViewModel(
                     isLoadingMore = false,
                     errorMessage = error,
                 )
-                _effect.send(HomeEffect.ShowMessage(error.userMessage))
+                _effect.send(HomeEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }

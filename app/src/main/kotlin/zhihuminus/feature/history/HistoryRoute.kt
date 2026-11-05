@@ -27,7 +27,7 @@ fun HistoryRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is HistoryEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is HistoryEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is HistoryEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }

@@ -61,7 +61,11 @@ fun PostRoute(
                 }
 
                 is PostEffect.ShowMessage -> {
-                    userMessages.showShortMessage(effect.message)
+                    if (effect.isError) {
+                        userMessages.showError(effect.message)
+                    } else {
+                        userMessages.showShortMessage(effect.message)
+                    }
                 }
 
                 is PostEffect.OpenExternalUrl -> openExternalUrl(effect.url)

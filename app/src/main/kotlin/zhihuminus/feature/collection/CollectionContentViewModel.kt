@@ -114,7 +114,7 @@ class CollectionContentViewModel(
                     errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(CollectionContentEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                    _effect.send(CollectionContentEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
                 }
             }
         }

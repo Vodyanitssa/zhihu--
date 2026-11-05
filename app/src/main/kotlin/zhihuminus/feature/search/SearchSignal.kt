@@ -70,6 +70,7 @@ sealed interface SearchEffect {
 
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : SearchEffect
 
     data class OpenExternalUrl(

@@ -58,6 +58,7 @@ sealed interface CommentEvent {
 sealed interface CommentEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : CommentEffect
 
     data class OpenExternalUrl(

@@ -117,7 +117,11 @@ fun CommentRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is CommentEffect.ShowMessage -> {
-                    userMessages.showShortMessage(effect.message)
+                    if (effect.isError) {
+                        userMessages.showError(effect.message)
+                    } else {
+                        userMessages.showShortMessage(effect.message)
+                    }
                 }
 
                 is CommentEffect.OpenExternalUrl -> openExternalUrl(effect.url)

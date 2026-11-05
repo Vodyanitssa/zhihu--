@@ -96,7 +96,7 @@ class PrivateMessageViewModel(
                     errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(PrivateMessageEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                    _effect.send(PrivateMessageEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
                 }
             }
         }
@@ -123,7 +123,7 @@ class PrivateMessageViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("PrivateMessageViewModel", "send private message", e)
                 uiState = uiState.copy(isSending = false)
-                _effect.send(PrivateMessageEffect.ShowMessage(error.userMessage))
+                _effect.send(PrivateMessageEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }

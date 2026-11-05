@@ -116,7 +116,7 @@ class DailyViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("DailyViewModel", "load more daily stories", e)
                 uiState = uiState.copy(isLoadingMore = false)
-                _effect.send(DailyEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                _effect.send(DailyEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
             }
         }
     }

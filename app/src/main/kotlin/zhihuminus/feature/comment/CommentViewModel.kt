@@ -139,7 +139,7 @@ class CommentViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "load more comments", e)
                 uiState = uiState.copy(isLoadingMore = false)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
             }
         }
     }
@@ -207,7 +207,7 @@ class CommentViewModel(
                 sendEffect(CommentEffect.ShowMessage("评论已发送"))
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "send comment", e)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("评论发送").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("评论发送").userMessage, isError = true))
             }
         }
     }
@@ -223,7 +223,7 @@ class CommentViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "like comment", e)
                 updateCommentLike(commentId, liked = false)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("点赞").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("点赞").userMessage, isError = true))
             }
         }
     }
@@ -239,7 +239,7 @@ class CommentViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "unlike comment", e)
                 updateCommentLike(commentId, liked = true)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("取消点赞").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("取消点赞").userMessage, isError = true))
             }
         }
     }
@@ -265,7 +265,7 @@ class CommentViewModel(
                 sendEffect(CommentEffect.ShowMessage("评论已删除"))
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "delete comment", e)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("删除评论").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("删除评论").userMessage, isError = true))
             }
         }
     }
@@ -298,7 +298,7 @@ class CommentViewModel(
                 )
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "load child comments", e)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载子评论").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载子评论").userMessage, isError = true))
             }
         }
     }
@@ -341,7 +341,7 @@ class CommentViewModel(
                 )
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "load more child comments", e)
-                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载更多子评论").userMessage))
+                sendEffect(CommentEffect.ShowMessage(error.withPrefix("加载更多子评论").userMessage, isError = true))
             } finally {
                 uiState = uiState.copy(isChildLoadingMore = false)
             }

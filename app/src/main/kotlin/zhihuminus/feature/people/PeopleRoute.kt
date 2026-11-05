@@ -51,7 +51,7 @@ fun PeopleRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collectLatest { effect ->
             when (effect) {
-                is PeopleEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is PeopleEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is PeopleEffect.ProfileLoaded -> environment.postHistoryDestination(effect.person)
                 is PeopleEffect.Navigate -> onNavigate(effect.destination)
             }

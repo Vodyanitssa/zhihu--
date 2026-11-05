@@ -137,7 +137,7 @@ class FollowViewModel(
                     isLoadingMore = false,
                     errorMessage = error,
                 )
-                _effect.send(FollowEffect.ShowMessage(message))
+                _effect.send(FollowEffect.ShowMessage(message, isError = true))
             }
         }
     }

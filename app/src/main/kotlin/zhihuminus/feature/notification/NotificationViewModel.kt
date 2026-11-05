@@ -93,7 +93,7 @@ class NotificationViewModel(
                     errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(NotificationEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                    _effect.send(NotificationEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
                 }
             }
         }
@@ -112,13 +112,13 @@ class NotificationViewModel(
                     )
                     _effect.send(NotificationEffect.ShowMessage("已全部标记为已读"))
                 } else {
-                    _effect.send(NotificationEffect.ShowMessage("标记已读失败"))
+                    _effect.send(NotificationEffect.ShowMessage("标记已读失败", isError = true))
                 }
             } catch (e: CancellationException) {
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("NotificationViewModel", "mark all as read", e)
-                _effect.send(NotificationEffect.ShowMessage(error.withPrefix("标记已读").userMessage))
+                _effect.send(NotificationEffect.ShowMessage(error.withPrefix("标记已读").userMessage, isError = true))
             }
         }
     }

@@ -96,7 +96,7 @@ class ColumnViewModel(
                     isRefreshing = false,
                     isLoadingMore = false,
                 )
-                sendEffect(ColumnEffect.ShowMessage(error.withPrefix("加载").userMessage))
+                sendEffect(ColumnEffect.ShowMessage(error.withPrefix("加载").userMessage, isError = true))
             }
         }
     }

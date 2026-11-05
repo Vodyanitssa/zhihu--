@@ -92,7 +92,7 @@ class WatchLaterViewModel(
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("WatchLaterViewModel", "delete item", e)
-                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("删除").userMessage))
+                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("删除").userMessage, isError = true))
             }
         }
     }
@@ -106,7 +106,7 @@ class WatchLaterViewModel(
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("WatchLaterViewModel", "clear all", e)
-                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("清除").userMessage))
+                _effect.send(WatchLaterEffect.ShowMessage(error.withPrefix("清除").userMessage, isError = true))
             }
         }
     }

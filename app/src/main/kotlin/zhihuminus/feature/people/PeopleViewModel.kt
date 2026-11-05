@@ -156,7 +156,7 @@ class PeopleViewModel(
                     isRefreshingProfile = false,
                     profileErrorMessage = error,
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载用户信息").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载用户信息").userMessage, isError = true))
             }
         }
     }
@@ -182,7 +182,7 @@ class PeopleViewModel(
                 _effect.send(PeopleEffect.ShowMessage(if (!currentFollowing) "已关注" else "已取消关注"))
             } catch (e: Exception) {
                 val error = reportFailure("PeopleViewModel", "toggle follow", e, userAction = "操作")
-                _effect.send(PeopleEffect.ShowMessage(error.userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -227,7 +227,7 @@ class PeopleViewModel(
                     followersState = uiState.followersState.copy(items = prevFollowers),
                     followingState = uiState.followingState.copy(items = prevFollowing),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix(if (willFollow) "关注" else "取消关注").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix(if (willFollow) "关注" else "取消关注").userMessage, isError = true))
             } finally {
                 uiState = uiState.copy(changingItemFollowIds = uiState.changingItemFollowIds - targetId)
             }
@@ -253,7 +253,7 @@ class PeopleViewModel(
                 _effect.send(PeopleEffect.ShowMessage(if (!currentBlocking) "已加入黑名单" else "已移出黑名单"))
             } catch (e: Exception) {
                 val error = reportFailure("PeopleViewModel", "toggle block", e, userAction = "操作")
-                _effect.send(PeopleEffect.ShowMessage(error.userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -417,7 +417,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载回答").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载回答").userMessage, isError = true))
             }
         }
     }
@@ -462,7 +462,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载文章").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载文章").userMessage, isError = true))
             }
         }
     }
@@ -507,7 +507,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载动态").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载动态").userMessage, isError = true))
             }
         }
     }
@@ -552,7 +552,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载想法").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载想法").userMessage, isError = true))
             }
         }
     }
@@ -597,7 +597,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载收藏").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载收藏").userMessage, isError = true))
             }
         }
     }
@@ -642,7 +642,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载提问").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载提问").userMessage, isError = true))
             }
         }
     }
@@ -687,7 +687,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载专栏").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载专栏").userMessage, isError = true))
             }
         }
     }
@@ -732,7 +732,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载粉丝").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载粉丝").userMessage, isError = true))
             }
         }
     }
@@ -777,7 +777,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注").userMessage, isError = true))
             }
         }
     }
@@ -822,7 +822,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载订阅专栏").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载订阅专栏").userMessage, isError = true))
             }
         }
     }
@@ -867,7 +867,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注话题").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注话题").userMessage, isError = true))
             }
         }
     }
@@ -912,7 +912,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注问题").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注问题").userMessage, isError = true))
             }
         }
     }
@@ -957,7 +957,7 @@ class PeopleViewModel(
                         errorMessage = error,
                     ),
                 )
-                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注收藏夹").userMessage))
+                _effect.send(PeopleEffect.ShowMessage(error.withPrefix("加载关注收藏夹").userMessage, isError = true))
             }
         }
     }

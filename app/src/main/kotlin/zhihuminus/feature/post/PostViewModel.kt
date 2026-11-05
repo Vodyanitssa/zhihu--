@@ -151,7 +151,7 @@ class PostViewModel(
     private fun handleAddToWatchLater() {
         val post = (uiState.loadState as? PostLoadState.Success)?.post
         if (post == null) {
-            sendEffect(PostEffect.ShowMessage("内容未加载完成"))
+            sendEffect(PostEffect.ShowMessage("内容未加载完成", isError = true))
             return
         }
         viewModelScope.launch {
@@ -176,7 +176,7 @@ class PostViewModel(
                 sendEffect(PostEffect.ShowMessage("已添加到稍后再看"))
             } catch (e: Exception) {
                 val error = reportFailure("PostViewModel", "add to watch later", e, userAction = "添加")
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -191,7 +191,7 @@ class PostViewModel(
     private fun exportImage() {
         val post = (uiState.loadState as? PostLoadState.Success)?.post
         if (post == null) {
-            sendEffect(PostEffect.ShowMessage("内容未加载完成"))
+            sendEffect(PostEffect.ShowMessage("内容未加载完成", isError = true))
             return
         }
         if (uiState.isExporting) return
@@ -212,7 +212,7 @@ class PostViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("PostViewModel", "export image", e, userAction = "图片导出")
                 uiState = uiState.copy(isExporting = false)
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             } finally {
                 result?.bitmap?.recycle()
             }
@@ -263,10 +263,10 @@ class PostViewModel(
                 } catch (e: Exception) {
                     val error = reportFailure("PostViewModel", "load post", e)
                     if (uiState.loadState is PostLoadState.Success) {
-                        sendEffect(PostEffect.ShowMessage(error.withPrefix("刷新").userMessage))
+                        sendEffect(PostEffect.ShowMessage(error.withPrefix("刷新").userMessage, isError = true))
                     } else {
                         uiState = uiState.copy(loadState = PostLoadState.Error(error))
-                        sendEffect(PostEffect.ShowMessage(error.withPrefix("加载").userMessage))
+                        sendEffect(PostEffect.ShowMessage(error.withPrefix("加载").userMessage, isError = true))
                     }
                     return@launch
                 }
@@ -380,7 +380,7 @@ class PostViewModel(
                 )
             } catch (e: Exception) {
                 val error = reportFailure("PostViewModel", "toggle collection", e, userAction = "操作收藏夹")
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -395,7 +395,7 @@ class PostViewModel(
                 sendEffect(PostEffect.ShowMessage("收藏夹已创建"))
             } catch (e: Exception) {
                 val error = reportFailure("PostViewModel", "create collection", e, userAction = "创建收藏夹")
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -457,7 +457,7 @@ class PostViewModel(
                         voteUpCount = previousCount,
                     ),
                 )
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -494,7 +494,7 @@ class PostViewModel(
                 val error = reportFailure("PostViewModel", "submit poll vote", e, userAction = "投票")
                 // Revert optimistic update
                 uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(poll = poll)))
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -522,7 +522,7 @@ class PostViewModel(
                 val error = reportFailure("PostViewModel", "follow author", e, userAction = "关注")
                 // Rollback
                 uiState = uiState.copy(loadState = loadState.copy(post = loadState.post.copy(author = author)))
-                sendEffect(PostEffect.ShowMessage(error.userMessage))
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }

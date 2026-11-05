@@ -23,5 +23,6 @@ sealed interface WatchLaterEffect {
 
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : WatchLaterEffect
 }

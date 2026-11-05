@@ -4,9 +4,13 @@ import android.content.Context
 import android.os.Handler
 import android.os.Looper
 import android.widget.Toast
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.platform.LocalContext
+import kotlinx.coroutines.launch
 
 enum class UserMessageDuration {
     Short,
@@ -16,6 +20,7 @@ enum class UserMessageDuration {
 data class UserMessageSink(
     val showShortMessage: (String) -> Unit,
     val showLongMessage: (String) -> Unit = showShortMessage,
+    val showError: (String) -> Unit = showShortMessage,
 ) {
     fun showMessage(
         message: String,
@@ -27,6 +32,9 @@ data class UserMessageSink(
         }
     }
 }
+
+/** 主壳提供的 Snackbar 宿主；未提供时错误提示回退为 Toast。 */
+val LocalSnackbarHostState = staticCompositionLocalOf<SnackbarHostState?> { null }
 
 fun androidUserMessageSink(context: Context): UserMessageSink {
     val appContext = context.applicationContext
@@ -58,5 +66,20 @@ fun androidUserMessageSink(context: Context): UserMessageSink {
 @Composable
 fun rememberUserMessageSink(): UserMessageSink {
     val context = LocalContext.current.applicationContext
-    return remember(context) { androidUserMessageSink(context) }
+    val snackbarHostState = LocalSnackbarHostState.current
+    val scope = rememberCoroutineScope()
+    return remember(context, snackbarHostState, scope) {
+        val toastSink = androidUserMessageSink(context)
+        toastSink.copy(
+            showError = { message ->
+                if (snackbarHostState != null) {
+                    scope.launch {
+                        snackbarHostState.showSnackbar(message, withDismissAction = true)
+                    }
+                } else {
+                    toastSink.showShortMessage(message)
+                }
+            },
+        )
+    }
 }

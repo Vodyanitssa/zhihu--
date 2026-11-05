@@ -116,7 +116,7 @@ fun HomeRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is HomeEffect.Navigate -> navigator.onNavigate(effect.destination)
-                is HomeEffect.ShowMessage -> userMessages.showMessage(effect.message, UserMessageDuration.Short)
+                is HomeEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showMessage(effect.message, UserMessageDuration.Short)
                 is HomeEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
             }
         }

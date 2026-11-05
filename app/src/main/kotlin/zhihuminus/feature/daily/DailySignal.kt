@@ -13,5 +13,6 @@ sealed interface DailyEvent {
 sealed interface DailyEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : DailyEffect
 }

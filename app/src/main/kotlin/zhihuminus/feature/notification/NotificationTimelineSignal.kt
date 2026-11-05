@@ -24,5 +24,6 @@ sealed interface NotificationTimelineEvent {
 sealed interface NotificationTimelineEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : NotificationTimelineEffect
 }

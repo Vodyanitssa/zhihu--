@@ -25,6 +25,7 @@ sealed interface QuestionEvent {
 sealed interface QuestionEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : QuestionEffect
 
     data class Navigate(

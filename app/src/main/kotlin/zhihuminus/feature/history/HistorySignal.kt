@@ -21,6 +21,7 @@ sealed interface HistoryEvent {
 sealed interface HistoryEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : HistoryEffect
 
     data class Navigate(

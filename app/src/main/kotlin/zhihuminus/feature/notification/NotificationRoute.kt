@@ -43,7 +43,7 @@ fun NotificationRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is NotificationEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is NotificationEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
             }
         }
     }

@@ -217,7 +217,7 @@ class SearchViewModel(
             } else if (item.content?.startsWith("http") == true) {
                 _effect.send(SearchEffect.OpenExternalUrl(item.content))
             } else {
-                _effect.send(SearchEffect.ShowMessage("暂不支持打开该内容"))
+                _effect.send(SearchEffect.ShowMessage("暂不支持打开该内容", isError = true))
             }
         }
     }
@@ -310,7 +310,7 @@ class SearchViewModel(
                     isLoadingMore = false,
                     errorMessage = error,
                 )
-                _effect.send(SearchEffect.ShowMessage(error.userMessage))
+                _effect.send(SearchEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }
@@ -335,7 +335,7 @@ class SearchViewModel(
                         if (curIdx >= 0) this[curIdx] = previous
                     },
                 )
-                _effect.send(SearchEffect.ShowMessage(if (following) "关注话题失败" else "取消关注话题失败"))
+                _effect.send(SearchEffect.ShowMessage(if (following) "关注话题失败" else "取消关注话题失败", isError = true))
             }
             uiState = uiState.copy(changingTopicIds = uiState.changingTopicIds - topicId)
         }
@@ -366,7 +366,7 @@ class SearchViewModel(
                         if (curIdx >= 0) this[curIdx] = previous
                     },
                 )
-                _effect.send(SearchEffect.ShowMessage(if (following) "关注失败" else "取消关注失败"))
+                _effect.send(SearchEffect.ShowMessage(if (following) "关注失败" else "取消关注失败", isError = true))
             }
             uiState = uiState.copy(changingPeopleIds = uiState.changingPeopleIds - peopleId)
         }

@@ -34,7 +34,7 @@ fun PrivateMessageRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is PrivateMessageEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is PrivateMessageEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is PrivateMessageEffect.MessageSent -> {}
             }
         }

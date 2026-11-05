@@ -65,7 +65,7 @@ fun QuestionRoute(
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is QuestionEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is QuestionEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
 
                 is QuestionEffect.Navigate -> navigator.onNavigate(effect.destination)
 

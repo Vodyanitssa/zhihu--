@@ -98,7 +98,7 @@ class QuestionViewModel(
             } catch (e: Exception) {
                 val error = reportFailure("QuestionViewModel", "load question", e)
                 uiState = uiState.copy(isLoadingQuestion = false)
-                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("获取问题详情").userMessage))
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("获取问题详情").userMessage, isError = true))
             }
         }
     }
@@ -153,7 +153,7 @@ class QuestionViewModel(
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("QuestionViewModel", "load answers", e)
-                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("加载").userMessage))
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("加载").userMessage, isError = true))
             } finally {
                 // 被取消说明已有新任务接管加载标志，不能在这里清掉
                 if (coroutineContext.isActive) {
@@ -182,7 +182,7 @@ class QuestionViewModel(
                 val error = reportFailure("QuestionViewModel", "toggle follow", e)
                 // 回滚乐观更新
                 uiState = uiState.copy(detail = detail)
-                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("关注操作").userMessage))
+                sendEffect(QuestionEffect.ShowMessage(error.withPrefix("关注操作").userMessage, isError = true))
             }
         }
     }

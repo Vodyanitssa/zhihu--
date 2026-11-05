@@ -44,7 +44,7 @@ fun TopicRoute(topic: Topic) {
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
             when (effect) {
-                is TopicEffect.ShowMessage -> userMessages.showShortMessage(effect.message)
+                is TopicEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
                 is TopicEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }

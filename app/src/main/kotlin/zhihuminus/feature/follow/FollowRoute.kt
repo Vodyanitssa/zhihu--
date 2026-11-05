@@ -43,7 +43,7 @@ fun FollowRoute(
         viewModel.effect.collect { effect ->
             when (effect) {
                 is FollowEffect.Navigate -> navigator.onNavigate(effect.destination)
-                is FollowEffect.ShowMessage -> userMessages.showMessage(effect.message, UserMessageDuration.Long)
+                is FollowEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showMessage(effect.message, UserMessageDuration.Long)
                 is FollowEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
             }
         }

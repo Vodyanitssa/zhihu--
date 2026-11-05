@@ -106,7 +106,7 @@ class HistoryViewModel(
                     errorMessage = error,
                 )
                 if (!reset) {
-                    _effect.send(HistoryEffect.ShowMessage(error.withPrefix("加载更多").userMessage))
+                    _effect.send(HistoryEffect.ShowMessage(error.withPrefix("加载更多").userMessage, isError = true))
                 }
             }
         }
@@ -126,7 +126,7 @@ class HistoryViewModel(
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("HistoryViewModel", "delete history item", e)
-                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("删除").userMessage))
+                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("删除").userMessage, isError = true))
             }
         }
     }
@@ -141,7 +141,7 @@ class HistoryViewModel(
                 throw e
             } catch (e: Exception) {
                 val error = reportFailure("HistoryViewModel", "clear history", e)
-                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("清除").userMessage))
+                _effect.send(HistoryEffect.ShowMessage(error.withPrefix("清除").userMessage, isError = true))
             }
         }
     }

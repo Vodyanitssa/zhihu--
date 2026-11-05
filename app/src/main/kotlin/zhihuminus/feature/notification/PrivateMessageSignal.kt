@@ -27,6 +27,7 @@ sealed interface PrivateMessageEvent {
 sealed interface PrivateMessageEffect {
     data class ShowMessage(
         val message: String,
+        val isError: Boolean = false,
     ) : PrivateMessageEffect
 
     data object MessageSent : PrivateMessageEffect
