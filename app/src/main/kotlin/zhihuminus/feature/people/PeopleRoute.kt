@@ -21,6 +21,7 @@ import com.zhihuminus.ui.components.getShareText
 import com.zhihuminus.ui.components.handleShareAction
 import com.zhihuminus.ui.components.rememberImagePreviewOpener
 import com.zhihuminus.ui.components.rememberShareActionExecutor
+import com.zhihuminus.ui.rememberAccountSettingsAccountState
 import kotlinx.coroutines.flow.collectLatest
 
 @Composable
@@ -31,6 +32,7 @@ fun PeopleRoute(
     modifier: Modifier = Modifier,
 ) {
     val environment = rememberPaginationEnvironment()
+    val account = rememberAccountSettingsAccountState().value
     val repository = remember(environment) {
         ZhihuRepositoryFactory(environment).createPeopleRepository()
     }
@@ -67,8 +69,17 @@ fun PeopleRoute(
             .ifBlank { person.name },
     )
 
+    val profile = viewModel.uiState.profile
+    val isSelf = (account.id.isNotBlank() && profile.id == account.id) ||
+        (account.urlToken?.isNotBlank() == true && profile.urlToken == account.urlToken)
+    val canMessage = account.login &&
+        profile.id.isNotBlank() &&
+        profile.id != Person.EMPTY_ID &&
+        !isSelf
+
     PeopleScreen(
         state = viewModel.uiState,
+        canMessage = canMessage,
         onEvent = viewModel::onEvent,
         onBack = onNavigateBack,
         onShare = {

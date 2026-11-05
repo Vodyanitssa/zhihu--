@@ -69,6 +69,7 @@ import com.zhihuminus.feature.people.components.PeopleUserInfoHeader
 import com.zhihuminus.feature.people.components.PeopleUserListSheet
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.NavDestination
+import com.zhihuminus.navigation.Notification
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.ui.components.FeedCard
@@ -82,6 +83,7 @@ import com.zhihuminus.navigation.Search as SearchDestination
 @Composable
 fun PeopleScreen(
     state: PeopleUiState,
+    canMessage: Boolean,
     onEvent: (PeopleEvent) -> Unit,
     onBack: () -> Unit,
     onShare: () -> Unit,
@@ -317,6 +319,16 @@ fun PeopleScreen(
                 ) {
                     PeopleUserInfoHeader(
                         profile = state.profile,
+                        isMessageAvailable = canMessage,
+                        onMessageClick = {
+                            onNavigate(
+                                Notification.Message(
+                                    peerId = state.profile.id,
+                                    name = state.profile.name,
+                                    avatarUrl = state.profile.avatarUrl,
+                                ),
+                            )
+                        },
                         onFollowToggle = { onEvent(PeopleEvent.ToggleFollow) },
                         onFollowingClick = { activeUserListType = PeopleUserListType.Following },
                         onFollowersClick = { activeUserListType = PeopleUserListType.Followers },

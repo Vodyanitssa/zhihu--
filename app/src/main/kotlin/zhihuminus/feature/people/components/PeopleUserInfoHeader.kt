@@ -36,6 +36,8 @@ import org.jsoup.Jsoup
 @Composable
 fun PeopleUserInfoHeader(
     profile: PeopleProfile,
+    isMessageAvailable: Boolean,
+    onMessageClick: () -> Unit,
     onFollowToggle: () -> Unit,
     onFollowingClick: () -> Unit,
     onFollowersClick: () -> Unit,
@@ -93,26 +95,42 @@ fun PeopleUserInfoHeader(
                         }
                     }
 
-                    val buttonModifier = Modifier
-                        .fillMaxWidth()
-                        .padding(top = 8.dp)
-                        .height(36.dp)
+                    Row(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(top = 8.dp),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        val buttonModifier = Modifier
+                            .weight(1f)
+                            .height(36.dp)
 
-                    if (profile.isFollowing) {
-                        OutlinedButton(
-                            onClick = onFollowToggle,
-                            modifier = buttonModifier,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        ) {
-                            Text(if (profile.isFollowed) "互相关注" else "已关注")
+                        if (profile.isFollowing) {
+                            OutlinedButton(
+                                onClick = onFollowToggle,
+                                modifier = buttonModifier,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                            ) {
+                                Text(if (profile.isFollowed) "互相关注" else "已关注")
+                            }
+                        } else {
+                            Button(
+                                onClick = onFollowToggle,
+                                modifier = buttonModifier,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                            ) {
+                                Text(if (profile.isFollowed) "回关" else "+ 关注")
+                            }
                         }
-                    } else {
-                        Button(
-                            onClick = onFollowToggle,
-                            modifier = buttonModifier,
-                            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                        ) {
-                            Text(if (profile.isFollowed) "回关" else "+ 关注")
+
+                        if (isMessageAvailable) {
+                            OutlinedButton(
+                                onClick = onMessageClick,
+                                modifier = buttonModifier,
+                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+                            ) {
+                                Text("私信")
+                            }
                         }
                     }
                 }
