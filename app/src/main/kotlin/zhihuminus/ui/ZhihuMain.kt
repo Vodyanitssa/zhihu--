@@ -556,6 +556,7 @@ fun ZhihuMain(
                         val destination: Notification.Message = navEntry.toRoute()
                         PrivateMessageRoute(
                             destination = destination,
+                            onNavigate = navigator.onNavigate,
                             onNavigateBack = navigator.onNavigateBack,
                         )
                     }

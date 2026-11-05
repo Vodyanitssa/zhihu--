@@ -8,11 +8,14 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
+import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Notification
+import com.zhihuminus.navigation.Person
 
 @Composable
 fun PrivateMessageRoute(
     destination: Notification.Message,
+    onNavigate: (NavDestination) -> Unit,
     onNavigateBack: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
@@ -37,18 +40,25 @@ fun PrivateMessageRoute(
         }
     }
 
-    val peerName = viewModel.uiState.peer
-        ?.name
-        ?.ifBlank { destination.name } ?: destination.name
-    val peerAvatar = viewModel.uiState.peer
-        ?.avatarUrl
-        ?.ifBlank { destination.avatarUrl } ?: destination.avatarUrl
+    val peer = viewModel.uiState.peer
+    val peerName = peer?.name?.ifBlank { destination.name } ?: destination.name
+    val peerAvatar = peer?.avatarUrl?.ifBlank { destination.avatarUrl } ?: destination.avatarUrl
+    val peerId = peer?.id?.takeIf { it.isNotBlank() } ?: destination.peerId
 
     PrivateMessageScreen(
         state = viewModel.uiState,
         peerName = peerName,
         peerAvatar = peerAvatar,
         onEvent = viewModel::onEvent,
+        onPeerClick = {
+            onNavigate(
+                Person(
+                    id = peerId,
+                    urlToken = peer?.urlToken.orEmpty(),
+                    name = peerName,
+                ),
+            )
+        },
         onNavigateBack = onNavigateBack,
         modifier = modifier,
     )
