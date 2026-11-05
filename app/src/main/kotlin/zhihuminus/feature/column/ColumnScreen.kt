@@ -18,6 +18,7 @@ import androidx.compose.material3.pulltorefresh.rememberPullToRefreshState
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
@@ -46,38 +47,47 @@ fun ColumnScreen(
             )
         },
     ) { innerPadding ->
-        PullToRefreshBox(
-            isRefreshing = state.isRefreshing,
-            onRefresh = { onEvent(ColumnEvent.Refresh) },
-            indicator = {
-                PullToRefreshDefaults.Indicator(
-                    modifier = Modifier
-                        .align(Alignment.TopCenter)
-                        .padding(innerPadding),
-                    isRefreshing = state.isRefreshing,
-                    containerColor = MaterialTheme.colorScheme.primaryContainer,
-                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                    state = pullToRefreshState,
-                )
-            },
-            state = pullToRefreshState,
-            modifier = Modifier.fillMaxSize(),
-        ) {
-            PaginatedList(
-                items = state.articles,
-                onLoadMore = { onEvent(ColumnEvent.LoadMore) },
-                isEnd = { state.isEnd },
-                key = { it.stableKey },
-                listState = listState,
+        val error = state.errorMessage
+        if (error != null && state.articles.isEmpty()) {
+            ErrorFullPage(
+                error = error,
+                onRetry = { onEvent(ColumnEvent.Refresh) },
                 modifier = Modifier.padding(innerPadding),
-                footer = if (state.isRefreshing) null else ProgressIndicatorFooter,
-            ) { item ->
-                FeedCard(
-                    item = item,
-                    onClick = {
-                        onEvent(ColumnEvent.ContentClick(item))
-                    },
-                )
+            )
+        } else {
+            PullToRefreshBox(
+                isRefreshing = state.isRefreshing,
+                onRefresh = { onEvent(ColumnEvent.Refresh) },
+                indicator = {
+                    PullToRefreshDefaults.Indicator(
+                        modifier = Modifier
+                            .align(Alignment.TopCenter)
+                            .padding(innerPadding),
+                        isRefreshing = state.isRefreshing,
+                        containerColor = MaterialTheme.colorScheme.primaryContainer,
+                        color = MaterialTheme.colorScheme.onPrimaryContainer,
+                        state = pullToRefreshState,
+                    )
+                },
+                state = pullToRefreshState,
+                modifier = Modifier.fillMaxSize(),
+            ) {
+                PaginatedList(
+                    items = state.articles,
+                    onLoadMore = { onEvent(ColumnEvent.LoadMore) },
+                    isEnd = { state.isEnd },
+                    key = { it.stableKey },
+                    listState = listState,
+                    modifier = Modifier.padding(innerPadding),
+                    footer = if (state.isRefreshing) null else ProgressIndicatorFooter,
+                ) { item ->
+                    FeedCard(
+                        item = item,
+                        onClick = {
+                            onEvent(ColumnEvent.ContentClick(item))
+                        },
+                    )
+                }
             }
         }
     }

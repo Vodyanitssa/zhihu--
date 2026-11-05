@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.error.AppError
 import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.error.withPrefix
 import com.zhihuminus.data.FeedDisplayItem
@@ -21,6 +22,7 @@ data class ColumnUiState(
     val isRefreshing: Boolean = false,
     val isLoadingMore: Boolean = false,
     val isEnd: Boolean = false,
+    val errorMessage: AppError? = null,
 )
 
 class ColumnViewModel(
@@ -87,6 +89,7 @@ class ColumnViewModel(
                     isRefreshing = false,
                     isLoadingMore = false,
                     isEnd = result.isEnd,
+                    errorMessage = null,
                 )
             } catch (e: CancellationException) {
                 throw e
@@ -95,6 +98,7 @@ class ColumnViewModel(
                 uiState = uiState.copy(
                     isRefreshing = false,
                     isLoadingMore = false,
+                    errorMessage = error,
                 )
                 sendEffect(ColumnEffect.ShowMessage(error.withPrefix("加载").userMessage, isError = true))
             }

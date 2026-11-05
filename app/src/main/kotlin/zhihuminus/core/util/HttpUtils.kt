@@ -1,16 +1,21 @@
 package com.zhihuminus.core.util
 
 import com.zhihuminus.core.error.HttpStatusException
+import com.zhihuminus.core.error.LoginExpiredException
 import io.ktor.client.statement.HttpResponse
 import io.ktor.client.statement.bodyAsText
 import io.ktor.client.statement.request
 
 suspend fun HttpResponse.raiseForStatus(dumpRequest: Boolean = false): HttpResponse {
     if (status.value >= 400) {
+        val bodyText = bodyAsText()
+        if (status.value == 401 && bodyText.contains("ERR_TICKET_NOT_EXIST")) {
+            throw LoginExpiredException(request.url.toString())
+        }
         throw HttpStatusException(
             status = status,
             requestUrl = request.url,
-            bodyText = bodyAsText(),
+            bodyText = bodyText,
             dumpedCurlRequest = if (dumpRequest) dumpCurlRequest() else null,
         )
     }

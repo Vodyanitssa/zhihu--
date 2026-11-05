@@ -18,6 +18,19 @@ fun Context.canSafelyShowDialog(): Boolean {
     return lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.STARTED)
 }
 
+fun Context.showLoginExpiredDialog(onRelogin: () -> Unit) {
+    mainExecutor.execute {
+        if (!canSafelyShowDialog()) return@execute
+        AlertDialog
+            .Builder(this)
+            .setTitle("登录已过期")
+            .setMessage("请重新登录以继续使用完整功能。")
+            .setPositiveButton("重新登录") { _, _ -> onRelogin() }
+            .setNegativeButton("取消", null)
+            .show()
+    }
+}
+
 fun Context.tryShowLoginExpiredDialog(
     error: HttpStatusException,
     onRelogin: () -> Unit,
@@ -28,17 +41,7 @@ fun Context.tryShowLoginExpiredDialog(
         if (errorBody["code"]?.jsonPrimitive?.int == 100 &&
             errorBody["message"]?.jsonPrimitive?.content == "ERR_TICKET_NOT_EXIST"
         ) {
-            mainExecutor.execute {
-                if (canSafelyShowDialog()) {
-                    AlertDialog
-                        .Builder(this)
-                        .setTitle("登录已过期")
-                        .setMessage("请重新登录以继续使用完整功能。")
-                        .setPositiveButton("重新登录") { _, _ -> onRelogin() }
-                        .setNegativeButton("取消", null)
-                        .show()
-                }
-            }
+            showLoginExpiredDialog(onRelogin)
             true
         } else {
             false

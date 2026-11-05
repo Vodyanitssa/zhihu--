@@ -37,6 +37,7 @@ private fun isTargetException(error: Throwable): Boolean =
     error is SocketTimeoutException ||
         error is java.net.SocketTimeoutException ||
         error is HttpRequestTimeoutException ||
+        error is LoginExpiredException ||
         error is HttpStatusException ||
         error is UnknownHostException ||
         error is ConnectException ||
@@ -73,6 +74,8 @@ private fun formatThrowable(error: Throwable): AppError = when (error) {
     is java.net.ConnectException,
     is ConnectTimeoutException,
     -> AppError.Network("无法连接到服务器，请检查网络设置", error)
+
+    is LoginExpiredException -> AppError.Auth("登录已过期，请重新登录", error)
 
     is HttpStatusException -> formatHttpStatus(error)
 

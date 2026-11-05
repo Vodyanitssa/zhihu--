@@ -90,9 +90,12 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.toRoute
 import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.rememberContentTypographyConfig
+import com.zhihuminus.core.error.LoginExpiredEvents
 import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.LocalSnackbarHostState
 import com.zhihuminus.core.platform.rememberUserMessageSink
+import com.zhihuminus.core.platform.showLoginExpiredDialog
+import com.zhihuminus.core.platform.startLoginActivity
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.local.LocalWatchLaterRepository
 import com.zhihuminus.feature.collection.CollectionContentRoute
@@ -192,6 +195,11 @@ fun ZhihuMain(
     val context = LocalContext.current
     val userMessages = rememberUserMessageSink()
     val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(Unit) {
+        LoginExpiredEvents.events.collect {
+            context.showLoginExpiredDialog { context.startLoginActivity() }
+        }
+    }
     val watchLaterScope = rememberCoroutineScope()
     val watchLaterRepository = remember(context) { LocalWatchLaterRepository.getInstance(context) }
     val addToWatchLater: (FeedDisplayItem) -> Unit = remember(watchLaterRepository, userMessages, watchLaterScope) {

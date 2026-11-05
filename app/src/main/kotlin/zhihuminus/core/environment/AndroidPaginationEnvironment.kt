@@ -6,7 +6,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.platform.LocalContext
 import com.zhihuminus.BuildConfig
 import com.zhihuminus.core.error.HttpStatusException
-import com.zhihuminus.core.error.failureMessage
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.androidUserMessageSink
 import com.zhihuminus.core.platform.copyPlainText
 import com.zhihuminus.core.platform.hasImageExportPermission
@@ -15,7 +15,6 @@ import com.zhihuminus.core.platform.requestImageExportPermission
 import com.zhihuminus.core.platform.restartApplication
 import com.zhihuminus.core.platform.showDebugErrorDialog
 import com.zhihuminus.core.platform.startLoginActivity
-import com.zhihuminus.core.platform.tryShowLoginExpiredDialog
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.ZhihuCookieStorage
@@ -109,23 +108,20 @@ open class AndroidPaginationEnvironment(
     ) {
         if (error is HttpStatusException) {
             Log.e(tag, "Response: ${error.bodyText}", error)
-            if (context.tryShowLoginExpiredDialog(error, onRelogin = { requestRelogin() })) {
-                return
-            }
             if (BuildConfig.DEBUG) {
                 context.showDebugErrorDialog(error, userMessageSink)
             }
         }
-        Log.e(tag, "Failed to fetch feeds", error)
+        val appError = reportFailure(tag ?: "PaginationEnvironment", "fetch feeds", error, userAction = "加载")
         context.mainExecutor.execute {
-            userMessageSink.showError(failureMessage("加载", error).userMessage)
+            userMessageSink.showError(appError.userMessage)
         }
     }
 
     override suspend fun handleMobileHomeFeedFailure(error: Exception) {
-        Log.e("AndroidHomeFeedViewModel", "Failed to fetch feeds", error)
+        val appError = reportFailure("AndroidHomeFeedViewModel", "fetch feeds", error, userAction = "安卓端推荐加载")
         context.mainExecutor.execute {
-            userMessageSink.showError(failureMessage("安卓端推荐加载", error).userMessage)
+            userMessageSink.showError(appError.userMessage)
         }
     }
 

@@ -20,5 +20,8 @@ fun reportFailure(
     if (error is CancellationException) throw error
     Log.e(tag, "Failed to $logAction", error)
     val appError = error.toAppError()
+    if (appError is AppError.Auth) {
+        LoginExpiredEvents.notifyLoginExpired()
+    }
     return if (userAction != null) appError.withPrefix(userAction) else appError
 }
