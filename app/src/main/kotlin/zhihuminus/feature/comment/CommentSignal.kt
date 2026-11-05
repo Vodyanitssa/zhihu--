@@ -12,6 +12,7 @@ sealed interface CommentEvent {
     data class SubmitComment(
         val text: String,
         val replyToCommentId: String? = null,
+        val imageBytes: ByteArray? = null,
     ) : CommentEvent
 
     data class LikeComment(

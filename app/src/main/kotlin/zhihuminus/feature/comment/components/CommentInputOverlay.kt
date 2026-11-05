@@ -1,5 +1,6 @@
 package com.zhihuminus.feature.comment.components
 
+import android.graphics.BitmapFactory
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Spring
@@ -24,13 +25,16 @@ import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.outlined.Send
+import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Fullscreen
 import androidx.compose.material.icons.filled.FullscreenExit
 import androidx.compose.material.icons.outlined.EmojiEmotions
+import androidx.compose.material.icons.outlined.Image
 import androidx.compose.material.icons.outlined.Keyboard
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -46,17 +50,22 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
 import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
 import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import coil3.compose.AsyncImage
+import com.zhihuminus.core.platform.rememberImagePicker
+import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import com.zhihuminus.ui.components.EmojiPicker
@@ -71,7 +80,8 @@ import kotlin.time.Duration.Companion.milliseconds
  * - 透明点击背景（点击关闭输入框）
  * - 底部页面（Surface 容器），支持弹簧动画平滑扩展到屏幕顶层
  * - 嵌套文本框，右上角附带放大/还原按钮，回复目标以灰色占位文字显示
- * - 文本框下方单行操作栏（表情按钮 + 发送按钮）
+ * - 文本框下方单行操作栏（表情按钮 + 添加图片按钮 + 发送按钮）
+ * - 选中图片后显示单图缩略图，可移除；发送时随评论一起上传
  * - 底部按需展开表情选择面板
  */
 @Composable
@@ -89,6 +99,15 @@ fun CommentInputOverlay(
     var commentFieldValue by remember { mutableStateOf(TextFieldValue(initialDraft)) }
     var showEmojiPicker by remember { mutableStateOf(false) }
     var isExpanded by rememberSaveable { mutableStateOf(false) }
+    var pendingImageBytes by remember { mutableStateOf<ByteArray?>(null) }
+    val pendingImageBitmap = remember(pendingImageBytes) {
+        pendingImageBytes?.let { BitmapFactory.decodeByteArray(it, 0, it.size) }
+    }
+    val userMessage = rememberUserMessageSink()
+    val pickImage = rememberImagePicker(
+        onPicked = { bytes, _ -> pendingImageBytes = bytes },
+        onError = { userMessage.showMessage(it) },
+    )
 
     fun updateDraft(value: TextFieldValue) {
         commentFieldValue = value
@@ -126,7 +145,7 @@ fun CommentInputOverlay(
             contentAlignment = Alignment.BottomCenter,
         ) {
             val screenMaxHeight = maxHeight
-            val baseCollapsedHeight = 200.dp
+            val baseCollapsedHeight = if (pendingImageBytes != null) 268.dp else 200.dp
             val collapsedHeight = (baseCollapsedHeight + if (showEmojiPicker) 240.dp else 0.dp)
                 .coerceAtMost(screenMaxHeight)
             val targetHeight = if (isExpanded) screenMaxHeight else collapsedHeight
@@ -236,6 +255,45 @@ fun CommentInputOverlay(
 
                     Spacer(modifier = Modifier.height(8.dp))
 
+                    // 待发送图片预览（单图）
+                    pendingImageBytes?.let {
+                        Box(modifier = Modifier.size(72.dp)) {
+                            if (pendingImageBitmap != null) {
+                                AsyncImage(
+                                    model = pendingImageBitmap,
+                                    contentDescription = "待发送图片",
+                                    contentScale = ContentScale.Crop,
+                                    modifier = Modifier
+                                        .fillMaxSize()
+                                        .clip(RoundedCornerShape(8.dp)),
+                                )
+                            }
+                            // 点击区 32dp 便于点按，可视圆圈限制为 18dp，避免 IconButton 的 48dp 最小交互尺寸把圆圈撑大
+                            Box(
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(32.dp)
+                                    .clickable { pendingImageBytes = null },
+                            ) {
+                                Box(
+                                    modifier = Modifier
+                                        .align(Alignment.TopEnd)
+                                        .size(18.dp)
+                                        .background(Color.Black.copy(alpha = 0.55f), CircleShape),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    Icon(
+                                        imageVector = Icons.Default.Close,
+                                        contentDescription = "移除图片",
+                                        tint = Color.White,
+                                        modifier = Modifier.size(11.dp),
+                                    )
+                                }
+                            }
+                        }
+                        Spacer(modifier = Modifier.height(8.dp))
+                    }
+
                     // 文本框下面是一行内容
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -271,22 +329,42 @@ fun CommentInputOverlay(
                             )
                         }
 
+                        // 添加图片按钮
+                        IconButton(
+                            onClick = {
+                                focusManager.clearFocus(force = true)
+                                keyboardController?.hide()
+                                showEmojiPicker = false
+                                pickImage()
+                            },
+                            modifier = Modifier.size(40.dp),
+                        ) {
+                            Icon(
+                                imageVector = Icons.Outlined.Image,
+                                contentDescription = "添加图片",
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+
                         Spacer(modifier = Modifier.weight(1f))
 
                         // 发送按钮
-                        val isSendEnabled = commentFieldValue.text.isNotBlank()
+                        val isSendEnabled = commentFieldValue.text.isNotBlank() || pendingImageBytes != null
                         IconButton(
                             onClick = {
                                 val text = commentFieldValue.text
-                                if (text.isNotBlank()) {
+                                val imageBytes = pendingImageBytes
+                                if (text.isNotBlank() || imageBytes != null) {
                                     onEvent(
                                         CommentEvent.SubmitComment(
                                             text = text,
                                             replyToCommentId = replyToComment?.id,
+                                            imageBytes = imageBytes,
                                         ),
                                     )
                                     commentFieldValue = TextFieldValue("")
                                     onDraftChange?.invoke("")
+                                    pendingImageBytes = null
                                     showEmojiPicker = false
                                 }
                             },

@@ -63,6 +63,7 @@ class CommentViewModelTest {
             id: Long,
             content: String,
             replyToCommentId: String?,
+            imageBytes: ByteArray?,
         ): Comment {
             if (shouldFail) throw RuntimeException("Submit failed")
             return sampleComment.copy(id = "new_c", content = content)

@@ -55,7 +55,7 @@ class CommentViewModel(
             is CommentEvent.LoadMore -> loadMore()
             is CommentEvent.Refresh -> refresh()
             is CommentEvent.ChangeSortOrder -> changeSortOrder(event.order)
-            is CommentEvent.SubmitComment -> submitComment(event.text, event.replyToCommentId)
+            is CommentEvent.SubmitComment -> submitComment(event.text, event.replyToCommentId, event.imageBytes)
             is CommentEvent.LikeComment -> likeComment(event.commentId)
             is CommentEvent.UnlikeComment -> unlikeComment(event.commentId)
             is CommentEvent.DeleteComment -> deleteComment(event.commentId)
@@ -193,13 +193,13 @@ class CommentViewModel(
         }
     }
 
-    private fun submitComment(text: String, replyToCommentId: String?) {
-        if (text.isBlank()) return
+    private fun submitComment(text: String, replyToCommentId: String?, imageBytes: ByteArray?) {
+        if (text.isBlank() && imageBytes == null) return
         uiState = uiState.copy(isInputActive = false, replyToComment = null)
         viewModelScope.launch {
             try {
                 val newComment = withContext(defaultDispatcher) {
-                    repository.submitComment(contentType, contentId, text, replyToCommentId)
+                    repository.submitComment(contentType, contentId, text, replyToCommentId, imageBytes)
                 }
                 items.add(0, newComment.toUiState())
                 emitState()

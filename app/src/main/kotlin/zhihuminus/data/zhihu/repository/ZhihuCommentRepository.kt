@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuCommentApi
+import com.zhihuminus.data.zhihu.api.ZhihuImageUploadApi
 import com.zhihuminus.data.zhihu.mapper.toComment
 import com.zhihuminus.data.zhihu.mapper.toCommentPage
 import com.zhihuminus.feature.comment.Comment
@@ -13,6 +14,7 @@ import kotlinx.serialization.json.JsonPrimitive
 
 class ZhihuCommentRepository(
     private val api: ZhihuCommentApi,
+    private val imageUploadApi: ZhihuImageUploadApi,
 ) : CommentRepository {
     override suspend fun getRootComments(
         type: CommentContentType,
@@ -49,11 +51,20 @@ class ZhihuCommentRepository(
         id: Long,
         content: String,
         replyToCommentId: String?,
+        imageBytes: ByteArray?,
     ): Comment {
         val url = buildSubmitCommentUrl(type, id)
+        val image = imageBytes?.let { imageUploadApi.upload(it) }
         val escapedContent = content.escapeHtml()
+        val html = buildString {
+            if (escapedContent.isNotBlank()) append("<p>").append(escapedContent).append("</p>")
+            image?.let {
+                append("<a class=\"comment_img\" href=\"${it.url}\" data-width=\"${it.width}\" data-height=\"${it.height}\">[图片]</a>")
+            }
+        }
         val body = buildJsonObject {
-            put("content", JsonPrimitive("<p>$escapedContent</p>"))
+            put("content", JsonPrimitive(html))
+            if (image != null) put("has_img", JsonPrimitive(true))
             replyToCommentId?.let { put("reply_comment_id", JsonPrimitive(it)) }
         }
         val dto = api.submitComment(url, body)

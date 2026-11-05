@@ -10,6 +10,7 @@ import com.zhihuminus.data.zhihu.api.ZhihuCommentApi
 import com.zhihuminus.data.zhihu.api.ZhihuDailyApi
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
+import com.zhihuminus.data.zhihu.api.ZhihuImageUploadApi
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
 import com.zhihuminus.data.zhihu.api.ZhihuPeopleApi
 import com.zhihuminus.data.zhihu.api.ZhihuPostApi
@@ -52,6 +53,7 @@ class ZhihuRepositoryFactory(
     val questionApi: ZhihuQuestionApi by lazy { ZhihuQuestionApi(environment) }
     val feedApi: ZhihuFeedApi by lazy { ZhihuFeedApi(environment) }
     val commentApi: ZhihuCommentApi by lazy { ZhihuCommentApi(environment) }
+    val imageUploadApi: ZhihuImageUploadApi by lazy { ZhihuImageUploadApi(environment) }
     val collectionApi: ZhihuCollectionApi by lazy { ZhihuCollectionApi(environment) }
     val peopleApi: ZhihuPeopleApi by lazy { ZhihuPeopleApi(environment, feedApi) }
     val notificationApi: ZhihuNotificationApi by lazy { ZhihuNotificationApi(environment) }
@@ -79,7 +81,7 @@ class ZhihuRepositoryFactory(
         )
 
     fun createCommentRepository(): CommentRepository =
-        ZhihuCommentRepository(commentApi)
+        ZhihuCommentRepository(commentApi, imageUploadApi)
 
     fun createCollectionRepository(): CollectionRepository =
         ZhihuCollectionRepository(collectionApi)

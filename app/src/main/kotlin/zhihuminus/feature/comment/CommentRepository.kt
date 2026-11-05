@@ -55,6 +55,7 @@ interface CommentRepository {
         id: Long,
         content: String,
         replyToCommentId: String?,
+        imageBytes: ByteArray? = null,
     ): Comment
 
     /**
