@@ -1,5 +1,14 @@
 package com.zhihuminus.core.content.renderer
 
+import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.LinearEasing
+import androidx.compose.animation.core.RepeatMode
+import androidx.compose.animation.core.Spring
+import androidx.compose.animation.core.animateFloat
+import androidx.compose.animation.core.infiniteRepeatable
+import androidx.compose.animation.core.rememberInfiniteTransition
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -29,6 +38,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.ContentCopy
 import androidx.compose.material.icons.filled.Link
 import androidx.compose.material.icons.filled.PlayArrow
+import androidx.compose.material.icons.outlined.BrokenImage
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Card
 import androidx.compose.material3.HorizontalDivider
@@ -58,6 +68,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.ColorFilter
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.platform.LocalClipboard
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.text.LinkAnnotation
 import androidx.compose.ui.text.SpanStyle
@@ -77,11 +88,16 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.em
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.unit.takeOrElse
+import coil3.Extras
 import coil3.compose.AsyncImage
+import coil3.compose.AsyncImagePainter
+import coil3.request.ImageRequest
 import com.zhihuminus.core.content.ContentNode
 import com.zhihuminus.core.content.EmojiManager
 import com.zhihuminus.core.content.FormulaManager
 import com.zhihuminus.core.content.InlineNode
+import com.zhihuminus.core.error.AppError
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.copyText
 import com.zhihuminus.feature.imageview.ImageViewManager
 import com.zhihuminus.navigation.LocalNavigator
@@ -579,12 +595,58 @@ private fun Quote(node: ContentNode.Quote) {
     }
 }
 
+private const val IMAGE_PLACEHOLDER_ASPECT_RATIO = 3f / 2f
+private val ImageRetryExtra = Extras.Key(0)
+
+@Composable
+private fun Modifier.shimmer(enabled: Boolean): Modifier {
+    if (!enabled) return this
+    val transition = rememberInfiniteTransition(label = "imageShimmer")
+    val progress by transition.animateFloat(
+        initialValue = 0f,
+        targetValue = 1f,
+        animationSpec = infiniteRepeatable(
+            animation = tween(durationMillis = 1200, easing = LinearEasing),
+            repeatMode = RepeatMode.Restart,
+        ),
+        label = "imageShimmerProgress",
+    )
+    val highlight = MaterialTheme.colorScheme.onSurfaceVariant.copy(alpha = 0.14f)
+    return drawWithContent {
+        drawContent()
+        val bandWidth = size.width * 0.6f
+        val startX = -bandWidth + (size.width + bandWidth * 2f) * progress
+        drawRect(
+            brush = Brush.linearGradient(
+                colors = listOf(Color.Transparent, highlight, Color.Transparent),
+                start = Offset(startX, 0f),
+                end = Offset(startX + bandWidth, size.height),
+            ),
+        )
+    }
+}
+
 @Composable
 private fun Image(
     node: ContentNode.Image,
     colorFilter: ColorFilter? = null,
 ) {
     val imageViewerManager = LocalImageViewManager.current
+    val context = LocalContext.current
+    var imageState by remember(node.url) {
+        mutableStateOf<AsyncImagePainter.State>(AsyncImagePainter.State.Empty)
+    }
+    var loadError by remember(node.url) { mutableStateOf<AppError?>(null) }
+    var retryKey by remember(node.url) { mutableStateOf(0) }
+    val isError = imageState is AsyncImagePainter.State.Error
+    val isSuccess = imageState is AsyncImagePainter.State.Success
+    val imageRequest = remember(node.url, retryKey) {
+        ImageRequest
+            .Builder(context)
+            .data(node.url)
+            .apply { extras[ImageRetryExtra] = retryKey }
+            .build()
+    }
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -592,15 +654,75 @@ private fun Image(
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(6.dp),
     ) {
-        AsyncImage(
-            model = node.url,
-            contentDescription = node.caption,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { imageViewerManager?.show(node.url) },
-            contentScale = ContentScale.FillWidth,
-            colorFilter = colorFilter,
-        )
+                .animateContentSize(
+                    animationSpec = spring(
+                        dampingRatio = Spring.DampingRatioNoBouncy,
+                        stiffness = Spring.StiffnessMediumLow,
+                    ),
+                ).then(if (isSuccess) Modifier else Modifier.aspectRatio(IMAGE_PLACEHOLDER_ASPECT_RATIO))
+                .clip(RoundedCornerShape(8.dp))
+                .background(if (isSuccess) Color.Transparent else MaterialTheme.colorScheme.surfaceVariant)
+                .shimmer(enabled = imageState is AsyncImagePainter.State.Loading)
+                .clickable {
+                    if (isError) {
+                        if (loadError?.retryable != false) {
+                            loadError = null
+                            imageState = AsyncImagePainter.State.Empty
+                            retryKey++
+                        }
+                    } else {
+                        imageViewerManager?.show(node.url)
+                    }
+                },
+            contentAlignment = Alignment.Center,
+        ) {
+            AsyncImage(
+                model = imageRequest,
+                contentDescription = node.caption,
+                modifier = Modifier.fillMaxWidth(),
+                contentScale = ContentScale.FillWidth,
+                colorFilter = colorFilter,
+                onState = { state ->
+                    imageState = state
+                    if (state is AsyncImagePainter.State.Error) {
+                        loadError = reportFailure(
+                            tag = "ComposeRenderer",
+                            logAction = "load article image",
+                            error = state.result.throwable,
+                        )
+                    }
+                },
+            )
+            if (isError) {
+                Column(
+                    modifier = Modifier.padding(16.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Outlined.BrokenImage,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.size(36.dp),
+                    )
+                    Text(
+                        text = "图片加载失败",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                    if (loadError?.retryable != false) {
+                        Text(
+                            text = "点击重试",
+                            style = MaterialTheme.typography.labelSmall,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
+            }
+        }
     }
     node.caption?.let {
         val typographyConfig = LocalContentTypographyConfig.current
