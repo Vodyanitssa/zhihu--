@@ -15,6 +15,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -24,7 +25,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.util.formatCount
-import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
@@ -162,11 +163,13 @@ fun PostHeader(
             .padding(horizontal = 16.dp)
             .padding(bottom = 8.dp),
     ) {
+        val createdTimeText = remember(createdAt) { formatRelativeTime(createdAt) }
+        val updatedTimeText = remember(updatedAt) { formatRelativeTime(updatedAt) }
         val infoText = buildString {
             if (createdAt > 0) {
-                append("发布于 ${formatDateTime(createdAt)}")
+                append("发布于$createdTimeText")
                 if (updatedAt > 0 && updatedAt != createdAt) {
-                    append(" · 编辑于 ${formatDateTime(updatedAt)}")
+                    append(" · 编辑于$updatedTimeText")
                 }
             }
             if (!ipInfo.isNullOrBlank()) {

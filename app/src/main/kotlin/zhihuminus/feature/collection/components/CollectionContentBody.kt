@@ -48,7 +48,7 @@ fun CollectionContentBody(
                         collection.itemCount.let { "${formatCount(it)} 条收藏" },
                         collection.likeCount.let { "${formatCount(it)} 个赞同" },
                         collection.commentCount.let { "${formatCount(it)} 条评论" },
-                        collection.updatedTime.takeIf { it > 0 }?.let { "更新于 ${formatRelativeTime(it)}" },
+                        collection.updatedTime.takeIf { it > 0 }?.let { "更新于${formatRelativeTime(it)}" },
                     )
                     Text(
                         text = stats.fastJoinToString(" · "),

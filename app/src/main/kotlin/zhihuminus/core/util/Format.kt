@@ -57,9 +57,9 @@ fun formatRelativeTime(
     val diff = (nowEpochSeconds - epochSeconds).coerceAtLeast(0)
     return when {
         diff < SECONDS_PER_MINUTE -> "刚刚"
-        diff < SECONDS_PER_HOUR -> "${diff / SECONDS_PER_MINUTE}分钟前"
-        diff < SECONDS_PER_DAY -> "${diff / SECONDS_PER_HOUR}小时前"
-        diff < SECONDS_PER_WEEK -> "${diff / SECONDS_PER_DAY}天前"
+        diff < SECONDS_PER_HOUR -> " ${diff / SECONDS_PER_MINUTE} 分钟前"
+        diff < SECONDS_PER_DAY -> " ${diff / SECONDS_PER_HOUR} 小时前"
+        diff < SECONDS_PER_WEEK -> " ${diff / SECONDS_PER_DAY} 天前"
         else -> {
             val dateTime = KotlinInstant
                 .fromEpochSeconds(epochSeconds)
@@ -68,9 +68,9 @@ fun formatRelativeTime(
                 .fromEpochSeconds(nowEpochSeconds)
                 .toLocalDateTime(timeZone)
             if (dateTime.year == nowDateTime.year) {
-                "${(dateTime.month.ordinal + 1).twoDigitString()}-${dateTime.day.twoDigitString()} ${dateTime.hour.twoDigitString()}:${dateTime.minute.twoDigitString()}"
+                " ${(dateTime.month.ordinal + 1).twoDigitString()}-${dateTime.day.twoDigitString()} ${dateTime.hour.twoDigitString()}:${dateTime.minute.twoDigitString()}"
             } else {
-                "${dateTime.year}-${(dateTime.month.ordinal + 1).twoDigitString()}-${dateTime.day.twoDigitString()}"
+                " ${dateTime.year}-${(dateTime.month.ordinal + 1).twoDigitString()}-${dateTime.day.twoDigitString()}"
             }
         }
     }

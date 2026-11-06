@@ -25,7 +25,7 @@ fun WatchLaterCard(
             FeedImageLayout.NONE
         }
         val details = if (item.addedAt > 0) {
-            "添加于 ${formatRelativeTime(item.addedAt / 1000)}"
+            "添加于${formatRelativeTime(item.addedAt / 1000)}"
         } else {
             ""
         }

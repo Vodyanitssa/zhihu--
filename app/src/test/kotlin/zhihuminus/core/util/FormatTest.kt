@@ -28,18 +28,18 @@ class FormatTest {
     fun formatRelativeTimeCoversRecentRanges() {
         assertEquals("刚刚", formatRelativeTime(now, now, TimeZone.UTC))
         assertEquals("刚刚", formatRelativeTime(now - 59, now, TimeZone.UTC))
-        assertEquals("1分钟前", formatRelativeTime(now - 60, now, TimeZone.UTC))
-        assertEquals("1小时前", formatRelativeTime(now - 3_600, now, TimeZone.UTC))
-        assertEquals("1天前", formatRelativeTime(now - 86_400, now, TimeZone.UTC))
+        assertEquals(" 1 分钟前", formatRelativeTime(now - 60, now, TimeZone.UTC))
+        assertEquals(" 1 小时前", formatRelativeTime(now - 3_600, now, TimeZone.UTC))
+        assertEquals(" 1 天前", formatRelativeTime(now - 86_400, now, TimeZone.UTC))
     }
 
     @Test
     fun formatRelativeTimeAddsYearOnlyWhenNeeded() {
-        assertEquals("05-25 12:00", formatRelativeTime(now - 7 * 86_400, now, TimeZone.UTC))
+        assertEquals(" 05-25 12:00", formatRelativeTime(now - 7 * 86_400, now, TimeZone.UTC))
 
         val newYear = Instant.parse("2024-01-01T00:00:00Z").epochSecond
         val lastYear = Instant.parse("2023-12-25T00:00:00Z").epochSecond
-        assertEquals("2023-12-25", formatRelativeTime(lastYear, newYear, TimeZone.UTC))
+        assertEquals(" 2023-12-25", formatRelativeTime(lastYear, newYear, TimeZone.UTC))
     }
 
     @Test
