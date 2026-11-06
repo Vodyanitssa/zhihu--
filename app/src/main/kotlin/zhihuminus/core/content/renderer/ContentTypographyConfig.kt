@@ -18,7 +18,7 @@ private const val PARAGRAPH_SPACING_EM = 0.5f
 /**
  * 富文本 AST 渲染排版配置。
  *
- * 封装正文及富文本阅读的字号缩放比例与行高倍率，统一驱动 [ComposeRenderer] 中所有
+ * 封装正文及富文本阅读的字号缩放比例与行高倍率，统一驱动 [RenderContentNode] 中所有
  * [com.zhihuminus.core.content.ContentNode] 与 [com.zhihuminus.core.content.InlineNode] 的样式计算。
  */
 @Immutable
@@ -77,6 +77,18 @@ data class ContentTypographyConfig(
  * AST 富文本排版配置的 CompositionLocal。
  */
 val LocalContentTypographyConfig = compositionLocalOf { ContentTypographyConfig() }
+
+/**
+ * 按当前 [LocalContentTypographyConfig] 缩放 [base] 样式。
+ *
+ * [ContentTypographyConfig.scaleStyle] 内部已处理 [ContentTypographyConfig.enabled]，
+ * 因此调用方无需再重复判断开关状态。
+ */
+@Composable
+internal fun scaledContentStyle(
+    base: TextStyle,
+    maxLineHeight: Float? = null,
+): TextStyle = LocalContentTypographyConfig.current.scaleStyle(base, maxLineHeight)
 
 /**
  * 从全局设置中响应式读取并计算 [ContentTypographyConfig]，供上层容器注入给 [LocalContentTypographyConfig]。
