@@ -1,5 +1,6 @@
 package com.zhihuminus.core.error
 
+import coil3.network.HttpException
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -39,6 +40,7 @@ private fun isTargetException(error: Throwable): Boolean =
         error is HttpRequestTimeoutException ||
         error is LoginExpiredException ||
         error is HttpStatusException ||
+        error is HttpException ||
         error is UnknownHostException ||
         error is ConnectException ||
         error is SerializationException
@@ -77,7 +79,17 @@ private fun formatThrowable(error: Throwable): AppError = when (error) {
 
     is LoginExpiredException -> AppError.Auth("登录已过期，请重新登录", error)
 
-    is HttpStatusException -> formatHttpStatus(error)
+    is HttpStatusException -> formatHttpStatus(
+        status = error.status.value,
+        serverMessage = extractServerErrorMessage(error.bodyText),
+        error = error,
+    )
+
+    is HttpException -> formatHttpStatus(
+        status = error.response.code,
+        serverMessage = null,
+        error = error,
+    )
 
     is SerializationException -> AppError.Parse("数据解析失败，可能知乎接口已变更", error)
 
@@ -91,12 +103,15 @@ private fun formatThrowable(error: Throwable): AppError = when (error) {
     else -> formatUnknown(error)
 }
 
-private fun formatHttpStatus(error: HttpStatusException): AppError {
-    val serverMessage = extractServerErrorMessage(error.bodyText)
+private fun formatHttpStatus(
+    status: Int,
+    serverMessage: String?,
+    error: Throwable,
+): AppError {
     if (serverMessage != null) {
         return AppError.Business(serverMessage, cause = error)
     }
-    return when (val status = error.status.value) {
+    return when (status) {
         401 -> AppError.Auth("登录已过期，请重新登录", error)
         403 -> AppError.Http(status, "没有访问权限或内容已被封禁", error)
         404 -> AppError.Http(status, "内容不存在或已被删除", error)

@@ -1,5 +1,7 @@
 package com.zhihuminus.core.error
 
+import coil3.network.HttpException
+import coil3.network.NetworkResponse
 import io.ktor.client.network.sockets.ConnectTimeoutException
 import io.ktor.client.network.sockets.SocketTimeoutException
 import io.ktor.client.plugins.HttpRequestTimeoutException
@@ -73,6 +75,27 @@ class AppErrorTest {
         assertTrue(!forbidden.toAppError().retryable)
         assertTrue(tooManyRequests.toAppError().retryable)
         assertTrue(serverError.toAppError().retryable)
+    }
+
+    @Test
+    fun handlesCoilHttpExceptions() {
+        val unauthorized = HttpException(NetworkResponse(code = 401))
+        val forbidden = HttpException(NetworkResponse(code = 403))
+        val notFound = HttpException(NetworkResponse(code = 404))
+        val tooManyRequests = HttpException(NetworkResponse(code = 429))
+        val serverError = HttpException(NetworkResponse(code = 500))
+
+        assertIs<AppError.Auth>(unauthorized.toAppError())
+        assertEquals(
+            HttpStatusCode.Forbidden.value,
+            assertIs<AppError.Http>(forbidden.toAppError()).status,
+        )
+        assertTrue(!forbidden.toAppError().retryable)
+        assertTrue(!notFound.toAppError().retryable)
+        assertTrue(tooManyRequests.toAppError().retryable)
+        assertEquals("知乎服务器开小差了，请稍后重试 (500)", friendlyErrorMessage(serverError))
+        assertTrue(serverError.toAppError().retryable)
+        assertEquals(forbidden, forbidden.toAppError().cause)
     }
 
     @Test
