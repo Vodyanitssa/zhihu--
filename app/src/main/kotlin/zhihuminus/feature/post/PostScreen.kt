@@ -1,6 +1,7 @@
 package com.zhihuminus.feature.post
 
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -44,6 +45,7 @@ import com.zhihuminus.feature.post.components.PostBottomBarState
 import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
+import com.zhihuminus.feature.post.components.PostScrollToTopButton
 import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
@@ -169,42 +171,57 @@ fun PostScreen(
                             imageViewManager?.submitImages(allImages)
                         }
                     }
-                    Column(
+                    BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(paddingValues)
-                            .verticalScroll(scrollState),
+                            .padding(paddingValues),
                     ) {
-                        PostHeader(
-                            title = state.post.title,
-                            author = state.post.author,
-                            createdAt = state.post.createdAt,
-                            updatedAt = state.post.updatedAt,
-                            ipInfo = state.post.ipInfo,
-                            voteCount = state.post.voteCount,
-                            isFollowing = state.post.author.isFollowing == true,
-                            questionId = state.post.questionId,
-                            coverUrl = state.post.coverUrl,
-                            onCoverClick = { url -> imageViewManager?.show(url) },
-                            onFollowClick = { onEvent(PostEvent.FollowAuthor) },
-                        )
-                        if (isTransitionFinished) {
-                            PostContent(
-                                post = state.post,
-                                onEvent = onEvent,
+                        Column(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .verticalScroll(scrollState),
+                        ) {
+                            PostHeader(
+                                title = state.post.title,
+                                author = state.post.author,
+                                createdAt = state.post.createdAt,
+                                updatedAt = state.post.updatedAt,
+                                ipInfo = state.post.ipInfo,
+                                voteCount = state.post.voteCount,
+                                isFollowing = state.post.author.isFollowing == true,
+                                questionId = state.post.questionId,
+                                coverUrl = state.post.coverUrl,
+                                onCoverClick = { url -> imageViewManager?.show(url) },
+                                onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                             )
-                        } else {
-                            Box(
-                                modifier = Modifier
-                                    .fillMaxWidth()
-                                    .padding(vertical = 48.dp),
-                                contentAlignment = Alignment.Center,
-                            ) {
-                                CircularProgressIndicator(
-                                    modifier = Modifier.size(28.dp),
-                                    strokeWidth = 2.5.dp,
+                            if (isTransitionFinished) {
+                                PostContent(
+                                    post = state.post,
+                                    onEvent = onEvent,
                                 )
+                            } else {
+                                Box(
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(vertical = 48.dp),
+                                    contentAlignment = Alignment.Center,
+                                ) {
+                                    CircularProgressIndicator(
+                                        modifier = Modifier.size(28.dp),
+                                        strokeWidth = 2.5.dp,
+                                    )
+                                }
                             }
+                        }
+
+                        if (isTransitionFinished) {
+                            PostScrollToTopButton(
+                                scrollState = scrollState,
+                                containerWidth = maxWidth,
+                                containerHeight = maxHeight,
+                                positionKey = state.post.id,
+                                modifier = Modifier.align(Alignment.TopStart),
+                            )
                         }
                     }
 
