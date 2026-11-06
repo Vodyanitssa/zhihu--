@@ -27,7 +27,7 @@ object QuestionMapper {
     fun toAnswerDisplayItem(feed: FeedDto): FeedDisplayItem {
         val target = feed.target
         if (target is AnswerTargetDto) {
-            val (images, layout) = target.resolveFeedImages()
+            val images = target.resolveFeedImages()
             return FeedDisplayItem(
                 authorName = target.author?.name ?: "未知作者",
                 avatarSrc = target.author?.avatarUrl,
@@ -39,7 +39,6 @@ object QuestionMapper {
                 contentTypeLabel = "回答",
                 publishTimeSeconds = target.createdTime.takeIf { it > 0 },
                 images = images,
-                imageLayout = layout,
             )
         }
         return feed.toDisplayItem()

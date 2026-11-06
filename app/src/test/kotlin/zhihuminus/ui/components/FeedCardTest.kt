@@ -1,6 +1,7 @@
 package com.zhihuminus.ui.components
 
 import com.zhihuminus.data.FeedImageLayout
+import com.zhihuminus.data.feedImageLayoutOf
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.PinContentItemDto
@@ -15,7 +16,7 @@ class FeedCardTest {
     @Test
     fun testFeedGalleryImageLayoutMapping() {
         assertNull(feedGalleryImageLayout(0))
-        assertEquals(FeedGalleryImageLayout.SINGLE, feedGalleryImageLayout(1))
+        assertNull(feedGalleryImageLayout(1))
         assertEquals(FeedGalleryImageLayout.MULTI_ROW, feedGalleryImageLayout(2))
         assertEquals(FeedGalleryImageLayout.MULTI_ROW, feedGalleryImageLayout(3))
         assertEquals(FeedGalleryImageLayout.MULTI_ROW, feedGalleryImageLayout(4))
@@ -25,28 +26,36 @@ class FeedCardTest {
     }
 
     @Test
+    fun testFeedImageLayoutMapping() {
+        assertEquals(FeedImageLayout.NONE, feedImageLayoutOf(emptyList()))
+        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, feedImageLayoutOf(listOf("a")))
+        assertEquals(FeedImageLayout.BOTTOM_GALLERY, feedImageLayoutOf(listOf("a", "b")))
+        assertEquals(FeedImageLayout.BOTTOM_GALLERY, feedImageLayoutOf(List(9) { "img$it" }))
+    }
+
+    @Test
     fun testResolveFeedImagesMapping() {
         val questionTarget = QuestionTargetDto(id = 100L)
-        val (qImages, qLayout) = questionTarget.resolveFeedImages()
+        val qImages = questionTarget.resolveFeedImages()
         assertEquals(emptyList(), qImages)
-        assertEquals(FeedImageLayout.NONE, qLayout)
+        assertEquals(FeedImageLayout.NONE, feedImageLayoutOf(qImages))
 
         val answerWithThumb = AnswerTargetDto(
             id = 101L,
             question = questionTarget,
             thumbnail = "https://example.com/answer.jpg",
         )
-        val (ansImages, ansLayout) = answerWithThumb.resolveFeedImages()
+        val ansImages = answerWithThumb.resolveFeedImages()
         assertEquals(listOf("https://example.com/answer.jpg"), ansImages)
-        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, ansLayout)
+        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, feedImageLayoutOf(ansImages))
 
         val articleWithThumb = ArticleTargetDto(
             id = 102L,
             thumbnail = "https://example.com/article.jpg",
         )
-        val (artImages, artLayout) = articleWithThumb.resolveFeedImages()
+        val artImages = articleWithThumb.resolveFeedImages()
         assertEquals(listOf("https://example.com/article.jpg"), artImages)
-        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, artLayout)
+        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, feedImageLayoutOf(artImages))
 
         val pinWithImages = PinTargetDto(
             id = 103L,
@@ -56,9 +65,19 @@ class FeedCardTest {
                 PinContentItemDto(type = "image", url = "https://example.com/p2.jpg"),
             ),
         )
-        val (pinImages, pinLayout) = pinWithImages.resolveFeedImages()
+        val pinImages = pinWithImages.resolveFeedImages()
         assertEquals(listOf("https://example.com/p1.jpg", "https://example.com/p2.jpg"), pinImages)
-        assertEquals(FeedImageLayout.BOTTOM_GALLERY, pinLayout)
+        assertEquals(FeedImageLayout.BOTTOM_GALLERY, feedImageLayoutOf(pinImages))
+
+        val pinWithSingleImage = PinTargetDto(
+            id = 104L,
+            content = listOf(
+                PinContentItemDto(type = "image", url = "https://example.com/pin-single.jpg"),
+            ),
+        )
+        val singlePinImages = pinWithSingleImage.resolveFeedImages()
+        assertEquals(listOf("https://example.com/pin-single.jpg"), singlePinImages)
+        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, feedImageLayoutOf(singlePinImages))
     }
 
     @Test

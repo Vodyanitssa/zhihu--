@@ -1,7 +1,6 @@
 package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.dto.AdvertisementFeedDto
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
@@ -28,7 +27,7 @@ import org.jsoup.Jsoup
  * 知乎信息流数据模型映射器。
  *
  * 负责将各类 Feed DTO（推荐流、关注流、话题流、搜索结果流等）转换为展示层模型 [FeedDisplayItem]，
- * 以及解析信息流 Target 对应的导航目标 [NavDestination] 与图片展示布局 [FeedImageLayout]。
+ * 以及解析信息流 Target 对应的导航目标 [NavDestination] 与图片列表。
  */
 object FeedMapper {
     fun toDisplayItem(feed: FeedDto): FeedDisplayItem = when (feed) {
@@ -51,7 +50,7 @@ object FeedMapper {
 
         is GroupFeedDto -> error("GroupFeed should be flattened before creating display items")
         is QuestionFeedCardDto -> {
-            val (images, layout) = resolveFeedImages(feed.target)
+            val images = resolveFeedImages(feed.target)
             FeedDisplayItem(
                 title = feed.target.title,
                 summary = feed.target.excerpt,
@@ -65,33 +64,23 @@ object FeedMapper {
                 contentTypeLabel = feed.target.description(),
                 publishTimeSeconds = feed.target.createdTime.takeIf { it > 0 },
                 images = images,
-                imageLayout = layout,
                 navDestinationJson = toNavDestination(feed.target)?.toFeedDisplayItemNavDestinationJson(),
             )
         }
     }
 
-    fun resolveFeedImages(target: FeedTargetDto): Pair<List<String>, FeedImageLayout> = when (target) {
+    fun resolveFeedImages(target: FeedTargetDto): List<String> = when (target) {
         is PinTargetDto -> {
-            val images = target.content
+            target.content
                 .filter { it.type == "image" }
                 .map { it.thumbnail?.takeIf { t -> t.isNotBlank() } ?: it.url.orEmpty() }
-            images to if (images.isNotEmpty()) FeedImageLayout.BOTTOM_GALLERY else FeedImageLayout.NONE
         }
 
-        is AnswerTargetDto -> {
-            val img = target.thumbnail?.takeIf { it.isNotBlank() }
-            val images = listOfNotNull(img)
-            images to if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE
-        }
+        is AnswerTargetDto -> listOfNotNull(target.thumbnail?.takeIf { it.isNotBlank() })
 
-        is ArticleTargetDto -> {
-            val img = (target.thumbnail ?: target.imageUrl)?.takeIf { it.isNotBlank() }
-            val images = listOfNotNull(img)
-            images to if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE
-        }
+        is ArticleTargetDto -> listOfNotNull((target.thumbnail ?: target.imageUrl)?.takeIf { it.isNotBlank() })
 
-        else -> emptyList<String>() to FeedImageLayout.NONE
+        else -> emptyList()
     }
 
     fun toNavDestination(target: FeedTargetDto): NavDestination? = when (target) {
@@ -145,7 +134,7 @@ object FeedMapper {
         val currentTarget = feed.target
         val resolvedSourceLabel = feed.sourceLabel
         val resolvedNavDestinationJson = currentTarget?.let(::toNavDestination)?.toFeedDisplayItemNavDestinationJson()
-        val (resolvedImages, resolvedImageLayout) = currentTarget?.let(::resolveFeedImages) ?: (emptyList<String>() to FeedImageLayout.NONE)
+        val resolvedImages = currentTarget?.let(::resolveFeedImages) ?: emptyList()
 
         return when (currentTarget) {
             is AnswerTargetDto,
@@ -163,7 +152,6 @@ object FeedMapper {
                 publishTimeSeconds = currentTarget.createdTime.takeIf { it > 0 },
                 sourceLabel = resolvedSourceLabel,
                 images = resolvedImages,
-                imageLayout = resolvedImageLayout,
                 navDestinationJson = resolvedNavDestinationJson,
             )
 
@@ -192,7 +180,6 @@ object FeedMapper {
                     publishTimeSeconds = currentTarget.createdTime.takeIf { it > 0 },
                     sourceLabel = resolvedSourceLabel,
                     images = resolvedImages,
-                    imageLayout = resolvedImageLayout,
                     navDestinationJson = resolvedNavDestinationJson,
                 )
             }
@@ -206,7 +193,6 @@ object FeedMapper {
                 publishTimeSeconds = currentTarget?.createdTime?.takeIf { it > 0 },
                 sourceLabel = resolvedSourceLabel,
                 images = resolvedImages,
-                imageLayout = resolvedImageLayout,
                 navDestinationJson = resolvedNavDestinationJson,
             )
         }
@@ -222,7 +208,7 @@ val FeedTargetDto.stableTargetKey: String
 val FeedTargetDto.navDestination: NavDestination?
     get() = FeedMapper.toNavDestination(this)
 
-fun FeedTargetDto.resolveFeedImages(): Pair<List<String>, FeedImageLayout> = FeedMapper.resolveFeedImages(this)
+fun FeedTargetDto.resolveFeedImages(): List<String> = FeedMapper.resolveFeedImages(this)
 
 fun FeedDto.toDisplayItem(): FeedDisplayItem = FeedMapper.toDisplayItem(this)
 

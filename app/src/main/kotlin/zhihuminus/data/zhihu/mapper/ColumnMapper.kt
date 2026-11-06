@@ -2,7 +2,6 @@ package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
-import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.dto.ColumnArticleDto
 import com.zhihuminus.feature.post.PostType
@@ -38,7 +37,6 @@ object ColumnMapper {
             contentTypeLabel = "文章",
             publishTimeSeconds = dto.created.takeIf { it > 0 },
             images = images,
-            imageLayout = if (images.isNotEmpty()) FeedImageLayout.RIGHT_THUMBNAIL else FeedImageLayout.NONE,
         )
     }
 }

@@ -269,7 +269,7 @@ private fun FeedCardContent(
             ?.flatMap { AstParser.parseInline(it) }
             .orEmpty()
     }
-    val showRightThumbnail = item.imageLayout == FeedImageLayout.RIGHT_THUMBNAIL && item.images.isNotEmpty()
+    val showRightThumbnail = item.imageLayout == FeedImageLayout.RIGHT_THUMBNAIL
     val rightThumbnailUrl = if (showRightThumbnail) item.images.first() else null
 
     if (summaryNodes.isNotEmpty() || rightThumbnailUrl != null) {
@@ -313,7 +313,7 @@ private fun FeedCardContent(
             }
         }
     }
-    if (item.imageLayout == FeedImageLayout.BOTTOM_GALLERY && item.images.isNotEmpty()) {
+    if (item.imageLayout == FeedImageLayout.BOTTOM_GALLERY) {
         FeedGalleryImages(
             images = item.images,
             modifier = Modifier.padding(top = 8.dp),
@@ -357,15 +357,13 @@ private fun FeedCardContent(
 }
 
 internal enum class FeedGalleryImageLayout {
-    SINGLE,
     MULTI_ROW,
     NINE_GRID,
 }
 
-internal fun feedGalleryImageLayout(imageCount: Int): FeedGalleryImageLayout? = when (imageCount) {
-    0 -> null
-    1 -> FeedGalleryImageLayout.SINGLE
-    in 2..4 -> FeedGalleryImageLayout.MULTI_ROW
+internal fun feedGalleryImageLayout(imageCount: Int): FeedGalleryImageLayout? = when {
+    imageCount < 2 -> null
+    imageCount <= 4 -> FeedGalleryImageLayout.MULTI_ROW
     else -> FeedGalleryImageLayout.NINE_GRID
 }
 
@@ -376,19 +374,6 @@ private fun FeedGalleryImages(
 ) {
     when (feedGalleryImageLayout(images.size)) {
         null -> return
-        FeedGalleryImageLayout.SINGLE -> {
-            val image = images.single()
-            AsyncImage(
-                model = image,
-                contentDescription = "画廊图片 1/1",
-                modifier = modifier
-                    .fillMaxWidth(1f / 3f)
-                    .aspectRatio(1f)
-                    .clip(RoundedCornerShape(8.dp)),
-                contentScale = ContentScale.Crop,
-            )
-        }
-
         FeedGalleryImageLayout.MULTI_ROW -> {
             Row(
                 modifier = modifier

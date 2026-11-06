@@ -107,6 +107,23 @@ class FeedMapperTest {
     }
 
     @Test
+    fun testSingleImagePinFeedUsesRightThumbnail() {
+        val pinTarget = PinTargetDto(
+            id = 4005L,
+            content = listOf(
+                PinContentItemDto(type = "image", url = "https://example.com/pin-single.jpg"),
+            ),
+        )
+        val feed = CommonFeedDto(
+            target = pinTarget,
+        )
+
+        val displayItem = feed.toDisplayItem()
+        assertEquals(listOf("https://example.com/pin-single.jpg"), displayItem.images)
+        assertEquals(FeedImageLayout.RIGHT_THUMBNAIL, displayItem.imageLayout)
+    }
+
+    @Test
     fun testAdvertisementFeedToDisplayItem() {
         val adFeed = AdvertisementFeedDto(
             actionText = "推广",

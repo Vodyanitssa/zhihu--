@@ -41,7 +41,7 @@ object CollectionMapper {
     )
 
     fun toFeedDisplayItem(dto: CollectionItemDto): FeedDisplayItem {
-        val (images, layout) = dto.content.resolveFeedImages()
+        val images = dto.content.resolveFeedImages()
         return FeedDisplayItem(
             title = dto.content.title,
             summary = dto.content.excerpt,
@@ -53,7 +53,6 @@ object CollectionMapper {
             contentTypeLabel = dto.content.description(),
             publishTimeSeconds = dto.content.createdTime.takeIf { it > 0 },
             images = images,
-            imageLayout = layout,
         )
     }
 }

@@ -31,6 +31,15 @@ enum class FeedImageLayout {
     BOTTOM_GALLERY,
 }
 
+/**
+ * 信息流卡片的图片展示方式：0 张不展示，1 张显示为右侧缩略图，2 张及以上显示为底部画廊。
+ */
+fun feedImageLayoutOf(images: List<String>): FeedImageLayout = when {
+    images.isEmpty() -> FeedImageLayout.NONE
+    images.size == 1 -> FeedImageLayout.RIGHT_THUMBNAIL
+    else -> FeedImageLayout.BOTTOM_GALLERY
+}
+
 @Serializable
 data class FeedDisplayItem(
     val title: String,
@@ -46,8 +55,10 @@ data class FeedDisplayItem(
     val publishTimeSeconds: Long? = null,
     val sourceLabel: String? = null,
     val images: List<String> = emptyList(),
-    val imageLayout: FeedImageLayout = FeedImageLayout.NONE,
 ) {
+    val imageLayout: FeedImageLayout
+        get() = feedImageLayoutOf(images)
+
     val stableKey: String
         get() = navDestinationJson
             ?: feed?.target?.stableTargetKey
