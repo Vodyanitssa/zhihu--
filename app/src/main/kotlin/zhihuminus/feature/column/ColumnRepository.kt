@@ -19,6 +19,7 @@ data class ColumnDetail(
     val followerCount: Int = 0,
     val articleCount: Int = 0,
     val voteupCount: Int = 0,
+    val createdAt: Long = 0,
     val isFollowing: Boolean = false,
     val author: ColumnAuthor? = null,
 )

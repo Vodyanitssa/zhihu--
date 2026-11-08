@@ -12,7 +12,8 @@ data class ColumnArticlePage(
 data class ColumnDetailDto(
     val id: String = "",
     val title: String = "",
-    val description: String = "",
+    val intro: String? = null,
+    val excerpt: String? = null,
     val imageUrl: String? = null,
     val followers: Int = 0,
     val articlesCount: Int = 0,
@@ -20,6 +21,7 @@ data class ColumnDetailDto(
     val isFollowing: Boolean = false,
     val voteupCount: Int = 0,
     val updated: Long = 0,
+    val created: Long = 0,
     val author: AuthorDto? = null,
 )
 

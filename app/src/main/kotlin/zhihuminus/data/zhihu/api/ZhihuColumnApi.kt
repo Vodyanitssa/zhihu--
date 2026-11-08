@@ -28,7 +28,10 @@ open class ZhihuColumnApi(
      */
     open suspend fun getColumnDetail(columnId: String): ColumnDetailDto {
         val url = "https://www.zhihu.com/api/v4/columns/$columnId"
-        val json = environment.fetchJson(url, "")
+        val include =
+            "created,title,intro,excerpt,image_url,followers,articles_count,items_count," +
+                "is_following,voteup_count,updated,author"
+        val json = environment.fetchJson(url, include)
             ?: throw IllegalStateException("Failed to fetch column detail for $columnId")
         return ZhihuJson.decodeJson(json)
     }

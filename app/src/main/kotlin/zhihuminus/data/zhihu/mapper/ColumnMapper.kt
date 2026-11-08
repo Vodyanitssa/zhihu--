@@ -46,11 +46,12 @@ object ColumnMapper {
     fun toColumnDetail(dto: ColumnDetailDto): ColumnDetail = ColumnDetail(
         id = dto.id,
         title = dto.title,
-        description = dto.description,
+        description = dto.intro?.takeIf { it.isNotBlank() } ?: dto.excerpt.orEmpty(),
         avatarUrl = dto.imageUrl?.takeIf { it.isNotBlank() },
         followerCount = dto.followers,
         articleCount = dto.articlesCount.takeIf { it > 0 } ?: dto.itemsCount,
         voteupCount = dto.voteupCount,
+        createdAt = dto.created,
         isFollowing = dto.isFollowing,
         author = dto.author?.let { author ->
             ColumnAuthor(
