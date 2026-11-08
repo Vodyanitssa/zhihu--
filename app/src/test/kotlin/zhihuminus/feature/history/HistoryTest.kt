@@ -95,4 +95,34 @@ class HistoryTest {
         assertEquals("问题", item.contentTypeLabel)
         assertEquals("100 关注 · 50 回答", item.details)
     }
+
+    @Test
+    fun testHistoryItemColumnMapping() {
+        val dto = HistoryItemDto(
+            cardType = "normal",
+            data = HistoryDataDto(
+                header = HistoryHeaderDto(icon = "", title = "专栏标题"),
+                content = HistoryContentDto(
+                    authorName = "作者",
+                    summary = "专栏简介",
+                    coverImage = "https://example.com/column.jpg",
+                ),
+                action = HistoryActionDto(
+                    type = "router",
+                    url = "https://www.zhihu.com/column/c_1542809288766390272",
+                ),
+                extra = HistoryExtraDto(
+                    contentToken = "c_1542809288766390272",
+                    contentType = "column",
+                    readTime = 123L,
+                    questionToken = "",
+                ),
+            ),
+        )
+        val item = dto.toHistoryItem()
+        assertEquals("专栏", item.contentTypeLabel)
+        assertEquals("column", item.contentType)
+        assertEquals("https://www.zhihu.com/column/c_1542809288766390272", item.actionUrl)
+        assertEquals("c_1542809288766390272", item.contentToken)
+    }
 }

@@ -26,6 +26,7 @@ object HistoryMapper {
             "pin" -> "想法"
             "question" -> "问题"
             "profile" -> "主页"
+            "column" -> "专栏"
             else -> dto.data.extra.contentType
         },
         actionUrl = dto.data.action.url,
