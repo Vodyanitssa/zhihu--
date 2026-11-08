@@ -8,6 +8,7 @@ import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.delete
 import io.ktor.client.request.post
+import io.ktor.client.request.put
 import io.ktor.client.statement.HttpResponse
 import io.ktor.http.HttpMethod
 import io.ktor.http.URLProtocol
@@ -80,6 +81,16 @@ suspend fun ZhihuApiEnvironment.deleteSigned(
     block: HttpRequestBuilder.() -> Unit = {},
 ): HttpResponse = withAuthenticatedClient { client, cookies ->
     client.delete(url) {
+        block()
+        signZhihuFetchRequest(cookies)
+    }
+}
+
+suspend fun ZhihuApiEnvironment.putSigned(
+    url: String,
+    block: HttpRequestBuilder.() -> Unit = {},
+): HttpResponse = withAuthenticatedClient { client, cookies ->
+    client.put(url) {
         block()
         signZhihuFetchRequest(cookies)
     }

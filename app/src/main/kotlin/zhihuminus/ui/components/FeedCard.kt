@@ -112,6 +112,7 @@ fun rememberFeedCardConfig(): FeedCardConfig {
  * 信息流卡片的 Material 3 纯 UI 实现。
  *
  * 卡片自上而下展示来源标签、标题、作者（头像、名称、徽章）、摘要、缩略图和统计数据，始终使用 Duo3 排版。
+ * 作者行可用 [showAuthor] 关闭，用于作者已在页面其他区域单独展示的场景（如专栏页）。
  * 卡片作为无副作用的纯展示组件，不直接依赖导航器。点击事件通过 [onClick]/[onAuthorClick] 上报，
  * 显示与排版样式通过 [LocalFeedCardConfig] 或显式参数传入；页面可以通过 [menuItems] 声明业务长按菜单。
  */
@@ -123,6 +124,7 @@ fun FeedCard(
     modifier: Modifier = Modifier,
     onLongClick: (() -> Unit)? = null,
     onAuthorClick: (() -> Unit)? = null,
+    showAuthor: Boolean = true,
     horizontalPadding: Dp = 16.dp,
     showSourceLabel: Boolean = false,
     fontSizePercent: Int = LocalFeedCardConfig.current.fontSizePercent,
@@ -146,6 +148,7 @@ fun FeedCard(
                 FeedCardContent(
                     item = item,
                     showSourceLabel = showSourceLabel,
+                    showAuthor = showAuthor,
                     fontSizePercent = fontSizePercent,
                     lineHeightPercent = lineHeightPercent,
                     onAuthorClick = onAuthorClick,
@@ -204,6 +207,7 @@ private fun FeedCardMenu(
 private fun FeedCardContent(
     item: FeedDisplayItem,
     showSourceLabel: Boolean,
+    showAuthor: Boolean,
     fontSizePercent: Int,
     lineHeightPercent: Int,
     onAuthorClick: (() -> Unit)?,
@@ -226,7 +230,7 @@ private fun FeedCardContent(
             )
         }
     }
-    if (item.avatarSrc != null && item.authorName != null) {
+    if (showAuthor && item.avatarSrc != null && item.authorName != null) {
         Row(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier

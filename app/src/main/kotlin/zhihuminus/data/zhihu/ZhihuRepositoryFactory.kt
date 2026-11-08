@@ -87,7 +87,7 @@ class ZhihuRepositoryFactory(
         ZhihuCollectionRepository(collectionApi)
 
     fun createColumnRepository(): ColumnRepository =
-        ZhihuColumnRepository(columnApi)
+        ZhihuColumnRepository(columnApi, peopleApi)
 
     fun createDailyRepository(): DailyRepository =
         ZhihuDailyRepository(dailyApi)

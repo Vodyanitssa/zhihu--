@@ -8,8 +8,24 @@ sealed interface ColumnEvent {
 
     data object LoadMore : ColumnEvent
 
+    data object RetryDetail : ColumnEvent
+
+    data class Follow(
+        val following: Boolean,
+    ) : ColumnEvent
+
+    data class FollowAuthor(
+        val following: Boolean,
+    ) : ColumnEvent
+
     data class ContentClick(
         val item: FeedDisplayItem,
+    ) : ColumnEvent
+
+    data class AuthorClick(
+        val id: String,
+        val urlToken: String,
+        val name: String,
     ) : ColumnEvent
 }
 

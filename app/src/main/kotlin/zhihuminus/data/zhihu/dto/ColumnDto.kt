@@ -9,6 +9,21 @@ data class ColumnArticlePage(
 )
 
 @Serializable
+data class ColumnDetailDto(
+    val id: String = "",
+    val title: String = "",
+    val description: String = "",
+    val imageUrl: String? = null,
+    val followers: Int = 0,
+    val articlesCount: Int = 0,
+    val itemsCount: Int = 0,
+    val isFollowing: Boolean = false,
+    val voteupCount: Int = 0,
+    val updated: Long = 0,
+    val author: AuthorDto? = null,
+)
+
+@Serializable
 data class ColumnArticleDto(
     val id: String,
     val title: String,

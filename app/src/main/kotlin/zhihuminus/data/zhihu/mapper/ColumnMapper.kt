@@ -4,6 +4,9 @@ import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.dto.ColumnArticleDto
+import com.zhihuminus.data.zhihu.dto.ColumnDetailDto
+import com.zhihuminus.feature.column.ColumnAuthor
+import com.zhihuminus.feature.column.ColumnDetail
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.PostDestination
 
@@ -39,6 +42,29 @@ object ColumnMapper {
             images = images,
         )
     }
+
+    fun toColumnDetail(dto: ColumnDetailDto): ColumnDetail = ColumnDetail(
+        id = dto.id,
+        title = dto.title,
+        description = dto.description,
+        avatarUrl = dto.imageUrl?.takeIf { it.isNotBlank() },
+        followerCount = dto.followers,
+        articleCount = dto.articlesCount.takeIf { it > 0 } ?: dto.itemsCount,
+        voteupCount = dto.voteupCount,
+        isFollowing = dto.isFollowing,
+        author = dto.author?.let { author ->
+            ColumnAuthor(
+                id = author.id,
+                urlToken = author.urlToken,
+                name = author.name,
+                avatarUrl = author.avatarUrl.takeIf { it.isNotBlank() },
+                headline = author.headline,
+                isFollowing = author.isFollowing,
+            )
+        },
+    )
 }
+
+fun ColumnDetailDto.toColumnDetail(): ColumnDetail = ColumnMapper.toColumnDetail(this)
 
 fun ColumnArticleDto.toFeedDisplayItem(): FeedDisplayItem = ColumnMapper.toFeedDisplayItem(this)
