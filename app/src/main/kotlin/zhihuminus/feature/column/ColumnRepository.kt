@@ -34,6 +34,8 @@ interface ColumnRepository {
 
     suspend fun getColumnDetail(columnId: String): ColumnDetail
 
+    suspend fun recordRead(columnId: String)
+
     suspend fun setFollowing(columnId: String, following: Boolean)
 
     suspend fun setAuthorFollowing(urlToken: String, following: Boolean)

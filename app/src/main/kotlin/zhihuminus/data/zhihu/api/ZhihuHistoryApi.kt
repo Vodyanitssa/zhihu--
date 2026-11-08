@@ -24,7 +24,7 @@ open class ZhihuHistoryApi(
     /**
      * 记录阅读历史（read_history/add）
      * @param contentToken 内容 token（数字 ID 字符串）
-     * @param contentType 内容类型: "answer", "article", "pin", "profile", "question"
+     * @param contentType 内容类型: "answer", "article", "pin", "profile", "question", "column"
      */
     open suspend fun addHistory(contentToken: String, contentType: String) {
         val url = "https://www.zhihu.com/api/v4/read_history/add"

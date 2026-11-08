@@ -47,6 +47,7 @@ class ColumnViewModel(
     init {
         loadDetail()
         loadArticles(reset = true)
+        recordRead()
     }
 
     fun onEvent(event: ColumnEvent) {
@@ -83,6 +84,18 @@ class ColumnViewModel(
                         )
                     }
                 }
+            }
+        }
+    }
+
+    private fun recordRead() {
+        viewModelScope.launch {
+            try {
+                repository.recordRead(columnId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportFailure("ColumnViewModel", "record column read", e)
             }
         }
     }

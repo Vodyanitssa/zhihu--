@@ -1,11 +1,13 @@
 package com.zhihuminus.data.zhihu.api
 
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
+import com.zhihuminus.core.environment.postSigned
 import com.zhihuminus.core.environment.putSigned
 import com.zhihuminus.core.util.raiseForStatus
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.ColumnDetailDto
+import io.ktor.client.request.header
 
 open class ZhihuColumnApi(
     protected val environment: ZhihuApiEnvironment,
@@ -29,6 +31,17 @@ open class ZhihuColumnApi(
         val json = environment.fetchJson(url, "")
             ?: throw IllegalStateException("Failed to fetch column detail for $columnId")
         return ZhihuJson.decodeJson(json)
+    }
+
+    /**
+     * 上报浏览专栏（column/feed/{id}/read），供服务端记录专栏阅读
+     */
+    open suspend fun reportRead(columnId: String) {
+        if (environment.authenticatedCookies()["d_c0"] == null) return
+        environment
+            .postSigned("https://www.zhihu.com/api/v4/column/feed/$columnId/read") {
+                header("Referer", "https://www.zhihu.com/column/$columnId")
+            }.raiseForStatus()
     }
 
     /**

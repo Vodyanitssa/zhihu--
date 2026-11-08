@@ -4,6 +4,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.CollectionContent
 import com.zhihuminus.navigation.Collections
+import com.zhihuminus.navigation.Column
 import com.zhihuminus.navigation.CommentHolder
 import com.zhihuminus.navigation.Daily
 import com.zhihuminus.navigation.Follow
@@ -227,6 +228,16 @@ class AppRouterRoundTripTest {
         assertEquals(
             RouteResolution.Tab(Home),
             AppRouter.resolveAny("zhihu://feed"),
+        )
+    }
+
+    @Test
+    fun column() {
+        val column = Column(columnId = "c_1542809288766390272")
+        assertRoundTrip(column, "zhihu://column/c_1542809288766390272")
+        assertEquals(
+            RouteResolution.Screen(column),
+            AppRouter.resolveAny("https://www.zhihu.com/column/c_1542809288766390272"),
         )
     }
 

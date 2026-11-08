@@ -27,8 +27,15 @@ class ColumnViewModelTest {
         var articles: ColumnArticleResult = ColumnArticleResult(emptyList(), null, true, 0),
         var followResult: Result<Unit> = Result.success(Unit),
         var authorFollowResult: Result<Unit> = Result.success(Unit),
+        var readError: Throwable? = null,
+        var readCalls: Int = 0,
     ) : ColumnRepository {
         override suspend fun getColumnArticles(columnId: String, nextUrl: String?): ColumnArticleResult = articles
+
+        override suspend fun recordRead(columnId: String) {
+            readCalls++
+            readError?.let { throw it }
+        }
 
         override suspend fun getColumnDetail(columnId: String): ColumnDetail {
             detailError?.let { throw it }
@@ -216,5 +223,46 @@ class ColumnViewModelTest {
         assertTrue(effect is ColumnEffect.ShowMessage)
         assertTrue(effect.isError)
         assertTrue(effect.message.contains("关注失败"))
+    }
+
+    @Test
+    fun testColumnReadReportedOnceOnEnter() = runTest(testDispatcher) {
+        val repository = FakeColumnRepository()
+        ColumnViewModel("c_1", repository)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.readCalls)
+    }
+
+    @Test
+    fun testColumnReadNotRepeatedOnRefresh() = runTest(testDispatcher) {
+        val repository = FakeColumnRepository()
+        val viewModel = ColumnViewModel("c_1", repository)
+        advanceUntilIdle()
+
+        viewModel.onEvent(ColumnEvent.Refresh)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.readCalls)
+    }
+
+    @Test
+    fun testColumnReadFailureDoesNotAffectContent() = runTest(testDispatcher) {
+        val repository = FakeColumnRepository(
+            readError = RuntimeException("Network error"),
+            articles = ColumnArticleResult(
+                articles = listOf(FeedDisplayItem(title = "文章", summary = null, details = "")),
+                nextUrl = null,
+                isEnd = true,
+                totals = 1,
+            ),
+        )
+        val viewModel = ColumnViewModel("c_1", repository)
+        advanceUntilIdle()
+
+        assertEquals("测试专栏", viewModel.uiState.detail?.title)
+        assertEquals(1, viewModel.uiState.articles.size)
+        assertNull(viewModel.uiState.errorMessage)
+        assertEquals(1, repository.readCalls)
     }
 }
