@@ -1,10 +1,17 @@
 package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.zhihu.dto.ColumnArticleDto
+import com.zhihuminus.data.zhihu.dto.ColumnArticlePage
 import com.zhihuminus.data.zhihu.dto.ColumnDetailDto
+import com.zhihuminus.feature.post.PostType
+import com.zhihuminus.navigation.PostDestination
 import kotlin.test.Test
 import kotlin.test.assertEquals
+import kotlin.test.assertIs
 import kotlin.test.assertNull
+import kotlin.test.assertTrue
 
 class ColumnMapperTest {
     @Test
@@ -45,6 +52,51 @@ class ColumnMapperTest {
         assertEquals("不知名书杯", author?.name)
         assertEquals("熟练的写着XXXCreateInfo", author?.headline)
         assertEquals("https://picx.zhimg.com/v2-4ed42c89e5f7dea78057ec5d876c3f3a_l.jpg?source=d16d100b", author?.avatarUrl)
+    }
+
+    @Test
+    fun testColumnArticleWithMissingTitleAndUrlStillDecodes() {
+        val json =
+            """
+            {"paging":{"totals":1},"data":[{"id":"123","type":"article","excerpt":"残留摘要"}]}
+            """.trimIndent()
+
+        val page = ZhihuJson.decodeFromString<ColumnArticlePage>(json)
+
+        assertEquals(1, page.data.size)
+        assertEquals("", page.data.single().title)
+        assertEquals("", page.data.single().url)
+        assertEquals("残留摘要", page.data.single().excerpt)
+    }
+
+    @Test
+    fun testColumnAnswerItemUsesQuestionTitleAndAnswerType() {
+        val json =
+            """
+            {"is_visible":true,"excerpt":"先捋一下发生了什么，这个瓜太新鲜了",
+            "created_time":1792487781,"id":"2095926348451792604","voteup_count":2720,
+            "type":"answer",
+            "author":{"uid":"1708918892532117504","user_type":"people","url_token":"62-32-1-7",
+            "id":"2eaa3cc323ca193a97e6c198991b8ac2","name":"爱莉不知道哦","headline":"爱莉不知道哦owo",
+            "avatar_url":"https://pica.zhimg.com/v2-49b849c7da1ab84bea16d2c0f1f82492_l.jpg?source=d16d100b"},
+            "question":{"id":"2095905104423662975","type":"question",
+            "title":"如何看待2026年10月20日下午疑似国内所有mc相关下载被封禁？"},
+            "comment_count":212,"updated_time":1792501600,
+            "thumbnail":"https://pic1.zhimg.com/v2-03543d78b4bf2a4c3f463723ae54c017_720w.jpg?source=d16d100b"}
+            """.trimIndent()
+
+        val item = ZhihuJson.decodeFromString<ColumnArticleDto>(json).toFeedDisplayItem()
+
+        assertEquals("如何看待2026年10月20日下午疑似国内所有mc相关下载被封禁？", item.title)
+        assertEquals("回答", item.contentTypeLabel)
+        assertTrue(item.details.startsWith("回答"))
+        assertEquals(1792487781L, item.publishTimeSeconds)
+        assertEquals("https://pic1.zhimg.com/v2-03543d78b4bf2a4c3f463723ae54c017_720w.jpg?source=d16d100b", item.images.single())
+
+        val nav = assertIs<PostDestination>(item.navDestination)
+        assertEquals(PostType.Answer, nav.type)
+        assertEquals(2095926348451792604L, nav.id)
+        assertEquals("如何看待2026年10月20日下午疑似国内所有mc相关下载被封禁？", nav.title)
     }
 
     @Test

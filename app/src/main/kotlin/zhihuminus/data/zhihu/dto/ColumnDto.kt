@@ -5,7 +5,7 @@ import kotlinx.serialization.Serializable
 @Serializable
 data class ColumnArticlePage(
     val paging: PagingDto = PagingDto(),
-    val data: List<ColumnArticleDto>,
+    val data: List<ColumnArticleDto> = emptyList(),
 )
 
 @Serializable
@@ -27,16 +27,21 @@ data class ColumnDetailDto(
 
 @Serializable
 data class ColumnArticleDto(
-    val id: String,
-    val title: String,
+    val id: String = "",
+    val type: String = "article",
+    val title: String = "",
     val titleImage: String? = null,
-    val url: String,
+    val thumbnail: String? = null,
+    val url: String = "",
     val excerpt: String? = null,
     val excerptTitle: String? = null,
     val content: String? = null,
     val author: AuthorDto? = null,
+    val question: QuestionDto? = null,
     val created: Long = 0,
+    val createdTime: Long? = null,
     val updated: Long = 0,
+    val updatedTime: Long? = null,
     val voteupCount: Int = 0,
     val commentCount: Int = 0,
     val articleType: String? = null,

@@ -15,30 +15,35 @@ import com.zhihuminus.navigation.PostDestination
  */
 object ColumnMapper {
     fun toFeedDisplayItem(dto: ColumnArticleDto): FeedDisplayItem {
+        val isAnswer = dto.type.equals("answer", ignoreCase = true)
+        val postType = if (isAnswer) PostType.Answer else PostType.Article
+        val typeLabel = if (isAnswer) "回答" else "文章"
+        val title = dto.title.ifBlank { dto.question?.title.orEmpty() }
         val articleId = dto.id.toLongOrNull() ?: 0L
         val nav = PostDestination(
-            title = dto.title,
-            type = PostType.Article,
+            title = title,
+            type = postType,
             id = articleId,
             authorName = dto.author?.name ?: "未知作者",
             authorBio = dto.author?.headline.orEmpty(),
             avatarSrc = dto.author?.avatarUrl,
             excerpt = dto.excerpt.orEmpty(),
         )
-        val titleImg = dto.titleImage?.takeIf { it.isNotBlank() }
+        val titleImg = (dto.titleImage ?: dto.thumbnail)?.takeIf { it.isNotBlank() }
         val images = listOfNotNull(titleImg)
+        val created = dto.created.takeIf { it > 0 } ?: dto.createdTime ?: 0
         return FeedDisplayItem(
-            title = dto.title,
+            title = title,
             summary = dto.excerpt
                 .orEmpty()
                 .ifEmpty { dto.excerptTitle.orEmpty() }
                 .takeIf { it.isNotBlank() },
-            details = "文章 · ${formatCount(dto.voteupCount)} 赞 · ${formatCount(dto.commentCount)} 评论",
+            details = "$typeLabel · ${formatCount(dto.voteupCount)} 赞 · ${formatCount(dto.commentCount)} 评论",
             navDestinationJson = nav.toFeedDisplayItemNavDestinationJson(),
             avatarSrc = dto.author?.avatarUrl,
             authorName = dto.author?.name ?: "未知作者",
-            contentTypeLabel = "文章",
-            publishTimeSeconds = dto.created.takeIf { it > 0 },
+            contentTypeLabel = typeLabel,
+            publishTimeSeconds = created.takeIf { it > 0 },
             images = images,
         )
     }
