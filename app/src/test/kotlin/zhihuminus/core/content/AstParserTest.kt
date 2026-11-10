@@ -152,6 +152,19 @@ class AstParserTest {
     }
 
     @Test
+    fun testParseCommentStickerAsImage() {
+        val html =
+            "<a href=\"https://pic1.zhimg.com/v2-2637ec87f0d63fe043a33096e0fb8f5e.gif?source=1d2f5c51\" " +
+                "class=\"comment_sticker\" data-width=\"0\" data-height=\"0\" " +
+                "data-sticker-id=\"2004244544011653972\">[灵感正在发酵]</a>"
+        val nodes = AstParser.parseContent(html)
+
+        assertEquals(1, nodes.size)
+        val image = assertIs<ContentNode.Image>(nodes.first())
+        assertEquals("https://pic1.zhimg.com/v2-2637ec87f0d63fe043a33096e0fb8f5e.gif?source=1d2f5c51", image.url)
+    }
+
+    @Test
     fun testParseTableWithTheadAndTbody() {
         val html =
             """

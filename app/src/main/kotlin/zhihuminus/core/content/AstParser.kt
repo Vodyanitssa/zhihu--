@@ -193,6 +193,7 @@ object AstParser {
             "a" ->
                 !node.hasClass("video-box") &&
                     !node.hasClass("comment_img") &&
+                    !node.hasClass("comment_sticker") &&
                     node.attr("data-draft-type") != "link-card"
 
             "img" -> node.attr("eeimg") == "1" || node.attr("eeimg") == "2"
@@ -293,7 +294,7 @@ object AstParser {
             listOfNotNull(
                 if (element.hasClass("video-box")) {
                     parseVideo(element)
-                } else if (element.hasClass("comment_img")) {
+                } else if (element.hasClass("comment_img") || element.hasClass("comment_sticker")) {
                     parseImage(element)
                 } else {
                     parseLink(element)
