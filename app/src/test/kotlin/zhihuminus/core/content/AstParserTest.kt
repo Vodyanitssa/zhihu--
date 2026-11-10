@@ -113,6 +113,45 @@ class AstParserTest {
     }
 
     @Test
+    fun testParseContentKeepsTrailingAnchorInline() {
+        val html =
+            "作为冷酷、客观的评分机器，请根据事实和逻辑对本回答进行评估，按低认知到高认知十分制打分。" +
+                "  <a data-hash=\"f3bce7aa022240e25f12aec9a9b70363\" " +
+                "href=\"http://www.zhihu.com/people/f3bce7aa022240e25f12aec9a9b70363\" " +
+                "class=\"member_mention\">@知乎直答 </a>"
+        val nodes = AstParser.parseContent(html)
+
+        assertEquals(1, nodes.size)
+        val paragraph = assertIs<ContentNode.Paragraph>(nodes.first())
+        val link = assertIs<InlineNode.Link>(paragraph.content.last())
+        assertEquals("http://www.zhihu.com/people/f3bce7aa022240e25f12aec9a9b70363", link.url)
+        assertEquals("@知乎直答", link.name.trim())
+        assertTrue(paragraph.content.first() is InlineNode.Text)
+    }
+
+    @Test
+    fun testParseContentSplitsInlineRunFromBlockElements() {
+        val html = """前文<a href="https://example.com">链接</a><p>段落</p>"""
+        val nodes = AstParser.parseContent(html)
+
+        assertEquals(2, nodes.size)
+        val inlineParagraph = assertIs<ContentNode.Paragraph>(nodes[0])
+        assertTrue(inlineParagraph.content.last() is InlineNode.Link)
+        val blockParagraph = assertIs<ContentNode.Paragraph>(nodes[1])
+        assertEquals("段落", blockParagraph.content.filterIsInstance<InlineNode.Text>().joinToString("") { it.text })
+    }
+
+    @Test
+    fun testParseContentKeepsBlockAnchorAsBlock() {
+        val html = """<a class="comment_img" href="https://pic1.zhimg.com/v2-abc.jpg">[图片]</a>"""
+        val nodes = AstParser.parseContent(html)
+
+        assertEquals(1, nodes.size)
+        val image = assertIs<ContentNode.Image>(nodes.first())
+        assertEquals("https://pic1.zhimg.com/v2-abc.jpg", image.url)
+    }
+
+    @Test
     fun testParseTableWithTheadAndTbody() {
         val html =
             """

@@ -10,24 +10,31 @@ import org.jsoup.nodes.TextNode
 object AstParser {
     fun parseContent(text: String): List<ContentNode> {
         val document = Jsoup.parseBodyFragment(text)
-        return document.body().childNodes().flatMap { node ->
-            when (node) {
-                is TextNode -> {
-                    if (node.isBlank) {
-                        emptyList()
-                    } else {
-                        listOf(
-                            ContentNode.Paragraph(
-                                content = parseInline(node),
-                            ),
-                        )
-                    }
-                }
+        val result = mutableListOf<ContentNode>()
+        val inlineBuffer = mutableListOf<InlineNode>()
 
-                is Element -> parseBlock(node)
-                else -> emptyList()
+        // 散落的文本与行内元素（如评论里的 @ 提及）要合并成同一段落，不能各自成块
+        fun flushInline() {
+            if (inlineBuffer.any { it !is InlineNode.LineBreak }) {
+                result.add(ContentNode.Paragraph(content = inlineBuffer.toList()))
+            }
+            inlineBuffer.clear()
+        }
+
+        for (node in document.body().childNodes()) {
+            when {
+                node is TextNode && node.isBlank -> Unit
+
+                isInlineNode(node) -> inlineBuffer.addAll(parseInline(node))
+
+                node is Element -> {
+                    flushInline()
+                    result.addAll(parseBlock(node))
+                }
             }
         }
+        flushInline()
+        return result
     }
 
     private val MULTI_NEWLINE_REGEX = Regex("(<br\\s*/?>|\\r?\\n)+", RegexOption.IGNORE_CASE)
@@ -176,6 +183,26 @@ object AstParser {
             result.add(InlineNode.Text(textBuffer.toString()))
         }
         return result
+    }
+
+    // 顶层节点中应并入段落的内容；视频、评论图片与链接卡片的 a 仍按块级解析
+    private fun isInlineNode(node: Node): Boolean = when (node) {
+        is TextNode -> true
+
+        is Element -> when (node.tagName()) {
+            "a" ->
+                !node.hasClass("video-box") &&
+                    !node.hasClass("comment_img") &&
+                    node.attr("data-draft-type") != "link-card"
+
+            "img" -> node.attr("eeimg") == "1" || node.attr("eeimg") == "2"
+
+            "strong", "b", "i", "span", "code", "sup", "br" -> true
+
+            else -> false
+        }
+
+        else -> false
     }
 
     private fun parseBlock(element: Element): List<ContentNode> = when (element.tagName()) {
