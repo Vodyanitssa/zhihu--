@@ -11,7 +11,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.pulltorefresh.PullToRefreshBox
 import androidx.compose.material3.pulltorefresh.PullToRefreshDefaults
@@ -30,6 +29,7 @@ import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,7 +47,13 @@ fun ColumnScreen(
         modifier = Modifier.fillMaxSize(),
         topBar = {
             TopAppBar(
-                title = { Text(state.detail?.title?.takeIf { it.isNotBlank() } ?: "专栏") },
+                title = {
+                    ScrollAwareTopBarTitle(
+                        state = listState,
+                        title = state.detail?.title?.takeIf { it.isNotBlank() } ?: "专栏",
+                        placeholder = "专栏",
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")

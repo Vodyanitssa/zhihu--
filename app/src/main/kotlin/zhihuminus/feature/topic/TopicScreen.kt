@@ -6,6 +6,7 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Share
@@ -35,6 +36,7 @@ import com.zhihuminus.ui.components.ExpandableContent
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.collapsedTextHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -47,12 +49,19 @@ fun TopicScreen(
     onShare: () -> Unit,
 ) {
     var isIntroductionExpanded by rememberSaveable(topic.id) { mutableStateOf(false) }
+    val listState = rememberLazyListState()
 
     Scaffold(
         modifier = Modifier,
         topBar = {
             TopAppBar(
-                title = { Text(state.detail?.name?.ifBlank { topic.name } ?: topic.name.ifBlank { "话题" }) },
+                title = {
+                    ScrollAwareTopBarTitle(
+                        state = listState,
+                        title = state.detail?.name?.ifBlank { topic.name } ?: topic.name.ifBlank { "话题" },
+                        placeholder = "话题",
+                    )
+                },
                 navigationIcon = {
                     IconButton(onClick = onBack) {
                         Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "返回")
@@ -72,13 +81,14 @@ fun TopicScreen(
             onLoadMore = { onEvent(TopicEvent.LoadMore) },
             isEnd = { state.isEnd },
             key = FeedDisplayItem::stableKey,
+            listState = listState,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(padding),
             contentPadding = PaddingValues(bottom = 24.dp),
-            footer = { listState ->
+            footer = { footerListState ->
                 if (state.errorMessage == null) {
-                    ProgressIndicatorFooter(listState)
+                    ProgressIndicatorFooter(footerListState)
                 } else {
                     ErrorListFooter(
                         error = state.errorMessage,
