@@ -13,6 +13,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
+import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Tab
@@ -24,15 +25,17 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.feature.topic.components.TopicHeader
-import com.zhihuminus.feature.topic.components.TopicIntroduction
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.ui.components.ErrorListFooter
+import com.zhihuminus.ui.components.ExpandableContent
 import com.zhihuminus.ui.components.FeedCard
 import com.zhihuminus.ui.components.PaginatedList
 import com.zhihuminus.ui.components.ProgressIndicatorFooter
+import com.zhihuminus.ui.components.collapsedTextHeight
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -94,11 +97,20 @@ fun TopicScreen(
                         onFollowingChange = { following -> onEvent(TopicEvent.Follow(following)) },
                     )
                     state.detail?.excerpt?.takeIf(String::isNotBlank)?.let { introduction ->
-                        TopicIntroduction(
-                            introduction = introduction,
+                        ExpandableContent(
                             isExpanded = isIntroductionExpanded,
                             onExpandedChange = { isIntroductionExpanded = it },
-                        )
+                            collapsedMaxHeight = collapsedTextHeight(10, MaterialTheme.typography.bodyMedium),
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 16.dp),
+                        ) {
+                            Text(
+                                text = introduction,
+                                style = MaterialTheme.typography.bodyMedium,
+                                overflow = TextOverflow.Clip,
+                            )
+                        }
                     }
                     PrimaryTabRow(selectedTabIndex = state.selectedTab.ordinal) {
                         TopicFeedTab.entries.forEach { tab ->
