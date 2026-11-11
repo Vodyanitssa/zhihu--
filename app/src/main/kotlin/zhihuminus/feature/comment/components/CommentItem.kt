@@ -32,6 +32,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -43,6 +44,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.content.AstParser
+import com.zhihuminus.core.content.renderer.LocalContentTypographyConfig
 import com.zhihuminus.core.content.renderer.RenderContentNodes
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatRelativeTime
@@ -50,6 +52,10 @@ import com.zhihuminus.feature.comment.Comment
 import com.zhihuminus.feature.comment.CommentEvent
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
+import com.zhihuminus.ui.components.ExpandableContent
+import com.zhihuminus.ui.components.collapsedTextHeight
+
+private const val COMMENT_COLLAPSED_LINES = 8
 
 /**
  * 通用评论条目组件，只负责渲染单条评论。
@@ -67,7 +73,12 @@ fun CommentItem(
     highlight: Boolean = false,
 ) {
     var showMoreMenu by remember(comment.id) { mutableStateOf(false) }
+    var contentExpanded by rememberSaveable(comment.id) { mutableStateOf(false) }
     val contentNodes = remember(comment.content) { AstParser.parseContent(comment.content) }
+    val collapsedMaxHeight = collapsedTextHeight(
+        maxLines = COMMENT_COLLAPSED_LINES,
+        style = LocalContentTypographyConfig.current.scaleStyle(MaterialTheme.typography.bodyLarge),
+    )
     val navigator = LocalNavigator.current
     val author = comment.author
 
@@ -146,8 +157,16 @@ fun CommentItem(
                     }
                 }
 
-                SelectionContainer {
-                    RenderContentNodes(contentNodes)
+                ExpandableContent(
+                    isExpanded = contentExpanded,
+                    onExpandedChange = { contentExpanded = it },
+                    collapsedMaxHeight = collapsedMaxHeight,
+                    modifier = Modifier.fillMaxWidth(),
+                    scrimColor = MaterialTheme.colorScheme.surfaceContainerLow,
+                ) {
+                    SelectionContainer {
+                        RenderContentNodes(contentNodes)
+                    }
                 }
             }
         }
