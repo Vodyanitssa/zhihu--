@@ -138,12 +138,10 @@ fun QuestionScreen(
                             )
                             if (detail != null) {
                                 QuestionBodyHeader(
-                                    questionId = destination.questionId,
                                     detail = detail,
                                     contentNodes = state.contentNodes,
-                                    allowDetailCollapse = state.allowDetailCollapse,
                                     isExpanded = isDetailExpanded,
-                                    onToggleExpanded = { isDetailExpanded = !isDetailExpanded },
+                                    onExpandedChange = { isDetailExpanded = it },
                                     onShowComments = { showComments = true },
                                     currentSort = state.sort,
                                     onEvent = onEvent,

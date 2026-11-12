@@ -17,14 +17,12 @@ import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
-import org.jsoup.Jsoup
 
 data class QuestionUiState(
     val title: String = "",
     val detail: QuestionDetail? = null,
     /** 详情 AST 只解析一次，渲染与图片收集共用同一份节点。 */
     val contentNodes: List<ContentNode> = emptyList(),
-    val allowDetailCollapse: Boolean = false,
     val answers: List<FeedDisplayItem> = emptyList(),
     val sort: QuestionSort = QuestionSort.DEFAULT,
     val isLoadingQuestion: Boolean = true,
@@ -79,17 +77,10 @@ class QuestionViewModel(
                         .onFailure { Log.w(TAG, "Failed to record read history", it) }
                 }
                 val nodes = AstParser.parseContent(detail.detailHtml)
-                val plainTextLength = Jsoup
-                    .parse(detail.detailHtml)
-                    .text()
-                    .trim()
-                    .length
                 uiState = uiState.copy(
                     title = detail.title,
                     detail = detail,
                     contentNodes = nodes,
-                    allowDetailCollapse = plainTextLength >= DETAIL_COLLAPSE_TEXT_THRESHOLD ||
-                        detail.detailHtml.contains("<img"),
                     isLoadingQuestion = false,
                 )
                 sendEffect(QuestionEffect.ContentOpened(detail.title))
@@ -204,6 +195,5 @@ class QuestionViewModel(
 
     companion object {
         private const val TAG = "QuestionViewModel"
-        private const val DETAIL_COLLAPSE_TEXT_THRESHOLD = 100
     }
 }
