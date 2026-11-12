@@ -43,8 +43,8 @@ private const val CONTENT_SLOT = 0
 private const val EXPAND_DURATION = 320
 private const val SCRIM_FADE_IN = 100
 private const val SCRIM_FADE_OUT = 130
-private const val SCRIM_ALPHA = 0.55f
-private val FADE_HEIGHT: Dp = 32.dp
+private const val SCRIM_MID_ALPHA = 0.55f
+private val SCRIM_HEIGHT: Dp = 48.dp
 
 /**
  * 可展开/收起的通用内容块，内容可以是纯文本，也可以是包含图片的任意 composable。
@@ -89,10 +89,12 @@ fun ExpandableContent(
     )
     val scrimBrush = remember(scrimColor) {
         Brush.verticalGradient(
-            listOf(
-                Color.Transparent,
-                scrimColor.copy(alpha = SCRIM_ALPHA),
-            ),
+            colorStops =
+                arrayOf(
+                    0f to Color.Transparent,
+                    0.5f to scrimColor.copy(alpha = SCRIM_MID_ALPHA),
+                    1f to scrimColor,
+                ),
         )
     }
 
@@ -129,7 +131,7 @@ fun ExpandableContent(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
-                        .height(FADE_HEIGHT)
+                        .height(SCRIM_HEIGHT)
                         .alpha(scrimAlpha)
                         .background(brush = scrimBrush),
                 )
