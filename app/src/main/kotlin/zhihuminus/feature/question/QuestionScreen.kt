@@ -135,7 +135,6 @@ fun QuestionScreen(
                                 visitCount = detail?.visitCount ?: 0,
                                 commentCount = detail?.commentCount ?: 0,
                                 followerCount = detail?.followerCount ?: 0,
-                                onShowComments = { showComments = true },
                             )
                             if (detail != null) {
                                 QuestionBodyHeader(
@@ -145,6 +144,7 @@ fun QuestionScreen(
                                     allowDetailCollapse = state.allowDetailCollapse,
                                     isExpanded = isDetailExpanded,
                                     onToggleExpanded = { isDetailExpanded = !isDetailExpanded },
+                                    onShowComments = { showComments = true },
                                     currentSort = state.sort,
                                     onEvent = onEvent,
                                 )

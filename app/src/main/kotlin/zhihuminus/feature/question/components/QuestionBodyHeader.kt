@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -62,6 +63,7 @@ import com.zhihuminus.feature.question.QuestionSort
 import com.zhihuminus.feature.question.QuestionTopic
 import com.zhihuminus.navigation.Topic
 import com.zhihuminus.ui.components.FollowButton
+import com.zhihuminus.ui.components.FollowButtonHeight
 import kotlin.math.roundToInt
 
 private val QUESTION_DETAIL_COLLAPSED_MAX_HEIGHT: Dp = 180.dp
@@ -77,7 +79,6 @@ internal fun QuestionHeaderSection(
     visitCount: Int,
     commentCount: Int,
     followerCount: Int,
-    onShowComments: () -> Unit,
 ) {
     Column(modifier = Modifier.fillMaxWidth(), verticalArrangement = Arrangement.spacedBy(12.dp)) {
         SelectionContainer {
@@ -89,29 +90,18 @@ internal fun QuestionHeaderSection(
         }
         Row(
             modifier = Modifier.fillMaxWidth(),
-            horizontalArrangement = Arrangement.spacedBy(12.dp),
+            horizontalArrangement = Arrangement.spacedBy(16.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            FlowRow(
-                modifier = Modifier.weight(1f),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                StatItem(icon = Icons.Outlined.Visibility, text = "${formatCount(visitCount)} 浏览")
-                StatItem(icon = Icons.Outlined.ChatBubbleOutline, text = "${formatCount(commentCount)} 评论")
-                StatItem(icon = Icons.Outlined.FavoriteBorder, text = "${formatCount(followerCount)} 关注")
-            }
-            OutlinedButton(onClick = onShowComments) {
-                Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = "评论")
-                Spacer(Modifier.width(8.dp))
-                Text(formatCount(commentCount))
-            }
+            StatItem(icon = Icons.Outlined.Visibility, text = "${formatCount(visitCount)} 浏览")
+            StatItem(icon = Icons.Outlined.ChatBubbleOutline, text = "${formatCount(commentCount)} 评论")
+            StatItem(icon = Icons.Outlined.FavoriteBorder, text = "${formatCount(followerCount)} 关注")
         }
     }
 }
 
 /**
- * 问题详情（可折叠）+ 主操作（写回答/关注）+ 回答排序切换。
+ * 问题详情（可折叠）+ 主操作（评论/关注）+ 回答排序切换。
  */
 @Composable
 internal fun QuestionBodyHeader(
@@ -121,6 +111,7 @@ internal fun QuestionBodyHeader(
     allowDetailCollapse: Boolean,
     isExpanded: Boolean,
     onToggleExpanded: () -> Unit,
+    onShowComments: () -> Unit,
     currentSort: QuestionSort,
     onEvent: (QuestionEvent) -> Unit,
 ) {
@@ -207,6 +198,7 @@ internal fun QuestionBodyHeader(
                     QuestionPrimaryActions(
                         isFollowing = detail.isFollowing,
                         onFollowClick = { onEvent(QuestionEvent.ToggleFollow) },
+                        onShowComments = onShowComments,
                     )
                     Row(
                         modifier = Modifier.fillMaxWidth(),
@@ -440,8 +432,24 @@ private fun QuestionDetailToggleButton(
 private fun QuestionPrimaryActions(
     isFollowing: Boolean,
     onFollowClick: () -> Unit,
+    onShowComments: () -> Unit,
 ) {
-    Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+    Row(
+        modifier =
+            Modifier
+                .fillMaxWidth()
+                .height(FollowButtonHeight),
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        OutlinedButton(
+            onClick = onShowComments,
+            modifier = Modifier.weight(1f),
+            contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
+        ) {
+            Icon(Icons.AutoMirrored.Filled.Comment, contentDescription = null)
+            Spacer(Modifier.width(8.dp))
+            Text("评论")
+        }
         FollowButton(
             isFollowing = isFollowing,
             onClick = onFollowClick,
