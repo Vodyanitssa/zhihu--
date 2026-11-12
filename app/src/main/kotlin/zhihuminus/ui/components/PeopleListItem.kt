@@ -106,7 +106,7 @@ fun PeopleListItem(
         }
         FollowButton(
             isFollowing = isFollowing,
-            enabled = !isChangingFollowing,
+            isLoading = isChangingFollowing,
             onClick = onToggleFollow,
         )
     }

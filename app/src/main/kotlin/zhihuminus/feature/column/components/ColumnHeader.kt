@@ -10,8 +10,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -20,8 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
@@ -30,6 +26,7 @@ import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.feature.column.ColumnDetail
 import com.zhihuminus.ui.components.ExpandableContent
+import com.zhihuminus.ui.components.FollowButton
 import com.zhihuminus.ui.components.collapsedTextHeight
 
 @Composable
@@ -86,17 +83,11 @@ fun ColumnHeader(
                 }
             }
             if (detail != null) {
-                Button(
+                FollowButton(
+                    isFollowing = detail.isFollowing,
                     onClick = { onFollowingChange(!detail.isFollowing) },
-                    enabled = !isFollowingChanging,
-                    modifier = Modifier.semantics { selected = detail.isFollowing },
-                ) {
-                    if (isFollowingChanging) {
-                        CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                    } else {
-                        Text(if (detail.isFollowing) "已关注" else "关注专栏", maxLines = 1)
-                    }
-                }
+                    isLoading = isFollowingChanging,
+                )
             }
         }
 

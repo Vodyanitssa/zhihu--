@@ -12,7 +12,6 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
@@ -30,6 +29,7 @@ import com.zhihuminus.feature.post.Author
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Person
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.ui.components.FollowButton
 
 @Composable
 fun PostHeader(
@@ -134,27 +134,10 @@ fun PostHeader(
             }
         }
         Spacer(modifier = Modifier.width(12.dp))
-        // Follow button
-        Surface(
-            shape = RoundedCornerShape(16.dp),
-            color = if (isFollowing) {
-                MaterialTheme.colorScheme.surfaceVariant
-            } else {
-                MaterialTheme.colorScheme.primaryContainer
-            },
-            modifier = Modifier.clickable(onClick = onFollowClick),
-        ) {
-            Text(
-                text = if (isFollowing) "已关注" else "关注",
-                style = MaterialTheme.typography.bodyMedium,
-                color = if (isFollowing) {
-                    MaterialTheme.colorScheme.onSurfaceVariant
-                } else {
-                    MaterialTheme.colorScheme.onPrimaryContainer
-                },
-                modifier = Modifier.padding(horizontal = 14.dp, vertical = 6.dp),
-            )
-        }
+        FollowButton(
+            isFollowing = isFollowing,
+            onClick = onFollowClick,
+        )
     }
     // Time and IP info
     Column(

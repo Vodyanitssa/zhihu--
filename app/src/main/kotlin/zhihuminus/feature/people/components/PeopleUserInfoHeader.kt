@@ -13,7 +13,6 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material3.Button
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -31,6 +30,8 @@ import com.zhihuminus.core.content.AstParser
 import com.zhihuminus.core.content.renderer.InlineNodes
 import com.zhihuminus.feature.people.PeopleProfile
 import com.zhihuminus.ui.components.AuthorBadge
+import com.zhihuminus.ui.components.FollowButton
+import com.zhihuminus.ui.components.FollowButtonHeight
 import org.jsoup.Jsoup
 
 @Composable
@@ -98,35 +99,20 @@ fun PeopleUserInfoHeader(
                     Row(
                         modifier = Modifier
                             .fillMaxWidth()
-                            .padding(top = 8.dp),
+                            .padding(top = 8.dp)
+                            .height(FollowButtonHeight),
                         horizontalArrangement = Arrangement.spacedBy(8.dp),
                     ) {
-                        val buttonModifier = Modifier
-                            .weight(1f)
-                            .height(36.dp)
-
-                        if (profile.isFollowing) {
-                            OutlinedButton(
-                                onClick = onFollowToggle,
-                                modifier = buttonModifier,
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            ) {
-                                Text(if (profile.isFollowed) "互相关注" else "已关注")
-                            }
-                        } else {
-                            Button(
-                                onClick = onFollowToggle,
-                                modifier = buttonModifier,
-                                contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
-                            ) {
-                                Text(if (profile.isFollowed) "回关" else "+ 关注")
-                            }
-                        }
+                        FollowButton(
+                            isFollowing = profile.isFollowing,
+                            onClick = onFollowToggle,
+                            modifier = Modifier.weight(1f),
+                        )
 
                         if (isMessageAvailable) {
                             OutlinedButton(
                                 onClick = onMessageClick,
-                                modifier = buttonModifier,
+                                modifier = Modifier.weight(1f),
                                 contentPadding = PaddingValues(horizontal = 12.dp, vertical = 0.dp),
                             ) {
                                 Text("私信")

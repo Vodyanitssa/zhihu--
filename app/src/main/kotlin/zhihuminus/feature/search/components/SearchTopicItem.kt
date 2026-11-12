@@ -71,7 +71,7 @@ fun SearchTopicItem(
         }
         FollowButton(
             isFollowing = result.isFollowing,
-            enabled = !isChangingFollowing,
+            isLoading = isChangingFollowing,
             onClick = { onToggleFollowing(!result.isFollowing) },
         )
     }

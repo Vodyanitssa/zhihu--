@@ -19,14 +19,11 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.text.selection.SelectionContainer
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Comment
-import androidx.compose.material.icons.filled.Add
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.ExpandLess
 import androidx.compose.material.icons.filled.ExpandMore
 import androidx.compose.material.icons.outlined.ChatBubbleOutline
 import androidx.compose.material.icons.outlined.FavoriteBorder
 import androidx.compose.material.icons.outlined.Visibility
-import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
@@ -64,6 +61,7 @@ import com.zhihuminus.feature.question.QuestionEvent
 import com.zhihuminus.feature.question.QuestionSort
 import com.zhihuminus.feature.question.QuestionTopic
 import com.zhihuminus.navigation.Topic
+import com.zhihuminus.ui.components.FollowButton
 import kotlin.math.roundToInt
 
 private val QUESTION_DETAIL_COLLAPSED_MAX_HEIGHT: Dp = 180.dp
@@ -444,31 +442,11 @@ private fun QuestionPrimaryActions(
     onFollowClick: () -> Unit,
 ) {
     Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        androidx.compose.material3.FilledTonalButton(
+        FollowButton(
+            isFollowing = isFollowing,
             onClick = onFollowClick,
-            modifier =
-                Modifier
-                    .weight(1f)
-                    .semantics {
-                        selected = isFollowing
-                    },
-            colors =
-                if (isFollowing) {
-                    ButtonDefaults.filledTonalButtonColors(
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        contentColor = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                } else {
-                    ButtonDefaults.filledTonalButtonColors()
-                },
-        ) {
-            Icon(
-                imageVector = if (isFollowing) Icons.Filled.Check else Icons.Filled.Add,
-                contentDescription = if (isFollowing) "取消关注" else "关注问题",
-            )
-            Spacer(Modifier.width(8.dp))
-            Text(if (isFollowing) "已关注" else "关注问题")
-        }
+            modifier = Modifier.weight(1f),
+        )
     }
 }
 

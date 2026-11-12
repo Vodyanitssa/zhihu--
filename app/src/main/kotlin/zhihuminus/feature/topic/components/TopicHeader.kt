@@ -9,8 +9,6 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
-import androidx.compose.material3.Button
-import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -18,13 +16,12 @@ import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
-import androidx.compose.ui.semantics.selected
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
 import com.zhihuminus.core.error.AppError
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.feature.topic.TopicDetail
+import com.zhihuminus.ui.components.FollowButton
 
 @Composable
 fun TopicHeader(
@@ -75,17 +72,11 @@ fun TopicHeader(
                     else -> Text("正在加载话题信息…")
                 }
             }
-            Button(
+            FollowButton(
+                isFollowing = detail?.isFollowing == true,
                 onClick = { detail?.let { onFollowingChange(!it.isFollowing) } },
-                enabled = detail != null && !isFollowingChanging,
-                modifier = Modifier.semantics { selected = detail?.isFollowing == true },
-            ) {
-                if (isFollowingChanging) {
-                    CircularProgressIndicator(Modifier.size(18.dp), strokeWidth = 2.dp)
-                } else {
-                    Text(if (detail?.isFollowing == true) "已关注" else "关注话题", maxLines = 1)
-                }
-            }
+                isLoading = isFollowingChanging,
+            )
         }
     }
 }
