@@ -1,12 +1,9 @@
 package com.zhihuminus.feature.post.components
 
-import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.text.selection.SelectionContainer
-import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
@@ -18,6 +15,8 @@ import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostEvent
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.link.rememberInAppLinkOpener
+import com.zhihuminus.ui.components.TopicTag
+import com.zhihuminus.ui.components.TopicTagList
 
 @Composable
 fun PostContent(
@@ -76,24 +75,11 @@ fun PostContent(
 
         // Topics (for articles and pins)
         if (post.topics.isNotEmpty()) {
-            Column(modifier = Modifier.padding(top = 16.dp)) {
-                Text(
-                    text = "话题",
-                    style = MaterialTheme.typography.labelMedium,
-                    modifier = Modifier.fillMaxWidth().padding(vertical = 4.dp),
-                )
-                post.topics.forEach { topic ->
-                    Text(
-                        text = "#${topic.name}",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.primary,
-                        modifier = Modifier
-                            .fillMaxWidth()
-                            .clickable { inAppLinkOpener("https://www.zhihu.com/topic/${topic.id}") }
-                            .padding(vertical = 4.dp),
-                    )
-                }
-            }
+            TopicTagList(
+                topics = post.topics.map { TopicTag(id = it.id, name = it.name) },
+                onTopicClick = { topic -> inAppLinkOpener("https://www.zhihu.com/topic/${topic.id}") },
+                modifier = Modifier.padding(top = 16.dp),
+            )
         }
     }
 }

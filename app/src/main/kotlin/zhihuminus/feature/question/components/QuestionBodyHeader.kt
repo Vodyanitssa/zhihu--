@@ -2,7 +2,6 @@ package com.zhihuminus.feature.question.components
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -41,6 +40,8 @@ import com.zhihuminus.navigation.Topic
 import com.zhihuminus.ui.components.ExpandableContent
 import com.zhihuminus.ui.components.FollowButton
 import com.zhihuminus.ui.components.FollowButtonHeight
+import com.zhihuminus.ui.components.TopicTag
+import com.zhihuminus.ui.components.TopicTagList
 
 private val QUESTION_DETAIL_COLLAPSED_MAX_HEIGHT: Dp = 180.dp
 
@@ -144,22 +145,17 @@ private fun SortChip(
 private fun QuestionDetailWithTopics(
     contentNodes: List<ContentNode>,
     topics: List<QuestionTopic>,
-    onTopicClick: (QuestionTopic) -> Unit,
+    onTopicClick: (TopicTag) -> Unit,
 ) {
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
         if (contentNodes.isNotEmpty()) {
             RenderContentNodes(contentNodes)
         }
         if (topics.isNotEmpty()) {
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                topics.forEach { topic ->
-                    FilterChip(
-                        selected = false,
-                        onClick = { onTopicClick(topic) },
-                        label = { Text("# ${topic.name}") },
-                    )
-                }
-            }
+            TopicTagList(
+                topics = topics.map { TopicTag(id = it.id, name = it.name) },
+                onTopicClick = onTopicClick,
+            )
         }
     }
 }
