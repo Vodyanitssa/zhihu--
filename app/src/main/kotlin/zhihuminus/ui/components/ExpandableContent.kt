@@ -44,13 +44,17 @@ private const val EXPAND_DURATION = 320
 private const val SCRIM_FADE_IN = 100
 private const val SCRIM_FADE_OUT = 130
 private const val SCRIM_MID_ALPHA = 0.55f
+private const val COLLAPSE_BUFFER_RATIO = 0.5f
 private val SCRIM_HEIGHT: Dp = 48.dp
 
 /**
  * 可展开/收起的通用内容块，内容可以是纯文本，也可以是包含图片的任意 composable。
  *
- * 展开状态由调用方持有（受控组件），折叠量为 [collapsedMaxHeight]：内容自然高度超过它时
- * 才显示按钮与底部渐变遮罩，收起时把内容裁切到该高度。
+ * 展开状态由调用方持有（受控组件），折叠量为 [collapsedMaxHeight]：内容自然高度需要超过
+ * `collapsedMaxHeight × (1 + COLLAPSE_BUFFER_RATIO)` 才折叠并显示按钮与底部渐变遮罩，收起时
+ * 把内容裁切到 [collapsedMaxHeight]。留出缓冲是为了避免内容只比折叠量多一两行时也被折叠、
+ * 遮罩几乎遮不到东西；自然高度不到该阈值的偏高内容按完整高度显示，不折叠。
+ *
  * 组件不内置水平内边距，由调用方通过 [modifier] 决定。
  *
  * 布局结构：内容容器（[SubcomposeLayout] + [animateContentSize]）只负责可见高度，渐变遮罩
@@ -118,7 +122,7 @@ fun ExpandableContent(
                         maxHeight = Constraints.Infinity,
                     ),
                 )
-                val isExpandable = naturalPlaceable.height > collapsedMaxHeightPx
+                val isExpandable = naturalPlaceable.height.toFloat() > collapsedMaxHeightPx * (1f + COLLAPSE_BUFFER_RATIO)
                 expandable = isExpandable
                 val visibleHeight = if (isExpandable && !isExpanded) collapsedMaxHeightPx else naturalPlaceable.height
                 layout(width, visibleHeight) {
