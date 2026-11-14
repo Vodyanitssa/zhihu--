@@ -35,9 +35,12 @@ class CollectionContentViewModelTest {
         var itemsFailure: Throwable? = null,
         var removeFailure: Throwable? = null,
         var deleteFailure: Throwable? = null,
+        var readFailure: Throwable? = null,
     ) : CollectionRepository {
         var lastRemovedType: String? = null
         var lastRemovedId: Long? = null
+        var readCount: Int = 0
+        var lastReadCollectionId: String? = null
 
         override suspend fun getUserCollections(urlToken: String, nextUrl: String?): CollectionsPageResult =
             CollectionsPageResult(items = emptyList(), nextUrl = null, isEnd = true)
@@ -78,6 +81,12 @@ class CollectionContentViewModelTest {
             removeFailure?.let { throw it }
             lastRemovedType = type
             lastRemovedId = id
+        }
+
+        override suspend fun recordRead(collectionId: String) {
+            readFailure?.let { throw it }
+            readCount++
+            lastReadCollectionId = collectionId
         }
     }
 
@@ -266,5 +275,43 @@ class CollectionContentViewModelTest {
         assertFalse(viewModel.uiState.showDeleteDialog)
         val effect = viewModel.effect.first()
         assertTrue(effect is CollectionContentEffect.ShowMessage && effect.isError && effect.message == "默认收藏夹不能删除")
+    }
+
+    @Test
+    fun testInitReportsReadOnce() = runTest(testDispatcher) {
+        val repository = FakeCollectionRepository(items = sampleItems(1), totals = 1)
+        CollectionContentViewModel("c1", repository)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.readCount)
+        assertEquals("c1", repository.lastReadCollectionId)
+    }
+
+    @Test
+    fun testRefreshDoesNotReportReadAgain() = runTest(testDispatcher) {
+        val repository = FakeCollectionRepository(items = sampleItems(1), totals = 1)
+        val viewModel = CollectionContentViewModel("c1", repository)
+        advanceUntilIdle()
+
+        viewModel.onEvent(CollectionContentEvent.Refresh)
+        advanceUntilIdle()
+
+        assertEquals(1, repository.readCount)
+    }
+
+    @Test
+    fun testReadFailureDoesNotAffectLoad() = runTest(testDispatcher) {
+        val repository = FakeCollectionRepository(
+            items = sampleItems(1),
+            totals = 1,
+            readFailure = RuntimeException("read failed"),
+        )
+        val viewModel = CollectionContentViewModel("c1", repository)
+        advanceUntilIdle()
+
+        assertEquals("Test Collection", viewModel.uiState.collection?.title)
+        assertEquals(1, viewModel.uiState.items.size)
+        assertNull(viewModel.uiState.errorMessage)
+        assertNull(viewModel.uiState.detailErrorMessage)
     }
 }

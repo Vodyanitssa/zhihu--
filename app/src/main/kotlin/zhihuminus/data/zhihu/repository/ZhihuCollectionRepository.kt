@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.repository
 
 import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
+import com.zhihuminus.data.zhihu.api.ZhihuHistoryApi
 import com.zhihuminus.data.zhihu.mapper.toDomain
 import com.zhihuminus.data.zhihu.mapper.toFeedDisplayItem
 import com.zhihuminus.feature.collection.Collection
@@ -10,6 +11,7 @@ import com.zhihuminus.feature.collection.CollectionsPageResult
 
 class ZhihuCollectionRepository(
     private val api: ZhihuCollectionApi,
+    private val historyApi: ZhihuHistoryApi,
 ) : CollectionRepository {
     override suspend fun getUserCollections(urlToken: String, nextUrl: String?): CollectionsPageResult {
         val response = api.getUserCollections(urlToken, nextUrl)
@@ -49,5 +51,13 @@ class ZhihuCollectionRepository(
 
     override suspend fun removeFromCollection(type: String, id: Long, collectionId: String) {
         api.removeFromCollection(type, id, collectionId)
+    }
+
+    override suspend fun recordRead(collectionId: String) {
+        historyApi.addHistory(
+            contentToken = collectionId,
+            contentType = "collection",
+            referer = "https://www.zhihu.com/collection/$collectionId",
+        )
     }
 }

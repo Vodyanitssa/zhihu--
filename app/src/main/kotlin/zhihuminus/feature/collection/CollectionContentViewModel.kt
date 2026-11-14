@@ -51,6 +51,7 @@ class CollectionContentViewModel(
     init {
         loadDetail()
         loadItems(reset = true)
+        recordRead()
     }
 
     fun onEvent(event: CollectionContentEvent) {
@@ -82,6 +83,18 @@ class CollectionContentViewModel(
             }
 
             is CollectionContentEvent.ConfirmDelete -> deleteCollection()
+        }
+    }
+
+    private fun recordRead() {
+        viewModelScope.launch {
+            try {
+                repository.recordRead(collectionId)
+            } catch (e: CancellationException) {
+                throw e
+            } catch (e: Exception) {
+                reportFailure("CollectionContentViewModel", "record collection read", e)
+            }
         }
     }
 

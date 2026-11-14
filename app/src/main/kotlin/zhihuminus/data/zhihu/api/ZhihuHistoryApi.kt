@@ -24,11 +24,19 @@ open class ZhihuHistoryApi(
     /**
      * 记录阅读历史（read_history/add）
      * @param contentToken 内容 token（数字 ID 字符串）
-     * @param contentType 内容类型: "answer", "article", "pin", "profile", "question", "column"
+     * @param contentType 内容类型: "answer", "article", "pin", "profile", "question", "column", "collection"
+     * @param referer 来源页面，非空时覆盖默认 Referer
      */
-    open suspend fun addHistory(contentToken: String, contentType: String) {
+    open suspend fun addHistory(
+        contentToken: String,
+        contentType: String,
+        referer: String? = null,
+    ) {
         val url = "https://www.zhihu.com/api/v4/read_history/add"
         environment.postSigned(url) {
+            if (referer != null) {
+                header("Referer", referer)
+            }
             contentType(ContentType.Application.Json)
             setBody(
                 buildJsonObject {

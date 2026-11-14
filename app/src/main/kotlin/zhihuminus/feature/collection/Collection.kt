@@ -66,6 +66,8 @@ interface CollectionRepository {
     suspend fun addToCollection(type: String, id: Long, collectionId: String)
 
     suspend fun removeFromCollection(type: String, id: Long, collectionId: String)
+
+    suspend fun recordRead(collectionId: String)
 }
 
 val Collection.subtitleText: String
