@@ -1,4 +1,4 @@
-package com.zhihuminus.feature.people.components
+package com.zhihuminus.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
@@ -14,10 +14,14 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.util.formatCount
 
+/**
+ * 信息卡统计项：上方数值、下方标签，供 [InfoHeader] 的统计行使用。
+ * 传入 [onClick] 时整项可点击。
+ */
 @Composable
-fun PeopleStatItem(
+fun InfoStatItem(
     label: String,
-    value: Int,
+    value: Long,
     onClick: (() -> Unit)? = null,
     modifier: Modifier = Modifier,
 ) {

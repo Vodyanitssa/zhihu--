@@ -58,6 +58,7 @@ class TopicViewModel(
             is TopicEvent.SelectIdeasSort -> selectIdeasSort(event.sort)
             is TopicEvent.LoadMore -> loadMore()
             is TopicEvent.Retry -> retry()
+            is TopicEvent.RetryDetail -> retryDetail()
             is TopicEvent.Follow -> follow(event.following)
             is TopicEvent.ContentClick -> {
                 val destination = event.item.navDestination
@@ -202,6 +203,11 @@ class TopicViewModel(
     private fun retry() {
         uiState = uiState.copy(errorMessage = null)
         loadMore()
+    }
+
+    private fun retryDetail() {
+        if (uiState.isLoadingDetail) return
+        loadDetail()
     }
 
     private fun follow(following: Boolean) {

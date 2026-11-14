@@ -1,12 +1,16 @@
 package com.zhihuminus.feature.collection.components
 
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Bookmarks
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -14,13 +18,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.error.AppError
-import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatRelativeTime
 import com.zhihuminus.feature.collection.Collection
 import com.zhihuminus.ui.components.ExpandableContent
+import com.zhihuminus.ui.components.InfoHeader
+import com.zhihuminus.ui.components.InfoStatItem
 import com.zhihuminus.ui.components.collapsedTextHeight
 
 @Composable
@@ -32,120 +36,92 @@ fun CollectionHeader(
     onRetryDetail: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
-    Column(
-        modifier = modifier
-            .fillMaxWidth()
-            .padding(16.dp),
-        verticalArrangement = Arrangement.spacedBy(8.dp),
-    ) {
-        if (collection != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.Top,
+    InfoHeader(
+        modifier = modifier,
+        iconUrl = null,
+        iconShape = RoundedCornerShape(12.dp),
+        iconBackgroundColor = MaterialTheme.colorScheme.primaryContainer,
+        iconContent = {
+            Box(
+                modifier = Modifier.fillMaxSize(),
+                contentAlignment = Alignment.Center,
             ) {
-                Text(
-                    text = collection.title.takeIf { it.isNotBlank() } ?: "收藏夹",
-                    style = MaterialTheme.typography.headlineSmall,
-                    modifier = Modifier.weight(0.5f),
-                )
-                Spacer(Modifier.width(12.dp))
-                CollectionStatsBar(
-                    collection = collection,
-                    modifier = Modifier.weight(0.5f),
+                Icon(
+                    imageVector = Icons.Filled.Bookmarks,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
+                    modifier = Modifier.size(40.dp),
                 )
             }
-
-            val updatedText = remember(collection.updatedTime) { formatRelativeTime(collection.updatedTime) }
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                verticalAlignment = Alignment.CenterVertically,
-                horizontalArrangement = Arrangement.spacedBy(6.dp),
-            ) {
-                Text(
-                    text = if (collection.isPublic) "公开" else "仅自己可见",
+        },
+        title = collection?.title?.takeIf { it.isNotBlank() } ?: "收藏夹",
+        stats = {
+            when {
+                collection != null -> {
+                    InfoStatItem(label = "关注", value = collection.followerCount.toLong())
+                    InfoStatItem(label = "浏览", value = collection.viewCount.toLong())
+                    InfoStatItem(label = "赞同", value = collection.likeCount.toLong())
+                }
+                detailErrorMessage != null -> TextButton(onClick = onRetryDetail) {
+                    Text(
+                        "信息加载失败，点击重试",
+                        color = MaterialTheme.colorScheme.error,
+                    )
+                }
+                else -> Text(
+                    "正在加载收藏夹信息…",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                if (collection.updatedTime > 0) {
+            }
+        },
+        introduction = {
+            collection?.description?.takeIf { it.isNotBlank() }?.let { description ->
+                ExpandableContent(
+                    isExpanded = isDescriptionExpanded,
+                    onExpandedChange = onDescriptionExpandedChange,
+                    collapsedMaxHeight = collapsedTextHeight(10, MaterialTheme.typography.bodyMedium),
+                    modifier = Modifier.fillMaxWidth(),
+                ) {
                     Text(
-                        text = "·",
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.outline,
-                    )
-                    Text(
-                        text = "更新于$updatedText",
-                        style = MaterialTheme.typography.labelMedium,
+                        text = description,
+                        style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
                 }
             }
-        } else {
-            when {
-                detailErrorMessage != null -> TextButton(onClick = onRetryDetail) {
+        },
+        footer = {
+            collection?.let { loadedCollection ->
+                Row(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(top = 4.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
                     Text(
-                        text = "收藏夹信息加载失败: ${detailErrorMessage.userMessage}，点击重试",
-                        color = MaterialTheme.colorScheme.error,
+                        text = if (loadedCollection.isPublic) "公开" else "仅自己可见",
+                        style = MaterialTheme.typography.labelMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    if (loadedCollection.updatedTime > 0) {
+                        val updatedText = remember(loadedCollection.updatedTime) {
+                            formatRelativeTime(loadedCollection.updatedTime)
+                        }
+                        Text(
+                            text = "·",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.outline,
+                        )
+                        Text(
+                            text = "更新于$updatedText",
+                            style = MaterialTheme.typography.labelMedium,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
                 }
-
-                else -> Text(
-                    text = "正在加载收藏夹信息…",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
-        }
-
-        val description = collection?.description?.takeIf { it.isNotBlank() }
-        if (description != null) {
-            ExpandableContent(
-                isExpanded = isDescriptionExpanded,
-                onExpandedChange = onDescriptionExpandedChange,
-                collapsedMaxHeight = collapsedTextHeight(10, MaterialTheme.typography.bodyMedium),
-            ) {
-                Text(
-                    text = description,
-                    style = MaterialTheme.typography.bodyMedium,
-                )
-            }
-        }
-    }
-}
-
-@Composable
-private fun CollectionStatsBar(
-    collection: Collection,
-    modifier: Modifier = Modifier,
-) {
-    Row(
-        modifier = modifier.fillMaxWidth(),
-        horizontalArrangement = Arrangement.SpaceEvenly,
-        verticalAlignment = Alignment.Top,
-    ) {
-        CollectionStatItem(label = "关注", value = collection.followerCount)
-        CollectionStatItem(label = "浏览", value = collection.viewCount)
-        CollectionStatItem(label = "赞同", value = collection.likeCount)
-    }
-}
-
-@Composable
-private fun CollectionStatItem(
-    label: String,
-    value: Int,
-) {
-    Column(
-        horizontalAlignment = Alignment.CenterHorizontally,
-        modifier = Modifier.padding(horizontal = 8.dp, vertical = 2.dp),
-    ) {
-        Text(
-            text = formatCount(value),
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = FontWeight.Bold,
-        )
-        Text(
-            text = label,
-            style = MaterialTheme.typography.labelMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+        },
+    )
 }

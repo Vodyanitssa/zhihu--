@@ -24,6 +24,8 @@ sealed interface TopicEvent {
 
     data object Retry : TopicEvent
 
+    data object RetryDetail : TopicEvent
+
     data class Follow(
         val following: Boolean,
     ) : TopicEvent
