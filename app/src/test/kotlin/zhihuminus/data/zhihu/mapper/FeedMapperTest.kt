@@ -2,6 +2,8 @@ package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.data.FeedImageLayout
 import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.navDestination
+import com.zhihuminus.data.zhihu.api.parseMobileFeedPage
 import com.zhihuminus.data.zhihu.dto.AdvertisementFeedDto
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
@@ -22,9 +24,16 @@ import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.VideoKind
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonArray
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertNotNull
+import kotlin.test.assertNull
 
 class FeedMapperTest {
     @Test
@@ -294,5 +303,209 @@ class FeedMapperTest {
         assertEquals(8008L, vDest.id)
         assertEquals(VideoKind.ZVIDEO, vDest.kind)
         assertEquals("video:8008", vTarget.stableTargetKey)
+    }
+
+    @Test
+    fun testMobileComponentCardToDisplayItem() {
+        val item = FeedMapper.toMobileDisplayItem(
+            mobileCard("https%3A%2F%2Fwww.zhihu.com%2Fquestion%2F123%2Fanswer%2F456"),
+        )
+
+        assertNotNull(item)
+        assertEquals("回答标题", item.title)
+        assertEquals("回答摘要", item.summary)
+        assertEquals("10 赞同 · 2 评论 · 3 收藏", item.details)
+        assertEquals("回答", item.contentTypeLabel)
+        assertEquals("作者名", item.authorName)
+        assertEquals("https://example.com/avatar.jpg", item.avatarSrc)
+        assertNull(item.feed)
+
+        val destination = item.navDestination as? PostDestination
+        assertNotNull(destination)
+        assertEquals(PostType.Answer, destination.type)
+        assertEquals(456L, destination.id)
+    }
+
+    @Test
+    fun testMobileVideoCardUsesVideoDestination() {
+        val item = FeedMapper.toMobileDisplayItem(
+            mobileCard("https%3A%2F%2Fwww.zhihu.com%2Fzvideo%2F777", title = "视频标题"),
+        )
+
+        assertNotNull(item)
+        assertEquals("视频标题", item.title)
+        assertEquals("视频", item.contentTypeLabel)
+        assertNull(item.feed)
+
+        val destination = item.navDestination as? Video
+        assertNotNull(destination)
+        assertEquals(777L, destination.id)
+    }
+
+    @OptIn(ExperimentalEncodingApi::class)
+    @Test
+    fun testMobilePinCardPrefersThumbnailImages() {
+        val originalContent = buildJsonObject {
+            put(
+                "media_info",
+                buildJsonObject {
+                    put(
+                        "images",
+                        buildJsonArray {
+                            add(buildJsonObject { put("url", "https://example.com/original-0.jpg") })
+                        },
+                    )
+                },
+            )
+        }
+        val extra = buildJsonObject {
+            put(
+                "business_ext_map",
+                buildJsonObject {
+                    put("ori_content", Base64.Default.encode(originalContent.toString().encodeToByteArray()))
+                    put(
+                        "images",
+                        buildJsonArray {
+                            add(buildJsonObject { put("url", "https://example.com/thumbnail-0.jpg") })
+                        },
+                    )
+                },
+            )
+        }
+
+        val item = FeedMapper.toMobileDisplayItem(
+            mobileCard("https%3A%2F%2Fwww.zhihu.com%2Fpin%2F999", title = "想法标题", extra = extra),
+        )
+
+        assertNotNull(item)
+        assertEquals(listOf("https://example.com/thumbnail-0.jpg"), item.images)
+        assertEquals("想法", item.contentTypeLabel)
+        assertEquals(PostType.Pin, (item.navDestination as? PostDestination)?.type)
+    }
+
+    @Test
+    fun testMobileCardSkippedWhenNotAComponentCardOrUnresolvable() {
+        assertNull(FeedMapper.toMobileDisplayItem(buildJsonObject { put("type", "VideoCard") }))
+        assertNull(
+            FeedMapper.toMobileDisplayItem(
+                mobileCard("https%3A%2F%2Fexample.com%2Funknown%2F1"),
+            ),
+        )
+    }
+
+    @Test
+    fun testParseMobileFeedPageUsesNextAsContinuation() {
+        val withNext = buildJsonObject {
+            put("data", buildJsonArray { add(buildJsonObject { put("type", "ComponentCard") }) })
+            put(
+                "paging",
+                buildJsonObject {
+                    put("next", "https://api.zhihu.com/topstory/recommend?page=2")
+                },
+            )
+        }
+        val page = parseMobileFeedPage(withNext)
+        assertEquals(1, page.items.size)
+        assertEquals("https://api.zhihu.com/topstory/recommend?page=2", page.nextUrl)
+        assertEquals(false, page.isEnd)
+
+        val withoutNext = buildJsonObject {
+            put("data", buildJsonArray { add(buildJsonObject { put("type", "ComponentCard") }) })
+            put("paging", buildJsonObject { put("is_end", true) })
+        }
+        val lastPage = parseMobileFeedPage(withoutNext)
+        assertNull(lastPage.nextUrl)
+        assertEquals(true, lastPage.isEnd)
+    }
+
+    private fun mobileCard(
+        routeUrl: String,
+        title: String = "回答标题",
+        extra: JsonObject? = null,
+    ): JsonObject = buildJsonObject {
+        put("type", "ComponentCard")
+        put("action", buildJsonObject { put("parameter", "route_url=$routeUrl") })
+        put(
+            "children",
+            buildJsonArray {
+                add(
+                    buildJsonObject {
+                        put("type", "Text")
+                        put("id", "Text")
+                        put("style", "Text")
+                        put("text", title)
+                    },
+                )
+                add(
+                    buildJsonObject {
+                        put("type", "Text")
+                        put("id", "text_pin_summary")
+                        put("style", "text_pin_summary")
+                        put("text", "回答摘要")
+                    },
+                )
+                add(lineWithText("置顶"))
+                add(reactionFooter())
+                add(authorLine())
+            },
+        )
+        extra?.let { put("extra", it) }
+    }
+
+    private fun lineWithText(text: String): JsonObject = buildJsonObject {
+        put("type", "Line")
+        put("style", "LineText")
+        put(
+            "elements",
+            buildJsonArray {
+                add(
+                    buildJsonObject {
+                        put("type", "Text")
+                        put("text", text)
+                    },
+                )
+            },
+        )
+    }
+
+    private fun reactionFooter(): JsonObject = buildJsonObject {
+        put("type", "Line")
+        put("style", "LineFooterReaction_feed_v3")
+        put(
+            "elements",
+            buildJsonArray {
+                add(reaction("Vote", 10))
+                add(reaction("Comment", 2))
+                add(reaction("Collect", 3))
+            },
+        )
+    }
+
+    private fun reaction(name: String, count: Int): JsonObject = buildJsonObject {
+        put("reaction", name)
+        put("count", count)
+    }
+
+    private fun authorLine(): JsonObject = buildJsonObject {
+        put("type", "Line")
+        put("style", "RecommendAuthorLine")
+        put(
+            "elements",
+            buildJsonArray {
+                add(
+                    buildJsonObject {
+                        put("type", "Image")
+                        put("style", "Avatar_default")
+                        put("image", buildJsonObject { put("url", "https://example.com/avatar.jpg") })
+                    },
+                )
+                add(
+                    buildJsonObject {
+                        put("type", "Text")
+                        put("text", "作者名")
+                    },
+                )
+            },
+        )
     }
 }

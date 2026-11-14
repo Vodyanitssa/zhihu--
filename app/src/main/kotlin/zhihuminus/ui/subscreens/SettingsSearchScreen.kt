@@ -212,6 +212,15 @@ private val settingsSearchEntries = buildList {
             listOf("自动刷新", "首页缓存", "启动页刷新"),
         ),
     )
+    add(
+        appearanceEntry(
+            "appearance.homeFeedSource",
+            "首页推荐来源",
+            "切换首页推荐流使用桌面 Web 还是安卓端接口。",
+            APPEARANCE_SETTINGS_HOME_FEED_SOURCE_KEY,
+            listOf("推荐来源", "安卓端推荐", "移动端推荐", "Web 推荐"),
+        ),
+    )
 
     add(
         systemEntry(

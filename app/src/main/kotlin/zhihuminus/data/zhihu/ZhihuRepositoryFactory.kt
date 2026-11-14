@@ -2,6 +2,7 @@ package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.core.environment.ZhihuApiEnvironment
 import com.zhihuminus.core.settings.AppSettingsRepository
+import com.zhihuminus.core.settings.model.HomeFeedSource
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.local.SearchHistoryStore
 import com.zhihuminus.data.zhihu.api.ZhihuCollectionApi
@@ -106,13 +107,17 @@ class ZhihuRepositoryFactory(
     fun createHistoryRepository(): HistoryRepository =
         ZhihuHistoryRepository(historyApi)
 
-    fun createHomeRepository(startupCacheFile: Path? = null): HomeRepository =
+    fun createHomeRepository(
+        startupCacheFile: Path? = null,
+        feedSource: HomeFeedSource = HomeFeedSource.Web,
+    ): HomeRepository =
         ZhihuHomeRepository(
             feedApi = feedApi,
             notificationApi = notificationApi,
             videoRepository = videoRepository,
             startupCacheFile = startupCacheFile,
             postCache = postCache,
+            feedSource = feedSource,
         )
 
     fun createNotificationRepository(): NotificationRepository =

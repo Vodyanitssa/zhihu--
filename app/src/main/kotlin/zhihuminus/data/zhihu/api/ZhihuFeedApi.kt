@@ -7,15 +7,18 @@ import com.zhihuminus.core.telemetry.ZaFeedExposureItem
 import com.zhihuminus.core.telemetry.ZaProtobufBuilder
 import com.zhihuminus.core.telemetry.gzipCompress
 import com.zhihuminus.core.util.Log
+import com.zhihuminus.core.util.raiseForStatus
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.FeedDto
 import com.zhihuminus.data.zhihu.dto.FeedPage
 import com.zhihuminus.data.zhihu.dto.FollowingUserItemDto
+import com.zhihuminus.data.zhihu.dto.PageResult
 import com.zhihuminus.data.zhihu.dto.PagingDto
 import io.ktor.client.call.body
 import io.ktor.client.request.forms.FormDataContent
 import io.ktor.client.request.forms.MultiPartFormDataContent
 import io.ktor.client.request.forms.formData
+import io.ktor.client.request.get
 import io.ktor.client.request.header
 import io.ktor.client.request.post
 import io.ktor.client.request.setBody
@@ -40,6 +43,10 @@ const val RECOMMEND_FEED_URL =
 /** 桌面 Web v3 关注流（动态）首页 URL；续页用响应里的 paging.next。 */
 const val MOMENTS_FEED_URL =
     "https://www.zhihu.com/api/v3/moments?limit=10&desktop=true"
+
+/** 安卓端推荐流首页 URL；续页用响应里的 paging.next。 */
+const val MOBILE_RECOMMEND_FEED_URL =
+    "https://api.zhihu.com/topstory/recommend"
 
 private const val RECENT_MOMENTS_USERS_URL = "https://api.zhihu.com/moments/recent?type=raw"
 
@@ -86,6 +93,15 @@ open class ZhihuFeedApi(
             nextUrl = paging?.nextUrl,
             isEnd = paging?.hasMore != true,
         )
+    }
+
+    /**
+     * 拉取一页安卓端推荐流。响应是组件化卡片，只保留原始 [JsonObject] 交给 mapper 解析。
+     * @param nextUrl 续页 URL（上一页响应的 paging.next）；null 表示请求第一页
+     */
+    open suspend fun fetchMobileRecommendPage(nextUrl: String? = null): PageResult<JsonObject> {
+        val response = environment.mobileHttpClient().get(normalizeMobileFeedUrl(nextUrl))
+        return parseMobileFeedPage(response.raiseForStatus().body())
     }
 
     /**
@@ -232,4 +248,31 @@ open class ZhihuFeedApi(
             Log.w("ZhihuFeedApi", "Failed to mark content uninterested", e)
             false
         }
+}
+
+private fun normalizeMobileFeedUrl(nextUrl: String?): String {
+    val raw = nextUrl?.takeIf { it.isNotBlank() } ?: MOBILE_RECOMMEND_FEED_URL
+
+    @Suppress("HttpUrlsUsage")
+    val https = raw.replace("http://", "https://")
+    return if (https.startsWith("https://")) https else "https://api.zhihu.com/${https.trimStart('/')}"
+}
+
+/**
+ * 解析安卓端推荐流响应。
+ *
+ * 安卓端分页的 `is_end` 可能缺失，因此只以 `paging.next` 是否存在判断是否结束。
+ */
+internal fun parseMobileFeedPage(json: JsonObject): PageResult<JsonObject> {
+    val data = json["data"] as? JsonArray
+        ?: throw RuntimeException("您可能已被风控，请重新登录。", Exception("cause: no \$.data"))
+    val paging = json["paging"]?.let {
+        runCatching { ZhihuJson.decodeJson<PagingDto>(it) }.getOrNull()
+    }
+    val nextUrl = paging?.next?.takeIf { it.isNotBlank() }
+    return PageResult(
+        items = data.mapNotNull { it as? JsonObject },
+        nextUrl = nextUrl,
+        isEnd = nextUrl == null,
+    )
 }

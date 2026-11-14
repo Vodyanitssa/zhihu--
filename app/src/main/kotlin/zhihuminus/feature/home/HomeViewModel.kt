@@ -22,6 +22,7 @@ import com.zhihuminus.feature.watchlater.toWatchLaterItemOrNull
 import com.zhihuminus.navigation.Account
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Search
+import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.withReadingQueueSource
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -251,6 +252,7 @@ class HomeViewModel(
             }
             return type to dest.id.toString()
         }
+        if (dest is Video) return "video" to dest.id.toString()
         return when (val target = item.feed?.target) {
             is AnswerTargetDto -> "answer" to target.id.toString()
             is ArticleTargetDto -> "post" to target.id.toString()

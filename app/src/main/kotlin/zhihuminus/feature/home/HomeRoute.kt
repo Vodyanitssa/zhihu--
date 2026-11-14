@@ -46,17 +46,21 @@ fun HomeRoute(
 
     val autoRefreshOnStartup = appSettings.interaction.autoRefreshHomeOnStartup
     val showUnreadBadge = appSettings.notification.showUnreadBadge
+    val feedSource = appSettings.interaction.homeFeedSource
 
-    val repository = remember(appPrivateDirectory, paginationEnvironment) {
-        val cacheFile = Path(appPrivateDirectory, homeFeedStartupCacheFileName())
-        ZhihuRepositoryFactory(paginationEnvironment).createHomeRepository(startupCacheFile = cacheFile)
+    val repository = remember(appPrivateDirectory, paginationEnvironment, feedSource) {
+        val cacheFile = Path(appPrivateDirectory, homeFeedStartupCacheFileName(feedSource))
+        ZhihuRepositoryFactory(paginationEnvironment).createHomeRepository(
+            startupCacheFile = cacheFile,
+            feedSource = feedSource,
+        )
     }
 
     val account = rememberAccountSettingsAccountState().value
     val context = LocalContext.current
     val watchLaterRepository = remember(context) { LocalWatchLaterRepository.getInstance(context) }
 
-    val viewModel: HomeViewModel = viewModel {
+    val viewModel: HomeViewModel = viewModel(key = "home-${feedSource.key}") {
         HomeViewModel(
             repository = repository,
             autoRefreshOnStartup = autoRefreshOnStartup,

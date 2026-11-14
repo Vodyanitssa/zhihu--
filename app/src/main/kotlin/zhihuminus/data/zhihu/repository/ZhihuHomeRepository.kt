@@ -1,11 +1,13 @@
 package com.zhihuminus.data.zhihu.repository
 
+import com.zhihuminus.core.settings.model.HomeFeedSource
 import com.zhihuminus.core.telemetry.ZaFeedExposureItem
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.cache.PostContentCache
 import com.zhihuminus.data.zhihu.api.RECOMMEND_FEED_URL
 import com.zhihuminus.data.zhihu.api.ZhihuFeedApi
 import com.zhihuminus.data.zhihu.api.ZhihuNotificationApi
+import com.zhihuminus.data.zhihu.mapper.FeedMapper
 import com.zhihuminus.data.zhihu.mapper.flattenFeeds
 import com.zhihuminus.data.zhihu.mapper.toDisplayItem
 import com.zhihuminus.feature.home.FeedExposureRecord
@@ -27,8 +29,14 @@ class ZhihuHomeRepository(
     private val videoRepository: VideoRepository,
     private val startupCacheFile: Path? = null,
     private val postCache: PostContentCache = PostContentCache,
+    private val feedSource: HomeFeedSource = HomeFeedSource.Web,
 ) : HomeRepository {
-    override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage {
+    override suspend fun fetchRecommendFeed(nextUrl: String?): HomeFeedPage = when (feedSource) {
+        HomeFeedSource.Web -> fetchWebRecommendFeed(nextUrl)
+        HomeFeedSource.Android -> fetchMobileRecommendFeed(nextUrl)
+    }
+
+    private suspend fun fetchWebRecommendFeed(nextUrl: String?): HomeFeedPage {
         val feedPage = feedApi.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
         val flattenedItems = feedPage.items.flattenFeeds()
         flattenedItems.forEach { item ->
@@ -42,6 +50,15 @@ class ZhihuHomeRepository(
             items = displayItems,
             nextUrl = feedPage.nextUrl,
             isEnd = feedPage.isEnd || feedPage.nextUrl == null,
+        )
+    }
+
+    private suspend fun fetchMobileRecommendFeed(nextUrl: String?): HomeFeedPage {
+        val page = feedApi.fetchMobileRecommendPage(nextUrl)
+        return HomeFeedPage(
+            items = page.items.mapNotNull(FeedMapper::toMobileDisplayItem),
+            nextUrl = page.nextUrl,
+            isEnd = page.isEnd,
         )
     }
 

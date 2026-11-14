@@ -60,9 +60,19 @@ enum class StartDestinationOption(
 data class InteractionSettings(
     val shareAction: ShareActionOption = ShareActionOption.Ask,
     val autoRefreshHomeOnStartup: Boolean = true,
+    val homeFeedSource: HomeFeedSource = HomeFeedSource.Web,
     val showSearchHotSearch: Boolean = true,
     val showSearchHistory: Boolean = true,
 )
+
+@Serializable
+enum class HomeFeedSource(
+    val key: String,
+    val displayName: String,
+) {
+    Web("web", "桌面 Web"),
+    Android("android", "安卓端"),
+}
 
 @Serializable
 enum class ShareActionOption(

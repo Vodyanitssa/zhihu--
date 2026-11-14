@@ -6,6 +6,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.watchlater.WatchLaterItem
 import com.zhihuminus.feature.watchlater.WatchLaterRepository
 import com.zhihuminus.navigation.PostDestination
+import com.zhihuminus.navigation.Video
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -258,6 +259,36 @@ class HomeTest {
         assertEquals(1, repo.readReportCount)
         assertEquals("post", repo.lastReadType)
         assertEquals("2002", repo.lastReadId)
+    }
+
+    @Test
+    fun testVideoContentClickReportsVideoReadAndUninterested() = runTest(testDispatcher) {
+        val repo = FakeHomeRepository()
+        val viewModel = HomeViewModel(
+            repository = repo,
+            autoRefreshOnStartup = true,
+            initialIsLoggedIn = true,
+        )
+        advanceUntilIdle()
+        val videoItem = FeedDisplayItem(
+            title = "视频",
+            summary = null,
+            details = "",
+            navDestinationJson = Video(id = 777L).toFeedDisplayItemNavDestinationJson(),
+        )
+
+        viewModel.onEvent(HomeEvent.ContentClick(videoItem))
+        advanceUntilIdle()
+
+        assertEquals(1, repo.readReportCount)
+        assertEquals("video", repo.lastReadType)
+        assertEquals("777", repo.lastReadId)
+
+        viewModel.onEvent(HomeEvent.MarkUninterested(videoItem))
+        advanceUntilIdle()
+
+        assertEquals("777", repo.lastMarkUninterestedToken)
+        assertEquals("3", repo.lastMarkUninterestedType)
     }
 
     @Test

@@ -100,6 +100,10 @@ object ZhihuWebUrlResolver {
             val videoId = segments[1].toLongOrNull() ?: return null
             return Video(id = videoId)
         }
+        if (segments.size == 2 && segments[0] == "zvideo") {
+            val videoId = segments[1].toLongOrNull() ?: return null
+            return Video(id = videoId)
+        }
         if (segments.size == 2 && segments[0] == "pin") {
             val pinId = segments[1].toLongOrNull() ?: return null
             return PostDestination(type = PostType.Pin, id = pinId)

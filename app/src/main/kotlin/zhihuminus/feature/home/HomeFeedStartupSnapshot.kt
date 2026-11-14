@@ -1,18 +1,23 @@
 package com.zhihuminus.feature.home
 
+import com.zhihuminus.core.settings.model.HomeFeedSource
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 
 const val HOME_FEED_STARTUP_CACHE_FILE_NAME = "home_feed_startup_cache.json"
 
+private const val HOME_FEED_STARTUP_CACHE_FILE_NAME_ANDROID = "home_feed_startup_cache_android.json"
+
 private const val HOME_FEED_STARTUP_SNAPSHOT_MAX_ITEMS = 10
 
-fun homeFeedStartupCacheFileName(): String =
-    HOME_FEED_STARTUP_CACHE_FILE_NAME
+fun homeFeedStartupCacheFileName(feedSource: HomeFeedSource = HomeFeedSource.Web): String = when (feedSource) {
+    HomeFeedSource.Web -> HOME_FEED_STARTUP_CACHE_FILE_NAME
+    HomeFeedSource.Android -> HOME_FEED_STARTUP_CACHE_FILE_NAME_ANDROID
+}
 
 fun homeFeedStartupCacheFileNames(): List<String> =
-    listOf(HOME_FEED_STARTUP_CACHE_FILE_NAME, "WEB")
+    listOf(HOME_FEED_STARTUP_CACHE_FILE_NAME, HOME_FEED_STARTUP_CACHE_FILE_NAME_ANDROID)
 
 fun encodeHomeFeedStartupSnapshot(items: List<FeedDisplayItem>): String? {
     val snapshotItems = items.take(HOME_FEED_STARTUP_SNAPSHOT_MAX_ITEMS)

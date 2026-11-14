@@ -69,6 +69,7 @@ import androidx.compose.ui.unit.dp
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
+import com.zhihuminus.core.settings.model.HomeFeedSource
 import com.zhihuminus.core.settings.model.ShareActionOption
 import com.zhihuminus.core.settings.model.StartDestinationOption
 import com.zhihuminus.navigation.LocalNavigator
@@ -84,6 +85,7 @@ import kotlin.math.roundToInt
 import kotlin.time.Duration.Companion.milliseconds
 
 const val APPEARANCE_SETTINGS_BOTTOM_BAR_SECTION_KEY = "appearanceSettings.bottomBarSection"
+const val APPEARANCE_SETTINGS_HOME_FEED_SOURCE_KEY = "appearanceSettings.homeFeedSource"
 
 /**
  * 外观与阅读体验设置页。
@@ -437,6 +439,46 @@ fun AppearanceSettingsScreen(
                     settingKey = AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY,
                     highlightedKey = settingKey,
                     bringIntoViewRequester = requesterFor(AUTO_REFRESH_HOME_ON_STARTUP_PREFERENCE_KEY),
+                )
+
+                var homeFeedSourceExpanded by remember { mutableStateOf(false) }
+                SettingItem(
+                    title = { Text("首页推荐来源") },
+                    description = { Text("桌面 Web 信息更完整；安卓端与知乎 App 的推荐算法一致，卡片信息较少。切回首页后生效。") },
+                    endAction = {
+                        ExposedDropdownMenuBox(
+                            expanded = homeFeedSourceExpanded,
+                            onExpandedChange = { homeFeedSourceExpanded = it },
+                        ) {
+                            OutlinedTextField(
+                                value = interactionSettings.homeFeedSource.displayName,
+                                onValueChange = {},
+                                readOnly = true,
+                                trailingIcon = { ExposedDropdownMenuDefaults.TrailingIcon(expanded = homeFeedSourceExpanded) },
+                                modifier = Modifier
+                                    .menuAnchor(ExposedDropdownMenuAnchorType.PrimaryNotEditable)
+                                    .width(160.dp),
+                                colors = ExposedDropdownMenuDefaults.outlinedTextFieldColors(),
+                            )
+                            ExposedDropdownMenu(
+                                expanded = homeFeedSourceExpanded,
+                                onDismissRequest = { homeFeedSourceExpanded = false },
+                            ) {
+                                HomeFeedSource.entries.forEach { source ->
+                                    DropdownMenuItem(
+                                        text = { Text(source.displayName) },
+                                        onClick = {
+                                            repository.updateInteraction { it.copy(homeFeedSource = source) }
+                                            homeFeedSourceExpanded = false
+                                        },
+                                    )
+                                }
+                            }
+                        }
+                    },
+                    settingKey = APPEARANCE_SETTINGS_HOME_FEED_SOURCE_KEY,
+                    highlightedKey = settingKey,
+                    bringIntoViewRequester = requesterFor(APPEARANCE_SETTINGS_HOME_FEED_SOURCE_KEY),
                 )
             }
 

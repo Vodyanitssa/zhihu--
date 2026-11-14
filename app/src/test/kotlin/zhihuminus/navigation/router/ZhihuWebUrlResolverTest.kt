@@ -58,6 +58,10 @@ class ZhihuWebUrlResolverTest {
             ZhihuWebUrlResolver.resolve("https://www.zhihu.com/video/444"),
         )
         assertEquals(
+            Video(id = 666L),
+            ZhihuWebUrlResolver.resolve("https://www.zhihu.com/zvideo/666"),
+        )
+        assertEquals(
             Video(id = 555L),
             ZhihuWebUrlResolver.resolve(
                 "https://www.zhihu.com/video/immersion/feed/555?object_type=zvideo&scene=read_history",
@@ -162,6 +166,7 @@ class ZhihuWebUrlResolverTest {
         assertNull(ZhihuWebUrlResolver.resolve("https://www.zhihu.com/question/not-a-number"))
         assertNull(ZhihuWebUrlResolver.resolve("https://www.zhihu.com/question/123/answer/not-a-number"))
         assertNull(ZhihuWebUrlResolver.resolve("https://www.zhihu.com/video/not-a-number"))
+        assertNull(ZhihuWebUrlResolver.resolve("https://www.zhihu.com/zvideo/not-a-number"))
         assertNull(ZhihuWebUrlResolver.resolve("https://zhuanlan.zhihu.com/p/not-a-number"))
         assertNull(ZhihuWebUrlResolver.resolve("https://other-domain.com/question/123"))
         assertNull(ZhihuWebUrlResolver.resolve(":::not-a-url:::"))

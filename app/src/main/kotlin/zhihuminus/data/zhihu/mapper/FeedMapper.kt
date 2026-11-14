@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.data.FeedDisplayItem
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.toFeedDisplayItemNavDestinationJson
 import com.zhihuminus.data.zhihu.dto.AdvertisementFeedDto
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
@@ -22,7 +23,17 @@ import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.router.AppRouter
+import io.ktor.http.decodeURLPart
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
+import kotlinx.serialization.json.contentOrNull
+import kotlinx.serialization.json.intOrNull
 import org.jsoup.Jsoup
+import kotlin.io.encoding.Base64
+import kotlin.io.encoding.ExperimentalEncodingApi
 
 /**
  * 知乎信息流数据模型映射器。
@@ -133,6 +144,58 @@ object FeedMapper {
         (it as? GroupFeedDto)?.list ?: listOf(it)
     }
 
+    /**
+     * 将安卓端推荐流的 `ComponentCard` 解析为展示项。
+     *
+     * 安卓端卡片没有完整 target，无法构造 [FeedDto]；解析不到导航目标时返回 null，由调用方逐卡跳过。
+     */
+    @OptIn(ExperimentalEncodingApi::class)
+    fun toMobileDisplayItem(card: JsonObject): FeedDisplayItem? {
+        if (card.string("type") != "ComponentCard") return null
+        val parameter = card["action"]
+            ?.asObject()
+            ?.get("parameter")
+            ?.asString()
+            ?.substringAfter("route_url=", "")
+            ?.substringBefore("&")
+            ?.takeIf { it.isNotBlank() }
+            ?: return null
+        val routeUrl = runCatching { parameter.decodeURLPart() }.getOrDefault(parameter)
+        val destination = AppRouter.resolveDestination(routeUrl) ?: return null
+        val children = card["children"]?.asArray()?.mapNotNull { it.asObject() }.orEmpty()
+        val isPin = destination is PostDestination && destination.type == PostType.Pin
+        val extraTitle = card["extra"]
+            ?.asObject()
+            ?.get("passthrough_info")
+            ?.asObject()
+            ?.get("content")
+            ?.asObject()
+            ?.string("title")
+        val title = children
+            .firstOrNull { it.string("id") == "Text" }
+            ?.string("text")
+            ?.takeIf { it.isNotBlank() }
+            ?: extraTitle?.takeIf { it.isNotBlank() }
+            ?: return null
+        val summary = children
+            .firstOrNull { it.string("id") == "text_pin_summary" }
+            ?.string("text")
+            ?.takeIf { it.isNotBlank() }
+        val footerText = mobileFooterText(children)
+        val (avatar, authorName) = mobileAuthor(children)
+
+        return FeedDisplayItem(
+            title = title,
+            summary = summary,
+            details = footerText,
+            navDestinationJson = destination.toFeedDisplayItemNavDestinationJson(),
+            avatarSrc = avatar,
+            authorName = authorName,
+            contentTypeLabel = mobileContentTypeLabel(destination),
+            images = if (isPin) mobilePinImages(card) else emptyList(),
+        )
+    }
+
     private fun toTargetDisplayItem(feed: FeedDto): FeedDisplayItem {
         val currentTarget = feed.target
         val resolvedSourceLabel = feed.sourceLabel
@@ -234,3 +297,80 @@ fun FeedTargetDto.resolveFeedImages(): List<String> = FeedMapper.resolveFeedImag
 fun FeedDto.toDisplayItem(): FeedDisplayItem = FeedMapper.toDisplayItem(this)
 
 fun List<FeedDto>.flattenFeeds(): List<FeedDto> = FeedMapper.flattenFeeds(this)
+
+private fun mobileContentTypeLabel(destination: NavDestination): String? = when (destination) {
+    is PostDestination -> when (destination.type) {
+        PostType.Answer -> "回答"
+        PostType.Article -> "文章"
+        PostType.Pin -> "想法"
+    }
+
+    is Video -> "视频"
+    is Question -> "问题"
+    else -> null
+}
+
+private fun mobileFooterText(children: List<JsonObject>): String {
+    val lines = children.filter { it.string("type") == "Line" }
+    val footer = lines.firstOrNull { it.string("style").orEmpty().startsWith("LineFooter") }
+        ?: lines.firstOrNull { line ->
+            line["elements"]?.asArray()?.any { (it as? JsonObject)?.containsKey("reaction") == true } == true
+        }
+        ?: lines.getOrNull(1)
+        ?: return ""
+    val elements = footer["elements"]?.asArray()?.mapNotNull { it.asObject() }.orEmpty()
+    val vote = elements.firstOrNull { it.string("reaction") == "Vote" }
+    val comment = elements.firstOrNull { it.string("reaction") == "Comment" }
+    val collect = elements.firstOrNull { it.string("reaction") == "Collect" }
+    return if (vote != null && comment != null && collect != null) {
+        "${vote.int("count")} 赞同 · ${comment.int("count")} 评论 · ${collect.int("count")} 收藏"
+    } else {
+        elements.firstOrNull { it.string("type") == "Text" }?.string("text").orEmpty()
+    }
+}
+
+private fun mobileAuthor(children: List<JsonObject>): Pair<String?, String?> {
+    val line = children.firstOrNull {
+        val style = it.string("style").orEmpty()
+        style.startsWith("RecommendAuthorLine") || style.startsWith("LineAuthor_default")
+    } ?: return null to null
+    val elements = line["elements"]?.asArray()?.mapNotNull { it.asObject() }.orEmpty()
+    val avatar = elements
+        .firstOrNull { it.string("style") == "Avatar_default" }
+        ?.get("image")
+        ?.asObject()
+        ?.string("url")
+    val authorName = elements.firstOrNull { it.string("type") == "Text" }?.string("text")
+    return avatar to authorName
+}
+
+@OptIn(ExperimentalEncodingApi::class)
+private fun mobilePinImages(card: JsonObject): List<String> {
+    val businessExt = card["extra"]?.asObject()?.get("business_ext_map")?.asObject()
+    val thumbnails = businessExt
+        ?.get("images")
+        ?.asArray()
+        ?.mapNotNull { it.asObject()?.string("url")?.takeIf(String::isNotBlank) }
+        .orEmpty()
+    if (thumbnails.isNotEmpty()) return thumbnails
+    val encoded = businessExt?.string("ori_content")?.takeIf { it.isNotBlank() } ?: return emptyList()
+    val original = runCatching {
+        ZhihuJson.json.parseToJsonElement(Base64.Default.decode(encoded).decodeToString())
+    }.getOrNull()?.asObject() ?: return emptyList()
+    return original["media_info"]
+        ?.asObject()
+        ?.get("images")
+        ?.asArray()
+        ?.mapNotNull { it.asObject()?.string("url")?.takeIf(String::isNotBlank) }
+        .orEmpty()
+}
+
+private fun JsonElement?.asObject(): JsonObject? = this as? JsonObject
+
+private fun JsonElement?.asArray(): JsonArray? = this as? JsonArray
+
+private fun JsonElement?.asString(): String? = (this as? JsonPrimitive)?.contentOrNull
+
+private fun JsonObject.string(key: String): String? = this[key].asString()
+
+private fun JsonObject.int(key: String): Int = (this[key] as? JsonPrimitive)?.intOrNull ?: 0

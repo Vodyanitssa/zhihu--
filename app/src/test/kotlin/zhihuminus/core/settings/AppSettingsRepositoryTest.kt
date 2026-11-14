@@ -1,6 +1,7 @@
 package com.zhihuminus.core.settings
 
 import com.zhihuminus.core.settings.model.AppSettings
+import com.zhihuminus.core.settings.model.HomeFeedSource
 import com.zhihuminus.core.settings.model.ShareActionOption
 import com.zhihuminus.core.settings.model.StartDestinationOption
 import com.zhihuminus.theme.ThemeMode
@@ -32,6 +33,7 @@ class AppSettingsRepositoryTest {
         assertFalse(settings.navigation.autoHideBottomBar)
         assertEquals(ShareActionOption.Ask, settings.interaction.shareAction)
         assertTrue(settings.interaction.autoRefreshHomeOnStartup)
+        assertEquals(HomeFeedSource.Web, settings.interaction.homeFeedSource)
         assertTrue(settings.notification.autoMarkAsRead)
         assertTrue(settings.notification.showUnreadBadge)
     }
@@ -67,7 +69,11 @@ class AppSettingsRepositoryTest {
             it.copy(
                 theme = it.theme.copy(mode = ThemeMode.DARK, useDynamicColor = false, customColor = 0xFF123456.toInt()),
                 navigation = it.navigation.copy(startDestination = StartDestinationOption.Daily, autoHideBottomBar = true),
-                interaction = it.interaction.copy(shareAction = ShareActionOption.CopyLink, autoRefreshHomeOnStartup = false),
+                interaction = it.interaction.copy(
+                    shareAction = ShareActionOption.CopyLink,
+                    autoRefreshHomeOnStartup = false,
+                    homeFeedSource = HomeFeedSource.Android,
+                ),
                 notification = it.notification.copy(autoMarkAsRead = false, showUnreadBadge = false),
             )
         }
@@ -80,6 +86,7 @@ class AppSettingsRepositoryTest {
         assertTrue(updated.navigation.autoHideBottomBar)
         assertEquals(ShareActionOption.CopyLink, updated.interaction.shareAction)
         assertFalse(updated.interaction.autoRefreshHomeOnStartup)
+        assertEquals(HomeFeedSource.Android, updated.interaction.homeFeedSource)
         assertFalse(updated.notification.autoMarkAsRead)
         assertFalse(updated.notification.showUnreadBadge)
     }
