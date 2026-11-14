@@ -13,13 +13,13 @@ class CollectionTest {
     @Test
     fun testCollectionSubtitleText() {
         val publicCollection = Collection(id = "1", title = "Public Col", itemCount = 5, isPublic = true)
-        assertEquals("5 内容·公开", publicCollection.subtitleText)
+        assertEquals("5 内容 · 公开", publicCollection.subtitleText)
 
         val privateCollection = Collection(id = "2", title = "Private Col", itemCount = 5, isPublic = false)
-        assertEquals("5 内容·仅自己可见", privateCollection.subtitleText)
+        assertEquals("5 内容 · 仅自己可见", privateCollection.subtitleText)
 
         val zeroItemCollection = Collection(id = "3", title = "Empty Col", itemCount = 0, isPublic = true)
-        assertEquals("0 内容·公开", zeroItemCollection.subtitleText)
+        assertEquals("0 内容 · 公开", zeroItemCollection.subtitleText)
     }
 
     @Test

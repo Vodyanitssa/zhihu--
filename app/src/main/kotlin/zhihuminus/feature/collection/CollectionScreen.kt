@@ -95,7 +95,7 @@ fun CollectionScreen(
                 ) { collection ->
                     CollectionCard(
                         collection = collection,
-                        onClick = { navigator.onNavigate(CollectionContent(collection.id)) },
+                        onClick = { navigator.onNavigate(CollectionContent(collection.id, isOwned = true)) },
                         onDeleteClick = { onEvent(CollectionEvent.RequestDelete(collection)) },
                         canDelete = !state.isDeleting,
                     )

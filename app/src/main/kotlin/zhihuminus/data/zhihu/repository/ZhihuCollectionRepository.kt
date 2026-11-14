@@ -33,6 +33,7 @@ class ZhihuCollectionRepository(
             items = response.data.map { it.toFeedDisplayItem() },
             nextUrl = response.paging.nextUrl,
             isEnd = !response.paging.hasMore,
+            totals = response.paging.totals,
         )
     }
 

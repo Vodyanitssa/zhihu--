@@ -29,7 +29,12 @@ fun PeopleCollectionListItem(
             style = MaterialTheme.typography.titleMedium,
         )
         Text(
-            text = "${formatCount(collection.answerCount)} 内容 · ${formatCount(collection.followerCount)} 关注",
+            text = buildString {
+                append("${formatCount(collection.answerCount)} 内容")
+                if (collection.followerCount > 0) {
+                    append(" · ${formatCount(collection.followerCount)} 关注")
+                }
+            },
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
             modifier = Modifier.padding(top = 4.dp),

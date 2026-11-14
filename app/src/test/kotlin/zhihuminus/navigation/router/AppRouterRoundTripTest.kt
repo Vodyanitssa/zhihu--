@@ -97,6 +97,18 @@ class AppRouterRoundTripTest {
     fun collectionContent() = assertRoundTrip(CollectionContent(collectionId = "9527"), "zhihu://collection/9527")
 
     @Test
+    fun collectionContentOwned() = assertRoundTrip(
+        CollectionContent(collectionId = "9527", isOwned = true),
+        "zhihu://collection/9527?owned=true",
+    )
+
+    @Test
+    fun collectionContentNotOwned() = assertRoundTrip(
+        CollectionContent(collectionId = "9527", isOwned = false),
+        "zhihu://collection/9527?owned=false",
+    )
+
+    @Test
     fun searchWithQueryOnly() {
         val url = Search(query = "kotlin").toAppUrl()
         assertEquals("zhihu://search?q=kotlin", url)

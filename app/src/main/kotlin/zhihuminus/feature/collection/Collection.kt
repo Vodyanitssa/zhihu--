@@ -42,6 +42,7 @@ data class CollectionContentPageResult(
     val items: List<FeedDisplayItem>,
     val nextUrl: String?,
     val isEnd: Boolean,
+    val totals: Int = 0,
 )
 
 interface CollectionRepository {
@@ -68,4 +69,4 @@ interface CollectionRepository {
 }
 
 val Collection.subtitleText: String
-    get() = "${formatCount(itemCount)} 内容·${if (isPublic) "公开" else "仅自己可见"}"
+    get() = "${formatCount(itemCount)} 内容 · ${if (isPublic) "公开" else "仅自己可见"}"

@@ -230,9 +230,22 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
         screenRule(
             hosts = setOf("collection"),
             segmentCounts = 1..1,
-            parse = { args -> args.segment(0)?.takeIf(String::isNotEmpty)?.let(::CollectionContent) },
+            parse = { args ->
+                args.segment(0)?.takeIf(String::isNotEmpty)?.let { collectionId ->
+                    CollectionContent(
+                        collectionId = collectionId,
+                        isOwned = args["owned"]?.toBooleanStrictOrNull(),
+                    )
+                }
+            },
             encode = { destination ->
-                (destination as? CollectionContent)?.let { buildAppUrl("collection", it.collectionId) }
+                (destination as? CollectionContent)?.let {
+                    buildAppUrl(
+                        "collection",
+                        it.collectionId,
+                        queryParameters = listOf("owned" to it.isOwned?.toString()),
+                    )
+                }
             },
         ),
     )

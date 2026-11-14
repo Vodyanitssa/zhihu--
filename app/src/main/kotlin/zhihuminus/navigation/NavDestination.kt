@@ -146,6 +146,7 @@ data class Collections(
 @Serializable
 data class CollectionContent(
     val collectionId: String,
+    val isOwned: Boolean? = null,
 ) : NavDestination
 
 @Serializable

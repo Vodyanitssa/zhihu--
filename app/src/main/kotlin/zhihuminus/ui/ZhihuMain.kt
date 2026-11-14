@@ -507,6 +507,7 @@ fun ZhihuMain(
                             val content: CollectionContent = navEntry.toRoute()
                             CollectionContentRoute(
                                 collectionId = content.collectionId,
+                                isOwnedHint = content.isOwned,
                                 onNavigateBack = navigator.onNavigateBack,
                                 onDestinationClick = { destination ->
                                     destination?.let(navigator.onNavigate)
