@@ -104,20 +104,53 @@ data class VideoTargetDto(
     val id: Long,
     override val url: String = "",
     override val author: FeedAuthorDto? = null,
-    val voteCount: Int = -1,
+    val voteupCount: Int = -1,
     val commentCount: Int = 0,
+    val playCount: Int = -1,
     override val title: String = "",
     val description: String = "",
     override val excerpt: String = "",
+    val createdAt: Long = 0,
+    val updatedAt: Long = 0,
+    val video: VideoInfoDto? = null,
 ) : FeedTargetDto {
-    override val detailsText = "视频 · ${formatCount(voteCount)} 赞 · ${formatCount(commentCount)} 评论"
+    override val detailsText =
+        "视频 · ${formatCount(playCount)} 播放 · ${formatCount(voteupCount)} 赞 · ${formatCount(commentCount)} 评论"
 
     override val createdTime: Long
-        get() = -1
+        get() = createdAt
 
     override val updatedTime: Long
-        get() = -1
+        get() = updatedAt
 }
+
+@Serializable
+data class VideoInfoDto(
+    val width: Int = 0,
+    val height: Int = 0,
+    val duration: Double = 0.0,
+    val thumbnail: String? = null,
+    val playlist: VideoPlaylistDto? = null,
+)
+
+@Serializable
+data class VideoPlaylistDto(
+    val fhd: VideoPlaylistItemDto? = null,
+    val hd: VideoPlaylistItemDto? = null,
+    val ld: VideoPlaylistItemDto? = null,
+    val sd: VideoPlaylistItemDto? = null,
+)
+
+@Serializable
+data class VideoPlaylistItemDto(
+    val width: Int = 0,
+    val height: Int = 0,
+    val format: String = "",
+    val url: String = "",
+    val duration: Double = 0.0,
+    val bitrate: Int = 0,
+    val size: Long = 0,
+)
 
 @Serializable
 @SerialName("article")

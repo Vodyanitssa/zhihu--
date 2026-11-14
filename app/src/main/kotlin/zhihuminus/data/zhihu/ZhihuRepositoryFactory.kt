@@ -17,6 +17,8 @@ import com.zhihuminus.data.zhihu.api.ZhihuPostApi
 import com.zhihuminus.data.zhihu.api.ZhihuQuestionApi
 import com.zhihuminus.data.zhihu.api.ZhihuSearchApi
 import com.zhihuminus.data.zhihu.api.ZhihuTopicApi
+import com.zhihuminus.data.zhihu.api.ZhihuVideoApi
+import com.zhihuminus.data.zhihu.repository.VideoRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuCollectionRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuColumnRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuCommentRepository
@@ -30,6 +32,7 @@ import com.zhihuminus.data.zhihu.repository.ZhihuPostRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuQuestionRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuSearchRepository
 import com.zhihuminus.data.zhihu.repository.ZhihuTopicRepository
+import com.zhihuminus.data.zhihu.repository.ZhihuVideoRepository
 import com.zhihuminus.feature.collection.CollectionRepository
 import com.zhihuminus.feature.column.ColumnRepository
 import com.zhihuminus.feature.comment.CommentRepository
@@ -58,6 +61,8 @@ class ZhihuRepositoryFactory(
     val peopleApi: ZhihuPeopleApi by lazy { ZhihuPeopleApi(environment, feedApi) }
     val notificationApi: ZhihuNotificationApi by lazy { ZhihuNotificationApi(environment) }
     val historyApi: ZhihuHistoryApi by lazy { ZhihuHistoryApi(environment) }
+    val videoApi: ZhihuVideoApi by lazy { ZhihuVideoApi(environment) }
+    val videoRepository: VideoRepository by lazy { ZhihuVideoRepository(videoApi) }
     val topicApi: ZhihuTopicApi by lazy { ZhihuTopicApi(environment) }
     val dailyApi: ZhihuDailyApi by lazy { ZhihuDailyApi(environment) }
     val columnApi: ZhihuColumnApi by lazy { ZhihuColumnApi(environment) }
@@ -105,6 +110,7 @@ class ZhihuRepositoryFactory(
         ZhihuHomeRepository(
             feedApi = feedApi,
             notificationApi = notificationApi,
+            videoRepository = videoRepository,
             startupCacheFile = startupCacheFile,
             postCache = postCache,
         )

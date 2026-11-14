@@ -71,6 +71,7 @@ import com.zhihuminus.data.zhihu.crypto.signFetchRequest
 import com.zhihuminus.data.zhihu.fetchHighestQualityZhihuVideoUrl
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.VideoKind
 import com.zhihuminus.navigation.resolveContent
 import com.zhihuminus.theme.ThemeManager
 import io.ktor.client.HttpClient
@@ -157,7 +158,7 @@ class CustomWebView : WebView {
                 }
             } else if (clicked.tagName() == "a" && clicked.hasClass("video-box")) {
                 val videoId = clicked.attr("data-lens-id")
-                context.navigateInMainActivity(Video(videoId.toLong()))
+                context.navigateInMainActivity(Video(videoId.toLong(), VideoKind.UNKNOWN))
             }
         }
         addJavascriptInterface(JsInterface(), "AndroidInterface")

@@ -47,14 +47,14 @@ class HistoryViewModel(
             is HistoryEvent.LoadMore -> loadHistory(reset = false)
             is HistoryEvent.DeleteItem -> deleteItem(event.item)
             is HistoryEvent.ClearAll -> clearAll()
-            is HistoryEvent.ContentClick -> {
-                val destination = resolveContent(event.item.actionUrl)?.withReadingQueueSource("history:online")
-                if (destination != null) {
-                    viewModelScope.launch {
-                        _effect.send(HistoryEffect.Navigate(destination))
-                    }
-                }
-            }
+            is HistoryEvent.ContentClick -> openContent(event.item)
+        }
+    }
+
+    private fun openContent(item: HistoryItem) {
+        val destination = resolveContent(item.actionUrl)?.withReadingQueueSource("history:online") ?: return
+        viewModelScope.launch {
+            _effect.send(HistoryEffect.Navigate(destination))
         }
     }
 

@@ -221,8 +221,15 @@ data class Person(
 }
 
 @Serializable
+enum class VideoKind {
+    ZVIDEO,
+    UNKNOWN,
+}
+
+@Serializable
 data class Video(
     val id: Long,
+    val kind: VideoKind = VideoKind.ZVIDEO,
 ) : NavDestination
 
 @Serializable

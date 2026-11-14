@@ -54,6 +54,7 @@ import com.zhihuminus.core.error.AppError
 import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.VideoKind
 
 private const val IMAGE_PLACEHOLDER_ASPECT_RATIO = 3f / 2f
 private val ImageRetryExtra = Extras.Key(0)
@@ -243,7 +244,7 @@ internal fun Video(node: ContentNode.Video) {
             }
 
             IconButton(
-                onClick = { navigator.onNavigate(Video(node.videoId)) },
+                onClick = { navigator.onNavigate(Video(node.videoId, VideoKind.UNKNOWN)) },
                 modifier = Modifier
                     .size(64.dp)
                     .clip(CircleShape)

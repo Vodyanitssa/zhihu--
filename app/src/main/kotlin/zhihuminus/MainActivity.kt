@@ -49,6 +49,7 @@ import coil3.request.crossfade
 import coil3.svg.SvgDecoder
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.content.EmojiManager
+import com.zhihuminus.core.environment.AndroidPaginationEnvironment
 import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.platform.SystemNotificationPresenter
 import com.zhihuminus.core.platform.androidUserMessageSink
@@ -60,6 +61,9 @@ import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.settings.LocalAppSettingsRepository
 import com.zhihuminus.data.AccountData
 import com.zhihuminus.data.local.AppRuntimeStore
+import com.zhihuminus.data.zhihu.api.ZhihuVideoApi
+import com.zhihuminus.data.zhihu.repository.VideoAttachment
+import com.zhihuminus.data.zhihu.repository.ZhihuVideoRepository
 import com.zhihuminus.feature.notification.NotificationType
 import com.zhihuminus.feature.notification.worker.NotificationScheduler
 import com.zhihuminus.feature.post.PostType
@@ -71,6 +75,7 @@ import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
 import com.zhihuminus.navigation.TopLevelDestination
 import com.zhihuminus.navigation.Video
+import com.zhihuminus.navigation.VideoKind
 import com.zhihuminus.navigation.router.AppRouter
 import com.zhihuminus.navigation.router.RouteResolution
 import com.zhihuminus.theme.AndroidThemeSettings
@@ -78,6 +83,7 @@ import com.zhihuminus.theme.ZhihuTheme
 import com.zhihuminus.ui.AndroidZhihuMain
 import com.zhihuminus.ui.ArticleHost
 import com.zhihuminus.ui.components.getHighestQualityVideoUrl
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.withContext
@@ -101,6 +107,20 @@ class MainActivity :
         }
     val httpClient by lazy {
         AccountData.httpClient(this)
+    }
+    private val videoRepository by lazy {
+        ZhihuVideoRepository(
+            videoApi = ZhihuVideoApi(AndroidPaginationEnvironment(this)),
+            attachmentFetcher = { attachment ->
+                getHighestQualityVideoUrl(
+                    this@MainActivity,
+                    httpClient,
+                    attachment.mediaId,
+                    attachment.contentId,
+                    attachment.contentType,
+                )
+            },
+        )
     }
 
     lateinit var navController: NavHostController
@@ -336,6 +356,32 @@ class MainActivity :
         }
     }
 
+    private fun videoAttachmentFor(video: Video): VideoAttachment? {
+        val current = runCatching {
+            navController.currentBackStackEntry?.toRoute<PostDestination>()
+        }.getOrNull() ?: runCatching {
+            navController.currentBackStackEntry?.toRoute<Question>()
+        }.getOrNull() ?: return null
+        val (contentId, contentType) = when (current) {
+            is PostDestination -> {
+                current.id.toString() to when (current.type) {
+                    PostType.Answer -> "answer"
+                    PostType.Article -> "article"
+                    else -> "unknown"
+                }
+            }
+
+            is Question -> current.questionId.toString() to "question"
+
+            else -> return null
+        }
+        return VideoAttachment(
+            mediaId = video.id.toString(),
+            contentId = contentId,
+            contentType = contentType,
+        )
+    }
+
     fun navigate(route: NavDestination, popup: Boolean = false) {
         if (route is CommentHolder) {
             pendingCommentHolder = route
@@ -346,39 +392,14 @@ class MainActivity :
             pendingCommentHolder = null
         }
         if (route is Video) {
-            val current = runCatching {
-                navController.currentBackStackEntry?.toRoute<PostDestination>()
-            }.getOrNull() ?: runCatching {
-                navController.currentBackStackEntry?.toRoute<Question>()
-            }.getOrNull()
-            if (current == null) {
-                androidUserMessageSink(this).showShortMessage("无法打开视频：未知的内容类型")
-                return
-            }
-            val (contentId, contentType) = when (current) {
-                is PostDestination -> {
-                    current.id.toString() to when (current.type) {
-                        PostType.Answer -> "answer"
-                        PostType.Article -> "article"
-                        else -> "unknown"
-                    }
-                }
-
-                is Question -> {
-                    current.questionId.toString() to "question"
-                }
-
-                else -> error("Unsupported content type for video: $current")
-            }
             lifecycleScope.launch {
+                val attachment = if (route.kind == VideoKind.UNKNOWN) videoAttachmentFor(route) else null
+                if (route.kind == VideoKind.UNKNOWN && attachment == null) {
+                    androidUserMessageSink(this@MainActivity).showShortMessage("无法打开视频：未知的内容类型")
+                    return@launch
+                }
                 try {
-                    val videoUrl = getHighestQualityVideoUrl(
-                        this@MainActivity,
-                        httpClient,
-                        route.id.toString(),
-                        contentId,
-                        contentType,
-                    )
+                    val videoUrl = videoRepository.resolve(route, attachment)
                     if (videoUrl == null) {
                         androidUserMessageSink(this@MainActivity).showShortMessage("获取视频链接失败")
                         return@launch
@@ -389,6 +410,8 @@ class MainActivity :
                             putExtra("video_id", route.id)
                         },
                     )
+                } catch (e: CancellationException) {
+                    throw e
                 } catch (e: Exception) {
                     val error = reportFailure("MainActivity", "open video", e, userAction = "打开视频")
                     androidUserMessageSink(this@MainActivity).showShortMessage(error.userMessage)

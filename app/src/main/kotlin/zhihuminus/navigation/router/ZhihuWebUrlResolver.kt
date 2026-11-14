@@ -87,6 +87,15 @@ object ZhihuWebUrlResolver {
                 Person(id = Person.EMPTY_ID, urlToken = urlToken)
             }
         }
+        if (
+            segments.size == 4 &&
+            segments[0] == "video" &&
+            segments[1] == "immersion" &&
+            segments[2] == "feed"
+        ) {
+            val videoId = segments[3].toLongOrNull() ?: return null
+            return Video(id = videoId)
+        }
         if (segments.size == 2 && segments[0] == "video") {
             val videoId = segments[1].toLongOrNull() ?: return null
             return Video(id = videoId)

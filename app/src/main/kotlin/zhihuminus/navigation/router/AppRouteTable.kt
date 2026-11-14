@@ -146,7 +146,7 @@ internal val APP_ROUTE_RULES: List<RouteRule> = buildList {
         screenRule(
             hosts = setOf("video"),
             segmentCounts = 1..1,
-            parse = { args -> args.longSegment(0)?.let(::Video) },
+            parse = { args -> args.longSegment(0)?.let { Video(it) } },
             encode = { destination ->
                 (destination as? Video)?.let { buildAppUrl("video", it.id.toString()) }
             },

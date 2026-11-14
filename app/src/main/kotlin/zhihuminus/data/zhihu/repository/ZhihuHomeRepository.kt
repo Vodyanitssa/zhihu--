@@ -24,6 +24,7 @@ import kotlinx.io.writeString
 class ZhihuHomeRepository(
     private val feedApi: ZhihuFeedApi,
     private val notificationApi: ZhihuNotificationApi,
+    private val videoRepository: VideoRepository,
     private val startupCacheFile: Path? = null,
     private val postCache: PostContentCache = PostContentCache,
 ) : HomeRepository {
@@ -31,7 +32,10 @@ class ZhihuHomeRepository(
         val feedPage = feedApi.fetchFeedPage(nextUrl ?: RECOMMEND_FEED_URL, include = "")
         val flattenedItems = feedPage.items.flattenFeeds()
         flattenedItems.forEach { item ->
-            item.target?.let { postCache.putFromFeed(it) }
+            item.target?.let {
+                postCache.putFromFeed(it)
+                videoRepository.prewarm(it)
+            }
         }
         val displayItems = flattenedItems.map { it.toDisplayItem() }
         return HomeFeedPage(
@@ -82,7 +86,10 @@ class ZhihuHomeRepository(
             }
         }.getOrDefault(emptyList())
         items.forEach { displayItem ->
-            displayItem.feed?.target?.let { target -> postCache.putFromFeed(target) }
+            displayItem.feed?.target?.let { target ->
+                postCache.putFromFeed(target)
+                videoRepository.prewarm(target)
+            }
         }
         items
     }

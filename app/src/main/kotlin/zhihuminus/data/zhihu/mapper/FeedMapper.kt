@@ -21,6 +21,7 @@ import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
 import com.zhihuminus.navigation.PostDestination
 import com.zhihuminus.navigation.Question
+import com.zhihuminus.navigation.Video
 import org.jsoup.Jsoup
 
 /**
@@ -80,6 +81,8 @@ object FeedMapper {
 
         is ArticleTargetDto -> listOfNotNull((target.thumbnail ?: target.imageUrl)?.takeIf { it.isNotBlank() })
 
+        is VideoTargetDto -> listOfNotNull(target.video?.thumbnail?.takeIf { it.isNotBlank() })
+
         else -> emptyList()
     }
 
@@ -115,7 +118,7 @@ object FeedMapper {
             title = target.title,
         )
 
-        is VideoTargetDto -> null
+        is VideoTargetDto -> Video(id = target.id)
     }
 
     fun toStableTargetKey(target: FeedTargetDto): String = when (target) {
@@ -183,6 +186,24 @@ object FeedMapper {
                     navDestinationJson = resolvedNavDestinationJson,
                 )
             }
+
+            is VideoTargetDto -> FeedDisplayItem(
+                title = currentTarget.title.ifBlank { currentTarget.description() },
+                summary = currentTarget.description
+                    .ifBlank { currentTarget.excerpt }
+                    .takeIf { it.isNotBlank() },
+                details = listOfNotNull(currentTarget.detailsText, feed.actionText?.takeIf { it.isNotBlank() })
+                    .joinToString(" · "),
+                avatarSrc = currentTarget.author?.avatarUrl,
+                authorName = currentTarget.author?.name,
+                authorBadge = currentTarget.author?.badgeV2?.toOfficialBadge(),
+                feed = feed,
+                contentTypeLabel = currentTarget.description(),
+                publishTimeSeconds = currentTarget.createdTime.takeIf { it > 0 },
+                sourceLabel = resolvedSourceLabel,
+                images = resolvedImages,
+                navDestinationJson = resolvedNavDestinationJson,
+            )
 
             else -> FeedDisplayItem(
                 title = currentTarget?.description() ?: "广告",

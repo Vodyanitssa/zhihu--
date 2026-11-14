@@ -57,6 +57,12 @@ class ZhihuWebUrlResolverTest {
             Video(id = 444L),
             ZhihuWebUrlResolver.resolve("https://www.zhihu.com/video/444"),
         )
+        assertEquals(
+            Video(id = 555L),
+            ZhihuWebUrlResolver.resolve(
+                "https://www.zhihu.com/video/immersion/feed/555?object_type=zvideo&scene=read_history",
+            ),
+        )
     }
 
     @Test

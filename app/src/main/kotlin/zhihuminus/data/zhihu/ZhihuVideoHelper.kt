@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu
 
 import com.zhihuminus.data.common.ZhihuJson
+import com.zhihuminus.data.zhihu.dto.VideoInfoDto
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
 import io.ktor.client.request.header
@@ -67,4 +68,13 @@ fun selectHighestQualityZhihuVideoUrl(jsonResponse: JsonObject): String? {
         ?.firstOrNull()
         ?.jsonPrimitive
         ?.content
+}
+
+fun selectBestVideoUrl(video: VideoInfoDto?): String? {
+    val playlist = video?.playlist ?: return null
+    return listOf(playlist.fhd, playlist.hd, playlist.ld, playlist.sd)
+        .filterNotNull()
+        .filter { it.url.isNotBlank() }
+        .maxByOrNull { it.bitrate }
+        ?.url
 }
