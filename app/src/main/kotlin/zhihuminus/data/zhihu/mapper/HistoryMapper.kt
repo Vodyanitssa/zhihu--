@@ -27,6 +27,8 @@ object HistoryMapper {
             "question" -> "问题"
             "profile" -> "主页"
             "column" -> "专栏"
+            "zvideo" -> "视频"
+            "collection" -> "收藏"
             else -> dto.data.extra.contentType
         },
         actionUrl = dto.data.action.url,

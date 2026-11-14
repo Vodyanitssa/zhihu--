@@ -125,4 +125,38 @@ class HistoryTest {
         assertEquals("https://www.zhihu.com/column/c_1542809288766390272", item.actionUrl)
         assertEquals("c_1542809288766390272", item.contentToken)
     }
+
+    @Test
+    fun testHistoryItemVideoAndCollectionLabels() {
+        val videoItem = historyItem(contentType = "zvideo", contentToken = "123", url = "https://www.zhihu.com/video/123")
+            .toHistoryItem()
+        val collectionItem = historyItem(
+            contentType = "collection",
+            contentToken = "456",
+            url = "https://www.zhihu.com/collection/456",
+        ).toHistoryItem()
+
+        assertEquals("视频", videoItem.contentTypeLabel)
+        assertEquals("zvideo", videoItem.contentType)
+        assertEquals("收藏", collectionItem.contentTypeLabel)
+        assertEquals("collection", collectionItem.contentType)
+    }
+
+    private fun historyItem(
+        contentType: String,
+        contentToken: String,
+        url: String,
+    ): HistoryItemDto = HistoryItemDto(
+        cardType = "normal",
+        data = HistoryDataDto(
+            header = HistoryHeaderDto(icon = "", title = "标题"),
+            action = HistoryActionDto(type = "link", url = url),
+            extra = HistoryExtraDto(
+                contentToken = contentToken,
+                contentType = contentType,
+                readTime = 123L,
+                questionToken = "",
+            ),
+        ),
+    )
 }
