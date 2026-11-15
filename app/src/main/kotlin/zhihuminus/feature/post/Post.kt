@@ -54,6 +54,7 @@ data class Post(
     val excerpt: String = "",
     // Answer-specific
     val questionId: Long? = null,
+    val endorsements: List<PostEndorsement> = emptyList(),
     // Article-specific
     val topics: List<PostTopic> = emptyList(),
     val coverUrl: String? = null,
@@ -129,6 +130,21 @@ data class PostLinkCard(
     val url: String,
 )
 
+data class PostEndorsement(
+    val text: String,
+    val actionUrl: String? = null,
+    val backgroundColor: PostEndorsementColor? = null,
+    val textColor: PostEndorsementColor? = null,
+    val leadingIconKey: String? = null,
+    val leadingIconColor: PostEndorsementColor? = null,
+    val trailingIconKey: String? = null,
+)
+
+data class PostEndorsementColor(
+    val alpha: Float = 1f,
+    val group: String? = null,
+)
+
 fun Post.mergeFallbackFrom(previous: Post?): Post {
     if (previous == null) return this
     return copy(
@@ -136,5 +152,6 @@ fun Post.mergeFallbackFrom(previous: Post?): Post {
         isFaved = isFaved ?: previous.isFaved,
         ipInfo = ipInfo ?: previous.ipInfo,
         coverUrl = previous.coverUrl ?: coverUrl,
+        endorsements = endorsements.ifEmpty { previous.endorsements },
     )
 }

@@ -46,6 +46,8 @@ import com.zhihuminus.feature.post.components.PostContent
 import com.zhihuminus.feature.post.components.PostExportDialog
 import com.zhihuminus.feature.post.components.PostHeader
 import com.zhihuminus.feature.post.components.PostScrollToTopButton
+import com.zhihuminus.navigation.link.rememberInAppLinkOpener
+import com.zhihuminus.ui.components.EndorsementChipList
 import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
@@ -84,6 +86,7 @@ fun PostScreen(
     initialCommentId: String? = null,
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
+    val openLink = rememberInAppLinkOpener()
     val scrollState = rememberScrollState()
     val lifecycleOwner = LocalLifecycleOwner.current
     var isTransitionFinished by remember {
@@ -194,6 +197,16 @@ fun PostScreen(
                                 onCoverClick = { url -> imageViewManager?.show(url) },
                                 onFollowClick = { onEvent(PostEvent.FollowAuthor) },
                             )
+                            if (state.post.type == PostType.Answer && state.post.endorsements.isNotEmpty()) {
+                                EndorsementChipList(
+                                    endorsements = state.post.endorsements,
+                                    onEndorsementClick = openLink,
+                                    modifier = Modifier
+                                        .fillMaxWidth()
+                                        .padding(horizontal = 16.dp)
+                                        .padding(bottom = 10.dp),
+                                )
+                            }
                             if (isTransitionFinished) {
                                 PostContent(
                                     post = state.post,

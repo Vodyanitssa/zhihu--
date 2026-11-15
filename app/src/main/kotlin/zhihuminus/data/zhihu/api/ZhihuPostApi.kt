@@ -24,9 +24,10 @@ open class ZhihuPostApi(
     open suspend fun getAnswer(answerId: Long): AnswerDto {
         val url = "https://www.zhihu.com/api/v4/answers/$answerId"
         val include =
-            "content,excerpt,thanks_count,voteup_count,comment_count,ip_info,reaction,reaction.relation.voting," +
-                "author.badge_v2,author.ip_info,segment_infos"
-        val json = environment.fetchJson(url, include)
+            ".settings,content,editable_content,paid_info,can_comment,excerpt,thanks_count,voteup_count,comment_count," +
+                "visited_count,attachment,reaction,ip_info,pagination_info,endorsements,question.topics,question.author," +
+                "reaction.relation.voting,author.badge_v2,author.ip_info,segment_infos,settings.table_of_contents.enabled"
+        val json = environment.fetchJson(url, include, webApiVersion = null)
             ?: throw IllegalStateException("Failed to fetch answer $answerId")
         return ZhihuJson.decodeJson(json)
     }

@@ -236,7 +236,7 @@ class PostViewModel(
             val post = if (cached != null) {
                 yield()
                 applyPost(cached)
-                if (cached.ipInfo.isNullOrBlank()) {
+                if (cached.ipInfo.isNullOrBlank() || (postType == PostType.Answer && cached.endorsements.isEmpty())) {
                     viewModelScope.launch {
                         try {
                             val fresh = withContext(defaultDispatcher) {

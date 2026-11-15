@@ -54,12 +54,13 @@ fun HttpRequestBuilder.signZhihuFetchRequest(
 fun HttpRequestBuilder.signZhihuFetchRequest(
     cookies: Map<String, String>,
     body: String? = null,
+    webApiVersion: String? = ZHIHU_WEB_API_VERSION,
 ) {
     if (headers["Referer"] == null) {
         header("Referer", ZHIHU_WEB_REFERER)
     }
-    if (headers["x-api-version"] == null) {
-        header("x-api-version", ZHIHU_WEB_API_VERSION)
+    if (webApiVersion != null && headers["x-api-version"] == null) {
+        header("x-api-version", webApiVersion)
     }
     if (headers["Accept-Language"] == null) {
         header("Accept-Language", ZHIHU_WEB_ACCEPT_LANGUAGE)

@@ -17,6 +17,7 @@ data class AnswerDto(
     val reaction: ReactionDto? = null,
     val segmentInfos: List<SegmentInfoDto> = emptyList(),
     val thumbnail: String? = null,
+    val endorsements: List<EndorsementDto>? = null,
 )
 
 /**

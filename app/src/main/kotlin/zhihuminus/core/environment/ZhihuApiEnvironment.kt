@@ -3,6 +3,7 @@ package com.zhihuminus.core.environment
 import com.zhihuminus.account.ZhihuCredentialRefresher
 import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.fetchZhihuAuthenticatedJson
+import com.zhihuminus.data.zhihu.crypto.ZHIHU_WEB_API_VERSION
 import com.zhihuminus.data.zhihu.crypto.signZhihuFetchRequest
 import io.ktor.client.HttpClient
 import io.ktor.client.request.HttpRequestBuilder
@@ -29,6 +30,12 @@ interface ZhihuApiEnvironment {
     suspend fun fetchJson(
         url: String,
         include: String,
+    ): JsonObject? = fetchJson(url, include, ZHIHU_WEB_API_VERSION)
+
+    suspend fun fetchJson(
+        url: String,
+        include: String,
+        webApiVersion: String?,
     ): JsonObject? = withAuthenticatedClient { client, cookies ->
         fetchZhihuAuthenticatedJson(client, url) {
             method = HttpMethod.Get
@@ -38,7 +45,7 @@ interface ZhihuApiEnvironment {
                     parameters["include"] = include
                 }
             }
-            signZhihuFetchRequest(cookies)
+            signZhihuFetchRequest(cookies, webApiVersion = webApiVersion)
         }
     }
 

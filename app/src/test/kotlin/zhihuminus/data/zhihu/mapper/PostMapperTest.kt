@@ -1,6 +1,7 @@
 package com.zhihuminus.data.zhihu.mapper
 
 import com.zhihuminus.core.content.ContentNode
+import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.zhihu.dto.AnswerDto
 import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
@@ -18,8 +19,12 @@ import com.zhihuminus.data.zhihu.dto.QuestionDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.data.zhihu.dto.ReactionDto
 import com.zhihuminus.data.zhihu.dto.RelationDto
+import com.zhihuminus.feature.post.Author
+import com.zhihuminus.feature.post.Post
+import com.zhihuminus.feature.post.PostEndorsement
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.feature.post.VoteUpState
+import com.zhihuminus.feature.post.mergeFallbackFrom
 import kotlin.test.Test
 import kotlin.test.assertEquals
 import kotlin.test.assertIs
@@ -285,5 +290,101 @@ class PostMapperTest {
         assertEquals("李四", post.author.name)
         assertEquals(1, post.content.size)
         assertIs<ContentNode.Paragraph>(post.content.first())
+    }
+
+    @Test
+    fun testAnswerEndorsementsParsed() {
+        val json =
+            """
+            {
+              "id": 1001,
+              "author": {"id": "author", "name": "答主", "avatar_url": ""},
+              "question": {"id": 2001, "title": "问题"},
+              "content": "<p>正文</p>",
+              "endorsements": [
+                {
+                  "background_color": {"alpha": 0.1, "group": "GYL02A"},
+                  "elements": [
+                    {"type": "IMAGE", "image_key": "zhicon_icon_24_chat_bubble_hash_fill",
+                     "image_color": {"alpha": 1, "group": "GYL02A"}},
+                    {"type": "TEXT", "content": "话题收录", "font_color": {"alpha": 1, "group": "GYL02A"}},
+                    {"type": "TEXT", "content": "我的开源名片", "font_color": {"alpha": 1, "group": "GYL02A"}},
+                    {"type": "IMAGE", "image_key": "zhicon_icon_16_arrow_right",
+                     "image_color": {"alpha": 1, "group": "GYL02A"}}
+                  ]
+                },
+                {
+                  "background_color": {"alpha": 0.1, "group": "GBL01A"},
+                  "elements": [
+                    {"type": "TEXT", "content": ""},
+                    {"type": "TEXT", "content": "创作声明: 内容包含剧透",
+                     "font_color": {"alpha": 1, "group": "GBL07A"}},
+                    {"type": "IMAGE", "image_key": "zhicon_icon_16_arrow_down",
+                     "selected_image_key": "zhicon_icon_16_arrow_up",
+                     "image_color": {"alpha": 1, "group": "GBL07A"}}
+                  ]
+                },
+                {
+                  "background_color": {"alpha": 0.08, "group": "GBL01A"},
+                  "action_url": "https://www.zhihu.com/column/www-dot-litrin-dot-net",
+                  "elements": [
+                    {"type": "IMAGE", "image_key": "zhicon_icon_24_column_fill",
+                     "image_color": {"alpha": 1, "group": "GBL01A"}},
+                    {"type": "TEXT", "content": "收录于 · 开源小站",
+                     "font_color": {"alpha": 1, "group": "GBL01A"}},
+                    {"type": "IMAGE", "image_key": "zhicon_icon_16_arrow_right",
+                     "image_color": {"alpha": 1, "group": "GBL01A"}}
+                  ]
+                },
+                {
+                  "elements": [
+                    {"type": "TEXT", "content": ""}
+                  ]
+                }
+              ]
+            }
+            """.trimIndent()
+
+        val post = ZhihuJson.decodeFromString<AnswerDto>(json).toPost()
+
+        assertEquals(3, post.endorsements.size)
+        val topic = post.endorsements[0]
+        assertEquals("话题收录 我的开源名片", topic.text)
+        assertNull(topic.actionUrl)
+        assertEquals("GYL02A", topic.backgroundColor?.group)
+        assertEquals(0.1f, topic.backgroundColor?.alpha)
+        assertEquals("GYL02A", topic.textColor?.group)
+        assertEquals("zhicon_icon_24_chat_bubble_hash_fill", topic.leadingIconKey)
+        assertEquals("zhicon_icon_16_arrow_right", topic.trailingIconKey)
+
+        val declaration = post.endorsements[1]
+        assertEquals("创作声明: 内容包含剧透", declaration.text)
+        assertEquals("GBL01A", declaration.backgroundColor?.group)
+        assertEquals("GBL07A", declaration.textColor?.group)
+        assertNull(declaration.leadingIconKey)
+        assertEquals("zhicon_icon_16_arrow_down", declaration.trailingIconKey)
+
+        val column = post.endorsements[2]
+        assertEquals("收录于 · 开源小站", column.text)
+        assertEquals("https://www.zhihu.com/column/www-dot-litrin-dot-net", column.actionUrl)
+        assertEquals("zhicon_icon_24_column_fill", column.leadingIconKey)
+    }
+
+    @Test
+    fun testMergeKeepsFallbackEndorsements() {
+        val previous = Post(
+            id = 1L,
+            type = PostType.Answer,
+            title = "问题",
+            author = Author(id = "author", name = "答主", avatarUrl = ""),
+            content = emptyList(),
+            voteCount = 0,
+            commentCount = 0,
+            endorsements = listOf(PostEndorsement(text = "话题收录 我的开源名片")),
+        )
+
+        val merged = previous.copy(endorsements = emptyList()).mergeFallbackFrom(previous)
+
+        assertEquals(previous.endorsements, merged.endorsements)
     }
 }

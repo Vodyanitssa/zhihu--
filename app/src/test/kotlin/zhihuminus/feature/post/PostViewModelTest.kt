@@ -340,6 +340,33 @@ class PostViewModelTest {
     }
 
     @Test
+    fun testCachedAnswerWithoutEndorsementsRefreshesInBackground() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.cachedPost = repo.samplePost.copy(
+            ipInfo = "IP 属地上海",
+            endorsements = emptyList(),
+        )
+        repo.freshPost = repo.samplePost.copy(
+            ipInfo = "IP 属地上海",
+            endorsements = listOf(PostEndorsement(text = "话题收录 我的开源名片")),
+        )
+
+        val viewModel = PostViewModel(
+            Application(),
+            12345L,
+            PostType.Answer,
+            repo,
+            defaultDispatcher = testDispatcher,
+        )
+        advanceUntilIdle()
+
+        val state = viewModel.uiState.loadState as PostLoadState.Success
+        assertEquals(1, state.post.endorsements.size)
+        val endorsement = state.post.endorsements.first()
+        assertEquals("话题收录 我的开源名片", endorsement.text)
+    }
+
+    @Test
     fun testDetailRefreshKeepsCachedFollowingState() = runTest(testDispatcher) {
         val repo = FakePostRepository(PostType.Answer)
         repo.cachedPost = repo.samplePost.copy(

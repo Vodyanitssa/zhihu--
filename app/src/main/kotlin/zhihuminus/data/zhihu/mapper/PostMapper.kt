@@ -7,12 +7,16 @@ import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.AuthorDto
+import com.zhihuminus.data.zhihu.dto.EndorsementColorDto
+import com.zhihuminus.data.zhihu.dto.EndorsementDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
 import com.zhihuminus.data.zhihu.dto.FeedTargetDto
 import com.zhihuminus.data.zhihu.dto.PinDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.feature.post.Author
 import com.zhihuminus.feature.post.Post
+import com.zhihuminus.feature.post.PostEndorsement
+import com.zhihuminus.feature.post.PostEndorsementColor
 import com.zhihuminus.feature.post.PostLinkCard
 import com.zhihuminus.feature.post.PostPoll
 import com.zhihuminus.feature.post.PostPollOption
@@ -82,8 +86,36 @@ object PostMapper {
             ipInfo = dto.ipInfo ?: dto.author.ipInfo,
             excerpt = dto.excerpt,
             questionId = dto.question.id,
+            endorsements = dto.endorsements.orEmpty().mapNotNull { it.toPostEndorsement() },
         )
     }
+
+    private fun EndorsementDto.toPostEndorsement(): PostEndorsement? {
+        val elements = elements.orEmpty()
+        val textElements = elements.filter { element ->
+            element.type == "TEXT" && !element.content.isNullOrBlank()
+        }
+        val text = textElements.joinToString(" ") { element -> element.content.orEmpty() }
+        if (text.isBlank()) return null
+        val leadingImage = elements.firstOrNull { element ->
+            element.type == "IMAGE" && !element.imageKey.isNullOrBlank() && !element.imageKey.contains("arrow")
+        }
+        val trailingImage = elements.lastOrNull { element ->
+            element.type == "IMAGE" && element.imageKey?.contains("arrow") == true
+        }
+        return PostEndorsement(
+            text = text,
+            actionUrl = actionUrl?.takeIf { it.isNotBlank() },
+            backgroundColor = backgroundColor?.toPostEndorsementColor(),
+            textColor = textElements.firstNotNullOfOrNull { element -> element.fontColor }?.toPostEndorsementColor(),
+            leadingIconKey = leadingImage?.imageKey,
+            leadingIconColor = leadingImage?.imageColor?.toPostEndorsementColor(),
+            trailingIconKey = trailingImage?.imageKey,
+        )
+    }
+
+    private fun EndorsementColorDto.toPostEndorsementColor(): PostEndorsementColor =
+        PostEndorsementColor(alpha = alpha, group = group)
 
     fun toPost(dto: ArticleDto): Post {
         val contentNodes = parseContent(dto.content)
