@@ -8,9 +8,9 @@ import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalFocusManager
 import androidx.compose.ui.platform.LocalSoftwareKeyboardController
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.data.local.SearchHistoryStore
@@ -31,7 +31,7 @@ fun SearchRoute(
     val paginationEnvironment = rememberPaginationEnvironment()
     val focusManager = LocalFocusManager.current
     val keyboardController = LocalSoftwareKeyboardController.current
-    val uriHandler = LocalUriHandler.current
+    val openExternalUrl = rememberExternalUrlOpener()
     val focusRequester = remember { FocusRequester() }
 
     val generalListState = rememberLazyListState()
@@ -65,7 +65,7 @@ fun SearchRoute(
             when (effect) {
                 is SearchEffect.Navigate -> navigator.onNavigate(effect.destination)
                 is SearchEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showShortMessage(effect.message)
-                is SearchEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
+                is SearchEffect.OpenExternalUrl -> openExternalUrl(effect.url)
                 is SearchEffect.ClearFocusAndHideKeyboard -> {
                     focusManager.clearFocus(force = true)
                     keyboardController?.hide()

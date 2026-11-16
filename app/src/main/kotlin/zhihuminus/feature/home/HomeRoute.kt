@@ -13,7 +13,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
@@ -21,6 +20,7 @@ import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.platform.UserMessageDuration
 import com.zhihuminus.core.platform.rememberAppPrivateDirectory
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.core.settings.LocalAppSettings
 import com.zhihuminus.core.state.UnreadNotificationState
@@ -38,7 +38,7 @@ fun HomeRoute(
     innerPadding: PaddingValues,
 ) {
     val navigator = LocalNavigator.current
-    val uriHandler = LocalUriHandler.current
+    val openExternalUrl = rememberExternalUrlOpener()
     val userMessages = rememberUserMessageSink()
     val appSettings = LocalAppSettings.current
     val paginationEnvironment = rememberPaginationEnvironment()
@@ -121,7 +121,7 @@ fun HomeRoute(
             when (effect) {
                 is HomeEffect.Navigate -> navigator.onNavigate(effect.destination)
                 is HomeEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showMessage(effect.message, UserMessageDuration.Short)
-                is HomeEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
+                is HomeEffect.OpenExternalUrl -> openExternalUrl(effect.url)
             }
         }
     }

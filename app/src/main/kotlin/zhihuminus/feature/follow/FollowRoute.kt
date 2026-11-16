@@ -5,10 +5,10 @@ import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.remember
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.zhihuminus.core.environment.rememberPaginationEnvironment
 import com.zhihuminus.core.platform.UserMessageDuration
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.core.platform.rememberUserMessageSink
 import com.zhihuminus.data.zhihu.ZhihuRepositoryFactory
 import com.zhihuminus.navigation.Follow
@@ -20,7 +20,7 @@ fun FollowRoute(
     innerPadding: PaddingValues,
 ) {
     val navigator = LocalNavigator.current
-    val uriHandler = LocalUriHandler.current
+    val openExternalUrl = rememberExternalUrlOpener()
     val userMessages = rememberUserMessageSink()
     val paginationEnvironment = rememberPaginationEnvironment()
 
@@ -44,7 +44,7 @@ fun FollowRoute(
             when (effect) {
                 is FollowEffect.Navigate -> navigator.onNavigate(effect.destination)
                 is FollowEffect.ShowMessage -> if (effect.isError) userMessages.showError(effect.message) else userMessages.showMessage(effect.message, UserMessageDuration.Long)
-                is FollowEffect.OpenExternalUrl -> uriHandler.openUri(effect.url)
+                is FollowEffect.OpenExternalUrl -> openExternalUrl(effect.url)
             }
         }
     }

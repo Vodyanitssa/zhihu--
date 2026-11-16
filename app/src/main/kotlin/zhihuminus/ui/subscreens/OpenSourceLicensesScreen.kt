@@ -36,11 +36,11 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.unit.dp
 import com.mikepenz.aboutlibraries.Libs
 import com.mikepenz.aboutlibraries.ui.compose.m3.LibrariesContainer
 import com.mikepenz.aboutlibraries.util.withContext
+import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.navigation.LocalNavigator
 import com.zhihuminus.ui.components.SettingItem
 import com.zhihuminus.ui.components.SettingItemGroup
@@ -103,7 +103,7 @@ fun OpenSourceLicensesContent(
 @Composable
 fun OpenSourceLicensesScreen() {
     val navigator = LocalNavigator.current
-    val uriHandler = LocalUriHandler.current
+    val openExternalUrl = rememberExternalUrlOpener()
     val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior()
     val manualLibraries = upstreamLibraries
 
@@ -137,7 +137,7 @@ fun OpenSourceLicensesScreen() {
         OpenSourceLicensesContent(
             contentPadding = PaddingValues(16.dp),
             manualLibraries = manualLibraries,
-            onOpenUrl = uriHandler::openUri,
+            onOpenUrl = openExternalUrl,
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding),
