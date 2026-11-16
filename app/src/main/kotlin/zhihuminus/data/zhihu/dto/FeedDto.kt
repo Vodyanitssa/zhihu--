@@ -29,6 +29,7 @@ sealed interface FeedTargetDto {
     fun description(): String = when (this) {
         is AnswerTargetDto -> "回答"
         is VideoTargetDto -> "视频"
+        is VideoAnswerTargetDto -> "视频"
         is ArticleTargetDto -> "文章"
         is PinTargetDto -> "想法"
         is QuestionTargetDto -> "问题"
@@ -122,6 +123,30 @@ data class VideoTargetDto(
 
     override val updatedTime: Long
         get() = updatedAt
+}
+
+@Serializable
+@SerialName("videoanswer")
+data class VideoAnswerTargetDto(
+    val id: Long,
+    override val url: String = "",
+    override val author: FeedAuthorDto? = null,
+    val voteupCount: Int = 0,
+    val commentCount: Int = 0,
+    val playCount: Int = 0,
+    val duration: Double = 0.0,
+    val coverUrl: String? = null,
+    val content: String = "",
+    override val excerpt: String = "",
+    override val createdTime: Long = 0,
+    override val updatedTime: Long = 0,
+    val question: QuestionTargetDto? = null,
+) : FeedTargetDto {
+    override val detailsText =
+        "视频 · ${formatCount(playCount)} 播放 · ${formatCount(voteupCount)} 赞 · ${formatCount(commentCount)} 评论"
+
+    override val title: String
+        get() = excerpt.stripHtmlTags().ifEmpty { content.stripHtmlTags() }
 }
 
 @Serializable
@@ -435,3 +460,7 @@ data class FeedRelationshipDto(
     val isFollowed: Boolean = false,
     val voting: Int? = null,
 )
+
+private val htmlTagRegex = Regex("<[^>]+>")
+
+private fun String.stripHtmlTags(): String = htmlTagRegex.replace(this, "").trim()

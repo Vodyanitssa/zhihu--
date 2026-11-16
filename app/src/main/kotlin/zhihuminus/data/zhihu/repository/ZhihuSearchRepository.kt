@@ -1,7 +1,7 @@
 package com.zhihuminus.data.zhihu.repository
 
+import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.settings.AppSettingsRepository
-import com.zhihuminus.core.util.Log
 import com.zhihuminus.data.FeedDisplayItem
 import com.zhihuminus.data.common.ZhihuJson
 import com.zhihuminus.data.local.SearchHistoryStore
@@ -25,7 +25,6 @@ import com.zhihuminus.feature.search.SearchSortOption
 import com.zhihuminus.feature.search.SearchTab
 import com.zhihuminus.feature.search.SearchTimeRange
 import com.zhihuminus.feature.search.TopicSearchResult
-import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonPrimitive
@@ -57,7 +56,7 @@ class ZhihuSearchRepository(
         )
 
         val feeds = response.data.mapNotNull { item ->
-            if (item.type != "search_result") return@mapNotNull null
+            if (!isGeneralSearchContentEntry(item.type)) return@mapNotNull null
             val obj = item.obj ?: return@mapNotNull null
             val type = (obj as? JsonObject)?.get("type")?.jsonPrimitive?.contentOrNull
             if (type == "people" || type == "topic") return@mapNotNull null
@@ -69,7 +68,7 @@ class ZhihuSearchRepository(
                     target = target,
                 )
             } catch (e: Exception) {
-                Log.e("ZhihuSearchRepository", "Failed to decode search feed target: $obj", e)
+                reportFailure("ZhihuSearchRepository", "decode search feed target", e)
                 null
             }
         }
@@ -114,7 +113,7 @@ class ZhihuSearchRepository(
                     highlightedName = member.name,
                 )
             } catch (e: Exception) {
-                Log.e("ZhihuSearchRepository", "Failed to decode member in search: $obj", e)
+                reportFailure("ZhihuSearchRepository", "decode member in search", e)
                 null
             }
         }
@@ -146,7 +145,11 @@ class ZhihuSearchRepository(
         val topics = response.data.mapNotNull { element ->
             SearchMapper.decodeTopicSearchResult(element.obj).also { result ->
                 if (result == null) {
-                    Log.e("ZhihuSearchRepository", "Topic search result missing valid topic object: $element")
+                    reportFailure(
+                        "ZhihuSearchRepository",
+                        "decode topic search result",
+                        IllegalStateException("missing valid topic object"),
+                    )
                 }
             }
         }
@@ -161,10 +164,8 @@ class ZhihuSearchRepository(
 
     override suspend fun fetchHotSearches(): List<HotSearchItem> = try {
         searchApi.getHotSearches().map { it.toHotSearchItem() }
-    } catch (e: CancellationException) {
-        throw e
     } catch (e: Exception) {
-        Log.w("ZhihuSearchRepository", "Failed to fetch hot searches", e)
+        reportFailure("ZhihuSearchRepository", "fetch hot searches", e)
         emptyList()
     }
 
@@ -199,3 +200,8 @@ class ZhihuSearchRepository(
         historyStorage.clear()
     }
 }
+
+private val generalSearchContentEntryTypes = setOf("search_result", "zvideo")
+
+internal fun isGeneralSearchContentEntry(entryType: String): Boolean =
+    entryType in generalSearchContentEntryTypes

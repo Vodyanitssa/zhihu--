@@ -9,12 +9,14 @@ import com.zhihuminus.data.zhihu.dto.AnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.ArticleTargetDto
 import com.zhihuminus.data.zhihu.dto.CommonFeedDto
 import com.zhihuminus.data.zhihu.dto.FeedAuthorDto
+import com.zhihuminus.data.zhihu.dto.FeedTargetDto
 import com.zhihuminus.data.zhihu.dto.GroupFeedDto
 import com.zhihuminus.data.zhihu.dto.PinContentItemDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.data.zhihu.dto.TopicFeedDto
+import com.zhihuminus.data.zhihu.dto.VideoAnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoInfoDto
 import com.zhihuminus.data.zhihu.dto.VideoPlaylistDto
 import com.zhihuminus.data.zhihu.dto.VideoPlaylistItemDto
@@ -286,6 +288,116 @@ class FeedMapperTest {
         assertNotNull(destination)
         assertEquals(1916898524035019106L, destination.id)
         assertEquals(VideoKind.ZVIDEO, destination.kind)
+    }
+
+    @Test
+    fun testVideoAnswerSearchItemParsesAndDisplays() {
+        val json =
+            """
+            {
+              "type": "videoanswer",
+              "id": "3513085915",
+              "content": "<p data-pid=\"gL_A-o7T\">苹果销量飙升|荣耀怒批友商小折叠|RTX5090—科技信息差</p>",
+              "excerpt": "苹果销量飙升|荣耀怒批友商小折叠|<em>RTX</em>5090—科技信息差",
+              "cover_url": "https://pica.zhimg.com/v2-d0eba06fdc5efa5f116409ebf8548b8d.jpg",
+              "play_count": 313,
+              "voteup_count": 1,
+              "comment_count": 0,
+              "duration": 200.922,
+              "created_at": 1716906935,
+              "created_time": 1716906935,
+              "updated_time": 1716906935,
+              "extra": "",
+              "question": {
+                "id": "650563716",
+                "type": "question",
+                "name": "请问下一代显卡<em>rtx50</em>系列会有哪些提升？",
+                "url": "https://api.zhihu.com/questions/650563716",
+                "answer_count": 0,
+                "follow_count": 0
+              },
+              "author": {
+                "id": "f0f084f84bd73c163ad84c529e1f42a6",
+                "url_token": "zhou-qing-di-49",
+                "name": "智能手机这点事",
+                "headline": "给你最新，最快的资讯！让你的科技生活更加充实！",
+                "gender": 1,
+                "is_followed": false,
+                "is_following": false,
+                "user_type": "people",
+                "avatar_url": "https://picx.zhimg.com/50/v2-fb2799d7237f0a4fb0dc994afda4c430_l.jpg",
+                "badge": [],
+                "badge_v2": {
+                  "title": "",
+                  "merged_badges": [],
+                  "detail_badges": [],
+                  "icon": "",
+                  "night_icon": ""
+                }
+              },
+              "thumbnail_info": {
+                "count": 1,
+                "thumbnails": [
+                  {
+                    "data_url": "",
+                    "url": "https://pica.zhimg.com/v2-d0eba06fdc5efa5f116409ebf8548b8d.jpg",
+                    "type": "video",
+                    "width": 0,
+                    "height": 0
+                  }
+                ],
+                "type": "thumbnail_info",
+                "total_count": 1
+              },
+              "relationship": {
+                "voting": 0,
+                "is_author": false,
+                "is_thanked": false,
+                "is_following": false,
+                "is_followed": false
+              },
+              "attachment": {
+                "type": "video",
+                "attachment_id": "1778912326575075329",
+                "video": {
+                  "video_id": "1778912326575075329",
+                  "title": "请问下一代显卡rtx50系列会有哪些提升？",
+                  "play_count": 313,
+                  "voteup_count": 1,
+                  "zvideo_id": "",
+                  "sub_video_id": "1778912326575075329",
+                  "parent_video_id": "1778912326575075329",
+                  "start_time": 0,
+                  "end_time": 200922
+                }
+              },
+              "flag": null,
+              "is_zhi_plus": false,
+              "is_zhi_plus_content": false
+            }
+            """.trimIndent()
+
+        val target = ZhihuJson.decodeJson<FeedTargetDto>(ZhihuJson.json.parseToJsonElement(json))
+        assertNotNull(target as? VideoAnswerTargetDto)
+        val feed = CommonFeedDto(id = "3513085915", verb = "SEARCH_RESULT", target = target)
+        assertEquals(3513085915L, target.id)
+        assertEquals("视频", target.description())
+        assertEquals("视频 · 313 播放 · 1 赞 · 0 评论", target.detailsText)
+        assertEquals("苹果销量飙升|荣耀怒批友商小折叠|RTX5090—科技信息差", target.title)
+        assertEquals("videoanswer:3513085915", target.stableTargetKey)
+        assertNull(target.navDestination)
+
+        val displayItem = feed.toDisplayItem()
+        assertEquals("苹果销量飙升|荣耀怒批友商小折叠|RTX5090—科技信息差", displayItem.title)
+        assertEquals("请问下一代显卡rtx50系列会有哪些提升？", displayItem.summary)
+        assertEquals("智能手机这点事", displayItem.authorName)
+        assertEquals("视频", displayItem.contentTypeLabel)
+        assertEquals(1716906935L, displayItem.publishTimeSeconds)
+        assertEquals(
+            listOf("https://pica.zhimg.com/v2-d0eba06fdc5efa5f116409ebf8548b8d.jpg"),
+            displayItem.images,
+        )
+        assertEquals("视频 · 313 播放 · 1 赞 · 0 评论", displayItem.details)
     }
 
     @Test

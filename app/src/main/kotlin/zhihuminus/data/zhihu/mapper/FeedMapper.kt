@@ -17,6 +17,7 @@ import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
 import com.zhihuminus.data.zhihu.dto.TopicFeedDto
+import com.zhihuminus.data.zhihu.dto.VideoAnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
 import com.zhihuminus.feature.post.PostType
 import com.zhihuminus.navigation.NavDestination
@@ -94,6 +95,8 @@ object FeedMapper {
 
         is VideoTargetDto -> listOfNotNull(target.video?.thumbnail?.takeIf { it.isNotBlank() })
 
+        is VideoAnswerTargetDto -> listOfNotNull(target.coverUrl?.takeIf { it.isNotBlank() })
+
         else -> emptyList()
     }
 
@@ -130,6 +133,8 @@ object FeedMapper {
         )
 
         is VideoTargetDto -> Video(id = target.id)
+
+        is VideoAnswerTargetDto -> null
     }
 
     fun toStableTargetKey(target: FeedTargetDto): String = when (target) {
@@ -138,6 +143,7 @@ object FeedMapper {
         is QuestionTargetDto -> "question:${target.id}"
         is PinTargetDto -> "pin:${target.id}"
         is VideoTargetDto -> "video:${target.id}"
+        is VideoAnswerTargetDto -> "videoanswer:${target.id}"
     }
 
     fun flattenFeeds(feeds: List<FeedDto>): List<FeedDto> = feeds.flatMap {
@@ -267,6 +273,34 @@ object FeedMapper {
                 images = resolvedImages,
                 navDestinationJson = resolvedNavDestinationJson,
             )
+
+            is VideoAnswerTargetDto -> {
+                val title = currentTarget.title.ifBlank { currentTarget.description() }
+                val questionTitle = currentTarget.question
+                    ?.title
+                    ?.let { Jsoup.parse(it).text() }
+                    ?.takeIf { it.isNotBlank() && it != title }
+                val summary = questionTitle
+                    ?: currentTarget.excerpt
+                        .let { Jsoup.parse(it).text() }
+                        .takeIf { it.isNotBlank() && it != title }
+
+                FeedDisplayItem(
+                    title = title,
+                    summary = summary,
+                    details = listOfNotNull(currentTarget.detailsText, feed.actionText?.takeIf { it.isNotBlank() })
+                        .joinToString(" · "),
+                    avatarSrc = currentTarget.author?.avatarUrl,
+                    authorName = currentTarget.author?.name,
+                    authorBadge = currentTarget.author?.badgeV2?.toOfficialBadge(),
+                    feed = feed,
+                    contentTypeLabel = currentTarget.description(),
+                    publishTimeSeconds = currentTarget.createdTime.takeIf { it > 0 },
+                    sourceLabel = resolvedSourceLabel,
+                    images = resolvedImages,
+                    navDestinationJson = resolvedNavDestinationJson,
+                )
+            }
 
             else -> FeedDisplayItem(
                 title = currentTarget?.description() ?: "广告",
