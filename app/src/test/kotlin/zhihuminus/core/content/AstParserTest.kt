@@ -165,6 +165,27 @@ class AstParserTest {
     }
 
     @Test
+    fun testParseContentUnwrapsZhihuRedirectLink() {
+        val html =
+            """<p>前文<a href="https://link.zhihu.com/?target=https%3A%2F%2Fzhuanlan.zhihu.com%2Fp%2F123">文章</a></p>"""
+        val nodes = AstParser.parseContent(html)
+
+        val paragraph = assertIs<ContentNode.Paragraph>(nodes.first())
+        val link = assertIs<InlineNode.Link>(paragraph.content.last())
+        assertEquals("https://zhuanlan.zhihu.com/p/123", link.url)
+    }
+
+    @Test
+    fun testParseContentUnwrapsZhihuRedirectLinkCard() {
+        val html =
+            """<a data-draft-type="link-card" href="https://link.zhihu.com/?target=https%3A%2F%2Fexample.com%2Fa%3Fb%3D1">链接卡片</a>"""
+        val nodes = AstParser.parseContent(html)
+
+        val link = assertIs<ContentNode.Link>(nodes.first())
+        assertEquals("https://example.com/a?b=1", link.url)
+    }
+
+    @Test
     fun testParseTableWithTheadAndTbody() {
         val html =
             """

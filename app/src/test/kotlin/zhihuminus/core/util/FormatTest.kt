@@ -72,4 +72,31 @@ class FormatTest {
         assertEquals("2024年06月01日", formatDailyDate("20240601"))
         assertEquals("invalid", formatDailyDate("invalid"))
     }
+
+    @Test
+    fun unwrapZhihuRedirectUrlDecodesTarget() {
+        assertEquals(
+            "https://example.com/a?b=1&c=2",
+            unwrapZhihuRedirectUrl("https://link.zhihu.com/?target=https%3A%2F%2Fexample.com%2Fa%3Fb%3D1%26c%3D2"),
+        )
+        assertEquals(
+            "https://example.com/a+b",
+            unwrapZhihuRedirectUrl("https://link.zhihu.com/?target=https%3A%2F%2Fexample.com%2Fa+b"),
+        )
+        assertEquals(
+            "https://example.com/raw",
+            unwrapZhihuRedirectUrl("https://link.zhihu.com/?target=https://example.com/raw"),
+        )
+        assertEquals(
+            "https://example.com/once",
+            unwrapZhihuRedirectUrl("https://link.zhihu.com/?target=https%253A%252F%252Fexample.com%252Fonce"),
+        )
+    }
+
+    @Test
+    fun unwrapZhihuRedirectUrlKeepsOtherLinks() {
+        assertEquals("https://example.com/path", unwrapZhihuRedirectUrl("https://example.com/path"))
+        assertEquals("https://link.zhihu.com/", unwrapZhihuRedirectUrl("https://link.zhihu.com/"))
+        assertEquals("https://www.zhihu.com/question/1", unwrapZhihuRedirectUrl("https://www.zhihu.com/question/1"))
+    }
 }

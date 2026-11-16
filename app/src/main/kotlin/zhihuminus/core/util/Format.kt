@@ -2,6 +2,7 @@ package com.zhihuminus.core.util
 
 import kotlinx.datetime.TimeZone
 import kotlinx.datetime.toLocalDateTime
+import java.net.URLDecoder
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -14,6 +15,9 @@ private const val SECONDS_PER_MINUTE = 60L
 private const val SECONDS_PER_HOUR = 60L * SECONDS_PER_MINUTE
 private const val SECONDS_PER_DAY = 24L * SECONDS_PER_HOUR
 private const val SECONDS_PER_WEEK = 7L * SECONDS_PER_DAY
+
+private const val ZHIHU_LINK_HOST = "link.zhihu.com"
+private const val MAX_ZHIHU_REDIRECT_DEPTH = 3
 
 fun formatDateTime(seconds: Long): String {
     if (seconds <= 0) return ""
@@ -114,3 +118,55 @@ fun formatShortDate(
 }
 
 fun Int.twoDigitString(): String = toString().padStart(2, '0')
+
+/**
+ * 解开知乎外链跳转地址：`https://link.zhihu.com/?target=<真实链接>` 中的 `target` 参数即目标链接，
+ * 通常经过 URL 编码（个别情况下会二次编码）。这里提取并解码后返回真实链接；
+ * 非 `link.zhihu.com` 地址或无 `target` 参数时原样返回。
+ */
+fun unwrapZhihuRedirectUrl(url: String): String {
+    var current = url.trim()
+    repeat(MAX_ZHIHU_REDIRECT_DEPTH) {
+        current = extractZhihuLinkTarget(current) ?: return current
+    }
+    return current
+}
+
+private fun extractZhihuLinkTarget(url: String): String? {
+    val schemeEnd = url.indexOf("://")
+    if (schemeEnd < 0) return null
+    val authority = url
+        .substring(schemeEnd + 3)
+        .substringBefore('/')
+        .substringBefore('?')
+        .substringBefore('#')
+        .substringBefore(':')
+    if (!authority.equals(ZHIHU_LINK_HOST, ignoreCase = true)) return null
+    val query = url.substringAfter('?', "").substringBefore('#')
+    if (query.isEmpty()) return null
+    val target = query
+        .split('&')
+        .firstOrNull { it.startsWith("target=") }
+        ?.substringAfter("target=")
+        ?.takeIf { it.isNotEmpty() }
+        ?: return null
+    return decodeZhihuTarget(target)
+}
+
+private fun decodeZhihuTarget(value: String): String {
+    val decoded = percentDecode(value)
+    // 二次编码时首轮解码结果仍是形如 https%3A%2F%2F... 的字符串，需要再解一次
+    return if (!decoded.contains("://") && decoded.contains("%3A", ignoreCase = true)) {
+        percentDecode(decoded)
+    } else {
+        decoded
+    }
+}
+
+private fun percentDecode(value: String): String {
+    if ('%' !in value) return value
+    // URLDecoder 会把 "+" 解码成空格，先转义为 %2B 以保留 URL 中真实的加号
+    return runCatching {
+        URLDecoder.decode(value.replace("+", "%2B"), "UTF-8")
+    }.getOrDefault(value)
+}

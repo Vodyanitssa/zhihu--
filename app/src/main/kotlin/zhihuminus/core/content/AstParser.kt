@@ -1,5 +1,6 @@
 package com.zhihuminus.core.content
 
+import com.zhihuminus.core.util.unwrapZhihuRedirectUrl
 import com.zhihuminus.navigation.Video
 import com.zhihuminus.navigation.resolveContent
 import org.jsoup.Jsoup
@@ -101,7 +102,7 @@ object AstParser {
                 if (node.className() == "hash_tag") {
                     return emptyList()
                 }
-                val url = node.attr("href").ifBlank { null }
+                val url = node.attr("href").ifBlank { null }?.let(::unwrapZhihuRedirectUrl)
                 if (url != null) {
                     listOf(
                         InlineNode.Link(
@@ -355,13 +356,11 @@ object AstParser {
     }
 
     private fun parseLink(element: Element): ContentNode.Link? {
+        val content = element.text().ifBlank { return null }
+        val url = element.attr("href").ifBlank { return null }
         return ContentNode.Link(
-            content = element.text().ifBlank {
-                return null
-            },
-            url = element.attr("href").ifBlank {
-                return null
-            },
+            content = content,
+            url = unwrapZhihuRedirectUrl(url),
             isCard = element.attr("data-draft-type") == "link-card",
         )
     }
