@@ -15,6 +15,7 @@ import com.zhihuminus.data.zhihu.dto.PinContentItemDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.dto.ScholarTargetDto
 import com.zhihuminus.data.zhihu.dto.TopicFeedDto
 import com.zhihuminus.data.zhihu.dto.VideoAnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoInfoDto
@@ -398,6 +399,46 @@ class FeedMapperTest {
             displayItem.images,
         )
         assertEquals("视频 · 313 播放 · 1 赞 · 0 评论", displayItem.details)
+    }
+
+    @Test
+    fun testScholarSearchItemParsesAndDisplays() {
+        val json =
+            """
+            {
+              "type": "scholar",
+              "id": "2006199590177742961",
+              "url": "https://www.zhihu.com/kvip/sku/paper/2006199590177742961",
+              "title": "颠覆与重构——论AI艺术与AI艺术研究",
+              "excerpt": "AI艺术正在“攻城略地”,以惊人的速度跨越重重壁垒,重写艺术的定义、创作流程、价值体系乃至哲学基础",
+              "keywords": ["主体性", "AI艺术", "艺术研究"],
+              "authors": ["周安华[1]"],
+              "journal": "艺术传播研究",
+              "year": 2026,
+              "period": "1",
+              "attachedInfoBytes": "OugBCgtwbGFjZWhvbGRlchIgOGNjNDRkOTc2MGQ3YTI0OTJmZDg2ZWU5ZDUzMDQyZGMYhQEiEzIwMDYxOTk1OTAxNzc3NDI5NjEqEzIwMDYxOTk1OTAxNzc3NDI5NjFKAmFpUABYAWABagJhaXAEgAGIg8KR0ouYA5gBAKABCagBALABAbgBAIACAbgCAIoDAJIDATCaAwCiAwkxMDFfM18zLjCqAwDCAwx6c2VhcmNoX3Jvb3TgBAD6BACCBSA4Y2M0NGQ5NzYwZDdhMjQ5MmZkODZlZTlkNTMwNDJkY4oFCee7k+aehOWMlg=="
+            }
+            """.trimIndent()
+
+        val target = ZhihuJson.decodeJson<FeedTargetDto>(ZhihuJson.json.parseToJsonElement(json))
+        assertNotNull(target as? ScholarTargetDto)
+        val feed = CommonFeedDto(id = "2006199590177742961", verb = "SEARCH_RESULT", target = target)
+        assertEquals("2006199590177742961", target.id)
+        assertEquals("论文", target.description())
+        assertEquals("论文 · 艺术传播研究 · 2026", target.detailsText)
+        assertEquals("scholar:2006199590177742961", target.stableTargetKey)
+        assertNull(target.navDestination)
+        assertNull(target.author)
+
+        val displayItem = feed.toDisplayItem()
+        assertEquals("颠覆与重构——论AI艺术与AI艺术研究", displayItem.title)
+        assertEquals("AI艺术正在“攻城略地”,以惊人的速度跨越重重壁垒,重写艺术的定义、创作流程、价值体系乃至哲学基础", displayItem.summary)
+        assertEquals("论文", displayItem.contentTypeLabel)
+        assertEquals("论文 · 艺术传播研究 · 2026", displayItem.details)
+        assertEquals("https://www.zhihu.com/kvip/sku/paper/2006199590177742961", displayItem.content)
+        assertNull(displayItem.authorName)
+        assertNull(displayItem.publishTimeSeconds)
+        assertEquals(emptyList(), displayItem.images)
     }
 
     @Test

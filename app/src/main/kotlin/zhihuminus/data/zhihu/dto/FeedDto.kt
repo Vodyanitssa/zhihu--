@@ -30,6 +30,7 @@ sealed interface FeedTargetDto {
         is AnswerTargetDto -> "回答"
         is VideoTargetDto -> "视频"
         is VideoAnswerTargetDto -> "视频"
+        is ScholarTargetDto -> "论文"
         is ArticleTargetDto -> "文章"
         is PinTargetDto -> "想法"
         is QuestionTargetDto -> "问题"

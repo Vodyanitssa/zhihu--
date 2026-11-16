@@ -13,6 +13,35 @@ data class SearchItemDto(
 )
 
 @Serializable
+@SerialName("scholar")
+data class ScholarTargetDto(
+    val id: String,
+    override val url: String = "",
+    override val title: String = "",
+    override val excerpt: String? = null,
+    val keywords: List<String> = emptyList(),
+    val authors: List<String> = emptyList(),
+    val journal: String = "",
+    val year: Int = 0,
+    val period: String = "",
+) : FeedTargetDto {
+    override val author: FeedAuthorDto?
+        get() = null
+
+    override val createdTime: Long
+        get() = -1
+
+    override val updatedTime: Long
+        get() = -1
+
+    override val detailsText: String = listOfNotNull(
+        "论文",
+        journal.takeIf { it.isNotBlank() },
+        year.takeIf { it > 0 }?.toString(),
+    ).joinToString(" · ")
+}
+
+@Serializable
 data class TopicSearchDto(
     val id: String,
     val type: String,

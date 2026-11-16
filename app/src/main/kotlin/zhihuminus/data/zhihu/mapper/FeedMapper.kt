@@ -16,6 +16,7 @@ import com.zhihuminus.data.zhihu.dto.PinContentItemDto
 import com.zhihuminus.data.zhihu.dto.PinTargetDto
 import com.zhihuminus.data.zhihu.dto.QuestionFeedCardDto
 import com.zhihuminus.data.zhihu.dto.QuestionTargetDto
+import com.zhihuminus.data.zhihu.dto.ScholarTargetDto
 import com.zhihuminus.data.zhihu.dto.TopicFeedDto
 import com.zhihuminus.data.zhihu.dto.VideoAnswerTargetDto
 import com.zhihuminus.data.zhihu.dto.VideoTargetDto
@@ -97,6 +98,8 @@ object FeedMapper {
 
         is VideoAnswerTargetDto -> listOfNotNull(target.coverUrl?.takeIf { it.isNotBlank() })
 
+        is ScholarTargetDto -> emptyList()
+
         else -> emptyList()
     }
 
@@ -135,6 +138,8 @@ object FeedMapper {
         is VideoTargetDto -> Video(id = target.id)
 
         is VideoAnswerTargetDto -> null
+
+        is ScholarTargetDto -> null
     }
 
     fun toStableTargetKey(target: FeedTargetDto): String = when (target) {
@@ -144,6 +149,7 @@ object FeedMapper {
         is PinTargetDto -> "pin:${target.id}"
         is VideoTargetDto -> "video:${target.id}"
         is VideoAnswerTargetDto -> "videoanswer:${target.id}"
+        is ScholarTargetDto -> "scholar:${target.id}"
     }
 
     fun flattenFeeds(feeds: List<FeedDto>): List<FeedDto> = feeds.flatMap {
@@ -301,6 +307,19 @@ object FeedMapper {
                     navDestinationJson = resolvedNavDestinationJson,
                 )
             }
+
+            is ScholarTargetDto -> FeedDisplayItem(
+                title = currentTarget.title,
+                summary = currentTarget.excerpt,
+                details = listOfNotNull(currentTarget.detailsText, feed.actionText?.takeIf { it.isNotBlank() })
+                    .joinToString(" · "),
+                feed = feed,
+                content = currentTarget.url.takeIf { it.startsWith("http") },
+                contentTypeLabel = currentTarget.description(),
+                sourceLabel = resolvedSourceLabel,
+                images = resolvedImages,
+                navDestinationJson = resolvedNavDestinationJson,
+            )
 
             else -> FeedDisplayItem(
                 title = currentTarget?.description() ?: "广告",
