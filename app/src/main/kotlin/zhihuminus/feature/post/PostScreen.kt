@@ -279,6 +279,7 @@ fun PostScreen(
                             isExporting = uiState.isExporting,
                             onDismiss = { showExportDialog = false },
                             onExportImage = { onEvent(PostEvent.Export) },
+                            onExportMarkdown = { onEvent(PostEvent.ExportMarkdown) },
                         )
 
                         // Comments

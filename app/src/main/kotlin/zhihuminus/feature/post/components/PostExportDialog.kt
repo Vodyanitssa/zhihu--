@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Description
 import androidx.compose.material.icons.filled.Image
 import androidx.compose.material3.Card
 import androidx.compose.material3.CircularProgressIndicator
@@ -28,10 +29,10 @@ import androidx.compose.ui.unit.sp
 import androidx.compose.ui.window.Dialog
 
 /**
- * Post 导出对话框，仅支持导出为图片。
+ * Post 导出对话框，支持导出为图片或 Markdown。
  *
  * 参考 [com.zhihuminus.ui.components.ExportDialogComponent] 的实现，
- * 简化为仅支持图片导出，不需要评论选项。
+ * 简化为不需要评论选项。
  */
 @Composable
 fun PostExportDialog(
@@ -39,6 +40,7 @@ fun PostExportDialog(
     isExporting: Boolean,
     onDismiss: () -> Unit,
     onExportImage: () -> Unit,
+    onExportMarkdown: () -> Unit,
 ) {
     if (showDialog) {
         Dialog(onDismissRequest = { if (!isExporting) onDismiss() }) {
@@ -88,6 +90,39 @@ fun PostExportDialog(
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
                                 text = "导出为图片",
+                                style = MaterialTheme.typography.bodyLarge,
+                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                        }
+                    }
+
+                    // 导出 Markdown 按钮
+                    Surface(
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(vertical = 4.dp),
+                        onClick = {
+                            if (!isExporting) onExportMarkdown()
+                        },
+                        shape = RoundedCornerShape(12.dp),
+                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        enabled = !isExporting,
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Icon(
+                                Icons.Filled.Description,
+                                contentDescription = null,
+                                modifier = Modifier.size(24.dp),
+                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                            )
+                            Spacer(modifier = Modifier.width(16.dp))
+                            Text(
+                                text = "导出为 Markdown",
                                 style = MaterialTheme.typography.bodyLarge,
                                 color = MaterialTheme.colorScheme.onSecondaryContainer,
                             )

@@ -145,6 +145,12 @@ data class PostEndorsementColor(
     val group: String? = null,
 )
 
+fun Post.contentLink(): String = when (type) {
+    PostType.Answer -> "https://www.zhihu.com/question/$questionId/answer/$id"
+    PostType.Article -> "https://zhuanlan.zhihu.com/p/$id"
+    PostType.Pin -> "https://www.zhihu.com/pin/$id"
+}
+
 fun Post.mergeFallbackFrom(previous: Post?): Post {
     if (previous == null) return this
     return copy(

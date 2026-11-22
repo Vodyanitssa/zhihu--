@@ -10,6 +10,7 @@ import com.zhihuminus.core.content.renderer.LocalImageViewManager
 import com.zhihuminus.core.platform.rememberExternalUrlOpener
 import com.zhihuminus.core.platform.rememberImageSaver
 import com.zhihuminus.core.platform.rememberImageSharer
+import com.zhihuminus.core.platform.rememberMarkdownFileSaver
 import com.zhihuminus.core.platform.rememberPlainTextClipboard
 import com.zhihuminus.core.platform.rememberShareText
 import com.zhihuminus.core.platform.rememberUserMessageSink
@@ -35,6 +36,7 @@ fun PostRoute(
     val openExternalUrl = rememberExternalUrlOpener()
     val saveImage = rememberImageSaver()
     val shareImage = rememberImageSharer()
+    val saveMarkdownFile = rememberMarkdownFileSaver()
     val userMessages = rememberUserMessageSink()
 
     val imageViewManager = remember { ImageViewManager() }
@@ -69,6 +71,7 @@ fun PostRoute(
                 }
 
                 is PostEffect.OpenExternalUrl -> openExternalUrl(effect.url)
+                is PostEffect.SaveMarkdownFile -> saveMarkdownFile(effect.fileName, effect.content)
                 is PostEffect.Navigate -> navigator.onNavigate(effect.destination)
             }
         }

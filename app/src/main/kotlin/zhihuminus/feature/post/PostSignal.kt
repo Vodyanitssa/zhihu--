@@ -31,6 +31,8 @@ sealed interface PostEvent {
 
     data object Export : PostEvent
 
+    data object ExportMarkdown : PostEvent
+
     data class CreateCollection(
         val title: String,
         val description: String,
@@ -74,6 +76,11 @@ sealed interface PostEffect {
 
     data class OpenExternalUrl(
         val url: String,
+    ) : PostEffect
+
+    data class SaveMarkdownFile(
+        val fileName: String,
+        val content: String,
     ) : PostEffect
 
     data class Navigate(

@@ -120,6 +120,16 @@ fun formatShortDate(
 fun Int.twoDigitString(): String = toString().padStart(2, '0')
 
 /**
+ * 清洗文件名片段：空白折叠为下划线，去掉文件系统保留字符，并收敛连续下划线。
+ */
+fun sanitizeFileNamePart(text: String): String = text
+    .trim()
+    .replace(Regex("\\s+"), "_")
+    .replace(Regex("[\\\\/:*?\"<>|]"), "_")
+    .replace(Regex("_+"), "_")
+    .trim('_')
+
+/**
  * 解开知乎外链跳转地址：`https://link.zhihu.com/?target=<真实链接>` 中的 `target` 参数即目标链接，
  * 通常经过 URL 编码（个别情况下会二次编码）。这里提取并解码后返回真实链接；
  * 非 `link.zhihu.com` 地址或无 `target` 参数时原样返回。

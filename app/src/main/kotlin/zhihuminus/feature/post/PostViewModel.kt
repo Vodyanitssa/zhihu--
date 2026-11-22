@@ -6,6 +6,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import androidx.lifecycle.AndroidViewModel
 import androidx.lifecycle.viewModelScope
+import com.zhihuminus.core.content.renderer.MarkdownRenderer
 import com.zhihuminus.core.content.renderer.PictureRenderer
 import com.zhihuminus.core.error.reportFailure
 import com.zhihuminus.core.error.withPrefix
@@ -56,11 +57,7 @@ class PostViewModel(
         get() {
             val state = uiState.loadState as? PostLoadState.Success ?: return ""
             val post = state.post
-            return when (post.type) {
-                PostType.Answer -> "https://www.zhihu.com/question/${post.questionId}/answer/${post.id}"
-                PostType.Article -> "https://zhuanlan.zhihu.com/p/${post.id}"
-                PostType.Pin -> "https://www.zhihu.com/pin/${post.id}"
-            }
+            return post.contentLink()
         }
 
     init {
@@ -96,6 +93,10 @@ class PostViewModel(
 
             is PostEvent.Export -> {
                 exportImage()
+            }
+
+            is PostEvent.ExportMarkdown -> {
+                exportMarkdown()
             }
 
             is PostEvent.OpenLink -> {
@@ -215,6 +216,31 @@ class PostViewModel(
                 sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             } finally {
                 result?.bitmap?.recycle()
+            }
+        }
+    }
+
+    private fun exportMarkdown() {
+        val post = (uiState.loadState as? PostLoadState.Success)?.post
+        if (post == null) {
+            sendEffect(PostEffect.ShowMessage("内容未加载完成", isError = true))
+            return
+        }
+        if (uiState.isExporting) return
+
+        uiState = uiState.copy(isExporting = true)
+        viewModelScope.launch {
+            try {
+                val fileName = MarkdownRenderer.fileName(post)
+                val content = withContext(defaultDispatcher) {
+                    MarkdownRenderer.render(post)
+                }
+                uiState = uiState.copy(isExporting = false)
+                sendEffect(PostEffect.SaveMarkdownFile(fileName, content))
+            } catch (e: Exception) {
+                val error = reportFailure("PostViewModel", "export markdown", e, userAction = "Markdown 导出")
+                uiState = uiState.copy(isExporting = false)
+                sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
     }

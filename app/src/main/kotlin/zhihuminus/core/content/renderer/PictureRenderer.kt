@@ -7,6 +7,7 @@ import com.zhihuminus.core.settings.AndroidAppSettingsRepository
 import com.zhihuminus.core.settings.model.ReadingSettings
 import com.zhihuminus.core.util.formatCount
 import com.zhihuminus.core.util.formatDateTime
+import com.zhihuminus.core.util.sanitizeFileNamePart
 import com.zhihuminus.feature.post.Post
 import com.zhihuminus.feature.post.PostType
 
@@ -111,13 +112,6 @@ object PictureRenderer {
         val safeAuthorName = sanitizeFileNamePart(post.author.name).ifBlank { "匿名作者" }
         return "${safeTitle}_${safeAuthorName}的${typeLabel}_${post.id}.png"
     }
-
-    private fun sanitizeFileNamePart(text: String): String = text
-        .trim()
-        .replace(Regex("\\s+"), "_")
-        .replace(Regex("[\\\\/:*?\"<>|]"), "_")
-        .replace(Regex("_+"), "_")
-        .trim('_')
 
     private fun escapeHtml(text: String): String = buildString(text.length) {
         text.forEach { char ->
