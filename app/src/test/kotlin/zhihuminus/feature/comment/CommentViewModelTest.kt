@@ -43,6 +43,8 @@ class CommentViewModelTest {
         )
         var nextPageProvider: (String) -> CommentPage = { CommentPage(emptyList(), true) }
         var childCommentsPage: CommentPage = CommentPage(emptyList(), true)
+        var submittedComment: Comment? = null
+        var lastReplyToCommentId: String? = null
 
         override suspend fun getRootComments(
             type: CommentContentType,
@@ -66,7 +68,8 @@ class CommentViewModelTest {
             imageBytes: ByteArray?,
         ): Comment {
             if (shouldFail) throw RuntimeException("Submit failed")
-            return sampleComment.copy(id = "new_c", content = content)
+            lastReplyToCommentId = replyToCommentId
+            return submittedComment ?: sampleComment.copy(id = "new_c", content = content)
         }
 
         override suspend fun likeComment(commentId: String) {
@@ -238,5 +241,121 @@ class CommentViewModelTest {
         assertEquals(2, updatedParentItem.children?.size)
         assertTrue(updatedParentItem.isChildEnd)
         assertTrue(viewModel.isChildEnd)
+    }
+
+    @Test
+    fun testSubmitRootCommentInsertsAtRootTop() = runTest(testDispatcher) {
+        val repo = FakeCommentRepository()
+        val viewModel = CommentViewModel(CommentContentType.Answer, 100L, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onEvent(CommentEvent.SubmitComment("New root"))
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.items.size)
+        assertEquals(
+            "new_c",
+            viewModel.uiState.items[0]
+                .comment.id,
+        )
+        assertEquals(null, viewModel.uiState.items[0].children)
+        assertEquals(null, repo.lastReplyToCommentId)
+    }
+
+    @Test
+    fun testReplyToRootCommentInsertsChildAndBumpsCount() = runTest(testDispatcher) {
+        val repo = FakeCommentRepository()
+        val parent = repo.sampleComment.copy(id = "root_1", childCommentCount = 0)
+        repo.rootCommentsPage = CommentPage(listOf(parent), isEnd = true)
+        repo.submittedComment = repo.sampleComment.copy(
+            id = "new_c",
+            content = "Reply root",
+            replyRootCommentId = "root_1",
+        )
+        val viewModel = CommentViewModel(CommentContentType.Answer, 100L, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onEvent(CommentEvent.SubmitComment("Reply root", replyToComment = parent))
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.items.size)
+        val rootItem = viewModel.uiState.items.first { it.comment.id == "root_1" }
+        assertEquals(
+            "new_c",
+            rootItem.children
+                ?.first()
+                ?.comment
+                ?.id,
+        )
+        assertEquals(1, rootItem.comment.childCommentCount)
+        assertEquals("root_1", repo.lastReplyToCommentId)
+    }
+
+    @Test
+    fun testReplyToChildCommentInsertsIntoSameRoot() = runTest(testDispatcher) {
+        val repo = FakeCommentRepository()
+        val child = repo.sampleComment.copy(id = "child_1", replyRootCommentId = "root_1")
+        val parent = repo.sampleComment.copy(
+            id = "root_1",
+            childCommentCount = 1,
+            childComments = listOf(child),
+        )
+        repo.rootCommentsPage = CommentPage(listOf(parent), isEnd = true)
+        repo.submittedComment = repo.sampleComment.copy(
+            id = "new_c",
+            content = "Reply child",
+            replyRootCommentId = "root_1",
+        )
+        val viewModel = CommentViewModel(CommentContentType.Answer, 100L, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onEvent(CommentEvent.SubmitComment("Reply child", replyToComment = child))
+        advanceUntilIdle()
+
+        assertEquals(1, viewModel.uiState.items.size)
+        val rootItem = viewModel.uiState.items.first { it.comment.id == "root_1" }
+        assertEquals(listOf("new_c", "child_1"), rootItem.children?.map { it.comment.id })
+        assertEquals(2, rootItem.comment.childCommentCount)
+        assertEquals("child_1", repo.lastReplyToCommentId)
+    }
+
+    @Test
+    fun testReplyToUnknownCommentFallsBackToRootTop() = runTest(testDispatcher) {
+        val repo = FakeCommentRepository()
+        repo.submittedComment = repo.sampleComment.copy(id = "new_c", content = "Fallback")
+        val viewModel = CommentViewModel(CommentContentType.Answer, 100L, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        val ghost = repo.sampleComment.copy(id = "ghost")
+        viewModel.onEvent(CommentEvent.SubmitComment("Fallback", replyToComment = ghost))
+        advanceUntilIdle()
+
+        assertEquals(2, viewModel.uiState.items.size)
+        assertEquals(
+            "new_c",
+            viewModel.uiState.items[0]
+                .comment.id,
+        )
+    }
+
+    @Test
+    fun testDeleteChildCommentDecrementsParentCount() = runTest(testDispatcher) {
+        val repo = FakeCommentRepository()
+        val child = repo.sampleComment.copy(id = "child_1", replyRootCommentId = "root_1")
+        val parent = repo.sampleComment.copy(
+            id = "root_1",
+            childCommentCount = 1,
+            childComments = listOf(child),
+        )
+        repo.rootCommentsPage = CommentPage(listOf(parent), isEnd = true)
+        val viewModel = CommentViewModel(CommentContentType.Answer, 100L, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onEvent(CommentEvent.DeleteComment("child_1"))
+        advanceUntilIdle()
+
+        val rootItem = viewModel.uiState.items.first { it.comment.id == "root_1" }
+        assertEquals(0, rootItem.comment.childCommentCount)
+        assertTrue(rootItem.children.isNullOrEmpty())
     }
 }

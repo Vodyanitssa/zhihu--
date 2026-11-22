@@ -358,7 +358,7 @@ fun CommentInputOverlay(
                                     onEvent(
                                         CommentEvent.SubmitComment(
                                             text = text,
-                                            replyToCommentId = replyToComment?.id,
+                                            replyToComment = replyToComment,
                                             imageBytes = imageBytes,
                                         ),
                                     )

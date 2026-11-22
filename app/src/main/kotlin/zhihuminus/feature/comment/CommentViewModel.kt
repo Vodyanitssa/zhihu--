@@ -51,7 +51,7 @@ class CommentViewModel(
             is CommentEvent.LoadMore -> loadMore()
             is CommentEvent.Refresh -> refresh()
             is CommentEvent.ChangeSortOrder -> changeSortOrder(event.order)
-            is CommentEvent.SubmitComment -> submitComment(event.text, event.replyToCommentId, event.imageBytes)
+            is CommentEvent.SubmitComment -> submitComment(event.text, event.replyToComment, event.imageBytes)
             is CommentEvent.LikeComment -> likeComment(event.commentId)
             is CommentEvent.UnlikeComment -> unlikeComment(event.commentId)
             is CommentEvent.DeleteComment -> deleteComment(event.commentId)
@@ -189,22 +189,65 @@ class CommentViewModel(
         }
     }
 
-    private fun submitComment(text: String, replyToCommentId: String?, imageBytes: ByteArray?) {
+    private fun submitComment(text: String, replyToComment: Comment?, imageBytes: ByteArray?) {
         if (text.isBlank() && imageBytes == null) return
         uiState = uiState.copy(isInputActive = false, replyToComment = null)
         viewModelScope.launch {
             try {
                 val newComment = withContext(defaultDispatcher) {
-                    repository.submitComment(contentType, contentId, text, replyToCommentId, imageBytes)
+                    repository.submitComment(contentType, contentId, text, replyToComment?.id, imageBytes)
                 }
-                items.add(0, newComment.toUiState())
-                emitState()
-                sendEffect(CommentEffect.ScrollToTop)
+                insertSubmittedComment(newComment, replyToComment)
+                sendEffect(CommentEffect.ScrollToComment(newComment.id))
                 sendEffect(CommentEffect.ShowMessage("评论已发送"))
             } catch (e: Exception) {
                 val error = reportFailure("CommentViewModel", "send comment", e)
                 sendEffect(CommentEffect.ShowMessage(error.withPrefix("评论发送").userMessage, isError = true))
             }
+        }
+    }
+
+    /**
+     * 将发送成功的评论插入正确的层级：
+     * - 无回复目标：作为根评论置顶
+     * - 回复根评论：插入该根评论的子评论列表顶部
+     * - 回复子评论：知乎只有两级，仍归属同一根评论，插入其子评论列表顶部
+     */
+    private fun insertSubmittedComment(newComment: Comment, replyToComment: Comment?) {
+        if (replyToComment == null) {
+            items.add(0, newComment.toUiState())
+            emitState()
+            return
+        }
+        val rootIndex = findRootIndexFor(replyToComment)
+        if (rootIndex < 0) {
+            // 目标不在已加载的树中（如列表已刷新）：兜底为根评论，避免评论丢失
+            items.add(0, newComment.toUiState())
+            emitState()
+            return
+        }
+        val rootItem = items[rootIndex]
+        items[rootIndex] = rootItem.copy(
+            comment = rootItem.comment.copy(
+                childCommentCount = rootItem.comment.childCommentCount + 1,
+            ),
+            children = listOf(newComment.toUiState()) + rootItem.children.orEmpty(),
+        )
+        emitState()
+    }
+
+    /**
+     * 在已加载的评论树中定位评论所属的根评论下标。
+     * 目标自身为根评论时直接命中；目标为子评论时命中其所属根评论。
+     */
+    private fun findRootIndexFor(comment: Comment): Int {
+        val direct = items.indexOfFirst { it.comment.id == comment.id }
+        if (direct >= 0) return direct
+        val fallbackRootId = comment.replyRootCommentId
+            ?.takeIf { it.isNotBlank() && it != comment.id }
+        return items.indexOfFirst { item ->
+            item.comment.id == fallbackRootId ||
+                item.children?.any { it.comment.id == comment.id } == true
         }
     }
 
@@ -256,7 +299,24 @@ class CommentViewModel(
                 withContext(defaultDispatcher) {
                     repository.deleteComment(commentId)
                 }
+                val parentRootId = items
+                    .firstOrNull { item ->
+                        item.comment.id != commentId &&
+                            item.children?.any { it.comment.id == commentId } == true
+                    }?.comment
+                    ?.id
                 removeFromTree(items, commentId)
+                if (parentRootId != null) {
+                    val rootIndex = items.indexOfFirst { it.comment.id == parentRootId }
+                    if (rootIndex >= 0) {
+                        val rootItem = items[rootIndex]
+                        items[rootIndex] = rootItem.copy(
+                            comment = rootItem.comment.copy(
+                                childCommentCount = (rootItem.comment.childCommentCount - 1).coerceAtLeast(0),
+                            ),
+                        )
+                    }
+                }
                 emitState()
                 sendEffect(CommentEffect.ShowMessage("评论已删除"))
             } catch (e: Exception) {
@@ -384,20 +444,16 @@ class CommentViewModel(
         list: MutableList<CommentItemUiState>,
         commentId: String,
     ): Boolean {
-        val iterator = list.iterator()
-        while (iterator.hasNext()) {
-            val item = iterator.next()
+        for (i in list.indices) {
+            val item = list[i]
             if (item.comment.id == commentId) {
-                iterator.remove()
+                list.removeAt(i)
                 return true
             }
             if (item.children != null) {
                 val childList = item.children.toMutableList()
                 if (removeFromTree(childList, commentId)) {
-                    val index = list.indexOf(item)
-                    if (index >= 0) {
-                        list[index] = item.copy(children = childList)
-                    }
+                    list[i] = item.copy(children = childList)
                     return true
                 }
             }

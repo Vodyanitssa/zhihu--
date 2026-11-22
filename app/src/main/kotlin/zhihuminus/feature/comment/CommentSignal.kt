@@ -11,7 +11,7 @@ sealed interface CommentEvent {
 
     data class SubmitComment(
         val text: String,
-        val replyToCommentId: String? = null,
+        val replyToComment: Comment? = null,
         val imageBytes: ByteArray? = null,
     ) : CommentEvent
 
@@ -65,5 +65,7 @@ sealed interface CommentEffect {
         val url: String,
     ) : CommentEffect
 
-    data object ScrollToTop : CommentEffect
+    data class ScrollToComment(
+        val commentId: String,
+    ) : CommentEffect
 }

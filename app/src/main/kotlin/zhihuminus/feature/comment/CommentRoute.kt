@@ -34,6 +34,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -60,6 +61,7 @@ import com.zhihuminus.feature.comment.components.CommentInputOverlay
 import com.zhihuminus.feature.imageview.ImageView
 import com.zhihuminus.feature.imageview.ImageViewActions
 import com.zhihuminus.feature.imageview.ImageViewManager
+import kotlinx.coroutines.launch
 
 /**
  * 评论路由组件，负责创建 ViewModel、处理副作用、展示单 Sheet 评论系统。
@@ -112,6 +114,11 @@ fun CommentRoute(
         }
     }
 
+    val rootListState = rememberLazyListState()
+    // 子评论 sheet 内的滚动请求：发送成功后定位新插入的回复
+    var childScrollTargetId by remember { mutableStateOf<String?>(null) }
+    var childScrollSignal by remember { mutableIntStateOf(0) }
+
     // 处理副作用
     LaunchedEffect(viewModel) {
         viewModel.effect.collect { effect ->
@@ -125,8 +132,14 @@ fun CommentRoute(
                 }
 
                 is CommentEffect.OpenExternalUrl -> openExternalUrl(effect.url)
-                is CommentEffect.ScrollToTop -> {
-                    // 由 CommentScreen 内部处理
+                is CommentEffect.ScrollToComment -> {
+                    val rootIndex = viewModel.uiState.items.indexOfFirst { it.comment.id == effect.commentId }
+                    if (rootIndex >= 0) {
+                        launch { rootListState.animateScrollToItem(rootIndex + 1) }
+                    } else {
+                        childScrollTargetId = effect.commentId
+                        childScrollSignal += 1
+                    }
                 }
             }
         }
@@ -152,7 +165,6 @@ fun CommentRoute(
             initialValue = SheetValue.Hidden,
         )
     }
-    val rootListState = rememberLazyListState()
 
     // 隔离列表滑动惯性速度与越界位移：
     // 1. 列表快速回顶时的向下惯性动量，若 Sheet 尚未被拉下则吸收，防止长列表回顶时误触关闭 (available.y > 0)
@@ -287,6 +299,9 @@ fun CommentRoute(
                                         onEvent = viewModel::onEvent,
                                         highlightCommentId = viewModel.uiState.anchorTargetId
                                             ?.takeIf { parentId == viewModel.uiState.anchorRootId },
+                                        scrollTargetId = childScrollTargetId,
+                                        scrollSignal = childScrollSignal,
+                                        onScrollConsumed = { childScrollTargetId = null },
                                     )
                                 }
                             }

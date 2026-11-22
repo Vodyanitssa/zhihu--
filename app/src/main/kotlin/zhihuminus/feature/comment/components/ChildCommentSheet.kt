@@ -47,6 +47,9 @@ fun ChildCommentSheet(
     onEvent: (CommentEvent) -> Unit,
     isLoadingMore: Boolean = false,
     highlightCommentId: String? = null,
+    scrollTargetId: String? = null,
+    scrollSignal: Int = 0,
+    onScrollConsumed: () -> Unit = {},
 ) {
     val listState = rememberLazyListState()
 
@@ -102,6 +105,17 @@ fun ChildCommentSheet(
         delay(3000.milliseconds)
         highlightVisible = false
         onEvent(CommentEvent.ConsumeAnchor)
+    }
+
+    // 发送成功后定位新插入的回复（新回复插在子评论列表顶部）
+    LaunchedEffect(scrollTargetId, scrollSignal, childComments.size) {
+        val targetId = scrollTargetId ?: return@LaunchedEffect
+        if (scrollSignal <= 0) return@LaunchedEffect
+        val index = childComments.indexOfFirst { it.id == targetId }
+        if (index >= 0) {
+            listState.animateScrollToItem(index + 2)
+            onScrollConsumed()
+        }
     }
 
     Surface(
