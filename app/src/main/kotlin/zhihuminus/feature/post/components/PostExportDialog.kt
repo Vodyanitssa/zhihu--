@@ -72,7 +72,7 @@ fun PostExportDialog(
                             if (!isExporting) onExportImage()
                         },
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         enabled = !isExporting,
                     ) {
                         Row(
@@ -85,13 +85,13 @@ fun PostExportDialog(
                                 Icons.Filled.Image,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
                                 text = "导出为图片",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
@@ -105,7 +105,7 @@ fun PostExportDialog(
                             if (!isExporting) onExportMarkdown()
                         },
                         shape = RoundedCornerShape(12.dp),
-                        color = MaterialTheme.colorScheme.secondaryContainer,
+                        color = MaterialTheme.colorScheme.surfaceVariant,
                         enabled = !isExporting,
                     ) {
                         Row(
@@ -118,13 +118,13 @@ fun PostExportDialog(
                                 Icons.Filled.Description,
                                 contentDescription = null,
                                 modifier = Modifier.size(24.dp),
-                                tint = MaterialTheme.colorScheme.onSecondaryContainer,
+                                tint = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                             Spacer(modifier = Modifier.width(16.dp))
                             Text(
                                 text = "导出为 Markdown",
                                 style = MaterialTheme.typography.bodyLarge,
-                                color = MaterialTheme.colorScheme.onSecondaryContainer,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
                             )
                         }
                     }
