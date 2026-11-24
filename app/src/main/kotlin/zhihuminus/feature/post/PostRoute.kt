@@ -83,6 +83,7 @@ fun PostRoute(
             commentRepository = commentRepository,
             initialCommentId = initialCommentId,
             onEvent = viewModel::onEvent,
+            onReadingProgressChanged = viewModel::onReadingProgressChanged,
             onBack = onBack,
         )
 

@@ -73,6 +73,21 @@ interface PostRepository {
     suspend fun putCachedPost(post: Post) {}
 
     /**
+     * 读取上次离开该内容时的阅读进度（0..1），无记录时返回 null
+     */
+    suspend fun getReadingProgress(type: PostType, id: Long): Float? = null
+
+    /**
+     * 异步记录阅读进度（0..1）；由应用级 scope 承载，不依赖页面协程生命周期
+     */
+    fun saveReadingProgress(type: PostType, id: Long, progress: Float) {}
+
+    /**
+     * 异步清除阅读进度（视为读完）
+     */
+    fun clearReadingProgress(type: PostType, id: Long) {}
+
+    /**
      * 记录阅读历史并标记已读
      * @param postType 内容类型
      * @param id 内容 ID

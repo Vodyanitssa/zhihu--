@@ -31,6 +31,31 @@ interface PostContentCache {
         isFollowing: Boolean,
     )
 
+    /**
+     * 读取上次离开该内容时的阅读进度（0..1）。未命中或条目已过期返回 null。
+     */
+    suspend fun getReadingProgress(
+        type: PostType,
+        id: Long,
+    ): Float?
+
+    /**
+     * 记录阅读进度（0..1）。仅在条目存在且未过期时生效，不会延长内容缓存寿命。
+     */
+    suspend fun saveReadingProgress(
+        type: PostType,
+        id: Long,
+        progress: Float,
+    )
+
+    /**
+     * 清除阅读进度（视为读完）。
+     */
+    suspend fun clearReadingProgress(
+        type: PostType,
+        id: Long,
+    )
+
     suspend fun clear()
 
     companion object : PostContentCache by MemoryPostContentCache()
@@ -49,6 +74,7 @@ class MemoryPostContentCache(
     private class Entry(
         val post: Post,
         val cachedAt: Long,
+        val readingProgress: Float = 0f,
     )
 
     private class RelationEntry(
@@ -85,10 +111,10 @@ class MemoryPostContentCache(
         val key = cacheKey(post.type, post.id)
         val now = Clock.System.now().toEpochMilliseconds()
         return mutex.withLock {
-            val existingEntry = entries[key]
-            val existing = existingEntry?.takeIf { now - it.cachedAt < ttlMillis }?.post
+            val existingEntry = entries[key]?.takeIf { now - it.cachedAt < ttlMillis }
+            val existing = existingEntry?.post
             val merged = if (existing != null) post.mergeFallbackFrom(existing) else applyKnownRelationLocked(post, now)
-            entries[key] = Entry(merged, now)
+            entries[key] = Entry(merged, now, existingEntry?.readingProgress ?: 0f)
             evictLocked()
             rememberRelationLocked(merged.author.urlToken, merged.author.id, merged.author.isFollowing, now)
             merged
@@ -125,10 +151,53 @@ class MemoryPostContentCache(
             for ((key, entry) in matching) {
                 val author = entry.post.author
                 val updatedPost = entry.post.copy(author = author.copy(isFollowing = isFollowing))
-                entries[key] = Entry(updatedPost, entry.cachedAt)
+                entries[key] = Entry(updatedPost, entry.cachedAt, entry.readingProgress)
                 rememberRelationLocked(author.urlToken, author.id, isFollowing, now)
             }
         }
+    }
+
+    override suspend fun getReadingProgress(
+        type: PostType,
+        id: Long,
+    ): Float? {
+        val key = cacheKey(type, id)
+        val now = Clock.System.now().toEpochMilliseconds()
+        return mutex.withLock {
+            val entry = entries[key] ?: return@withLock null
+            if (now - entry.cachedAt >= ttlMillis) {
+                entries.remove(key)
+                null
+            } else {
+                entry.readingProgress
+            }
+        }
+    }
+
+    override suspend fun saveReadingProgress(
+        type: PostType,
+        id: Long,
+        progress: Float,
+    ) {
+        if (!progress.isFinite()) return
+        val clamped = progress.coerceIn(0f, 1f)
+        val key = cacheKey(type, id)
+        val now = Clock.System.now().toEpochMilliseconds()
+        mutex.withLock {
+            val entry = entries[key] ?: return@withLock
+            if (now - entry.cachedAt >= ttlMillis) {
+                entries.remove(key)
+                return@withLock
+            }
+            entries[key] = Entry(entry.post, entry.cachedAt, clamped)
+        }
+    }
+
+    override suspend fun clearReadingProgress(
+        type: PostType,
+        id: Long,
+    ) {
+        saveReadingProgress(type, id, 0f)
     }
 
     override suspend fun clear() = mutex.withLock {

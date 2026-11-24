@@ -122,6 +122,16 @@ class ZhihuPostRepository(
         postCache.put(post)
     }
 
+    override suspend fun getReadingProgress(type: PostType, id: Long): Float? = postCache.getReadingProgress(type, id)
+
+    override fun saveReadingProgress(type: PostType, id: Long, progress: Float) {
+        cacheScope.launch { postCache.saveReadingProgress(type, id, progress) }
+    }
+
+    override fun clearReadingProgress(type: PostType, id: Long) {
+        cacheScope.launch { postCache.clearReadingProgress(type, id) }
+    }
+
     override suspend fun recordHistory(postType: PostType, id: Long) {
         val apiType = when (postType) {
             PostType.Answer -> "answer"

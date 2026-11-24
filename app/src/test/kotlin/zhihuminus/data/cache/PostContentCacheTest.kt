@@ -374,4 +374,82 @@ class PostContentCacheTest {
 
         assertNull(cache.getAuthorFollowing("token_author_4"))
     }
+
+    @Test
+    fun testReadingProgressRoundTrip() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.put(createDummyPost(id = 301L))
+
+        assertEquals(0f, cache.getReadingProgress(PostType.Answer, 301L)!!, 0.0001f)
+        cache.saveReadingProgress(PostType.Answer, 301L, 0.42f)
+        assertEquals(0.42f, cache.getReadingProgress(PostType.Answer, 301L)!!, 0.0001f)
+
+        cache.clearReadingProgress(PostType.Answer, 301L)
+        assertEquals(0f, cache.getReadingProgress(PostType.Answer, 301L)!!, 0.0001f)
+    }
+
+    @Test
+    fun testReadingProgressClampedAndInvalidIgnored() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.put(createDummyPost(id = 302L))
+
+        cache.saveReadingProgress(PostType.Answer, 302L, 5f)
+        assertEquals(1f, cache.getReadingProgress(PostType.Answer, 302L)!!, 0.0001f)
+
+        cache.saveReadingProgress(PostType.Answer, 302L, 0.5f)
+        cache.saveReadingProgress(PostType.Answer, 302L, Float.NaN)
+        assertEquals(0.5f, cache.getReadingProgress(PostType.Answer, 302L)!!, 0.0001f)
+    }
+
+    @Test
+    fun testReadingProgressSurvivesContentRefresh() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.put(createDummyPost(id = 303L))
+        cache.saveReadingProgress(PostType.Answer, 303L, 0.35f)
+
+        cache.putAndMerge(createDummyPost(id = 303L, title = "Refreshed Title"))
+
+        assertEquals("Refreshed Title", cache.get(PostType.Answer, 303L)?.title)
+        assertEquals(0.35f, cache.getReadingProgress(PostType.Answer, 303L)!!, 0.0001f)
+    }
+
+    @Test
+    fun testReadingProgressSurvivesFollowingUpdate() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.put(createDummyPost(id = 304L))
+        cache.saveReadingProgress(PostType.Answer, 304L, 0.6f)
+
+        cache.updateAuthorFollowing("user1", true)
+
+        assertEquals(0.6f, cache.getReadingProgress(PostType.Answer, 304L)!!, 0.0001f)
+        assertEquals(true, cache.get(PostType.Answer, 304L)?.author?.isFollowing)
+    }
+
+    @Test
+    fun testReadingProgressExpiresWithTtl() = runTest {
+        val cache = MemoryPostContentCache(ttlMillis = 10L)
+        cache.put(createDummyPost(id = 305L))
+        cache.saveReadingProgress(PostType.Answer, 305L, 0.5f)
+
+        Thread.sleep(15L)
+        assertNull(cache.getReadingProgress(PostType.Answer, 305L))
+    }
+
+    @Test
+    fun testReadingProgressIgnoredWithoutCachedEntry() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.saveReadingProgress(PostType.Answer, 306L, 0.5f)
+
+        assertNull(cache.getReadingProgress(PostType.Answer, 306L))
+    }
+
+    @Test
+    fun testClearRemovesReadingProgress() = runTest {
+        val cache = MemoryPostContentCache()
+        cache.put(createDummyPost(id = 307L))
+        cache.saveReadingProgress(PostType.Answer, 307L, 0.5f)
+
+        cache.clear()
+        assertNull(cache.getReadingProgress(PostType.Answer, 307L))
+    }
 }

@@ -61,7 +61,11 @@ class PostViewModel(
         }
 
     init {
-        loadPost()
+        // 先读进度再加载正文，保证正文进入 Success 时进度状态已确定，避免内容先显示在顶部再隐藏
+        viewModelScope.launch {
+            loadReadingProgress()
+            loadPost()
+        }
     }
 
     fun onEvent(event: PostEvent) {
@@ -308,6 +312,33 @@ class PostViewModel(
         }
     }
 
+    private suspend fun loadReadingProgress() {
+        val progress = try {
+            withContext(defaultDispatcher) {
+                repository.getReadingProgress(postType, postId)
+            }
+        } catch (e: Exception) {
+            reportFailure("PostViewModel", "get reading progress", e)
+            null
+        } ?: return
+        if (progress > MIN_VISIBLE_READING_PROGRESS) {
+            uiState = uiState.copy(savedReadingProgress = progress)
+        }
+    }
+
+    /**
+     * 页面离开时的进度决策：顶部附近忽略、接近底部视为读完并清除、其余保存。
+     */
+    fun onReadingProgressChanged(ratio: Float) {
+        if (!ratio.isFinite()) return
+        val clamped = ratio.coerceIn(0f, 1f)
+        when {
+            clamped < MIN_VISIBLE_READING_PROGRESS -> Unit
+            clamped >= READING_PROGRESS_COMPLETED -> repository.clearReadingProgress(postType, postId)
+            else -> repository.saveReadingProgress(postType, postId, clamped)
+        }
+    }
+
     private fun applyPost(post: Post) {
         val currentBar = uiState.bottomBarState
         val previousPost = (uiState.loadState as? PostLoadState.Success)?.post
@@ -551,5 +582,10 @@ class PostViewModel(
                 sendEffect(PostEffect.ShowMessage(error.userMessage, isError = true))
             }
         }
+    }
+
+    companion object {
+        internal const val MIN_VISIBLE_READING_PROGRESS = 0.01f
+        internal const val READING_PROGRESS_COMPLETED = 0.95f
     }
 }

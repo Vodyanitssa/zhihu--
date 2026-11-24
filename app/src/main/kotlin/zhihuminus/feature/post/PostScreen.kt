@@ -1,5 +1,7 @@
 package com.zhihuminus.feature.post
 
+import androidx.compose.animation.core.animateFloatAsState
+import androidx.compose.animation.core.tween
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
@@ -20,15 +22,21 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.repeatOnLifecycle
 import com.zhihuminus.core.content.extractAllImageUrls
@@ -51,6 +59,10 @@ import com.zhihuminus.ui.components.EndorsementChipList
 import com.zhihuminus.ui.components.ErrorFullPage
 import com.zhihuminus.ui.components.ScrollAwareTopBarTitle
 import com.zhihuminus.ui.components.VerticalReadingProgressBar
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.takeWhile
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.math.roundToInt
 
 sealed interface PostLoadState {
     data object Loading : PostLoadState
@@ -74,7 +86,12 @@ data class PostUiState(
     val showActionsMenu: Boolean = false,
     val showComments: Boolean = false,
     val isExporting: Boolean = false,
+    /** 上次离开时的阅读进度（0..1），null 表示尚未读取到或没有记录 */
+    val savedReadingProgress: Float? = null,
 )
+
+private const val READING_PROGRESS_HIDE_WINDOW_MILLIS = 200L
+private const val READING_PROGRESS_FADE_IN_MILLIS = 180
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,6 +101,7 @@ fun PostScreen(
     onEvent: (PostEvent) -> Unit,
     onBack: () -> Unit,
     initialCommentId: String? = null,
+    onReadingProgressChanged: (Float) -> Unit,
 ) {
     var showExportDialog by remember { mutableStateOf(false) }
     val openLink = rememberInAppLinkOpener()
@@ -92,10 +110,57 @@ fun PostScreen(
     var isTransitionFinished by remember {
         mutableStateOf(lifecycleOwner.lifecycle.currentState.isAtLeast(Lifecycle.State.RESUMED))
     }
+    var hasRestoredReadingProgress by rememberSaveable { mutableStateOf(false) }
+    val needsRestore = (uiState.savedReadingProgress ?: 0f) > PostViewModel.MIN_VISIBLE_READING_PROGRESS &&
+        !hasRestoredReadingProgress
+    val contentAlpha by animateFloatAsState(
+        targetValue = if (needsRestore) 0f else 1f,
+        animationSpec = tween(durationMillis = READING_PROGRESS_FADE_IN_MILLIS),
+        label = "postContentAlpha",
+    )
+    val reportReadingProgress = rememberUpdatedState(onReadingProgressChanged)
 
     LaunchedEffect(lifecycleOwner) {
         lifecycleOwner.lifecycle.repeatOnLifecycle(Lifecycle.State.RESUMED) {
             isTransitionFinished = true
+        }
+    }
+
+    // 只恢复一次：正文渲染且布局完成后按比例定位，隐藏窗口内跟随图片加载的高度变化，随后淡入
+    val loadedPostId = (uiState.loadState as? PostLoadState.Success)?.post?.id
+    LaunchedEffect(uiState.savedReadingProgress, isTransitionFinished, loadedPostId) {
+        val target = uiState.savedReadingProgress
+            ?.takeIf { it > PostViewModel.MIN_VISIBLE_READING_PROGRESS }
+            ?: return@LaunchedEffect
+        if (!isTransitionFinished || hasRestoredReadingProgress || loadedPostId == null) return@LaunchedEffect
+        snapshotFlow { scrollState.maxValue }.first { it != Int.MAX_VALUE }
+        scrollState.scrollTo((target * scrollState.maxValue).roundToInt())
+        withTimeoutOrNull(READING_PROGRESS_HIDE_WINDOW_MILLIS) {
+            snapshotFlow { scrollState.maxValue to scrollState.isScrollInProgress }
+                .takeWhile { !it.second }
+                .collect { (max, _) ->
+                    if (max > 0 && max != Int.MAX_VALUE) {
+                        scrollState.scrollTo((target * max).roundToInt())
+                    }
+                }
+        }
+        hasRestoredReadingProgress = true
+    }
+
+    // 导航返回（onDispose）与切后台（ON_STOP）都记录一次阅读进度
+    DisposableEffect(lifecycleOwner) {
+        fun reportProgress() {
+            val max = scrollState.maxValue
+            if (max <= 0 || max == Int.MAX_VALUE) return
+            reportReadingProgress.value(scrollState.value.toFloat() / max)
+        }
+        val observer = LifecycleEventObserver { _, event ->
+            if (event == Lifecycle.Event.ON_STOP) reportProgress()
+        }
+        lifecycleOwner.lifecycle.addObserver(observer)
+        onDispose {
+            lifecycleOwner.lifecycle.removeObserver(observer)
+            reportProgress()
         }
     }
 
@@ -177,7 +242,8 @@ fun PostScreen(
                     BoxWithConstraints(
                         modifier = Modifier
                             .fillMaxSize()
-                            .padding(paddingValues),
+                            .padding(paddingValues)
+                            .graphicsLayer { alpha = contentAlpha },
                     ) {
                         Column(
                             modifier = Modifier
@@ -296,7 +362,7 @@ fun PostScreen(
             }
         }
 
-        if (isTransitionFinished) {
+        if (isTransitionFinished && !needsRestore) {
             VerticalReadingProgressBar(
                 scrollState = scrollState,
                 modifier = Modifier

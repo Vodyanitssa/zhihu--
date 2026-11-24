@@ -78,6 +78,10 @@ class PostViewModelTest {
         var cachedPost: Post? = null
         var freshPost: Post? = null
         var authorFollowingResult: Boolean? = null
+        var readingProgress: Float? = null
+        var readingProgressFailure = false
+        var savedReadingProgress: Float? = null
+        var readingProgressCleared = false
 
         override suspend fun getPost(type: PostType, id: Long): Post = freshPost ?: samplePost
 
@@ -129,6 +133,19 @@ class PostViewModelTest {
 
         override suspend fun putCachedPost(post: Post) {
             lastCachedPost = post
+        }
+
+        override suspend fun getReadingProgress(type: PostType, id: Long): Float? {
+            if (readingProgressFailure) throw RuntimeException("Reading progress failed")
+            return readingProgress
+        }
+
+        override fun saveReadingProgress(type: PostType, id: Long, progress: Float) {
+            savedReadingProgress = progress
+        }
+
+        override fun clearReadingProgress(type: PostType, id: Long) {
+            readingProgressCleared = true
         }
 
         override suspend fun recordHistory(postType: PostType, id: Long) {}
@@ -412,5 +429,92 @@ class PostViewModelTest {
         val state = viewModel.uiState.loadState as PostLoadState.Success
         assertEquals(true, state.post.author.isFollowing)
         assertEquals(true, repo.lastCachedPost?.author?.isFollowing)
+    }
+
+    @Test
+    fun testReadingProgressFailureDoesNotBlockContent() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.readingProgressFailure = true
+
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        assertTrue(viewModel.uiState.loadState is PostLoadState.Success)
+        assertEquals(null, viewModel.uiState.savedReadingProgress)
+    }
+
+    @Test
+    fun testReadingProgressLoadedIntoUiState() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.readingProgress = 0.4f
+
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        assertEquals(0.4f, viewModel.uiState.savedReadingProgress ?: -1f)
+    }
+
+    @Test
+    fun testNegligibleReadingProgressNotRestored() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        repo.readingProgress = 0.005f
+
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        assertEquals(null, viewModel.uiState.savedReadingProgress)
+    }
+
+    @Test
+    fun testLeavingNearTopKeepsPreviousProgress() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onReadingProgressChanged(0.005f)
+
+        assertEquals(null, repo.savedReadingProgress)
+        assertTrue(!repo.readingProgressCleared)
+    }
+
+    @Test
+    fun testLeavingMidwaySavesProgress() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onReadingProgressChanged(0.42f)
+
+        assertEquals(0.42f, repo.savedReadingProgress ?: -1f)
+        assertTrue(!repo.readingProgressCleared)
+    }
+
+    @Test
+    fun testLeavingNearBottomClearsProgress() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onReadingProgressChanged(0.96f)
+
+        assertTrue(repo.readingProgressCleared)
+        assertEquals(null, repo.savedReadingProgress)
+    }
+
+    @Test
+    fun testReadingProgressClampedAndNonFiniteIgnored() = runTest(testDispatcher) {
+        val repo = FakePostRepository(PostType.Answer)
+        val viewModel = PostViewModel(Application(), 12345L, PostType.Answer, repo, defaultDispatcher = testDispatcher)
+        advanceUntilIdle()
+
+        viewModel.onReadingProgressChanged(1.4f)
+        assertTrue(repo.readingProgressCleared)
+
+        repo.readingProgressCleared = false
+        repo.savedReadingProgress = null
+        viewModel.onReadingProgressChanged(Float.NaN)
+
+        assertEquals(null, repo.savedReadingProgress)
+        assertTrue(!repo.readingProgressCleared)
     }
 }
