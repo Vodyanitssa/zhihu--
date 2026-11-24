@@ -218,7 +218,10 @@ fun PostScreen(
                             .padding(paddingValues),
                         contentAlignment = Alignment.Center,
                     ) {
-                        CircularProgressIndicator()
+                        CircularProgressIndicator(
+                            modifier = Modifier.size(28.dp),
+                            strokeWidth = 2.5.dp,
+                        )
                     }
                 }
 
@@ -300,6 +303,21 @@ fun PostScreen(
                                 containerHeight = maxHeight,
                                 positionKey = state.post.id,
                                 modifier = Modifier.align(Alignment.TopStart),
+                            )
+                        }
+                    }
+
+                    if (contentAlpha < 1f) {
+                        Box(
+                            modifier = Modifier
+                                .fillMaxSize()
+                                .padding(top = paddingValues.calculateTopPadding())
+                                .graphicsLayer { alpha = 1f - contentAlpha },
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            CircularProgressIndicator(
+                                modifier = Modifier.size(28.dp),
+                                strokeWidth = 2.5.dp,
                             )
                         }
                     }
