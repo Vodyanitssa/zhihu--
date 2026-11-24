@@ -1,8 +1,8 @@
 package com.zhihuminus.ui.components
 
 import androidx.compose.animation.animateContentSize
+import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
-import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
@@ -20,6 +20,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -86,11 +87,19 @@ fun ExpandableContent(
     var expandable by remember { mutableStateOf(false) }
     val showScrim = expandable && !isExpanded
     // 展开时内容高度在增长，遮罩不能瞬间消失，用淡出与高度过渡同步。
-    val scrimAlpha by animateFloatAsState(
-        targetValue = if (showScrim) 1f else 0f,
-        animationSpec = tween(durationMillis = if (showScrim) SCRIM_FADE_IN else SCRIM_FADE_OUT),
-        label = "expandableScrimAlpha",
-    )
+    // 只有 isExpanded（用户点击）变化才播放淡入淡出；expandable 是测量结果，首次判定翻转
+    // （如 LazyColumn 条目滚回视口重新组合）必须直接 snap，否则滚动时会重播遮罩淡入。
+    val scrimAlpha = remember { Animatable(if (showScrim) 1f else 0f) }
+    LaunchedEffect(isExpanded) {
+        val target = if (expandable && !isExpanded) 1f else 0f
+        scrimAlpha.animateTo(
+            targetValue = target,
+            animationSpec = tween(durationMillis = if (target > 0f) SCRIM_FADE_IN else SCRIM_FADE_OUT),
+        )
+    }
+    LaunchedEffect(expandable) {
+        scrimAlpha.snapTo(if (expandable && !isExpanded) 1f else 0f)
+    }
     val scrimBrush = remember(scrimColor) {
         Brush.verticalGradient(
             colorStops =
@@ -130,13 +139,13 @@ fun ExpandableContent(
                 }
             }
 
-            if (expandable && scrimAlpha > 0f) {
+            if (expandable && scrimAlpha.value > 0f) {
                 Box(
                     modifier = Modifier
                         .align(Alignment.BottomCenter)
                         .fillMaxWidth()
                         .height(SCRIM_HEIGHT)
-                        .alpha(scrimAlpha)
+                        .alpha(scrimAlpha.value)
                         .background(brush = scrimBrush),
                 )
             }
