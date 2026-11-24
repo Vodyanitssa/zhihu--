@@ -324,13 +324,14 @@ object AstParser {
 
     private fun parseImage(element: Element): ContentNode.Image? {
         // 知乎使用 a 渲染评论图片，因此最终可能需要用 href
+        // 知乎动图的 data-original 是静态 JPEG（_r.jpg），动图地址只出现在 src/href 上，故优先 .gif 候选
+        val candidates = listOfNotNull(
+            element.attr("data-original").takeIf { it.isNotBlank() },
+            element.attr("src").takeIf { it.isNotBlank() },
+            element.attr("href").takeIf { it.isNotBlank() },
+        )
         return ContentNode.Image(
-            url = element
-                .attr("data-original")
-                .ifBlank { element.attr("src") }
-                .ifBlank { element.attr("href") }
-                .takeIf { it.isNotBlank() }
-                ?: return null,
+            url = (candidates.firstOrNull { it.isGifUrl() } ?: candidates.firstOrNull()) ?: return null,
             caption = element
                 .children()
                 .firstOrNull { it.tagName() == "figcaption" }
@@ -414,6 +415,9 @@ object AstParser {
         )
     }
 }
+
+private fun String.isGifUrl(): Boolean =
+    substringBefore('?').substringBefore('#').endsWith(".gif", ignoreCase = true)
 
 fun extractImageUrl(attribute: (String) -> String): String? =
     attribute("data-original-token")

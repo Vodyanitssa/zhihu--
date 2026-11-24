@@ -165,6 +165,70 @@ class AstParserTest {
     }
 
     @Test
+    fun testParseImagePrefersGifSrcOverStaticDataOriginal() {
+        val html =
+            """<figure><img src="https://picx.zhimg.com/v2-a_1440w.gif" """ +
+                """data-original="https://picx.zhimg.com/v2-a_r.jpg" class="origin_image zh-lightbox-thumb"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://picx.zhimg.com/v2-a_1440w.gif", image.url)
+    }
+
+    @Test
+    fun testParseImageKeepsStaticDataOriginalForNormalImage() {
+        val html =
+            """<figure><img src="https://pica.zhimg.com/v2-a_1440w.jpg" """ +
+                """data-original="https://pica.zhimg.com/v2-a_r.jpg" class="origin_image zh-lightbox-thumb"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://pica.zhimg.com/v2-a_r.jpg", image.url)
+    }
+
+    @Test
+    fun testParseImageRecognizesGifWithQueryAndUppercase() {
+        val html =
+            """<figure><img src="https://picx.zhimg.com/v2-a_1440w.GIF?source=abc" """ +
+                """data-original="https://picx.zhimg.com/v2-a_r.jpg"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://picx.zhimg.com/v2-a_1440w.GIF?source=abc", image.url)
+    }
+
+    @Test
+    fun testParseImageDoesNotTreatGifInQueryAsAnimated() {
+        val html =
+            """<figure><img src="https://pica.zhimg.com/v2-a_1440w.jpg" """ +
+                """data-original="https://pica.zhimg.com/v2-a_r.jpg?next=.gif"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://pica.zhimg.com/v2-a_r.jpg?next=.gif", image.url)
+    }
+
+    @Test
+    fun testParseImageKeepsGifDataOriginalWhenBothAreGif() {
+        val html =
+            """<figure><img src="https://picx.zhimg.com/v2-a_1440w.gif" """ +
+                """data-original="https://picx.zhimg.com/v2-a_r.gif"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://picx.zhimg.com/v2-a_r.gif", image.url)
+    }
+
+    @Test
+    fun testParseImageFallsBackToGifSrcWithoutDataOriginal() {
+        val html = """<figure><img src="https://picx.zhimg.com/v2-a_1440w.gif"/></figure>"""
+        val nodes = AstParser.parseContent(html)
+
+        val image = assertIs<ContentNode.Image>(nodes.single())
+        assertEquals("https://picx.zhimg.com/v2-a_1440w.gif", image.url)
+    }
+
+    @Test
     fun testParseContentUnwrapsZhihuRedirectLink() {
         val html =
             """<p>前文<a href="https://link.zhihu.com/?target=https%3A%2F%2Fzhuanlan.zhihu.com%2Fp%2F123">文章</a></p>"""
